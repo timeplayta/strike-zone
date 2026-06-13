@@ -186,6 +186,7 @@ let deathJumpscareRunning = false;
 let flashlightLight = null;
 let flashlightFill = null;
 let flashlightTarget = null;
+let flashlightEquipped = false;
 
 const menu = document.getElementById("menu");
 const hud = document.getElementById("hud");
