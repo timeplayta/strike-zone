@@ -7,6 +7,8 @@ import { buildHumanCharacter, configureCharacterRenderer, isHumanModelReady } fr
 
 const viewers = new Map();
 
+import { buildAmongUsCharacter } from "./among-us-model.js";
+
 function hexStr(c) {
   return "#" + (c >>> 0).toString(16).padStart(6, "0").slice(-6);
 }
@@ -21,7 +23,17 @@ function disposeGroup(group) {
   });
 }
 
-export function buildPreviewCharacter(loadout, team = "ct", portrait = false) {
+export function buildPreviewCharacter(loadout, team = "ct", portrait = false, characterSkin) {
+  const skinId = characterSkin || window.__characterSkin || "soldier";
+  if (
+    skinId &&
+    skinId !== "soldier" &&
+    (skinId.startsWith("among") || skinId === "neon_runner" || skinId === "shadow")
+  ) {
+    const body = buildAmongUsCharacter(skinId, portrait ? 0.95 : 1.1);
+    return { group: body.group, mixer: null, human: false, among: true };
+  }
+
   const opts = loadoutToBuildOpts(loadout);
   opts.team = team;
   opts.scale = portrait ? 0.92 : 1;
@@ -115,7 +127,9 @@ export function mountCharacterViewer(canvasId, opts = {}) {
   scene.add(pivot);
 
   const loadout = normalizeLoadout(opts.loadout);
-  const built = opts.enemy ? buildEnemyPreview() : buildPreviewCharacter(loadout, opts.team || "ct", !!opts.portrait);
+  const built = opts.enemy
+    ? buildEnemyPreview()
+    : buildPreviewCharacter(loadout, opts.team || "ct", !!opts.portrait, opts.characterSkin);
   const charGroup = built.group;
   pivot.add(charGroup);
 

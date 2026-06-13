@@ -66,6 +66,8 @@
       <div id="welcomeLoginPanel" class="welcome-panel">
         <label for="loginName">Nome da conta</label>
         <input type="text" id="loginName" maxlength="16" placeholder="Ex: Maria, João..." autocomplete="username" />
+        <label for="loginPlayerId">ID da conta <span class="label-optional">(se o nome é igual ao de outra pessoa)</span></label>
+        <input type="text" id="loginPlayerId" maxlength="12" placeholder="Ex: SZ-A7X2K9" autocomplete="off" />
         <label for="loginPassword">Senha</label>
         <input type="password" id="loginPassword" maxlength="32" placeholder="Sua senha" autocomplete="current-password" />
         <button type="button" id="welcomeLoginBtn" class="btn-primary">ENTRAR</button>
@@ -95,37 +97,36 @@
         <button type="button" id="welcomeMigrateBack" class="btn-link">Voltar ao login</button>
       </div>
 
-      <p class="welcome-note">Cada conta tem nome + senha únicos — seus dados ficam salvos no servidor</p>
+      <p class="welcome-note">Cada conta tem um <strong>ID único SZ-XXXXXX</strong> — mesmo nome e senha de outra pessoa não mistura os dados</p>
+      <p id="welcomeRegisterSuccess" class="welcome-register-success hidden"></p>
     </div>
   </div>
 
-  <div id="menu" class="screen hidden">
+  <div id="menu" class="screen ff-menu hidden">
 
-    <button type="button" id="openAccountBtn" class="menu-fab menu-fab-c" title="Conta">
-      <span class="fab-c-portrait">
-        <canvas id="accountFabCanvas" width="208" height="168"></canvas>
-      </span>
-      <span id="accountFabName" class="fab-c-name">Operador</span>
-    </button>
+    <header class="ff-header">
+      <button type="button" id="openAccountBtn" class="ff-profile-chip menu-fab menu-fab-c" title="Conta">
+        <span class="fab-c-portrait">
+          <canvas id="accountFabCanvas" width="208" height="168"></canvas>
+        </span>
+        <span id="accountFabName" class="fab-c-name">Operador</span>
+      </button>
+      <div class="ff-header-right">
+        <span id="menuCoinsDisplay" class="ff-coins">0 🪙</span>
+      </div>
+    </header>
 
     <div id="menuHubTabs" class="menu-hub-tabs hidden" role="tablist" aria-label="Painel jogador ou admin">
-      <button type="button" class="menu-hub-tab selected" data-menu-hub="player" role="tab" aria-selected="true">Painel Jogador</button>
-      <button type="button" class="menu-hub-tab" data-menu-hub="admin" role="tab" aria-selected="false">Painel Admin</button>
+      <button type="button" class="menu-hub-tab selected" data-menu-hub="player" role="tab" aria-selected="true">Jogador</button>
+      <button type="button" class="menu-hub-tab" data-menu-hub="admin" role="tab" aria-selected="false">Admin</button>
     </div>
 
-    <div class="menu-layout">
+    <div class="ff-scroll">
+    <div class="menu-layout ff-layout">
 
-    <div class="menu-card menu-card-play" id="playerPanel">
+    <div class="menu-card menu-card-play ff-panel" id="playerPanel">
 
-      <h1>STRIKE ZONE</h1>
-
-      <p class="tagline">Tático • 2 mapas • PC ou Android</p>
-
-
-
-      <label>Onde você vai jogar?</label>
-
-      <div class="device-select">
+      <div class="ff-device-row device-select">
 
         <button type="button" class="device-btn selected" data-device="desktop">
 
@@ -149,17 +150,9 @@
 
       </div>
 
+      <p class="ff-section-label">Mapa</p>
 
-
-      <label>Seu nome</label>
-
-      <input type="text" id="playerName" value="Operador" maxlength="16" placeholder="Digite seu nome" autocomplete="nickname" />
-
-      <label>Mapa</label>
-
-      <p class="map-category">Mapas de tiro</p>
-
-      <div class="map-select map-select-shooting">
+      <div class="ff-map-scroll">
 
         <button type="button" class="map-btn selected" data-map="dust">
 
@@ -170,49 +163,28 @@
         </button>
 
         <button type="button" class="map-btn" data-map="warehouse">
-
           <span class="map-name">Cold Storage</span>
-
           <span class="map-desc">Armazém • salas fechadas</span>
-
         </button>
-
-      </div>
-
-      <p class="map-category map-category-horror">Modo terror</p>
-
-      <div class="map-select map-select-horror">
-
         <button type="button" class="map-btn map-btn-horror" data-map="horror">
-
-          <span class="map-name">Por onde você não deveria passar</span>
-
-          <span class="map-desc">Terror • combate • presenças tortas</span>
-
+          <span class="map-name">Terror</span>
+          <span class="map-desc">Escuro • combate</span>
         </button>
-
         <button type="button" class="map-btn map-btn-horror" data-map="labyrinth">
-
-          <span class="map-name">O Labirinto — Fim das Trevas</span>
-
-          <span class="map-desc">Só você • gigante • facão, porrete, katana</span>
-
+          <span class="map-name">Labirinto</span>
+          <span class="map-desc">Escape • melee</span>
         </button>
-
       </div>
 
+      <input type="text" id="playerName" class="visually-hidden" value="Operador" maxlength="16" autocomplete="nickname" aria-hidden="true" tabindex="-1" />
 
-
-      <label class="labyrinth-hide">Arma principal</label>
-
-      <div class="weapon-select labyrinth-hide">
-
+      <details class="ff-details labyrinth-hide" id="ffGameOptions">
+        <summary class="ff-details-summary">Arma, modo e bots</summary>
+        <div class="ff-details-body">
+        <div class="weapon-select labyrinth-hide">
         <button type="button" class="weapon-btn selected" data-weapon="ak47">
-
           <span class="weapon-name">AK-47</span>
-
           <span class="weapon-desc">Alto dano • automática</span>
-
         </button>
 
         <button type="button" class="weapon-btn" data-weapon="scar">
@@ -270,118 +242,32 @@
 
 
 
-      <label class="labyrinth-hide">Inimigos e aliados (NPCs)</label>
+      <div class="npc-simple labyrinth-hide">
 
-      <p class="section-desc labyrinth-hide">Escolha quantos bandidos enfrentar e se quer ajudantes CT antes de iniciar.</p>
+        <label class="ally-check-row" for="wantHelpers">
+          <input type="checkbox" id="wantHelpers" />
+          <span>Quer 2 ajudantes CT na partida?</span>
+        </label>
 
-      <div class="npc-select labyrinth-hide">
-
-        <button type="button" class="npc-btn" data-bots="1">
-
-          <span class="npc-count">1</span>
-
-          <span class="npc-label">Super inimigo</span>
-
-        </button>
-
-        <button type="button" class="npc-btn selected" data-bots="4">
-
-          <span class="npc-count">4</span>
-
-          <span class="npc-label">Esquadrão</span>
-
-        </button>
-
-        <button type="button" class="npc-btn" data-bots="8">
-
-          <span class="npc-count">8</span>
-
-          <span class="npc-label">Pelotão</span>
-
-        </button>
-
-        <button type="button" class="npc-btn" data-bots="12">
-
-          <span class="npc-count">12</span>
-
-          <span class="npc-label">Companhia</span>
-
-        </button>
-
-        <button type="button" class="npc-btn" data-bots="20">
-
-          <span class="npc-count">20</span>
-
-          <span class="npc-label">Horda</span>
-
-        </button>
-
-        <button type="button" class="npc-btn npc-ally" id="allyToggle" aria-pressed="false">
-
-          <span class="npc-count">+2</span>
-
-          <span class="npc-label">Ajudantes CT</span>
-
-        </button>
-
+        <label for="botCount">Quantidade de inimigos (1–20)</label>
+        <div class="bot-row">
+          <input type="range" id="botCount" min="1" max="20" value="4" />
+          <span id="botCountLabel" class="bot-count-display">4</span>
+        </div>
+        <p id="difficultyPreview" class="difficulty-preview">Dificuldade: equilibrada (4 bots)</p>
       </div>
-
-      <input type="checkbox" id="wantHelpers" class="visually-hidden" tabindex="-1" aria-hidden="true" />
-
-
-
-      <div class="npc-fine-tune">
-
-        <p class="difficulty-desc">
-
-          <strong>1 bot</strong> = super inimigo <strong>500 HP</strong>, atira <strong>3× mais rápido</strong>.
-
-          <strong>20 bots</strong> = fracos, lentos, <strong>100 HP</strong>. Sempre ativo.
-
-        </p>
 
       <input type="checkbox" id="useBotDifficulty" checked class="visually-hidden" tabindex="-1" aria-hidden="true" />
-
-        <label for="botCount">Quantidade de bots (1–20) — define a dificuldade</label>
-
-        <div class="bot-row">
-
-          <input type="range" id="botCount" min="1" max="20" value="4" />
-
-          <span id="botCountLabel" class="bot-count-display">4</span>
-
         </div>
-
-        <p id="difficultyPreview" class="difficulty-preview">Dificuldade: equilibrada (4 bots)</p>
-
-      </div>
-
-
-
-      <div class="menu-actions">
-        <button type="button" id="startBtn" class="btn-primary btn-start-main">INICIAR PARTIDA</button>
-      </div>
+      </details>
 
       <p id="loadStatus" class="load-status">Carregando motor do jogo...</p>
 
-      <p class="hint" id="menuHint">WASD mover • Mouse mirar • Clique esquerdo na porta / atirar • Botão direito = mirar (AK, SCAR, AWM)</p>
-
-      <a class="mobile-guide-link" href="COMO_JOGAR_NO_CELULAR.md" target="_blank" rel="noopener">📖 Guia completo para jogar no celular</a>
+      <p class="hint ff-hint" id="menuHint">WASD mover • Mouse mirar • Botão direito = mirar (AK, SCAR, AWM)</p>
 
     </div>
 
-    <div class="menu-side-fabs" aria-label="Personagem e loja">
-      <button type="button" id="openCharacterBtn" class="menu-fab menu-fab-p" title="Personagem">
-        <svg class="fab-icon fab-icon-person" viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-        </svg>
-      </button>
-      <button type="button" id="openSoloBtn" class="menu-fab menu-fab-s" title="Loja">
-        <svg class="fab-icon fab-icon-bag" viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M18 6h-2c0-2.21-1.79-4-4-4S8 3.79 8 6H6c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-6-2c1.1 0 2 .9 2 2h-4c0-1.1.9-2 2-2zm6 16H6V8h2v2h8V8h2v12z"/>
-        </svg>
-      </button>
-    </div>
+    <div class="menu-side-fabs visually-hidden" aria-hidden="true"></div>
 
     <aside id="adminPanel" class="menu-card menu-card-admin hidden" aria-label="Painel administrador">
 
@@ -414,6 +300,14 @@
         <label class="admin-check">
           <input type="checkbox" id="adminSpectatorStart" /> Entrar como espectador (noclip)
         </label>
+        <button type="button" id="adminDevLightBtn" class="btn-shop admin-dev-light-btn">
+          Iluminar mapa escuro (H)
+        </button>
+        <p class="section-desc admin-horror-tip">
+          <strong>Mapas escuros (terror / labirinto):</strong> tecla <strong>J</strong> = lanterna.
+          No terror: <strong>H</strong> ilumina o mapa (admin) • <strong>2× PULAR</strong> = espectador voador.
+          Na partida: <strong>Enter</strong> ou <strong>/</strong> abre o <strong>chat dev</strong> com todos os comandos.
+        </p>
         <button type="button" id="adminStartBtn" class="btn-primary admin-start-btn">INICIAR (ADMIN)</button>
         <label>Console de comandos</label>
         <div id="adminCmdLog" class="admin-cmd-log"></div>
@@ -455,6 +349,27 @@
     </aside>
 
     </div>
+    </div>
+
+    <nav class="ff-bottom-bar" aria-label="Menu principal">
+      <button type="button" id="openCharacterBtn" class="ff-nav-btn" title="Personagem">
+        <span class="ff-nav-icon">👤</span>
+        <span class="ff-nav-label">Boneco</span>
+      </button>
+      <button type="button" id="openArsenalBtn" class="ff-nav-btn" title="Armas">
+        <span class="ff-nav-icon">🔫</span>
+        <span class="ff-nav-label">Armas</span>
+      </button>
+      <button type="button" id="openSoloBtn" class="ff-nav-btn" title="Loja">
+        <span class="ff-nav-icon">🛒</span>
+        <span class="ff-nav-label">Loja</span>
+      </button>
+      <button type="button" id="ffOptionsBtn" class="ff-nav-btn" title="Opções">
+        <span class="ff-nav-icon">⚙</span>
+        <span class="ff-nav-label">Opções</span>
+      </button>
+      <button type="button" id="startBtn" class="ff-play-btn btn-start-main">JOGAR</button>
+    </nav>
 
   </div>
 
@@ -467,6 +382,7 @@
         <button type="button" id="closeAccountBtn" class="shop-close" aria-label="Fechar">✕</button>
       </div>
       <div class="account-info-grid">
+        <div class="account-field"><span class="account-label">ID único</span><strong id="accountPlayerIdDisplay">—</strong></div>
         <div class="account-field"><span class="account-label">Conta</span><strong id="accountNameDisplay">—</strong></div>
         <div class="account-field"><span class="account-label">Senha</span><strong id="accountPasswordDisplay">—</strong></div>
         <label class="account-show-pw"><input type="checkbox" id="accountShowPassword" /> Mostrar senha</label>
@@ -524,10 +440,35 @@
         <span>Loja</span>
         <button type="button" id="closeSoloBtn" class="shop-close" aria-label="Fechar">✕</button>
       </div>
-      <canvas id="soloCanvas" class="solo-canvas" width="360" height="280"></canvas>
-      <h3 class="solo-shop-title">🛒 Loja <span id="shopCoins" class="shop-coins">0 🪙</span></h3>
-      <p id="accountHint" class="account-hint">Skins de armas — moedas da sua conta</p>
-      <div id="shopGrid" class="shop-grid"></div>
+      <canvas id="soloCanvas" class="solo-canvas" width="360" height="220"></canvas>
+      <h3 class="solo-shop-title">Loja <span id="shopCoins" class="shop-coins">0 🪙</span></h3>
+      <p id="accountHint" class="account-hint">Skins de armas e personagens</p>
+      <div class="shop-tabs">
+        <button type="button" class="shop-tab selected" data-shop-tab="weapons">Armas</button>
+        <button type="button" class="shop-tab" data-shop-tab="chars">Personagens</button>
+      </div>
+      <div id="shopPanelWeapons" class="shop-panel-tab">
+        <div id="shopGridWeapons" class="shop-grid"></div>
+      </div>
+      <div id="shopPanelChars" class="shop-panel-tab hidden">
+        <div id="shopGridChars" class="shop-grid"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="arsenalModal" class="hub-modal hidden" aria-hidden="true">
+    <div class="hub-modal-backdrop" id="arsenalModalBackdrop"></div>
+    <div class="hub-modal-panel hub-panel-arsenal">
+      <div class="hub-header">
+        <span class="hub-badge hub-badge-a">🔫</span>
+        <span>Arsenal — suas skins</span>
+        <button type="button" id="closeArsenalBtn" class="shop-close" aria-label="Fechar">✕</button>
+      </div>
+      <p class="hub-sub">Skins compradas • clique para equipar • cor ativa na partida</p>
+      <canvas id="arsenalCanvas" class="arsenal-canvas" width="360" height="240"></canvas>
+      <div id="arsenalWeaponPreview" class="arsenal-weapon-preview">AK-47</div>
+      <div id="arsenalWeaponTabs" class="arsenal-weapon-tabs"></div>
+      <div id="arsenalSkinList" class="arsenal-skin-list"></div>
     </div>
   </div>
 
@@ -634,7 +575,7 @@
 
       <button type="button" id="btnJump" class="mob-btn mob-jump">↑</button>
 
-      <button type="button" id="btnFlashlight" class="mob-btn mob-flashlight hidden" aria-label="Lanterna">🔦</button>
+      <button type="button" id="btnFlashlight" class="mob-btn mob-flashlight hidden" aria-label="Lanterna (J)">🔦</button>
 
       <button type="button" id="btnBomb" class="mob-btn mob-bomb">B</button>
 
@@ -724,12 +665,34 @@
 
   <div id="adminHud" class="hidden" aria-live="polite"></div>
 
+  <div id="devChat" class="dev-chat hidden" aria-label="Chat desenvolvedor">
+    <button type="button" id="devChatToggle" class="dev-chat-toggle" title="Chat dev (Enter)">DEV</button>
+    <div id="devChatPanel" class="dev-chat-panel hidden">
+      <div id="devChatLog" class="dev-chat-log"></div>
+      <div id="devChatSuggest" class="dev-chat-suggest hidden"></div>
+      <div class="dev-chat-input-row">
+        <button type="button" id="devChatSlash" class="dev-chat-slash" title="Comandos">/</button>
+        <input
+          type="text"
+          id="devChatInput"
+          class="dev-chat-input"
+          placeholder="Comando ou pedido… (/luz +, adicionar inimigo…)"
+          maxlength="160"
+          autocomplete="off"
+        />
+      </div>
+      <p class="dev-chat-hint">Enter abre • / lista comandos • fala normal: «aumentar luz», «adicionar amigo»</p>
+    </div>
+  </div>
+
   <div id="worldLabels" aria-hidden="true"></div>
 
   <canvas id="gameCanvas"></canvas>
 
   <script src="menu-init.js"></script>
   <script type="module" src="admin-panel.js"></script>
+  <script type="module" src="dev-chat.js"></script>
+  <script type="module" src="arsenal-view.js"></script>
   <script type="module" src="account-hub.js"></script>
   <script type="module" src="character-customizer.js"></script>
   <script type="module" src="solo-view.js"></script>

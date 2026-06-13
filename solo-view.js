@@ -1,6 +1,6 @@
 /** Botão S (ao lado do painel) → modal solo + loja */
 
-import { getLoggedInName, refreshShopUI } from "./player-account.js";
+import { getLoggedInName, refreshShopUI, getCharacterSkin } from "./player-account.js";
 import { normalizeLoadout, DEFAULT_LOADOUT } from "./character-loadout.js";
 import { mountCharacterViewer, destroyViewer, resizeViewer, updateViewerLoadout } from "./character-viewer.js";
 
@@ -27,7 +27,11 @@ async function openModal() {
   const loadout = normalizeLoadout(window.__playerLoadout || DEFAULT_LOADOUT);
   requestAnimationFrame(() => {
     if (!soloMounted) {
-      mountCharacterViewer("soloCanvas", { loadout, autoSpin: true });
+      mountCharacterViewer("soloCanvas", {
+        loadout,
+        characterSkin: getCharacterSkin(),
+        autoSpin: true,
+      });
       soloMounted = true;
     } else {
       updateViewerLoadout("soloCanvas", loadout);
@@ -45,6 +49,15 @@ export function initSoloView() {
   $("openSoloBtn")?.addEventListener("click", openModal);
   $("closeSoloBtn")?.addEventListener("click", closeModal);
   $("soloModalBackdrop")?.addEventListener("click", closeModal);
+
+  document.querySelectorAll(".shop-tab").forEach((tab) => {
+    tab.addEventListener("click", () => {
+      document.querySelectorAll(".shop-tab").forEach((t) => t.classList.toggle("selected", t === tab));
+      const which = tab.dataset.shopTab;
+      $("shopPanelWeapons")?.classList.toggle("hidden", which !== "weapons");
+      $("shopPanelChars")?.classList.toggle("hidden", which !== "chars");
+    });
+  });
   window.addEventListener("resize", () => {
     if (soloMounted && !$("soloModal")?.classList.contains("hidden")) {
       resizeViewer("soloCanvas");

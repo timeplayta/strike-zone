@@ -132,43 +132,6 @@
     btn.classList.add("selected");
   }
 
-  function syncNpcButtons() {
-    const slider = $("botCount");
-    if (!slider) return;
-    const n = parseInt(slider.value, 10) || 4;
-    document.querySelectorAll(".npc-btn:not(.npc-ally)").forEach((b) => {
-      b.classList.toggle("selected", parseInt(b.dataset.bots, 10) === n);
-    });
-  }
-
-  function syncAllyBtn() {
-    const cb = $("wantHelpers");
-    const btn = $("allyToggle");
-    if (!cb || !btn) return;
-    btn.classList.toggle("selected", cb.checked);
-    btn.setAttribute("aria-pressed", cb.checked ? "true" : "false");
-  }
-
-  function selectNpcBtn(btn) {
-    if (!btn?.classList?.contains("npc-btn")) return;
-    if (btn.classList.contains("npc-ally")) {
-      const cb = $("wantHelpers");
-      if (cb) cb.checked = !cb.checked;
-      syncAllyBtn();
-      return;
-    }
-    const bots = btn.dataset.bots;
-    if (!bots) return;
-    document.querySelectorAll(".npc-btn:not(.npc-ally)").forEach((b) => b.classList.remove("selected"));
-    btn.classList.add("selected");
-    const slider = $("botCount");
-    if (slider) {
-      slider.value = bots;
-      if ($("botCountLabel")) $("botCountLabel").textContent = bots;
-      updateBotDifficultyPreview();
-    }
-  }
-
   function updateMenuHint() {
     const device = document.querySelector(".device-btn.selected")?.dataset.device || "desktop";
     const map = document.querySelector(".map-btn.selected")?.dataset?.map;
@@ -305,6 +268,7 @@
   async function enterMenuWithAccount(name, mod, account) {
     const playerName = $("playerName");
     if (playerName) playerName.value = name;
+    window.__characterSkin = account?.characterSkin || "soldier";
     await mod.refreshShopUI(name);
     $("welcomeScreen")?.classList.add("hidden");
     $("welcomeScreen")?.classList.remove("active");
@@ -335,6 +299,7 @@
     loginBtn?.addEventListener("click", async () => {
       const name = $("loginName")?.value?.trim();
       const password = $("loginPassword")?.value || "";
+      const playerId = $("loginPlayerId")?.value?.trim() || "";
       if (!name) {
         alert("Digite o nome da sua conta.");
         $("loginName")?.focus();
@@ -348,9 +313,14 @@
       loginBtn.disabled = true;
       try {
         const mod = await import("./player-account.js");
-        const res = await mod.loginAccount(name, password);
+        const res = await mod.loginAccount(name, password, playerId);
         if (res.ok) {
           await enterMenuWithAccount(name, mod, res.account);
+          return;
+        }
+        if (res.needPlayerId) {
+          alert(res.msg || "Use seu ID SZ-XXXXXX no campo ID da conta.");
+          $("loginPlayerId")?.focus();
           return;
         }
         if (res.needPasswordSetup) {
@@ -397,8 +367,15 @@
       try {
         const mod = await import("./player-account.js");
         const res = await mod.registerAccount(name, age, password);
-        if (res.ok) await enterMenuWithAccount(name, mod, res.account);
-        else alert(res.msg || "Não foi possível criar a conta.");
+        if (res.ok) {
+          const pid = res.account?.playerId || res.playerId;
+          const okEl = $("welcomeRegisterSuccess");
+          if (okEl && pid) {
+            okEl.textContent = `Conta criada! Guarde seu ID: ${pid}`;
+            okEl.classList.remove("hidden");
+          }
+          await enterMenuWithAccount(name, mod, res.account);
+        } else alert(res.msg || "Não foi possível criar a conta.");
       } catch {
         alert("Servidor offline. Abra JOGAR.bat e tente de novo.");
       } finally {
@@ -462,10 +439,10 @@
     applyDeviceFromURL();
     applyMenuDeviceLayout();
 
+    bindDelegatedClick(".ff-map-scroll", selectMapBtn);
     bindDelegatedClick(".map-select", selectMapBtn);
     updateMapModeUI();
     bindDelegatedClick(".weapon-select", selectWeaponBtn);
-    bindDelegatedClick(".npc-select", selectNpcBtn);
 
     document.querySelectorAll(".device-btn").forEach((btn) => {
       const pick = () => {
@@ -491,18 +468,24 @@
     const botLabel = $("botCountLabel");
     const syncBots = () => {
       if (botLabel && botSlider) botLabel.textContent = botSlider.value;
-      syncNpcButtons();
       updateBotDifficultyPreview();
     };
     botSlider?.addEventListener("input", syncBots);
     botSlider?.addEventListener("change", syncBots);
     $("useBotDifficulty")?.addEventListener("change", syncBots);
     syncBots();
-    syncAllyBtn();
 
     $("startBtn")?.addEventListener("click", (e) => {
       e.preventDefault();
       tryStartGame();
+    });
+
+    $("ffOptionsBtn")?.addEventListener("click", () => {
+      const el = $("ffGameOptions");
+      if (el) {
+        el.open = true;
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
     });
 
     $("restartBtn")?.addEventListener("click", (e) => {

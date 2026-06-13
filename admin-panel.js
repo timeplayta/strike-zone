@@ -88,6 +88,16 @@ function initAdminPanel() {
 
   $("adminMapViewSelect")?.addEventListener("change", refreshMapInfo);
 
+  $("adminDevLightBtn")?.addEventListener("click", () => {
+    if (typeof window.strikeZoneToggleAdminLight === "function") {
+      window.strikeZoneToggleAdminLight();
+      const on = window.__adminHorrorFullLight;
+      logAdmin(on ? "Mapa iluminado (H para desligar)" : "Iluminação normal");
+    } else {
+      logAdmin("Inicie uma partida ou preview do mapa escuro primeiro.");
+    }
+  });
+
   $("adminStartBtn")?.addEventListener("click", () => {
     const mapKey = $("adminMapSelect")?.value || "dust";
     syncAdminMapToMenu(mapKey);

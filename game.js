@@ -49,6 +49,14 @@ import { createWeaponView, setWeaponView, setWeaponADS, triggerMuzzleFlash, trig
 import { spawnMeleePickups, updateMeleePickups, tryPickupMelee, collectMeleePickup } from "./melee-pickups.js";
 import { createExitZone, updateExitZone, checkExitReached } from "./exit-zone.js";
 import { playGunshot, playEmptyClip } from "./audio.js";
+import { isSessionAdmin } from "./player-account.js";
+import {
+  LOW_GRAPHICS,
+  MAX_PIXEL_RATIO,
+  ENABLE_ANTIALIAS,
+  ENEMY_LABEL_FRAME_SKIP,
+  BLOOD_SPRAY_MUL,
+} from "./perf-config.js";
 import { WEAPONS, calcWeaponDamage, getPrimaryWeapon, refillWeaponToMax } from "./weapons-data.js";
 import { configureCharacterRenderer } from "./human-model.js";
 import { initCharacterAnim, updateHumanAnimation, smoothTurn, getAnimOpts } from "./character-animation.js";
@@ -155,12 +163,21 @@ let adminNoclip = false;
 let adminNightVision = false;
 let adminPreviewMode = null;
 let adminFlySpeed = 14;
+let adminHorrorFullLight = false;
+let adminLiveSpectator = false;
+let devLightBoost = 0;
+let devFogFarBonus = 0;
+let adminGodMode = false;
+let devMoveSpeedMul = 1;
+let lastAdminJumpTap = 0;
+const ADMIN_DOUBLE_JUMP_MS = 450;
 let adminPreviewPivot = null;
 let adminPreviewEntity = null;
 let adminCharOrbit = { yaw: 0.6, pitch: 0.25, dist: 4.2 };
 
 let flashlightEquipped = false;
 let flashlightLight = null;
+let flashlightFill = null;
 let flashlightTarget = null;
 
 const menu = document.getElementById("menu");
@@ -457,7 +474,7 @@ function initMobileControls() {
     onReload: () => reload(),
     onBomb: () => tryPlantOrDefuse(),
     onWeapon: (slot) => switchWeapon(slot),
-    onJump: () => tryJump(player),
+    onJump: () => handlePlayerJump(),
     onFlashlight: () => toggleFlashlight(),
   });
 }
@@ -498,6 +515,14 @@ function startGame(config = {}) {
   adminPreviewMode = config.preview === "map" ? "map" : null;
   adminSpectator = !!config.spectator || config.preview === "map";
   adminNoclip = adminSpectator;
+  adminHorrorFullLight = false;
+  window.__adminHorrorFullLight = false;
+  devLightBoost = 0;
+  devFogFarBonus = 0;
+  adminGodMode = false;
+  devMoveSpeedMul = 1;
+  adminLiveSpectator = false;
+  lastAdminJumpTap = 0;
   if (config.nightVision) applyAdminNightVision(true);
   else if (!config.fromAdmin) applyAdminNightVision(false);
 
@@ -599,8 +624,9 @@ function startGame(config = {}) {
       document.getElementById("timer").textContent = "∞";
       hud.classList.add("hidden");
     } else if (isLabyrinthMap(mapData)) {
-      showOverlay("Labirinto — encontre facão, porrete e katana. Alcance a saída verde.");
-      document.getElementById("objective").textContent = "Explore o escuro. Armas no caminho. Saída no fim do labirinto.";
+      showOverlay("Labirinto escuro — pressione J para a lanterna");
+      document.getElementById("objective").textContent =
+        "J = lanterna • Explore o escuro • Armas no caminho • Saída verde";
       document.getElementById("timer").textContent = "∞";
     } else if (isHorrorMap(mapData)) {
       showOverlay("Modo terror — pressione J para equipar a lanterna");
@@ -618,6 +644,7 @@ function startGame(config = {}) {
     }
     updateHUD();
     updateAdminHud();
+    updateAdminGameplayHud();
     updateFlashlightHud();
 
     clock = new THREE.Clock();
@@ -703,6 +730,119 @@ function applyMapAtmosphere() {
       48
     );
   }
+  if (adminHorrorFullLight && isDarkMap(mapData)) {
+    applyDevFullLightVisuals();
+    return;
+  }
+  if (devLightBoost > 0) applyDevLightBoost();
+  if (devFogFarBonus !== 0) applyDevFogBonus();
+  if (adminNightVision && isDarkMap(mapData)) {
+    if (renderer) configureCharacterRenderer(renderer, labyrinth ? 1.08 : 1.25);
+    if (hemiLight) hemiLight.intensity *= 2.4;
+    if (ambientLight) ambientLight.intensity *= 2.6;
+    if (sunLight) sunLight.intensity *= 2.2;
+    if (fillLight) fillLight.intensity *= 2.2;
+    if (scene.fog) {
+      scene.fog.near *= 0.25;
+      scene.fog.far *= 2.8;
+    }
+  }
+}
+
+function applyDevLightBoost() {
+  if (!mapData || devLightBoost <= 0) return;
+  const labyrinth = isLabyrinthMap(mapData);
+  const horror = isHorrorMap(mapData);
+  const mul = 1 + devLightBoost * 0.5;
+  if (hemiLight) hemiLight.intensity *= mul;
+  if (ambientLight) ambientLight.intensity *= mul;
+  if (sunLight) sunLight.intensity *= mul;
+  if (fillLight) fillLight.intensity *= mul;
+  if (scene.fog) {
+    scene.fog.far = Math.min(240, scene.fog.far * (1 + devLightBoost * 0.4));
+    scene.fog.near *= Math.max(0.25, 1 - devLightBoost * 0.12);
+  }
+  if (renderer) {
+    const base = labyrinth ? 0.74 : horror ? 0.86 : 1.05;
+    configureCharacterRenderer(renderer, base * (1 + devLightBoost * 0.28));
+  }
+}
+
+function applyDevFogBonus() {
+  if (!scene?.fog || devFogFarBonus === 0) return;
+  scene.fog.far = Math.max(6, scene.fog.far + devFogFarBonus);
+}
+
+function adjustDevLight(delta) {
+  devLightBoost = Math.max(0, Math.min(2, devLightBoost + delta));
+  if (devLightBoost > 0) adminHorrorFullLight = false;
+  window.__adminHorrorFullLight = adminHorrorFullLight;
+  applyMapAtmosphere();
+  return `Nível de luz: ${devLightBoost.toFixed(1)} (0=normal, 2=máximo)`;
+}
+
+function setDevLightLevel(level) {
+  devLightBoost = Math.max(0, Math.min(2, level));
+  if (devLightBoost > 0) adminHorrorFullLight = false;
+  window.__adminHorrorFullLight = adminHorrorFullLight;
+  applyMapAtmosphere();
+  return `Nível de luz: ${devLightBoost.toFixed(1)}`;
+}
+
+function adjustDevFog(delta) {
+  devFogFarBonus = Math.max(-30, Math.min(80, devFogFarBonus + delta));
+  applyMapAtmosphere();
+  return `Nevoeiro: bônus ${devFogFarBonus} m`;
+}
+
+function applyDevFullLightVisuals() {
+  if (!mapData || !isDarkMap(mapData)) return;
+  const lab = isLabyrinthMap(mapData);
+  if (renderer) configureCharacterRenderer(renderer, lab ? 1.4 : 1.75);
+  if (hemiLight) {
+    hemiLight.color.setHex(0xe8ecf4);
+    hemiLight.groundColor.setHex(0x888480);
+    hemiLight.intensity = lab ? 1.1 : 1.15;
+  }
+  if (ambientLight) {
+    ambientLight.color.setHex(0xf0ebe4);
+    ambientLight.intensity = lab ? 0.95 : 1.05;
+  }
+  if (sunLight) {
+    sunLight.color.setHex(0xfff8ee);
+    sunLight.intensity = lab ? 1.05 : 1.25;
+  }
+  if (fillLight) {
+    fillLight.color.setHex(0xe8f4ff);
+    fillLight.intensity = lab ? 0.85 : 1.05;
+  }
+  const bg = lab ? 0xc8c0bc : mapData.sky || 0xc4a574;
+  scene.background = new THREE.Color(bg).multiplyScalar(lab ? 0.78 : 0.95);
+  scene.fog = new THREE.Fog(
+    new THREE.Color(bg).multiplyScalar(0.72).getHex(),
+    lab ? 50 : 60,
+    lab ? 180 : 220
+  );
+}
+
+function isAdminGameplay() {
+  return isSessionAdmin();
+}
+
+function applyAdminDevFullLight(on) {
+  if (!isDarkMap(mapData)) return;
+  adminHorrorFullLight = on;
+  window.__adminHorrorFullLight = on;
+  if (on) {
+    devLightBoost = 0;
+    devFogFarBonus = 0;
+  }
+  applyMapAtmosphere();
+  if (on) showOverlay("Mapa iluminado — H para desligar");
+  else showOverlay("Iluminação normal");
+  updateAdminGameplayHud();
+  updateAdminHud();
+  window.devChatLog?.(on ? "Mapa totalmente iluminado." : "Iluminação normal.", "ok");
 }
 
 function initThree() {
@@ -730,8 +870,8 @@ function initThree() {
   }
   renderer = new THREE.WebGLRenderer({
     canvas,
-    antialias: true,
-    powerPreference: "high-performance",
+    antialias: ENABLE_ANTIALIAS,
+    powerPreference: LOW_GRAPHICS ? "low-power" : "high-performance",
     alpha: false,
   });
   renderer.setSize(window.innerWidth, window.innerHeight);
@@ -787,7 +927,7 @@ function onResize() {
   if (!camera || !renderer) return;
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.25));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, MAX_PIXEL_RATIO));
   renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
@@ -1405,58 +1545,93 @@ function applyCameraRotation() {
 
 function ensureFlashlightRig() {
   if (!camera || flashlightLight) return;
-  flashlightLight = new THREE.SpotLight(0xfff0cc, 0, 44, Math.PI / 6.5, 0.45, 1.1);
+  const lab = isLabyrinthMap(mapData);
+  flashlightLight = new THREE.SpotLight(
+    0xfff6e8,
+    0,
+    lab ? 58 : 50,
+    Math.PI / 5.2,
+    0.35,
+    1.02
+  );
   flashlightLight.castShadow = false;
   flashlightTarget = new THREE.Object3D();
-  flashlightTarget.position.set(0, 0, -10);
-  flashlightLight.position.set(0.2, -0.14, 0.02);
+  flashlightTarget.position.set(0, 0, -12);
+  flashlightLight.position.set(0.18, -0.12, 0.04);
   flashlightLight.target = flashlightTarget;
   camera.add(flashlightLight);
   camera.add(flashlightTarget);
+  flashlightFill = new THREE.PointLight(0xffeed8, 0, lab ? 14 : 11, 1.4);
+  flashlightFill.position.set(0, 0, 0.2);
+  camera.add(flashlightFill);
 }
 
 function disposeFlashlight() {
   if (flashlightLight && camera) {
     camera.remove(flashlightLight);
     if (flashlightTarget) camera.remove(flashlightTarget);
+    if (flashlightFill) camera.remove(flashlightFill);
     flashlightLight.dispose?.();
+    flashlightFill?.dispose?.();
   }
   flashlightLight = null;
+  flashlightFill = null;
   flashlightTarget = null;
   flashlightEquipped = false;
   updateFlashlightHud();
 }
 
+function canToggleFlashlight() {
+  if (!isDarkMap(mapData) || !roundActive || inCinematic || adminPreviewMode) return false;
+  if (player.dead && !adminSpectator && !adminLiveSpectator) return false;
+  return true;
+}
+
+function getFlashlightIntensity() {
+  const lab = isLabyrinthMap(mapData);
+  return { spot: lab ? 34 : 28, fill: lab ? 5.2 : 4 };
+}
+
 function updateFlashlightHud() {
   const el = document.getElementById("flashlightHud");
   if (el) {
-    const show = isHorrorMap(mapData) && flashlightEquipped && roundActive && !player.dead;
+    const show =
+      isDarkMap(mapData) &&
+      flashlightEquipped &&
+      roundActive &&
+      (!player.dead || adminSpectator || adminLiveSpectator);
     el.classList.toggle("hidden", !show);
     el.classList.toggle("active", show);
     el.setAttribute("aria-hidden", show ? "false" : "true");
   }
   const mobBtn = document.getElementById("btnFlashlight");
   if (mobBtn) {
-    const showBtn = isHorrorMap(mapData) && roundActive && !player.dead;
+    const showBtn =
+      isDarkMap(mapData) &&
+      roundActive &&
+      (!player.dead || adminSpectator || adminLiveSpectator);
     mobBtn.classList.toggle("hidden", !showBtn);
     mobBtn.classList.toggle("active", !!flashlightEquipped);
   }
 }
 
 function updateFlashlightBeam() {
-  if (!flashlightLight || !flashlightEquipped) return;
-  flashlightLight.intensity = 21;
+  if (!flashlightEquipped) return;
+  const { spot, fill } = getFlashlightIntensity();
+  if (flashlightLight) flashlightLight.intensity = spot;
+  if (flashlightFill) flashlightFill.intensity = fill;
 }
 
 function toggleFlashlight() {
-  if (!isHorrorMap(mapData) || !roundActive || player.dead || inCinematic) return;
+  if (!canToggleFlashlight()) return;
   ensureFlashlightRig();
   flashlightEquipped = !flashlightEquipped;
-  if (flashlightLight) {
-    flashlightLight.intensity = flashlightEquipped ? 21 : 0;
-  }
-  if (isHorrorMap(mapData) && fillLight) {
-    fillLight.intensity = flashlightEquipped ? 0.36 : 0.24;
+  const { spot, fill } = getFlashlightIntensity();
+  if (flashlightLight) flashlightLight.intensity = flashlightEquipped ? spot : 0;
+  if (flashlightFill) flashlightFill.intensity = flashlightEquipped ? fill : 0;
+  if (fillLight && isDarkMap(mapData)) {
+    const base = isLabyrinthMap(mapData) ? 0.11 : 0.24;
+    fillLight.intensity = flashlightEquipped ? base * 2.5 : base;
   }
   updateFlashlightHud();
   if (flashlightEquipped) {
@@ -1465,12 +1640,16 @@ function toggleFlashlight() {
     showOverlay("Lanterna desligada");
   }
   const obj = document.getElementById("objective");
-  if (obj && isHorrorMap(mapData)) {
-    obj.textContent = `Sobreviva ao escuro${getHorrorObjectiveExtra()} • elimine as ameaças`;
+  if (obj && isDarkMap(mapData)) {
+    if (isLabyrinthMap(mapData)) {
+      obj.textContent = `Explore o escuro${getDarkObjectiveExtra()} • Armas no caminho • Saída verde`;
+    } else {
+      obj.textContent = `Sobreviva ao escuro${getDarkObjectiveExtra()} • elimine as ameaças`;
+    }
   }
 }
 
-function getHorrorObjectiveExtra() {
+function getDarkObjectiveExtra() {
   return flashlightEquipped ? " • 🔦 Lanterna ON (J)" : " • J = lanterna";
 }
 
@@ -1487,14 +1666,28 @@ function findEnemyFromHit(obj) {
 }
 
 function onKeyDown(e) {
+  if (window.__devChatOpen) return;
   keys[e.code] = true;
+  if (e.code === "Escape" && adminLiveSpectator) {
+    toggleAdminLiveSpectator(false);
+    return;
+  }
   if (e.code === "Escape" && (adminSpectator || adminPreviewMode)) {
     adminExitToMenu();
+    return;
+  }
+  if (e.code === "KeyH" && isDarkMap(mapData) && isAdminGameplay() && adminPreviewMode !== "character") {
+    applyAdminDevFullLight(!adminHorrorFullLight);
+    updateAdminHud();
     return;
   }
   if (e.code === "KeyN" && (adminSpectator || adminPreviewMode) && isDarkMap(mapData)) {
     applyAdminNightVision(!adminNightVision);
     updateAdminHud();
+    return;
+  }
+  if (e.code === "KeyJ" && canToggleFlashlight()) {
+    toggleFlashlight();
     return;
   }
   if (adminSpectator || adminPreviewMode) return;
@@ -1504,10 +1697,9 @@ function onKeyDown(e) {
   if (e.code === "Digit2") switchWeapon(2);
   if (e.code === "Digit3") switchWeapon(3);
   if (e.code === "KeyB" && gameMode === "defuse") tryPlantOrDefuse();
-  if (e.code === "KeyJ" && isHorrorMap(mapData)) toggleFlashlight();
   if (e.code === "Space") {
     e.preventDefault();
-    tryJump(player);
+    handlePlayerJump();
   }
 }
 
@@ -1751,7 +1943,7 @@ function damageEnemy(e, dmg, headshot, hitPoint, fromPlayer = true) {
   const bleedOrigin = hitPoint
     ? hitPoint.clone()
     : e.group.position.clone().add(new THREE.Vector3(0, 1.2, 0));
-  const sprayCount = headshot ? 9 : fromPlayer && dmg >= 80 ? 7 : 5;
+  const sprayCount = Math.max(2, Math.round((headshot ? 9 : fromPlayer && dmg >= 80 ? 7 : 5) * BLOOD_SPRAY_MUL));
   bloodParticles.push(...spawnBloodSpray(scene, bleedOrigin, sprayCount, { headshot }));
   if (hitPoint) bloodParticles.push(...spawnBloodImpact(scene, hitPoint, headshot ? 1.3 : 0.9));
 
@@ -1788,7 +1980,14 @@ async function killEnemy(e, headshot) {
 
   const bloodPos = e.group.position.clone();
   bloodPools.push(spawnBloodPool(scene, bloodPos, 1.35));
-  bloodParticles.push(...spawnBloodSpray(scene, bloodPos.clone().add(new THREE.Vector3(0, 0.6, 0)), 14, { death: true }));
+  bloodParticles.push(
+    ...spawnBloodSpray(
+      scene,
+      bloodPos.clone().add(new THREE.Vector3(0, 0.6, 0)),
+      Math.max(4, Math.round(14 * BLOOD_SPRAY_MUL)),
+      { death: true }
+    )
+  );
 
   checkWin();
 }
@@ -1823,7 +2022,9 @@ function showDeathChoice(attacker) {
   const bloodPos = camera.position.clone();
   bloodPos.y = 0.1;
   bloodPools.push(spawnBloodPool(scene, bloodPos, 1.4));
-  bloodParticles.push(...spawnBloodSpray(scene, camera.position.clone(), 20));
+  bloodParticles.push(
+    ...spawnBloodSpray(scene, camera.position.clone(), Math.max(6, Math.round(20 * BLOOD_SPRAY_MUL)))
+  );
   addKillfeed(attacker || "Bandido", playerName);
 
   document.body.classList.add("damage-flash");
@@ -1832,6 +2033,7 @@ function showDeathChoice(attacker) {
   roundActive = false;
   inCinematic = false;
   if (flashlightLight) flashlightLight.intensity = 0;
+  if (flashlightFill) flashlightFill.intensity = 0;
   flashlightEquipped = false;
   updateFlashlightHud();
   document.exitPointerLock?.();
@@ -1867,7 +2069,7 @@ function finishMatchFromDeath() {
 }
 
 function damagePlayer(dmg, attacker) {
-  if (adminSpectator || player.dead || inCinematic) return;
+  if (adminGodMode || adminSpectator || player.dead || inCinematic) return;
   player.health -= dmg;
   updateHealthHUD();
   document.body.classList.add("damage-flash");
@@ -2377,7 +2579,7 @@ function updatePlayer(dt) {
   }
 
   const inputLen = Math.hypot(inputX, inputZ);
-  const maxSpeed = isMobileMode() ? MOVE_SPEED_MOBILE : MOVE_SPEED;
+  const maxSpeed = (isMobileMode() ? MOVE_SPEED_MOBILE : MOVE_SPEED) * devMoveSpeedMul;
   let targetVx = 0, targetVz = 0;
   if (inputLen > 0) {
     targetVx = (inputX / inputLen) * maxSpeed;
@@ -2711,16 +2913,74 @@ function applyAdminNightVision(on) {
   document.body.classList.toggle("admin-nvg", on);
   if (!mapData) return;
   applyMapAtmosphere();
-  if (on && isDarkMap(mapData)) {
-    if (renderer) configureCharacterRenderer(renderer, isLabyrinthMap(mapData) ? 1.08 : 1.2);
-    if (hemiLight) hemiLight.intensity *= 2.4;
-    if (ambientLight) ambientLight.intensity *= 2.6;
-    if (sunLight) sunLight.intensity *= 2.2;
-    if (fillLight) fillLight.intensity *= 2.2;
-    if (scene.fog) {
-      scene.fog.near *= 0.25;
-      scene.fog.far *= 2.8;
+}
+
+function handlePlayerJump() {
+  if (tryAdminJumpSpectatorToggle()) return;
+  if (adminLiveSpectator || (adminSpectator && !adminPreviewMode)) return;
+  tryJump(player);
+}
+
+function tryAdminJumpSpectatorToggle() {
+  if (!isSessionAdmin() || !isHorrorMap(mapData) || adminPreviewMode) return false;
+  const now = performance.now();
+  const doubleTap = now - lastAdminJumpTap <= ADMIN_DOUBLE_JUMP_MS;
+  lastAdminJumpTap = now;
+  if (doubleTap) {
+    lastAdminJumpTap = 0;
+    toggleAdminLiveSpectator(!adminLiveSpectator);
+    return true;
+  }
+  return false;
+}
+
+function restorePlayerWeaponView() {
+  if (!weaponView || !currentWeapon) return;
+  for (const slot of ["1", "2", "3"]) {
+    if (weapons[slot] === currentWeapon) {
+      switchWeapon(Number(slot));
+      break;
     }
+  }
+}
+
+function toggleAdminLiveSpectator(force) {
+  if (!isSessionAdmin() || !isHorrorMap(mapData) || adminPreviewMode) return;
+  const next = typeof force === "boolean" ? force : !adminLiveSpectator;
+  adminLiveSpectator = next;
+  adminSpectator = next;
+  adminNoclip = next;
+  if (next) {
+    moveVel.x = 0;
+    moveVel.z = 0;
+    if (weaponView) hideAllWeapons(weaponView);
+    showOverlay("Espectador admin — voe sem colisão • 2× PULAR ou ESC para voltar");
+  } else {
+    camera.position.y = PLAYER_EYE_HEIGHT + (player.jumpOffset || 0);
+    restorePlayerWeaponView();
+    showOverlay("Modo jogador");
+  }
+  updateAdminHud();
+  updateAdminGameplayHud();
+}
+
+function updateAdminGameplayHud() {
+  const el = document.getElementById("adminHud");
+  if (!el || !isSessionAdmin() || !isDarkMap(mapData) || adminPreviewMode) return;
+  if (adminLiveSpectator || adminSpectator) return;
+  el.classList.remove("hidden");
+  if (isHorrorMap(mapData)) {
+    const light = adminHorrorFullLight ? "ON" : "OFF";
+    el.innerHTML =
+      "<strong>Admin — mapa terror</strong><br>" +
+      `H = iluminar mapa (${light})<br>` +
+      "J = lanterna • 2× PULAR = espectador voador";
+  } else {
+    const light = adminHorrorFullLight ? "ON" : "OFF";
+    el.innerHTML =
+      "<strong>Admin — labirinto</strong><br>" +
+      `H = iluminar mapa (${light})<br>` +
+      "J = lanterna";
   }
 }
 
@@ -2740,11 +3000,15 @@ function updateAdminHud() {
     return;
   }
   const nvg = adminNightVision ? "ON" : "OFF";
+  const liveHint = adminLiveSpectator ? " • 2× PULAR ou ESC = voltar ao jogador" : "";
+  const darkHint = isDarkMap(mapData)
+    ? ` • H iluminar mapa (${adminHorrorFullLight ? "ON" : "OFF"})`
+    : "";
   el.innerHTML =
     `<strong>Admin espectador</strong><br>` +
     `Mapa: ${meta.name}<br>` +
     `Tamanho: <strong>${meta.widthM} m × ${meta.heightM} m</strong> (~${meta.areaM2} m²)<br>` +
-    `WASD voar • Espaço/Ctrl subir/descer • N visão noturna (${nvg}) • ESC menu`;
+    `WASD voar • Espaço/Ctrl subir/descer • N visão noturna (${nvg})${darkHint} • ESC menu${liveHint}`;
 }
 
 function updateAdminFly(dt) {
@@ -2773,7 +3037,7 @@ function updateAdminFly(dt) {
   if (keys["Space"]) my += 1;
   if (keys["ControlLeft"] || keys["KeyC"]) my -= 1;
   const boost = keys["ShiftLeft"] ? 2.6 : 1;
-  const speed = adminFlySpeed * boost;
+  const speed = adminFlySpeed * boost * devMoveSpeedMul;
   const len = Math.hypot(mx, mz, my);
   if (len > 0) {
     camera.position.x += (mx / len) * speed * dt;
@@ -2811,6 +3075,10 @@ function onAdminWheel(e) {
 function adminExitToMenu() {
   adminSpectator = false;
   adminNoclip = false;
+  adminLiveSpectator = false;
+  adminHorrorFullLight = false;
+  window.__adminHorrorFullLight = false;
+  lastAdminJumpTap = 0;
   adminPreviewMode = null;
   adminPreviewPivot = null;
   adminPreviewEntity = null;
@@ -3024,16 +3292,66 @@ function runAdminCommand(raw) {
   const cmd = parts[0]?.toLowerCase();
 
   if (cmd === "help") {
-    return "Comandos: /add t | /add ct | /weapon ak47 | /noclip | /tp x z | /nv | /bots N | /clear | /block dx dz";
+    return "Mapa: /luz +|- | /claro | /escuro | /fog +|- | /nv | /mapa | /tp x z | /tpme | /block dx dz — NPC: /add t|ct [n] | /bots N | /clear | /killall | /boss — Jogador: /heal | /god | /vel +|- | /weapon | /moedas | /noclip — Partida: /win ct|t | /round — Digite / no chat para lista completa.";
   }
-  if (cmd === "add" && parts[1] === "t") {
-    if (!scene || isNoCombatMap(mapData)) return "Mapa sem combate.";
-    return "Terrorista: " + adminSpawnBanditNear();
+
+  if (cmd === "luz" || cmd === "light") {
+    if (parts[1] === "+" || parts[1] === "up" || parts[1] === "mais") return adjustDevLight(0.25);
+    if (parts[1] === "-" || parts[1] === "down" || parts[1] === "menos") return adjustDevLight(-0.25);
+    if (parts[1]) {
+      const n = parseFloat(parts[1]);
+      if (Number.isNaN(n)) return "Uso: /luz + | /luz - | /luz 1.5";
+      return setDevLightLevel(n);
+    }
+    return `Luz atual: ${devLightBoost.toFixed(1)} — use /luz + ou /luz -`;
   }
-  if (cmd === "add" && parts[1] === "ct") {
-    if (!scene || isNoCombatMap(mapData)) return "Mapa sem combate.";
-    return "CT aliado: " + adminSpawnHelperNear();
+
+  if (cmd === "claro" || cmd === "h") {
+    if (!isDarkMap(mapData)) return "Só em mapas escuros (terror / labirinto).";
+    applyAdminDevFullLight(!adminHorrorFullLight);
+    return adminHorrorFullLight ? "Mapa iluminado." : "Iluminação normal.";
   }
+
+  if (cmd === "escuro" || cmd === "dark") {
+    adminHorrorFullLight = false;
+    window.__adminHorrorFullLight = false;
+    devLightBoost = 0;
+    devFogFarBonus = 0;
+    applyMapAtmosphere();
+    updateAdminHud();
+    updateAdminGameplayHud();
+    return "Mapa voltou ao escuro normal.";
+  }
+
+  if (cmd === "fog" || cmd === "nevoa" || cmd === "neveiro") {
+    if (parts[1] === "+" || parts[1] === "mais") return adjustDevFog(8);
+    if (parts[1] === "-" || parts[1] === "menos") return adjustDevFog(-8);
+    return `Nevoeiro bônus: ${devFogFarBonus} m — use /fog + ou /fog -`;
+  }
+
+  if (cmd === "mapa" || cmd === "mapinfo" || cmd === "info") {
+    const meta = getMapMeta(currentMapKey);
+    return `${meta.name} — ${meta.widthM}×${meta.heightM} m — luz ${devLightBoost.toFixed(1)} — pos ${camera.position.x.toFixed(1)}, ${camera.position.z.toFixed(1)}`;
+  }
+
+  if (cmd === "add" || cmd === "spawn") {
+    const kind = (parts[1] || "").toLowerCase();
+    const n = Math.min(10, Math.max(1, parseInt(parts[2], 10) || 1));
+    if (kind === "t" || kind === "inimigo" || kind === "terrorista" || kind === "bandido") {
+      if (!scene || isNoCombatMap(mapData)) return "Mapa sem combate.";
+      const names = [];
+      for (let i = 0; i < n; i++) names.push(adminSpawnBanditNear());
+      return n === 1 ? "Inimigo: " + names[0] : `${n} inimigos: ${names.join(", ")}`;
+    }
+    if (kind === "ct" || kind === "amigo" || kind === "aliado" || kind === "helper") {
+      if (!scene || isNoCombatMap(mapData)) return "Mapa sem combate.";
+      const names = [];
+      for (let i = 0; i < n; i++) names.push(adminSpawnHelperNear());
+      return n === 1 ? "Aliado: " + names[0] : `${n} aliados: ${names.join(", ")}`;
+    }
+    return "Uso: /add t|ct [quantidade] ou /add inimigo|amigo";
+  }
+
   if (cmd === "weapon" && parts[1]) {
     const id = parts[1].toLowerCase();
     if (!getPrimaryWeapon(id)) return "Arma inválida. Ex: ak47, scar, m4a1, awm, doze, ump";
@@ -3041,11 +3359,13 @@ function runAdminCommand(raw) {
     initWeapons();
     return "Arma trocada: " + getPrimaryWeapon(id).name;
   }
+
   if (cmd === "noclip") {
     adminNoclip = !adminNoclip;
     adminSpectator = adminNoclip || adminPreviewMode === "map";
     return adminNoclip ? "Noclip ativado." : "Noclip desativado.";
   }
+
   if (cmd === "tp" && parts.length >= 3) {
     const x = parseFloat(parts[1]);
     const z = parseFloat(parts[2]);
@@ -3054,11 +3374,50 @@ function runAdminCommand(raw) {
     camera.position.z = z;
     return `Teleportado para ${x}, ${z}.`;
   }
+
+  if (cmd === "tpme" || cmd === "home") {
+    if (!mapData?.spawnCT) return "Spawn não definido.";
+    camera.position.set(mapData.spawnCT.x, PLAYER_EYE_HEIGHT, mapData.spawnCT.z);
+    return `Teleportado ao spawn CT (${mapData.spawnCT.x}, ${mapData.spawnCT.z}).`;
+  }
+
   if (cmd === "nv") {
     applyAdminNightVision(!adminNightVision);
     updateAdminHud();
     return adminNightVision ? "Visão noturna ON." : "Visão noturna OFF.";
   }
+
+  if (cmd === "heal" || cmd === "cura") {
+    player.health = 100;
+    player.dead = false;
+    updateHealthHUD();
+    return "Vida restaurada (100).";
+  }
+
+  if (cmd === "god" || cmd === "deus") {
+    adminGodMode = !adminGodMode;
+    return adminGodMode ? "Modo Deus ON — sem dano." : "Modo Deus OFF.";
+  }
+
+  if (cmd === "vel" || cmd === "speed" || cmd === "velocidade") {
+    if (parts[1] === "+" || parts[1] === "mais") {
+      devMoveSpeedMul = Math.min(3, devMoveSpeedMul + 0.25);
+    } else if (parts[1] === "-" || parts[1] === "menos") {
+      devMoveSpeedMul = Math.max(0.5, devMoveSpeedMul - 0.25);
+    } else {
+      return `Velocidade: ${devMoveSpeedMul.toFixed(2)}x — /vel + ou /vel -`;
+    }
+    return `Velocidade: ${devMoveSpeedMul.toFixed(2)}x`;
+  }
+
+  if (cmd === "moedas" || cmd === "coins") {
+    const n = parseInt(parts[1], 10);
+    if (Number.isNaN(n)) return "Uso: /moedas 100";
+    sessionCoins += n;
+    updateHUD();
+    return `+${n} moedas (sessão: ${sessionCoins}).`;
+  }
+
   if (cmd === "bots" && parts[1]) {
     const n = Math.min(20, Math.max(0, parseInt(parts[1], 10)));
     if (Number.isNaN(n)) return "Uso: /bots 4";
@@ -3068,7 +3427,8 @@ function runAdminCommand(raw) {
     if (n > 0 && !isNoCombatMap(mapData)) spawnEnemies();
     return `${n} bot(s) — inimigos respawnados.`;
   }
-  if (cmd === "clear") {
+
+  if (cmd === "clear" || cmd === "limpar") {
     enemies.filter((e) => !e.isBoss).forEach((e) => {
       if (e.group) scene.remove(e.group);
       removeEnemyLabel(e);
@@ -3076,13 +3436,49 @@ function runAdminCommand(raw) {
     enemies = enemies.filter((e) => e.isBoss);
     return "Inimigos removidos (chefão mantido).";
   }
+
+  if (cmd === "killall" || cmd === "matar") {
+    const victims = enemies.filter((e) => e.alive && !e.isBoss);
+    for (const e of victims) {
+      e.health = 0;
+      killEnemy(e, false);
+    }
+    return `${victims.length} inimigo(s) eliminado(s).`;
+  }
+
+  if (cmd === "boss" || cmd === "chefao" || cmd === "chefão") {
+    if (bossSpawned) return "Chefão já está no mapa.";
+    if (!mapData?.bossSpawn) return "Este mapa não tem chefão.";
+    spawnBoss();
+    return "Chefão spawnado.";
+  }
+
+  if (cmd === "win" && parts[1]) {
+    const w = parts[1].toLowerCase();
+    if (w === "ct") {
+      endMatch("ct", { skipCinematic: true });
+      return "Vitória CT.";
+    }
+    if (w === "t") {
+      endMatch("t", { skipCinematic: true });
+      return "Vitória terroristas.";
+    }
+    return "Uso: /win ct | /win t";
+  }
+
+  if (cmd === "round") {
+    endRound(scoreCT >= scoreT ? "ct" : "t");
+    return "Round reiniciado.";
+  }
+
   if (cmd === "block" && parts.length >= 3) {
     const dx = parseFloat(parts[1]);
     const dz = parseFloat(parts[2]);
     if (Number.isNaN(dx) || Number.isNaN(dz)) return "Uso: /block dx dz (metros)";
     return adminMoveNearestBlock(dx, dz);
   }
-  return "Comando desconhecido. Digite /help";
+
+  return "Comando desconhecido. Digite / no chat para ver opções.";
 }
 
 function animate() {
@@ -3105,7 +3501,7 @@ function animate() {
       updateWeaponView(weaponView, dt, moving);
     }
 
-    if (frameCount % 3 === 0) updateEnemyLabels([...enemies, ...helpers], camera);
+    if (frameCount % ENEMY_LABEL_FRAME_SKIP === 0) updateEnemyLabels([...enemies, ...helpers], camera);
 
     if (roundActive && !player.dead && !isLabyrinthMap(mapData) && adminPreviewMode !== "map") {
       roundTime -= dt;
@@ -3123,6 +3519,8 @@ function animate() {
       }
       if (bombPlanted) roundTime = Math.min(roundTime, 40);
     }
+
+    if (isDarkMap(mapData) && isSessionAdmin()) updateAdminGameplayHud();
 
     updateEnemySpawnCountdown();
     updatePlayer(dt);
@@ -3162,4 +3560,15 @@ function animate() {
 window.startStrikeZone = startGame;
 window.startAdminPreview = startAdminPreview;
 window.runAdminCommand = runAdminCommand;
+window.strikeZoneToggleAdminLight = () => {
+  if (!isDarkMap(mapData)) {
+    showOverlay("Só em mapas escuros");
+    return;
+  }
+  if (!isAdminGameplay()) {
+    showOverlay("Login admin (MJuan) necessário");
+    return;
+  }
+  applyAdminDevFullLight(!adminHorrorFullLight);
+};
 window.__strikeZoneReady = true;

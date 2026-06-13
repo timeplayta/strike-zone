@@ -5,8 +5,10 @@ import { GLTFLoader } from "./vendor/GLTFLoader.js";
 import { clone as cloneSkeleton } from "./vendor/SkeletonUtils.js";
 import { buildNpcWeapon, attachNpcWeapon } from "./npc-weapon.js";
 
+import { MAX_PIXEL_RATIO, MAX_TEXTURE_ANISO } from "./perf-config.js";
+
 const BASE_SCALE = 1.2;
-const MAX_ANISO = 8;
+const MAX_ANISO = MAX_TEXTURE_ANISO;
 
 const MODEL_URLS = [
   "./vendor/Soldier.glb",
@@ -66,7 +68,7 @@ export function getHumanModelError() {
 
 export function configureCharacterRenderer(renderer, exposure = 1.05) {
   if (!renderer) return;
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.25));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, MAX_PIXEL_RATIO));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = exposure;

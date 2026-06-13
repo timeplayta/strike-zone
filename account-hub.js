@@ -5,6 +5,7 @@ import {
   getAccountCoins,
   getSessionPassword,
   getSavedAvatar,
+  getCharacterSkin,
   saveAvatarChoice,
   getSavedSession,
 } from "./player-account.js";
@@ -32,11 +33,14 @@ export function mountAccountFab() {
   const name = getLoggedInName() || $("playerName")?.value?.trim();
   updateFabName(name);
   const loadout = normalizeLoadout(window.__playerLoadout || DEFAULT_LOADOUT);
+  const characterSkin = getCharacterSkin();
+  window.__characterSkin = characterSkin;
   if (!fabPortraitMounted && $("accountFabCanvas")) {
     mountCharacterViewer("accountFabCanvas", {
       loadout,
       portrait: true,
       autoSpin: false,
+      characterSkin,
     });
     fabPortraitMounted = true;
   } else if (fabPortraitMounted) {
@@ -55,7 +59,8 @@ export function refreshAccountFabHuman() {
 
 function mountViewers() {
   const loadout = normalizeLoadout(window.__playerLoadout || DEFAULT_LOADOUT);
-  mountCharacterViewer("accountPlayerCanvas", { loadout, autoSpin: true });
+  const characterSkin = getCharacterSkin();
+  mountCharacterViewer("accountPlayerCanvas", { loadout, autoSpin: true, characterSkin });
   mountCharacterViewer("accountEnemyCanvas", { enemy: true, autoSpin: true });
   resizeViewer("accountPlayerCanvas");
   resizeViewer("accountEnemyCanvas");
@@ -72,8 +77,11 @@ function refreshAccountPanel(name) {
   const session = getSavedSession();
   const account = session?.account || {};
   const avatar = getSavedAvatar() || account.avatar || "soldier";
+  const characterSkin = account.characterSkin || getCharacterSkin() || "soldier";
+  window.__characterSkin = characterSkin;
 
   if ($("accountNameDisplay")) $("accountNameDisplay").textContent = name;
+  if ($("accountPlayerIdDisplay")) $("accountPlayerIdDisplay").textContent = account.playerId || "—";
   if ($("accountAgeDisplay")) $("accountAgeDisplay").textContent = account.age ? `${account.age} anos` : "—";
   if ($("accountCoinsDisplay")) $("accountCoinsDisplay").textContent = `${getAccountCoins(name)} 🪙`;
   if ($("accountKillsDisplay")) $("accountKillsDisplay").textContent = String(account.kills || 0);

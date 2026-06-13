@@ -8,11 +8,7 @@ import {
   applyPresetToLoadout,
   DEFAULT_LOADOUT,
 } from "./character-loadout.js";
-import {
-  getLoggedInName,
-  getPlayerLoadout,
-  savePlayerLoadout,
-} from "./player-account.js";
+import { getCharacterSkin, getLoggedInName, getPlayerLoadout, savePlayerLoadout } from "./player-account.js";
 import { refreshAccountHub } from "./account-hub.js";
 import {
   mountCharacterViewer,
@@ -98,7 +94,11 @@ async function openModal() {
   $("characterModal")?.setAttribute("aria-hidden", "false");
   requestAnimationFrame(() => {
     if (!viewerMounted) {
-      mountCharacterViewer("customizerCanvas", { loadout: currentLoadout, autoSpin: true });
+      mountCharacterViewer("customizerCanvas", {
+        loadout: currentLoadout,
+        autoSpin: true,
+        characterSkin: getCharacterSkin(),
+      });
       viewerMounted = true;
     } else {
       updateViewerLoadout("customizerCanvas", currentLoadout);

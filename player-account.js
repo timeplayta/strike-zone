@@ -1,39 +1,44 @@
-/** Conta por jogador — servidor com nome + senha (Maria ≠ João) */
+/** Conta por jogador — ID único (SZ-XXXXXX), nome pode repetir */
 
-export const SHOP_ITEMS = [
-  { id: "ak_blue", weapon: "ak47", color: 0x2266cc, price: 45, label: "AK-47 Azul" },
-  { id: "ak_red", weapon: "ak47", color: 0xcc3322, price: 45, label: "AK-47 Vermelha" },
-  { id: "ak_gold", weapon: "ak47", color: 0xc9a227, price: 120, label: "AK-47 Dourada" },
-  { id: "scar_blue", weapon: "scar", color: 0x3355aa, price: 55, label: "SCAR Azul" },
-  { id: "scar_green", weapon: "scar", color: 0x2a6644, price: 55, label: "SCAR Verde" },
-  { id: "awm_black", weapon: "awm", color: 0x1a1a22, price: 90, label: "AWM Preta" },
-  { id: "glock_pink", weapon: "glock", color: 0xcc4488, price: 30, label: "Glock Rosa" },
-  { id: "doze_wood", weapon: "doze", color: 0x6b4423, price: 35, label: "Doze Madeira+" },
-];
+import {
+  ALL_SHOP_ITEMS,
+  WEAPON_SKINS,
+  CHARACTER_SKINS,
+  getShopItem,
+} from "./shop-catalog.js";
+
+export const SHOP_ITEMS = ALL_SHOP_ITEMS;
 
 const KILL_REWARD = 12;
 const SOLO_KILL_REWARD = 55;
-const SESSION_KEY = "strikezone_session_v2";
+const SESSION_KEY = "strikezone_session_v3";
 const PASSWORD_HINT_KEY = "strikezone_password_hint";
 
 let cachedAccount = null;
 let cachedName = "";
+let cachedAccountId = "";
 let sessionToken = "";
 let cachedIsAdmin = false;
 
 function emptyAccount() {
-  return { coins: 0, skins: {}, purchases: [] };
+  return { coins: 0, skins: {}, purchases: [], characterSkin: "soldier" };
 }
 
 export function saveSession(name, token, account) {
   cachedName = (name || "").trim();
   sessionToken = token || "";
   cachedAccount = account || emptyAccount();
+  cachedAccountId = account?.id || "";
   cachedIsAdmin = !!cachedAccount.isAdmin;
   try {
     localStorage.setItem(
       SESSION_KEY,
-      JSON.stringify({ name: cachedName, token: sessionToken, account: cachedAccount })
+      JSON.stringify({
+        name: cachedName,
+        token: sessionToken,
+        accountId: cachedAccountId,
+        account: cachedAccount,
+      })
     );
   } catch { /* ignore */ }
 }
@@ -41,6 +46,7 @@ export function saveSession(name, token, account) {
 export function clearSession() {
   cachedName = "";
   sessionToken = "";
+  cachedAccountId = "";
   cachedAccount = null;
   cachedIsAdmin = false;
   try {
@@ -63,8 +69,16 @@ export function getLoggedInName() {
   return cachedName || getSavedSession()?.name || "";
 }
 
+export function getAccountId() {
+  return cachedAccountId || getSavedSession()?.accountId || cachedAccount?.id || "";
+}
+
+export function getPlayerId() {
+  return cachedAccount?.playerId || getSavedSession()?.account?.playerId || "";
+}
+
 export function isLoggedIn() {
-  return !!(cachedName && sessionToken);
+  return !!(getAccountId() && sessionToken);
 }
 
 export function isSessionAdmin() {
@@ -90,60 +104,55 @@ export function getSavedAvatar() {
   return cachedAccount?.avatar || getSavedSession()?.account?.avatar || "soldier";
 }
 
+export function getCharacterSkin() {
+  return cachedAccount?.characterSkin || getSavedSession()?.account?.characterSkin || "soldier";
+}
+
+function authBody(extra = {}) {
+  return {
+    accountId: getAccountId(),
+    token: sessionToken,
+    ...extra,
+  };
+}
+
 export async function getPlayerLoadout(name) {
-  const trimmed = (name || "").trim();
-  if (cachedName === trimmed && cachedAccount?.loadout) return cachedAccount.loadout;
+  if (cachedAccount?.loadout) return cachedAccount.loadout;
   const saved = getSavedSession();
-  if (saved?.name === trimmed && saved.account?.loadout) return saved.account.loadout;
+  if (saved?.account?.loadout) return saved.account.loadout;
   return null;
 }
 
 export async function savePlayerLoadout(name, loadout) {
-  const trimmed = (name || "").trim();
-  if (!trimmed || !sessionToken) return { ok: false, msg: "Faça login para salvar" };
+  if (!getAccountId() || !sessionToken) return { ok: false, msg: "Faça login para salvar" };
   try {
-    const { ok, data } = await apiPost("/api/account/profile", {
-      name: trimmed,
-      token: sessionToken,
-      loadout,
-    });
+    const { ok, data } = await apiPost("/api/account/profile", authBody({ loadout }));
     if (ok && data.ok) {
-      if (cachedName === trimmed && cachedAccount) {
-        cachedAccount.loadout = loadout;
-        saveSession(trimmed, sessionToken, cachedAccount);
-      }
+      cachedAccount.loadout = loadout;
+      saveSession(cachedName, sessionToken, data.account);
       return { ok: true, account: data.account };
     }
     if (data.error?.includes("autorizado")) clearSession();
     return { ok: false, msg: data.error || "Erro ao salvar" };
   } catch {
-    if (cachedName === trimmed && cachedAccount) {
-      cachedAccount.loadout = loadout;
-      saveSession(trimmed, sessionToken, cachedAccount);
-    }
+    cachedAccount.loadout = loadout;
+    saveSession(cachedName, sessionToken, cachedAccount);
     return { ok: true, offline: true };
   }
 }
 
 export async function saveAvatarChoice(name, avatar) {
-  const trimmed = (name || "").trim();
-  if (!trimmed || !sessionToken) return { ok: false };
+  if (!getAccountId() || !sessionToken) return { ok: false };
   try {
-    const { ok, data } = await apiPost("/api/account/profile", {
-      name: trimmed,
-      token: sessionToken,
-      avatar,
-    });
-    if (ok && data.ok && cachedName === trimmed && cachedAccount) {
+    const { ok, data } = await apiPost("/api/account/profile", authBody({ avatar }));
+    if (ok && data.ok) {
       cachedAccount.avatar = avatar;
-      saveSession(trimmed, sessionToken, cachedAccount);
+      saveSession(cachedName, sessionToken, data.account);
       return { ok: true };
     }
   } catch { /* offline */ }
-  if (cachedName === trimmed && cachedAccount) {
-    cachedAccount.avatar = avatar;
-    saveSession(trimmed, sessionToken, cachedAccount);
-  }
+  cachedAccount.avatar = avatar;
+  saveSession(cachedName, sessionToken, cachedAccount);
   return { ok: true };
 }
 
@@ -157,14 +166,13 @@ async function apiPost(path, body) {
   return { ok: res.ok, status: res.status, data };
 }
 
-/** Tenta restaurar sessão salva ao reiniciar o jogo */
 export async function tryRestoreSession() {
   const saved = getSavedSession();
-  if (!saved?.name || !saved?.token) return null;
+  if (!saved?.token || !saved?.accountId) return null;
 
   try {
     const { ok, data } = await apiPost("/api/account/session", {
-      name: saved.name,
+      accountId: saved.accountId,
       token: saved.token,
     });
     if (ok && data.ok && data.account) {
@@ -176,6 +184,7 @@ export async function tryRestoreSession() {
   if (saved.account) {
     cachedName = saved.name;
     sessionToken = saved.token;
+    cachedAccountId = saved.accountId;
     cachedAccount = saved.account;
     return saved.account;
   }
@@ -192,26 +201,31 @@ export async function registerAccount(name, age, password) {
   if (ok && data.ok) {
     saveSession(trimmed, data.token, data.account);
     savePasswordHint(password);
-    return { ok: true, account: data.account };
+    return { ok: true, account: data.account, playerId: data.account.playerId };
   }
   return { ok: false, msg: data.error || "Não foi possível criar a conta" };
 }
 
-export async function loginAccount(name, password) {
+export async function loginAccount(name, password, playerId) {
   const trimmed = (name || "").trim();
   const { ok, data } = await apiPost("/api/account/login", {
     name: trimmed,
     password,
+    playerId: playerId || undefined,
+    accountId: playerId?.startsWith?.("SZ-") ? undefined : playerId,
   });
   if (ok && data.ok) {
-    saveSession(trimmed, data.token, data.account);
+    saveSession(trimmed || data.account.name, data.token, data.account);
     savePasswordHint(password);
+    window.__characterSkin = data.account.characterSkin;
     return { ok: true, account: data.account };
   }
   return {
     ok: false,
-    msg: data.error || "Essa conta não existe ou o nome e a senha estão errados. Tente de novo.",
+    msg: data.error || "Login falhou.",
     needPasswordSetup: !!data.needPasswordSetup,
+    needPlayerId: !!data.needPlayerId,
+    playerIds: data.playerIds,
   };
 }
 
@@ -230,128 +244,149 @@ export async function migrateLegacyAccount(name, age, password) {
   return { ok: false, msg: data.error || "Não foi possível definir a senha" };
 }
 
-/** @deprecated use loginAccount — mantido por compatibilidade */
 export async function loadAccount(username) {
-  if (cachedName === (username || "").trim() && cachedAccount) return { ...cachedAccount };
+  if (cachedAccount) return { ...cachedAccount };
   const restored = await tryRestoreSession();
-  if (restored && cachedName === (username || "").trim()) return restored;
+  if (restored) return restored;
   return emptyAccount();
 }
 
 export function getAccountCoins(username) {
-  if (cachedName === (username || "").trim() && cachedAccount) return cachedAccount.coins || 0;
-  return getSavedSession()?.account?.coins || 0;
+  return cachedAccount?.coins || getSavedSession()?.account?.coins || 0;
 }
 
 export async function addKillReward(username, isSolo = false) {
-  const trimmed = (username || "").trim();
-  if (!trimmed || !sessionToken) return isSolo ? SOLO_KILL_REWARD : KILL_REWARD;
+  if (!getAccountId() || !sessionToken) return isSolo ? SOLO_KILL_REWARD : KILL_REWARD;
 
   try {
-    const { ok, data } = await apiPost("/api/account/kill", {
-      name: trimmed,
-      token: sessionToken,
-      solo: isSolo,
-    });
+    const { ok, data } = await apiPost("/api/account/kill", authBody({ solo: isSolo }));
     if (ok && data.ok) {
-      if (cachedName === trimmed && cachedAccount) {
-        cachedAccount.coins = data.coins;
-        saveSession(trimmed, sessionToken, cachedAccount);
-      }
+      cachedAccount.coins = data.coins;
+      saveSession(cachedName, sessionToken, cachedAccount);
       return data.gain ?? (isSolo ? SOLO_KILL_REWARD : KILL_REWARD);
     }
     if (data.error?.includes("autorizado")) clearSession();
   } catch { /* offline */ }
 
-  if (cachedName === trimmed && cachedAccount) {
-    const gain = isSolo ? SOLO_KILL_REWARD : KILL_REWARD;
-    cachedAccount.coins = (cachedAccount.coins || 0) + gain;
-    saveSession(trimmed, sessionToken, cachedAccount);
-    return gain;
-  }
-  return isSolo ? SOLO_KILL_REWARD : KILL_REWARD;
+  const gain = isSolo ? SOLO_KILL_REWARD : KILL_REWARD;
+  cachedAccount.coins = (cachedAccount.coins || 0) + gain;
+  saveSession(cachedName, sessionToken, cachedAccount);
+  return gain;
 }
 
 export async function buyShopItem(username, itemId) {
-  const item = SHOP_ITEMS.find((i) => i.id === itemId);
-  const trimmed = (username || "").trim();
-  if (!item || !trimmed) return { ok: false, msg: "Item inválido" };
+  const item = getShopItem(itemId);
+  if (!item || !getAccountId()) return { ok: false, msg: "Item inválido" };
   if (!sessionToken) return { ok: false, msg: "Faça login para comprar" };
 
   try {
-    const { ok, data } = await apiPost("/api/account/buy", {
-      name: trimmed,
-      token: sessionToken,
-      itemId,
-    });
+    const { ok, data } = await apiPost("/api/account/buy", authBody({ itemId }));
     if (ok && data.ok && data.account) {
-      saveSession(trimmed, sessionToken, data.account);
-      return { ok: true, msg: `${item.label} comprada!`, coins: data.account.coins };
+      saveSession(cachedName, sessionToken, data.account);
+      window.__characterSkin = data.account.characterSkin;
+      return { ok: true, msg: `${item.label} comprado!`, coins: data.account.coins };
     }
     if (data.error) return { ok: false, msg: data.error };
   } catch {
     return { ok: false, msg: "Servidor offline — não foi possível comprar" };
   }
-
   return { ok: false, msg: "Compra falhou" };
 }
 
-export function getWeaponSkinColor(username, weaponId) {
-  if (cachedName === (username || "").trim() && cachedAccount?.skins) {
-    return cachedAccount.skins[weaponId] || null;
+export async function equipShopItem(itemId) {
+  const item = getShopItem(itemId);
+  if (!item || !getAccountId()) return { ok: false, msg: "Item inválido" };
+
+  try {
+    const { ok, data } = await apiPost("/api/account/equip", authBody({ itemId }));
+    if (ok && data.ok && data.account) {
+      saveSession(cachedName, sessionToken, data.account);
+      window.__characterSkin = data.account.characterSkin;
+      return { ok: true, account: data.account };
+    }
+    return { ok: false, msg: data.error || "Não foi possível equipar" };
+  } catch {
+    return { ok: false, msg: "Servidor offline" };
   }
-  return getSavedSession()?.account?.skins?.[weaponId] || null;
 }
 
-export async function refreshShopUI(username) {
-  const acc =
-    cachedName === (username || "").trim() && cachedAccount
-      ? cachedAccount
-      : await loadAccount(username);
+export function getWeaponSkinColor(username, weaponId) {
+  return cachedAccount?.skins?.[weaponId] || getSavedSession()?.account?.skins?.[weaponId] || null;
+}
 
-  const coinsEl = document.getElementById("shopCoins");
-  if (coinsEl) coinsEl.textContent = `${acc.coins || 0} 🪙`;
-
-  const accHint = document.getElementById("accountHint");
-  if (accHint) {
-    const name = (username || "").trim() || "—";
-    accHint.textContent = `Conta: ${name} — moedas e skins salvas no servidor`;
-  }
-
-  const grid = document.getElementById("shopGrid");
+function renderShopGrid(grid, items, acc, onBuy) {
   if (!grid) return;
   grid.innerHTML = "";
-  for (const item of SHOP_ITEMS) {
+  for (const item of items) {
     const owned = (acc.purchases || []).includes(item.id);
-    const active = acc.skins?.[item.weapon] === item.color;
+    const isWeapon = item.type === "weapon";
+    const active = isWeapon
+      ? acc.skins?.[item.weapon] === item.color
+      : acc.characterSkin === item.skinId;
     const btn = document.createElement("button");
     btn.type = "button";
-    btn.className = "shop-item" + (owned ? " owned" : "") + (active ? " active-skin" : "");
+    btn.className =
+      "shop-item" +
+      (owned ? " owned" : "") +
+      (active ? " active-skin" : "") +
+      (item.tier ? ` shop-tier-${item.tier}` : "");
     btn.dataset.itemId = item.id;
+    const colorHex = (item.color >>> 0).toString(16).padStart(6, "0");
     btn.innerHTML =
-      `<span class="shop-swatch" style="background:#${item.color.toString(16).padStart(6, "0")}"></span>` +
+      `<span class="shop-swatch" style="background:#${colorHex}"></span>` +
       `<span class="shop-item-name">${item.label}</span>` +
-      `<span class="shop-item-price">${owned ? "Comprado" : item.price + " 🪙"}</span>`;
-    if (!owned) btn.addEventListener("click", () => onShopBuy(item.id));
+      `<span class="shop-item-tier">${item.tier || ""}</span>` +
+      `<span class="shop-item-price">${owned ? (active ? "Em uso" : "Equipar") : item.price + " 🪙"}</span>`;
+    btn.addEventListener("click", () => onBuy(item, owned, active));
     grid.appendChild(btn);
   }
 }
 
-async function onShopBuy(itemId) {
-  const name = document.getElementById("playerName")?.value?.trim();
-  if (!name) {
-    alert("Faça login antes de comprar.");
-    return;
+export async function refreshShopUI(username) {
+  const acc = cachedAccount || await loadAccount(username);
+
+  const coins = acc.coins || 0;
+  document.getElementById("shopCoins")?.textContent = `${coins} 🪙`;
+  document.getElementById("menuCoinsDisplay")?.textContent = `${coins} 🪙`;
+
+  const accHint = document.getElementById("accountHint");
+  if (accHint) {
+    const pid = acc.playerId || "—";
+    accHint.textContent = `ID ${pid} — skins salvas na sua conta única`;
   }
-  const res = await buyShopItem(name, itemId);
-  if (res.ok) await refreshShopUI(name);
-  else alert(res.msg);
+
+  window.__characterSkin = acc.characterSkin || "soldier";
+
+  const weaponGrid = document.getElementById("shopGridWeapons");
+  const charGrid = document.getElementById("shopGridChars");
+
+  const handleBuy = async (item, owned, active) => {
+    if (!owned) {
+      const res = await buyShopItem(username, item.id);
+      if (res.ok) await refreshShopUI(username);
+      else alert(res.msg);
+      return;
+    }
+    if (active) return;
+    const res = await equipShopItem(item.id);
+    if (res.ok) {
+      await refreshShopUI(username);
+      import("./arsenal-view.js").then((m) => m.refreshArsenal?.());
+      import("./account-hub.js").then((m) => m.refreshAccountHub?.());
+    } else alert(res.msg);
+  };
+
+  renderShopGrid(weaponGrid, WEAPON_SKINS, acc, handleBuy);
+  renderShopGrid(charGrid, CHARACTER_SKINS.filter((c) => c.price > 0), acc, handleBuy);
+
+  const legacyGrid = document.getElementById("shopGrid");
+  if (legacyGrid && !weaponGrid) {
+    renderShopGrid(legacyGrid, ALL_SHOP_ITEMS.filter((i) => i.price > 0), acc, handleBuy);
+  }
 }
 
 export function bindShopUI() {
-  const nameInput = document.getElementById("playerName");
-  const refresh = () => refreshShopUI(nameInput?.value?.trim() || getLoggedInName());
-  nameInput?.addEventListener("input", refresh);
-  nameInput?.addEventListener("change", refresh);
+  const refresh = () => refreshShopUI(getLoggedInName());
+  document.getElementById("playerName")?.addEventListener("input", refresh);
   refresh();
 }
