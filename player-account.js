@@ -35,6 +35,7 @@ function getSavedPlayerIdForName(name) {
     return "";
   }
 }
+const KILL_REWARD = 12;
 const SOLO_KILL_REWARD = 55;
 const SESSION_KEY = "strikezone_session_v3";
 const PASSWORD_HINT_KEY = "strikezone_password_hint";
@@ -374,8 +375,10 @@ export async function refreshShopUI(username) {
   const acc = cachedAccount || await loadAccount(username);
 
   const coins = acc.coins || 0;
-  document.getElementById("shopCoins")?.textContent = `${coins} 🪙`;
-  document.getElementById("menuCoinsDisplay")?.textContent = `${coins} 🪙`;
+  const shopCoinsEl = document.getElementById("shopCoins");
+  const menuCoinsEl = document.getElementById("menuCoinsDisplay");
+  if (shopCoinsEl) shopCoinsEl.textContent = `${coins} 🪙`;
+  if (menuCoinsEl) menuCoinsEl.textContent = `${coins} 🪙`;
 
   const accHint = document.getElementById("accountHint");
   if (accHint) {

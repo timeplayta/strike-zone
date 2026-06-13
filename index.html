@@ -156,86 +156,55 @@
 
       </div>
 
-      <p class="ff-section-label">Mapa</p>
-
-      <div class="ff-map-scroll">
-
-        <button type="button" class="map-btn selected" data-map="dust">
-
-          <span class="map-name">Dust Alley</span>
-
-          <span class="map-desc">Deserto • corredores abertos</span>
-
-        </button>
-
-        <button type="button" class="map-btn" data-map="warehouse">
-          <span class="map-name">Cold Storage</span>
-          <span class="map-desc">Armazém • salas fechadas</span>
-        </button>
-        <button type="button" class="map-btn map-btn-horror" data-map="horror">
-          <span class="map-name">Terror</span>
-          <span class="map-desc">Escuro • combate</span>
-        </button>
-        <button type="button" class="map-btn map-btn-horror" data-map="labyrinth">
-          <span class="map-name">Labirinto</span>
-          <span class="map-desc">Escape • melee</span>
-        </button>
-      </div>
-
       <input type="text" id="playerName" class="visually-hidden" value="Operador" maxlength="16" autocomplete="nickname" aria-hidden="true" tabindex="-1" />
 
+      <section id="ffWeaponSection" class="ff-weapon-section labyrinth-hide" aria-label="Seleção de armas">
+        <p class="ff-section-label">Armas</p>
+        <div class="weapon-select ff-weapon-grid">
+          <button type="button" class="weapon-btn ff-weapon-card selected" data-weapon="ak47">
+            <span class="weapon-preview-wrap">
+              <canvas class="weapon-preview-canvas" data-weapon-preview="ak47" width="120" height="88"></canvas>
+            </span>
+            <span class="weapon-name">AK-47</span>
+          </button>
+          <button type="button" class="weapon-btn ff-weapon-card" data-weapon="scar">
+            <span class="weapon-preview-wrap">
+              <canvas class="weapon-preview-canvas" data-weapon-preview="scar" width="120" height="88"></canvas>
+            </span>
+            <span class="weapon-name">SCAR-H</span>
+          </button>
+          <button type="button" class="weapon-btn ff-weapon-card" data-weapon="m4">
+            <span class="weapon-preview-wrap">
+              <canvas class="weapon-preview-canvas" data-weapon-preview="m4" width="120" height="88"></canvas>
+            </span>
+            <span class="weapon-name">M4A1</span>
+          </button>
+          <button type="button" class="weapon-btn ff-weapon-card" data-weapon="ump45">
+            <span class="weapon-preview-wrap">
+              <canvas class="weapon-preview-canvas" data-weapon-preview="ump45" width="120" height="88"></canvas>
+            </span>
+            <span class="weapon-name">UMP-45</span>
+          </button>
+          <button type="button" class="weapon-btn ff-weapon-card" data-weapon="awm">
+            <span class="weapon-preview-wrap">
+              <canvas class="weapon-preview-canvas" data-weapon-preview="awm" width="120" height="88"></canvas>
+            </span>
+            <span class="weapon-name">AWM</span>
+          </button>
+          <button type="button" class="weapon-btn ff-weapon-card" data-weapon="doze">
+            <span class="weapon-preview-wrap">
+              <canvas class="weapon-preview-canvas" data-weapon-preview="doze" width="120" height="88"></canvas>
+            </span>
+            <span class="weapon-name">Doze</span>
+          </button>
+        </div>
+      </section>
+
+      <p id="ffLabyrinthNote" class="ff-labyrinth-note hidden">Labirinto — sem armas de fogo. Encontre a saída.</p>
+
       <details class="ff-details labyrinth-hide" id="ffGameOptions">
-        <summary class="ff-details-summary">Arma, modo e bots</summary>
+        <summary class="ff-details-summary">Modo e bots</summary>
         <div class="ff-details-body">
-        <div class="weapon-select labyrinth-hide">
-        <button type="button" class="weapon-btn selected" data-weapon="ak47">
-          <span class="weapon-name">AK-47</span>
-          <span class="weapon-desc">Alto dano • automática</span>
-        </button>
-
-        <button type="button" class="weapon-btn" data-weapon="scar">
-
-          <span class="weapon-name">SCAR-H</span>
-
-          <span class="weapon-desc">Precisa • médio alcance</span>
-
-        </button>
-
-        <button type="button" class="weapon-btn" data-weapon="m4">
-
-          <span class="weapon-name">M4A1</span>
-
-          <span class="weapon-desc">Versátil • cadência alta</span>
-
-        </button>
-
-        <button type="button" class="weapon-btn" data-weapon="ump45">
-
-          <span class="weapon-name">UMP-45</span>
-
-          <span class="weapon-desc">SMG • combate curto</span>
-
-        </button>
-
-        <button type="button" class="weapon-btn" data-weapon="awm">
-
-          <span class="weapon-name">AWM</span>
-
-          <span class="weapon-desc">Sniper • 1 tiro na cabeça</span>
-
-        </button>
-
-        <button type="button" class="weapon-btn" data-weapon="doze">
-
-          <span class="weapon-name">Doze</span>
-
-          <span class="weapon-desc">Escopeta • perto</span>
-
-        </button>
-
-      </div>
-
-
 
       <label class="labyrinth-hide">Modo</label>
       <select id="gameMode" class="labyrinth-hide">
@@ -266,8 +235,6 @@
       <input type="checkbox" id="useBotDifficulty" checked class="visually-hidden" tabindex="-1" aria-hidden="true" />
         </div>
       </details>
-
-      <p id="loadStatus" class="load-status">Carregando motor do jogo...</p>
 
       <p class="hint ff-hint" id="menuHint">WASD mover • Mouse mirar • Botão direito = mirar (AK, SCAR, AWM)</p>
 
@@ -357,25 +324,49 @@
     </div>
     </div>
 
-    <nav class="ff-bottom-bar" aria-label="Menu principal">
-      <button type="button" id="openCharacterBtn" class="ff-nav-btn" title="Personagem">
-        <span class="ff-nav-icon">👤</span>
-        <span class="ff-nav-label">Boneco</span>
-      </button>
-      <button type="button" id="openArsenalBtn" class="ff-nav-btn" title="Armas">
-        <span class="ff-nav-icon">🔫</span>
-        <span class="ff-nav-label">Armas</span>
-      </button>
-      <button type="button" id="openSoloBtn" class="ff-nav-btn" title="Loja">
-        <span class="ff-nav-icon">🛒</span>
-        <span class="ff-nav-label">Loja</span>
-      </button>
-      <button type="button" id="ffOptionsBtn" class="ff-nav-btn" title="Opções">
-        <span class="ff-nav-icon">⚙</span>
-        <span class="ff-nav-label">Opções</span>
-      </button>
-      <button type="button" id="startBtn" class="ff-play-btn btn-start-main">JOGAR</button>
-    </nav>
+    <footer class="ff-bottom-zone" aria-label="Mapas e ações">
+      <div class="ff-play-dock">
+        <p class="ff-section-label ff-dock-label">Mapas</p>
+        <div class="ff-map-scroll ff-map-dock">
+          <button type="button" class="map-btn selected" data-map="dust">
+            <span class="map-name">Dust Alley</span>
+            <span class="map-desc">Deserto</span>
+          </button>
+          <button type="button" class="map-btn" data-map="warehouse">
+            <span class="map-name">Cold Storage</span>
+            <span class="map-desc">Armazém</span>
+          </button>
+          <button type="button" class="map-btn map-btn-horror" data-map="horror">
+            <span class="map-name">Terror</span>
+            <span class="map-desc">Escuro</span>
+          </button>
+          <button type="button" class="map-btn map-btn-horror" data-map="labyrinth">
+            <span class="map-name">Labirinto</span>
+            <span class="map-desc">Escape</span>
+          </button>
+        </div>
+        <p id="loadStatus" class="load-status ff-load-status">Carregando motor do jogo...</p>
+        <button type="button" id="startBtn" class="ff-play-btn btn-start-main">JOGAR</button>
+      </div>
+      <nav class="ff-bottom-bar" aria-label="Menu principal">
+        <button type="button" id="openCharacterBtn" class="ff-nav-btn" title="Personagem">
+          <span class="ff-nav-icon">👤</span>
+          <span class="ff-nav-label">Boneco</span>
+        </button>
+        <button type="button" id="openArsenalBtn" class="ff-nav-btn" title="Armas">
+          <span class="ff-nav-icon">🔫</span>
+          <span class="ff-nav-label">Armas</span>
+        </button>
+        <button type="button" id="openSoloBtn" class="ff-nav-btn" title="Loja">
+          <span class="ff-nav-icon">🛒</span>
+          <span class="ff-nav-label">Loja</span>
+        </button>
+        <button type="button" id="ffOptionsBtn" class="ff-nav-btn" title="Opções">
+          <span class="ff-nav-icon">⚙</span>
+          <span class="ff-nav-label">Opções</span>
+        </button>
+      </nav>
+    </footer>
 
   </div>
 

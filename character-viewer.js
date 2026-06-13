@@ -4,10 +4,9 @@ import * as THREE from "three";
 import { buildStylizedHuman } from "./stylized-character.js";
 import { loadoutToBuildOpts, normalizeLoadout } from "./character-loadout.js";
 import { buildHumanCharacter, configureCharacterRenderer, isHumanModelReady } from "./human-model.js";
+import { buildAmongUsCharacter } from "./among-us-model.js";
 
 const viewers = new Map();
-
-import { buildAmongUsCharacter } from "./among-us-model.js";
 
 function hexStr(c) {
   return "#" + (c >>> 0).toString(16).padStart(6, "0").slice(-6);

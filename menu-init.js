@@ -123,6 +123,8 @@
     document.querySelectorAll(".labyrinth-hide").forEach((el) => {
       el.classList.toggle("hidden", isLab);
     });
+    const labNote = $("ffLabyrinthNote");
+    if (labNote) labNote.classList.toggle("hidden", !isLab);
     updateMenuHint();
   }
 
@@ -283,6 +285,10 @@
       await preloadPlayerLoadout(name);
       const hub = await import("./account-hub.js");
       hub.mountAccountFab?.();
+    } catch { /* optional */ }
+    try {
+      const { initMenuWeaponPreviews } = await import("./menu-weapon-preview.js");
+      requestAnimationFrame(() => initMenuWeaponPreviews());
     } catch { /* optional */ }
   }
 
@@ -467,6 +473,10 @@
     bindDelegatedClick(".map-select", selectMapBtn);
     updateMapModeUI();
     bindDelegatedClick(".weapon-select", selectWeaponBtn);
+
+    import("./menu-weapon-preview.js")
+      .then((m) => requestAnimationFrame(() => m.initMenuWeaponPreviews?.()))
+      .catch(() => {});
 
     document.querySelectorAll(".device-btn").forEach((btn) => {
       const pick = () => {

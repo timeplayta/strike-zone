@@ -74,7 +74,7 @@ export function showJumpscareOverlay(opts = {}) {
   el.classList.add("active");
   document.body.classList.add("jumpscare-active");
 
-  playHorrorScream(opts.sound || opts.style === "death" ? "death" : "monster");
+  playHorrorScream(opts.sound || (opts.style === "death" ? "death" : "monster"));
 
   return new Promise((resolve) => {
     setTimeout(() => {
