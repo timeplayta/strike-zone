@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Strike Zone — Testar</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Segoe UI, system-ui, sans-serif;
+      background: #0f1419;
+      color: #e8eef4;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+    .card {
+      width: min(520px, 100%);
+      background: #1a2332;
+      border: 1px solid #2d3f55;
+      border-radius: 16px;
+      padding: 1.75rem;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+    }
+    h1 {
+      margin: 0 0 0.35rem;
+      font-size: 1.6rem;
+      letter-spacing: 0.06em;
+    }
+    p { margin: 0 0 1rem; color: #9fb0c3; line-height: 1.5; }
+    label {
+      display: block;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #7f93a8;
+      margin: 1.1rem 0 0.45rem;
+    }
+    .link-box {
+      display: flex;
+      gap: 0.5rem;
+    }
+    input {
+      flex: 1;
+      min-width: 0;
+      padding: 0.75rem 0.85rem;
+      border-radius: 10px;
+      border: 1px solid #3a5068;
+      background: #0f1419;
+      color: #fff;
+      font-size: 0.92rem;
+    }
+    button, .btn {
+      border: none;
+      border-radius: 10px;
+      padding: 0.75rem 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      text-align: center;
+    }
+    .copy-btn { background: #2ecc71; color: #0b1a10; }
+    .play-btn {
+      width: 100%;
+      margin-top: 1.25rem;
+      background: #e74c3c;
+      color: #fff;
+      font-size: 1rem;
+    }
+    .public { border-left: 4px solid #2ecc71; padding-left: 0.85rem; margin-top: 0.5rem; }
+    .hint { font-size: 0.88rem; margin-top: 1rem; }
+    .ok { color: #2ecc71; display: none; margin-top: 0.5rem; font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>STRIKE ZONE</h1>
+    <p>Página de teste — copie o link e abra no Chrome do celular.</p>
+
+    <label>Testar no PC (este computador)</label>
+    <div class="link-box">
+      <input id="pcLink" readonly />
+      <button type="button" class="copy-btn" data-target="pcLink">Copiar</button>
+    </div>
+    <a class="btn play-btn" id="pcPlay" href="/">JOGAR NO PC AGORA</a>
+
+    <div id="publicBlock" class="hidden">
+      <label>Link público — Chrome no celular (qualquer rede)</label>
+      <div class="public">
+        <div class="link-box">
+          <input id="mobileLink" readonly />
+          <button type="button" class="copy-btn" data-target="mobileLink">Copiar</button>
+        </div>
+        <p class="hint">Cole no Chrome do celular. Deixe o PC com a janela do link aberta enquanto joga.</p>
+        <p id="copied" class="ok">Link copiado!</p>
+      </div>
+    </div>
+
+    <p class="hint" id="wifiHint"></p>
+  </div>
+  <script>
+    const params = new URLSearchParams(location.search);
+    const origin = location.origin;
+    const pcUrl = origin + "/";
+    const mobileUrl = params.get("public") || params.get("mobile") || "";
+
+    document.getElementById("pcLink").value = pcUrl;
+    document.getElementById("pcPlay").href = pcUrl;
+
+    if (mobileUrl) {
+      document.getElementById("publicBlock").classList.remove("hidden");
+      document.getElementById("mobileLink").value = mobileUrl;
+      try { navigator.clipboard.writeText(mobileUrl); } catch (_) {}
+    }
+
+    document.querySelectorAll(".copy-btn").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const input = document.getElementById(btn.dataset.target);
+        if (!input) return;
+        input.select();
+        try {
+          await navigator.clipboard.writeText(input.value);
+        } catch (_) {
+          document.execCommand("copy");
+        }
+        const ok = document.getElementById("copied");
+        if (ok) {
+          ok.style.display = "block";
+          setTimeout(() => { ok.style.display = "none"; }, 2000);
+        }
+      });
+    });
+
+    fetch("/api/ip")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.ip) {
+          document.getElementById("wifiHint").textContent =
+            "Mesma Wi-Fi: http://" + data.ip + ":8080/celular";
+        }
+      })
+      .catch(() => {});
+  </script>
+</body>
+</html>

@@ -1,0 +1,25 @@
+STRIKE ZONE — JOGO DE TIRO (esta pasta)
+========================================
+
+Angry Birds e OUTRO jogo — pasta separada:
+  Desktop\MEU_JOGO_ANGRY_BIRDS  →  JOGAR_ANGRY_BIRDS.bat (porta 8081)
+
+STRIKE ZONE — COMO JOGAR
+========================
+
+1. Duplo clique em JOGAR.bat (nesta pasta)
+   OU na Area de Trabalho: JOGAR_STRIKE_ZONE.bat
+
+2. O navegador abre em http://localhost:8080
+
+3. Espere: "Pronto — clique em INICIAR PARTIDA"
+
+4. Clique INICIAR PARTIDA
+
+PROBLEMAS?
+- Feche TODAS as janelas pretas antigas
+- Rode JOGAR.bat de novo
+- No navegador: Ctrl+F5 (recarregar)
+- NAO abra index.html pelo Explorer
+
+Precisa Node.js: https://nodejs.org

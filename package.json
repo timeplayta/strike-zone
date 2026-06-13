@@ -1,0 +1,12 @@
+{
+  "name": "strike-zone",
+  "version": "1.0.0",
+  "description": "Strike Zone — FPS tático no navegador",
+  "private": true,
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node server.js"
+  }
+}

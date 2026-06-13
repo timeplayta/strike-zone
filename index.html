@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR">
+
+<head>
+
+  <meta charset="UTF-8" />
+  <meta http-equiv="Cache-Control" content="no-cache" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+
+  <meta name="mobile-web-app-capable" content="yes" />
+
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+
+  <title>Strike Zone — FPS Tático</title>
+
+  <meta name="theme-color" content="#0a0c10" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+
+  <link rel="stylesheet" href="style.css" />
+
+  <script>
+
+    if (location.protocol === "file:") {
+
+      document.addEventListener("DOMContentLoaded", function () {
+
+        document.body.innerHTML =
+
+          '<div style="font-family:Segoe UI,sans-serif;max-width:520px;margin:3rem auto;padding:2rem;background:#1a2332;color:#fff;border-radius:12px;text-align:center">' +
+
+          "<h1>Strike Zone</h1>" +
+
+          "<p style='color:#9fb0c3'>Voce abriu o arquivo direto do Windows. Assim o jogo <strong>nao funciona</strong>.</p>" +
+
+          "<p>Feche esta aba. Va na pasta do jogo e de um duplo clique em:</p>" +
+
+          "<p style='font-size:1.2rem;color:#2ecc71'><strong>JOGAR.bat</strong></p>" +
+
+          "<p style='color:#9fb0c3'>Depois use o endereco <strong>http://localhost:8080</strong></p></div>";
+
+      });
+
+    }
+
+  </script>
+
+</head>
+
+<body class="mode-desktop">
+
+  <div id="welcomeScreen" class="screen active">
+    <div class="welcome-card">
+      <h1 class="welcome-logo">STRIKE ZONE</h1>
+      <p class="welcome-tag">FPS Tático • Entre na partida</p>
+
+      <p class="welcome-question">Você já tem uma conta?</p>
+      <div class="welcome-tabs" role="tablist">
+        <button type="button" id="welcomeTabLogin" class="welcome-tab active" role="tab" aria-selected="true">Sim, entrar</button>
+        <button type="button" id="welcomeTabRegister" class="welcome-tab" role="tab" aria-selected="false">Não, criar conta</button>
+      </div>
+
+      <div id="welcomeLoginPanel" class="welcome-panel">
+        <label for="loginName">Nome da conta</label>
+        <input type="text" id="loginName" maxlength="16" placeholder="Ex: Maria, João..." autocomplete="username" />
+        <label for="loginPassword">Senha</label>
+        <input type="password" id="loginPassword" maxlength="32" placeholder="Sua senha" autocomplete="current-password" />
+        <button type="button" id="welcomeLoginBtn" class="btn-primary">ENTRAR</button>
+      </div>
+
+      <div id="welcomeRegisterPanel" class="welcome-panel hidden">
+        <label for="registerName">Escolha um nome</label>
+        <input type="text" id="registerName" maxlength="16" placeholder="Ex: Maria, João..." autocomplete="off" />
+        <label for="registerAge">Sua idade</label>
+        <input type="number" id="registerAge" min="8" max="99" placeholder="Ex: 16" />
+        <label for="registerPassword">Crie uma senha</label>
+        <input type="password" id="registerPassword" maxlength="32" placeholder="Mínimo 4 caracteres" autocomplete="new-password" />
+        <label for="registerPasswordConfirm">Confirmar senha</label>
+        <input type="password" id="registerPasswordConfirm" maxlength="32" placeholder="Repita a senha" autocomplete="new-password" />
+        <button type="button" id="welcomeRegisterBtn" class="btn-primary">CRIAR CONTA</button>
+      </div>
+
+      <div id="welcomeMigratePanel" class="welcome-panel hidden">
+        <p class="welcome-migrate-msg">Esta conta foi criada antes das senhas. Defina uma senha para continuar.</p>
+        <label for="migrateName">Nome</label>
+        <input type="text" id="migrateName" maxlength="16" readonly />
+        <label for="migrateAge">Idade (confirmação)</label>
+        <input type="number" id="migrateAge" min="8" max="99" />
+        <label for="migratePassword">Nova senha</label>
+        <input type="password" id="migratePassword" maxlength="32" placeholder="Mínimo 4 caracteres" autocomplete="new-password" />
+        <button type="button" id="welcomeMigrateBtn" class="btn-primary">DEFINIR SENHA E ENTRAR</button>
+        <button type="button" id="welcomeMigrateBack" class="btn-link">Voltar ao login</button>
+      </div>
+
+      <p class="welcome-note">Cada conta tem nome + senha únicos — seus dados ficam salvos no servidor</p>
+    </div>
+  </div>
+
+  <div id="menu" class="screen hidden">
+
+    <button type="button" id="openAccountBtn" class="menu-fab menu-fab-c" title="Conta">
+      <span class="fab-c-portrait">
+        <canvas id="accountFabCanvas" width="208" height="168"></canvas>
+      </span>
+      <span id="accountFabName" class="fab-c-name">Operador</span>
+    </button>
+
+    <div class="menu-layout">
+
+    <div class="menu-card menu-card-play">
+
+      <h1>STRIKE ZONE</h1>
+
+      <p class="tagline">Tático • 2 mapas • PC ou Android</p>
+
+
+
+      <label>Onde você vai jogar?</label>
+
+      <div class="device-select">
+
+        <button type="button" class="device-btn selected" data-device="desktop">
+
+          <span class="device-icon">💻</span>
+
+          <span class="device-name">Computador</span>
+
+          <span class="device-desc">Mouse + teclado (WASD)</span>
+
+        </button>
+
+        <button type="button" class="device-btn" data-device="mobile">
+
+          <span class="device-icon">📱</span>
+
+          <span class="device-name">Celular (Android)</span>
+
+          <span class="device-desc">Estilo Free Fire — joystick + arrastar</span>
+
+        </button>
+
+      </div>
+
+
+
+      <label>Seu nome</label>
+
+      <input type="text" id="playerName" value="Operador" maxlength="16" placeholder="Digite seu nome" autocomplete="nickname" />
+
+      <label>Mapa</label>
+
+      <p class="map-category">Mapas de tiro</p>
+
+      <div class="map-select map-select-shooting">
+
+        <button type="button" class="map-btn selected" data-map="dust">
+
+          <span class="map-name">Dust Alley</span>
+
+          <span class="map-desc">Deserto • corredores abertos</span>
+
+        </button>
+
+        <button type="button" class="map-btn" data-map="warehouse">
+
+          <span class="map-name">Cold Storage</span>
+
+          <span class="map-desc">Armazém • salas fechadas</span>
+
+        </button>
+
+      </div>
+
+      <p class="map-category map-category-horror">Modo terror</p>
+
+      <div class="map-select map-select-horror">
+
+        <button type="button" class="map-btn map-btn-horror" data-map="horror">
+
+          <span class="map-name">Por onde você não deveria passar</span>
+
+          <span class="map-desc">Terror • combate • presenças tortas</span>
+
+        </button>
+
+        <button type="button" class="map-btn map-btn-horror" data-map="labyrinth">
+
+          <span class="map-name">O Labirinto — Fim das Trevas</span>
+
+          <span class="map-desc">Só você • gigante • facão, porrete, katana</span>
+
+        </button>
+
+      </div>
+
+
+
+      <label class="labyrinth-hide">Arma principal</label>
+
+      <div class="weapon-select labyrinth-hide">
+
+        <button type="button" class="weapon-btn selected" data-weapon="ak47">
+
+          <span class="weapon-name">AK-47</span>
+
+          <span class="weapon-desc">Alto dano • automática</span>
+
+        </button>
+
+        <button type="button" class="weapon-btn" data-weapon="scar">
+
+          <span class="weapon-name">SCAR-H</span>
+
+          <span class="weapon-desc">Precisa • médio alcance</span>
+
+        </button>
+
+        <button type="button" class="weapon-btn" data-weapon="m4">
+
+          <span class="weapon-name">M4A1</span>
+
+          <span class="weapon-desc">Versátil • cadência alta</span>
+
+        </button>
+
+        <button type="button" class="weapon-btn" data-weapon="ump45">
+
+          <span class="weapon-name">UMP-45</span>
+
+          <span class="weapon-desc">SMG • combate curto</span>
+
+        </button>
+
+        <button type="button" class="weapon-btn" data-weapon="awm">
+
+          <span class="weapon-name">AWM</span>
+
+          <span class="weapon-desc">Sniper • 1 tiro na cabeça</span>
+
+        </button>
+
+        <button type="button" class="weapon-btn" data-weapon="doze">
+
+          <span class="weapon-name">Doze</span>
+
+          <span class="weapon-desc">Escopeta • perto</span>
+
+        </button>
+
+      </div>
+
+
+
+      <label class="labyrinth-hide">Modo</label>
+      <select id="gameMode" class="labyrinth-hide">
+
+        <option value="tdm">Eliminação (primeiro a 15)</option>
+
+        <option value="defuse">Desarmar bomba (5 rounds)</option>
+
+      </select>
+
+
+
+      <label class="labyrinth-hide">Inimigos e aliados (NPCs)</label>
+
+      <p class="section-desc labyrinth-hide">Escolha quantos bandidos enfrentar e se quer ajudantes CT antes de iniciar.</p>
+
+      <div class="npc-select labyrinth-hide">
+
+        <button type="button" class="npc-btn" data-bots="1">
+
+          <span class="npc-count">1</span>
+
+          <span class="npc-label">Super inimigo</span>
+
+        </button>
+
+        <button type="button" class="npc-btn selected" data-bots="4">
+
+          <span class="npc-count">4</span>
+
+          <span class="npc-label">Esquadrão</span>
+
+        </button>
+
+        <button type="button" class="npc-btn" data-bots="8">
+
+          <span class="npc-count">8</span>
+
+          <span class="npc-label">Pelotão</span>
+
+        </button>
+
+        <button type="button" class="npc-btn" data-bots="12">
+
+          <span class="npc-count">12</span>
+
+          <span class="npc-label">Companhia</span>
+
+        </button>
+
+        <button type="button" class="npc-btn" data-bots="20">
+
+          <span class="npc-count">20</span>
+
+          <span class="npc-label">Horda</span>
+
+        </button>
+
+        <button type="button" class="npc-btn npc-ally" id="allyToggle" aria-pressed="false">
+
+          <span class="npc-count">+2</span>
+
+          <span class="npc-label">Ajudantes CT</span>
+
+        </button>
+
+      </div>
+
+      <input type="checkbox" id="wantHelpers" class="visually-hidden" tabindex="-1" aria-hidden="true" />
+
+
+
+      <div class="npc-fine-tune">
+
+        <p class="difficulty-desc">
+
+          <strong>1 bot</strong> = super inimigo <strong>500 HP</strong>, atira <strong>3× mais rápido</strong>.
+
+          <strong>20 bots</strong> = fracos, lentos, <strong>100 HP</strong>. Sempre ativo.
+
+        </p>
+
+      <input type="checkbox" id="useBotDifficulty" checked class="visually-hidden" tabindex="-1" aria-hidden="true" />
+
+        <label for="botCount">Quantidade de bots (1–20) — define a dificuldade</label>
+
+        <div class="bot-row">
+
+          <input type="range" id="botCount" min="1" max="20" value="4" />
+
+          <span id="botCountLabel" class="bot-count-display">4</span>
+
+        </div>
+
+        <p id="difficultyPreview" class="difficulty-preview">Dificuldade: equilibrada (4 bots)</p>
+
+      </div>
+
+
+
+      <div class="menu-actions">
+        <button type="button" id="startBtn" class="btn-primary btn-start-main">INICIAR PARTIDA</button>
+      </div>
+
+      <p id="loadStatus" class="load-status">Carregando motor do jogo...</p>
+
+      <p class="hint" id="menuHint">WASD mover • Mouse mirar • Clique esquerdo na porta / atirar • Botão direito = mirar (AK, SCAR, AWM)</p>
+
+      <a class="mobile-guide-link" href="COMO_JOGAR_NO_CELULAR.md" target="_blank" rel="noopener">📖 Guia completo para jogar no celular</a>
+
+    </div>
+
+    <div class="menu-side-fabs" aria-label="Personagem e loja">
+      <button type="button" id="openCharacterBtn" class="menu-fab menu-fab-p" title="Personagem">
+        <svg class="fab-icon fab-icon-person" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+        </svg>
+      </button>
+      <button type="button" id="openSoloBtn" class="menu-fab menu-fab-s" title="Loja">
+        <svg class="fab-icon fab-icon-bag" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M18 6h-2c0-2.21-1.79-4-4-4S8 3.79 8 6H6c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-6-2c1.1 0 2 .9 2 2h-4c0-1.1.9-2 2-2zm6 16H6V8h2v2h8V8h2v12z"/>
+        </svg>
+      </button>
+    </div>
+
+    <aside id="adminPanel" class="menu-card menu-card-admin hidden" aria-label="Painel administrador">
+
+      <h2 class="admin-title">PAINEL ADMIN</h2>
+      <p class="admin-sub">MJuan — ferramentas de desenvolvimento</p>
+
+      <div class="admin-tabs" role="tablist">
+        <button type="button" class="admin-tab selected" data-admin-tab="play">Partida</button>
+        <button type="button" class="admin-tab" data-admin-tab="chars">Personagens</button>
+        <button type="button" class="admin-tab" data-admin-tab="maps">Mapas</button>
+      </div>
+
+      <div id="adminTabPlay" class="admin-panel-section">
+        <label>Mapa (admin)</label>
+        <select id="adminMapSelect">
+          <option value="dust">Dust Alley</option>
+          <option value="warehouse">Cold Storage</option>
+          <option value="horror">Por onde você não deveria passar</option>
+          <option value="labyrinth">O Labirinto</option>
+        </select>
+        <label>Modo de partida</label>
+        <select id="adminGameMode">
+          <option value="tdm">Eliminação</option>
+          <option value="defuse">Desarmar bomba</option>
+          <option value="escape">Labirinto (escape)</option>
+        </select>
+        <label class="admin-check">
+          <input type="checkbox" id="adminNightVision" /> Óculos visão noturna (mapas escuros)
+        </label>
+        <label class="admin-check">
+          <input type="checkbox" id="adminSpectatorStart" /> Entrar como espectador (noclip)
+        </label>
+        <button type="button" id="adminStartBtn" class="btn-primary admin-start-btn">INICIAR (ADMIN)</button>
+        <label>Console de comandos</label>
+        <div id="adminCmdLog" class="admin-cmd-log"></div>
+        <div class="admin-cmd-row">
+          <input type="text" id="adminCmdInput" placeholder="/help, /add t, /add ct, /weapon ak47..." maxlength="120" />
+          <button type="button" id="adminCmdSend" class="btn-shop">OK</button>
+        </div>
+        <p class="section-desc">Comandos funcionam durante a partida. Espectador: WASD voar, Espaço/Shift subir/descer, N visão noturna.</p>
+      </div>
+
+      <div id="adminTabChars" class="admin-panel-section hidden">
+        <label>Personagem</label>
+        <select id="adminCharSelect">
+          <option value="bandit:0">Bandido 1 (T)</option>
+          <option value="bandit:1">Bandido 2 (T)</option>
+          <option value="bandit:2">Bandido 3 (T)</option>
+          <option value="helper:0">Operador Alpha (CT)</option>
+          <option value="helper:1">Operador Bravo (CT)</option>
+          <option value="boss">Chefão / Guardião</option>
+          <option value="horror:0">Terrorista horror</option>
+        </select>
+        <button type="button" id="adminViewCharBtn" class="btn-primary">VER PERSONAGEM 3D</button>
+        <p class="section-desc">Câmera livre ao redor do boneco. Mouse gira • Scroll zoom • ESC volta ao menu.</p>
+      </div>
+
+      <div id="adminTabMaps" class="admin-panel-section hidden">
+        <label>Mapa para inspecionar</label>
+        <select id="adminMapViewSelect">
+          <option value="dust">Dust Alley</option>
+          <option value="warehouse">Cold Storage</option>
+          <option value="horror">Por onde você não deveria passar</option>
+          <option value="labyrinth">O Labirinto</option>
+        </select>
+        <div id="adminMapInfo" class="admin-map-info"></div>
+        <button type="button" id="adminViewMapBtn" class="btn-primary">VER MAPA (ESPECTADOR)</button>
+        <p class="section-desc">Voe pelo mapa, atravesse paredes. Tamanho em metros no HUD.</p>
+      </div>
+
+    </aside>
+
+    </div>
+
+  </div>
+
+  <div id="accountModal" class="hub-modal hidden" aria-hidden="true">
+    <div class="hub-modal-backdrop" id="accountModalBackdrop"></div>
+    <div class="hub-modal-panel hub-panel-account">
+      <div class="hub-header">
+        <span class="hub-badge">C</span>
+        <span>Minha Conta</span>
+        <button type="button" id="closeAccountBtn" class="shop-close" aria-label="Fechar">✕</button>
+      </div>
+      <div class="account-info-grid">
+        <div class="account-field"><span class="account-label">Conta</span><strong id="accountNameDisplay">—</strong></div>
+        <div class="account-field"><span class="account-label">Senha</span><strong id="accountPasswordDisplay">—</strong></div>
+        <label class="account-show-pw"><input type="checkbox" id="accountShowPassword" /> Mostrar senha</label>
+        <div class="account-field"><span class="account-label">Idade</span><span id="accountAgeDisplay">—</span></div>
+        <div class="account-field"><span class="account-label">Moedas</span><span id="accountCoinsDisplay">0 🪙</span></div>
+        <div class="account-field"><span class="account-label">Abates</span><span id="accountKillsDisplay">0</span></div>
+      </div>
+      <label class="hub-section-label">Ícone do perfil</label>
+      <div class="avatar-grid">
+        <button type="button" class="avatar-pick" data-avatar="dog" title="Cachorro"><span>🐕</span><small>Cachorro</small></button>
+        <button type="button" class="avatar-pick" data-avatar="cat" title="Gato"><span>🐈</span><small>Gato</small></button>
+        <button type="button" class="avatar-pick selected" data-avatar="soldier" title="Meu personagem"><span>🎖</span><small>Meu boneco</small></button>
+        <button type="button" class="avatar-pick" data-avatar="enemy" title="Inimigo"><span>☠</span><small>Inimigo</small></button>
+      </div>
+      <div class="account-preview-row">
+        <div class="account-preview-box">
+          <span class="account-preview-title">Seu personagem</span>
+          <canvas id="accountPlayerCanvas" width="280" height="200"></canvas>
+        </div>
+        <div class="account-preview-box">
+          <span class="account-preview-title">Personagem inimigo</span>
+          <canvas id="accountEnemyCanvas" width="280" height="200"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="characterModal" class="hub-modal hidden" aria-hidden="true">
+    <div class="hub-modal-backdrop" id="characterModalBackdrop"></div>
+    <div class="hub-modal-panel hub-panel-character">
+      <div class="hub-header">
+        <span class="hub-badge hub-badge-p">P</span>
+        <span>Customizar Personagem</span>
+        <button type="button" id="closeCharacterBtn" class="shop-close" aria-label="Fechar">✕</button>
+      </div>
+      <p class="hub-sub">Capacete → camisa → calça → luvas → tênis</p>
+      <div class="customizer-layout">
+        <canvas id="customizerCanvas" class="customizer-canvas" width="320" height="360"></canvas>
+        <div class="customizer-slots">
+          <div id="customSlotTabs" class="custom-slot-tabs"></div>
+          <p class="custom-active-slot">Peça: <strong id="customActiveSlotLabel">Capacete</strong></p>
+          <div id="customPresetGrid" class="custom-preset-grid"></div>
+          <button type="button" id="customSaveBtn" class="btn-primary custom-save-btn">SALVAR PERSONAGEM</button>
+          <p id="customSaveHint" class="custom-save-hint"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="soloModal" class="hub-modal hidden" aria-hidden="true">
+    <div class="hub-modal-backdrop" id="soloModalBackdrop"></div>
+    <div class="hub-modal-panel hub-panel-solo">
+      <div class="hub-header">
+        <span class="hub-badge hub-badge-s">🛒</span>
+        <span>Loja</span>
+        <button type="button" id="closeSoloBtn" class="shop-close" aria-label="Fechar">✕</button>
+      </div>
+      <canvas id="soloCanvas" class="solo-canvas" width="360" height="280"></canvas>
+      <h3 class="solo-shop-title">🛒 Loja <span id="shopCoins" class="shop-coins">0 🪙</span></h3>
+      <p id="accountHint" class="account-hint">Skins de armas — moedas da sua conta</p>
+      <div id="shopGrid" class="shop-grid"></div>
+    </div>
+  </div>
+
+  <div id="hud" class="hidden">
+
+    <div class="hud-top">
+
+      <div class="score-block ct">
+
+        <span class="team-label">CT</span>
+
+        <span id="scoreCT">0</span>
+
+      </div>
+
+      <div class="round-info">
+
+        <span id="roundText">ROUND 1</span>
+
+        <span id="timer">3:00</span>
+
+      </div>
+
+      <div class="score-block t">
+
+        <span class="team-label">T</span>
+
+        <span id="scoreT">0</span>
+
+      </div>
+
+    </div>
+
+    <div class="killfeed" id="killfeed"></div>
+
+    <div class="crosshair" id="crosshair"></div>
+
+    <div id="scopeHud" class="scope-hud hidden" aria-hidden="true">
+
+      <div class="scope-ring scope-ak47" data-scope="ak47"></div>
+
+      <div class="scope-ring scope-scar" data-scope="scar"></div>
+
+      <div class="scope-ring scope-awm" data-scope="awm"></div>
+
+      <div class="scope-dot"></div>
+
+    </div>
+
+    <div class="hud-bottom">
+
+      <div class="health-bar">
+
+        <div class="health-fill" id="healthFill"></div>
+
+        <span id="healthText">100 HP</span>
+
+      </div>
+
+      <div class="ammo">
+
+        <span id="weaponName">AK-47</span>
+
+        <span id="ammoText">30 / 90</span>
+
+        <span id="hudCoins" class="hud-coins">0 🪙</span>
+
+      </div>
+
+      <div class="objective" id="objective"></div>
+      <div id="flashlightHud" class="flashlight-hud hidden" aria-hidden="true">🔦 Lanterna</div>
+
+    </div>
+
+  </div>
+
+
+
+  <div id="mobileControls" class="mobile-controls hidden">
+
+    <div id="aimLayer" class="aim-layer" aria-label="Arraste para mirar"></div>
+
+    <div id="moveJoystick" class="move-joystick" aria-label="Joystick mover">
+
+      <div class="joystick-base"></div>
+
+      <div id="joystickKnob" class="joystick-knob"></div>
+
+      <span class="joystick-label">MOVER</span>
+
+    </div>
+
+    <span class="aim-hint">Arraste a tela para mirar enquanto move</span>
+
+    <div class="mobile-buttons">
+
+      <button type="button" id="btnW1" class="mob-btn">1</button>
+
+      <button type="button" id="btnW2" class="mob-btn">2</button>
+
+      <button type="button" id="btnW3" class="mob-btn">3</button>
+
+      <button type="button" id="btnReload" class="mob-btn">R</button>
+
+      <button type="button" id="btnJump" class="mob-btn mob-jump">↑</button>
+
+      <button type="button" id="btnFlashlight" class="mob-btn mob-flashlight hidden" aria-label="Lanterna">🔦</button>
+
+      <button type="button" id="btnBomb" class="mob-btn mob-bomb">B</button>
+
+    </div>
+
+    <button type="button" id="btnFire" class="btn-fire">ATIRAR</button>
+
+  </div>
+
+
+
+  <div id="overlay" class="hidden">
+
+    <div class="overlay-msg" id="overlayMsg"></div>
+
+  </div>
+
+
+
+  <div id="cinematic" class="cinematic hidden">
+
+    <div class="cinematic-backdrop"></div>
+
+    <div class="cinematic-content">
+
+      <div class="cinematic-badge" id="cinematicBadge"></div>
+
+      <div class="cinematic-title"></div>
+
+      <div class="cinematic-sub"></div>
+
+    </div>
+
+    <button type="button" id="skipCinematicBtn" class="cinematic-skip">PULAR CENA →</button>
+
+  </div>
+
+
+
+  <div id="deathScreen" class="screen hidden">
+
+    <div class="menu-card death-card">
+
+      <div class="death-icon">☠</div>
+
+      <h2>ELIMINADO</h2>
+
+      <p id="deathMsg">Você foi abatido em combate.</p>
+
+      <div class="death-actions">
+
+        <button type="button" id="respawnBtn" class="btn-primary">RENASCER</button>
+
+        <button type="button" id="endMatchFromDeathBtn" class="btn-secondary">FINALIZAR PARTIDA</button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+
+  <div id="endScreen" class="screen hidden">
+
+    <div class="menu-card end-card">
+
+      <div class="end-badge" id="endBadge">🏆</div>
+
+      <h2 id="endTitle">VITÓRIA</h2>
+
+      <p class="end-subtitle" id="endSubtitle"></p>
+
+      <div class="end-stats-grid" id="endStatsGrid"></div>
+
+      <p id="endStats" class="end-stats-detail"></p>
+
+      <button type="button" id="restartBtn" class="btn-primary">JOGAR NOVAMENTE</button>
+
+      <button type="button" id="menuBtn" class="btn-secondary">VOLTAR AO MENU</button>
+
+    </div>
+
+  </div>
+
+
+
+  <div id="adminHud" class="hidden" aria-live="polite"></div>
+
+  <div id="worldLabels" aria-hidden="true"></div>
+
+  <canvas id="gameCanvas"></canvas>
+
+  <script src="menu-init.js"></script>
+  <script type="module" src="admin-panel.js"></script>
+  <script type="module" src="account-hub.js"></script>
+  <script type="module" src="character-customizer.js"></script>
+  <script type="module" src="solo-view.js"></script>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "/vendor/three.module.js"
+    }
+  }
+  </script>
+
+  <script type="module" src="game-loader.js?v=16"></script>
+  <script type="module">
+    import { bindShopUI } from "./player-account.js";
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", bindShopUI);
+    else bindShopUI();
+  </script>
+
+  <script>
+    if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) {
+      navigator.serviceWorker.register("sw.js").catch(function () {});
+    }
+  </script>
+
+</body>
+
+</html>
+
