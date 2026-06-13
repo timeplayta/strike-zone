@@ -119,6 +119,10 @@
       </button>
       <div class="ff-header-right">
         <span id="menuCoinsDisplay" class="ff-coins">0 🪙</span>
+        <button type="button" id="ffOptionsBtn" class="ff-options-btn" title="Opções">
+          <span class="ff-options-icon">⚙</span>
+          <span class="ff-options-label">Opções</span>
+        </button>
       </div>
     </header>
 
@@ -127,78 +131,138 @@
       <button type="button" class="menu-hub-tab" data-menu-hub="admin" role="tab" aria-selected="false">Admin</button>
     </div>
 
-    <div class="ff-scroll">
-    <div class="menu-layout ff-layout">
-
-    <div class="menu-card menu-card-play ff-panel" id="playerPanel">
-
-      <div class="ff-device-row device-select">
-
-        <button type="button" class="device-btn selected" data-device="desktop">
-
-          <span class="device-icon">💻</span>
-
-          <span class="device-name">Computador</span>
-
-          <span class="device-desc">Mouse + teclado (WASD)</span>
-
+    <div id="playerPanel" class="ff-menu-body">
+      <nav class="ff-side-nav" id="ffSideNav" aria-label="Personagem, armas e loja">
+        <button type="button" id="openCharacterBtn" class="ff-side-nav-btn" data-hub="character" title="Boneco">
+          <span class="ff-side-icon">👤</span>
+          <span class="ff-side-label">Boneco</span>
         </button>
-
-        <button type="button" class="device-btn" data-device="mobile">
-
-          <span class="device-icon">📱</span>
-
-          <span class="device-name">Celular (Android)</span>
-
-          <span class="device-desc">Estilo Free Fire — joystick + arrastar</span>
-
+        <button type="button" id="openArsenalBtn" class="ff-side-nav-btn" data-hub="arsenal" title="Armas">
+          <span class="ff-side-icon">🔫</span>
+          <span class="ff-side-label">Armas</span>
         </button>
+        <button type="button" id="openSoloBtn" class="ff-side-nav-btn" data-hub="shop" title="Loja">
+          <span class="ff-side-icon">🛒</span>
+          <span class="ff-side-label">Loja</span>
+        </button>
+      </nav>
 
-      </div>
-
-      <input type="text" id="playerName" class="visually-hidden" value="Operador" maxlength="16" autocomplete="nickname" aria-hidden="true" tabindex="-1" />
-
-      <details class="ff-details labyrinth-hide" id="ffGameOptions">
-        <summary class="ff-details-summary">Modo e bots</summary>
-        <div class="ff-details-body">
-
-      <label class="labyrinth-hide">Modo</label>
-      <select id="gameMode" class="labyrinth-hide">
-
-        <option value="tdm">Eliminação (primeiro a 15)</option>
-
-        <option value="defuse">Desarmar bomba (5 rounds)</option>
-
-      </select>
-
-
-
-      <div class="npc-simple labyrinth-hide">
-
-        <label class="ally-check-row" for="wantHelpers">
-          <input type="checkbox" id="wantHelpers" />
-          <span>Quer 2 ajudantes CT na partida?</span>
-        </label>
-
-        <label for="botCount">Quantidade de inimigos (1–20)</label>
-        <div class="bot-row">
-          <input type="range" id="botCount" min="1" max="20" value="4" />
-          <span id="botCountLabel" class="bot-count-display">4</span>
+      <div class="ff-hub-stage" id="ffHubStage">
+        <div id="ffHubPanelPlay" class="ff-hub-panel menu-card menu-card-play ff-panel active">
+          <p class="ff-hub-play-title">Strike Zone</p>
+          <p class="ff-hub-play-sub">Escolha o mapa e clique em JOGAR</p>
+          <p class="hint ff-hint" id="menuHint">WASD mover • Mouse mirar • Botão direito = mirar</p>
         </div>
-        <p id="difficultyPreview" class="difficulty-preview">Dificuldade: equilibrada (4 bots)</p>
-      </div>
 
-      <input type="checkbox" id="useBotDifficulty" checked class="visually-hidden" tabindex="-1" aria-hidden="true" />
+        <div id="ffHubPanelCharacter" class="ff-hub-panel hub-panel-character hidden" aria-hidden="true">
+          <div class="hub-header hub-header-inline">
+            <span class="hub-badge hub-badge-p">P</span>
+            <span>Customizar Personagem</span>
+            <button type="button" id="closeCharacterBtn" class="shop-close hub-back-btn" aria-label="Voltar">✕</button>
+          </div>
+          <p class="hub-sub">Capacete → camisa → calça → luvas → tênis</p>
+          <div class="customizer-layout customizer-layout-hub">
+            <canvas id="customizerCanvas" class="customizer-canvas" width="320" height="360"></canvas>
+            <div class="customizer-slots">
+              <div id="customSlotTabs" class="custom-slot-tabs"></div>
+              <p class="custom-active-slot">Peça: <strong id="customActiveSlotLabel">Capacete</strong></p>
+              <div id="customPresetGrid" class="custom-preset-grid"></div>
+              <button type="button" id="customSaveBtn" class="btn-primary custom-save-btn">SALVAR PERSONAGEM</button>
+              <p id="customSaveHint" class="custom-save-hint"></p>
+            </div>
+          </div>
         </div>
-      </details>
 
-      <p class="hint ff-hint" id="menuHint">WASD mover • Mouse mirar • Botão direito = mirar (AK, SCAR, AWM)</p>
+        <div id="ffHubPanelArsenal" class="ff-hub-panel hub-panel-arsenal hidden" aria-hidden="true">
+          <div class="hub-header hub-header-inline">
+            <span class="hub-badge hub-badge-a">🔫</span>
+            <span>Arsenal — suas skins</span>
+            <button type="button" id="closeArsenalBtn" class="shop-close hub-back-btn" aria-label="Voltar">✕</button>
+          </div>
+          <p class="hub-sub">Skins compradas • clique para equipar</p>
+          <div class="arsenal-hub-layout">
+            <canvas id="arsenalCanvas" class="arsenal-canvas" width="360" height="240"></canvas>
+            <div class="arsenal-hub-side">
+              <div id="arsenalWeaponPreview" class="arsenal-weapon-preview">AK-47</div>
+              <div id="arsenalWeaponTabs" class="arsenal-weapon-tabs"></div>
+              <div id="arsenalSkinList" class="arsenal-skin-list"></div>
+            </div>
+          </div>
+        </div>
 
+        <div id="ffHubPanelShop" class="ff-hub-panel hub-panel-solo hidden" aria-hidden="true">
+          <div class="hub-header hub-header-inline">
+            <span class="hub-badge hub-badge-s">🛒</span>
+            <span>Loja</span>
+            <button type="button" id="closeSoloBtn" class="shop-close hub-back-btn" aria-label="Voltar">✕</button>
+          </div>
+          <div class="shop-hub-layout">
+            <canvas id="soloCanvas" class="solo-canvas" width="360" height="220"></canvas>
+            <div class="shop-hub-side">
+              <h3 class="solo-shop-title">Loja <span id="shopCoins" class="shop-coins">0 🪙</span></h3>
+              <p id="accountHint" class="account-hint">Skins de armas e personagens</p>
+              <div class="shop-tabs">
+                <button type="button" class="shop-tab selected" data-shop-tab="weapons">Armas</button>
+                <button type="button" class="shop-tab" data-shop-tab="chars">Personagens</button>
+              </div>
+              <div id="shopPanelWeapons" class="shop-panel-tab">
+                <div id="shopGridWeapons" class="shop-grid"></div>
+              </div>
+              <div id="shopPanelChars" class="shop-panel-tab hidden">
+                <div id="shopGridChars" class="shop-grid"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <div class="menu-side-fabs visually-hidden" aria-hidden="true"></div>
+    <div id="ffGameOptionsPanel" class="ff-options-panel hidden" aria-hidden="true">
+      <div class="ff-options-panel-inner">
+        <div class="ff-options-panel-head">
+          <strong>Opções de partida</strong>
+          <button type="button" id="ffOptionsCloseBtn" class="shop-close" aria-label="Fechar">✕</button>
+        </div>
+        <div class="ff-device-row device-select">
+          <button type="button" class="device-btn selected" data-device="desktop">
+            <span class="device-icon">💻</span>
+            <span class="device-name">Computador</span>
+            <span class="device-desc">Mouse + teclado (WASD)</span>
+          </button>
+          <button type="button" class="device-btn" data-device="mobile">
+            <span class="device-icon">📱</span>
+            <span class="device-name">Celular (Android)</span>
+            <span class="device-desc">Estilo Free Fire — joystick + arrastar</span>
+          </button>
+        </div>
+        <input type="text" id="playerName" class="visually-hidden" value="Operador" maxlength="16" autocomplete="nickname" aria-hidden="true" tabindex="-1" />
+        <details class="ff-details labyrinth-hide" id="ffGameOptions" open>
+          <summary class="ff-details-summary">Modo e bots</summary>
+          <div class="ff-details-body">
+            <label class="labyrinth-hide">Modo</label>
+            <select id="gameMode" class="labyrinth-hide">
+              <option value="tdm">Eliminação (primeiro a 15)</option>
+              <option value="defuse">Desarmar bomba (5 rounds)</option>
+            </select>
+            <div class="npc-simple labyrinth-hide">
+              <label class="ally-check-row" for="wantHelpers">
+                <input type="checkbox" id="wantHelpers" />
+                <span>Quer 2 ajudantes CT na partida?</span>
+              </label>
+              <label for="botCount">Quantidade de inimigos (1–20)</label>
+              <div class="bot-row">
+                <input type="range" id="botCount" min="1" max="20" value="4" />
+                <span id="botCountLabel" class="bot-count-display">4</span>
+              </div>
+              <p id="difficultyPreview" class="difficulty-preview">Dificuldade: equilibrada (4 bots)</p>
+            </div>
+            <input type="checkbox" id="useBotDifficulty" checked class="visually-hidden" tabindex="-1" aria-hidden="true" />
+          </div>
+        </details>
+      </div>
+    </div>
 
-    <aside id="adminPanel" class="menu-card menu-card-admin hidden" aria-label="Painel administrador">
+    <aside id="adminPanel" class="menu-card menu-card-admin ff-admin-panel hidden" aria-label="Painel administrador">
 
       <h2 class="admin-title">PAINEL ADMIN</h2>
       <p class="admin-sub">MJuan — ferramentas de desenvolvimento</p>
@@ -277,30 +341,7 @@
 
     </aside>
 
-    </div>
-    </div>
-
-    <footer class="ff-bottom-zone" aria-label="Mapas e ações">
-      <nav class="ff-bottom-bar" aria-label="Menu principal">
-        <button type="button" id="openCharacterBtn" class="ff-nav-btn" title="Personagem">
-          <span class="ff-nav-icon">👤</span>
-          <span class="ff-nav-label">Boneco</span>
-        </button>
-        <button type="button" id="openArsenalBtn" class="ff-nav-btn" title="Armas">
-          <span class="ff-nav-icon">🔫</span>
-          <span class="ff-nav-label">Armas</span>
-        </button>
-        <button type="button" id="openSoloBtn" class="ff-nav-btn" title="Loja">
-          <span class="ff-nav-icon">🛒</span>
-          <span class="ff-nav-label">Loja</span>
-        </button>
-        <button type="button" id="ffOptionsBtn" class="ff-nav-btn" title="Opções">
-          <span class="ff-nav-icon">⚙</span>
-          <span class="ff-nav-label">Opções</span>
-        </button>
-      </nav>
-
-      <div class="ff-play-dock ff-play-dock-right">
+    <footer class="ff-bottom-zone" aria-label="Mapas e jogar">
         <div id="ffMapPickerPanel" class="ff-map-picker-panel hidden" aria-hidden="true">
           <div class="ff-map-category">
             <p class="ff-map-cat-title">Jogo de tiro</p>
@@ -381,68 +422,6 @@
           <canvas id="accountEnemyCanvas" width="280" height="200"></canvas>
         </div>
       </div>
-    </div>
-  </div>
-
-  <div id="characterModal" class="hub-modal hidden" aria-hidden="true">
-    <div class="hub-modal-backdrop" id="characterModalBackdrop"></div>
-    <div class="hub-modal-panel hub-panel-character">
-      <div class="hub-header">
-        <span class="hub-badge hub-badge-p">P</span>
-        <span>Customizar Personagem</span>
-        <button type="button" id="closeCharacterBtn" class="shop-close" aria-label="Fechar">✕</button>
-      </div>
-      <p class="hub-sub">Capacete → camisa → calça → luvas → tênis</p>
-      <div class="customizer-layout">
-        <canvas id="customizerCanvas" class="customizer-canvas" width="320" height="360"></canvas>
-        <div class="customizer-slots">
-          <div id="customSlotTabs" class="custom-slot-tabs"></div>
-          <p class="custom-active-slot">Peça: <strong id="customActiveSlotLabel">Capacete</strong></p>
-          <div id="customPresetGrid" class="custom-preset-grid"></div>
-          <button type="button" id="customSaveBtn" class="btn-primary custom-save-btn">SALVAR PERSONAGEM</button>
-          <p id="customSaveHint" class="custom-save-hint"></p>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div id="soloModal" class="hub-modal hidden" aria-hidden="true">
-    <div class="hub-modal-backdrop" id="soloModalBackdrop"></div>
-    <div class="hub-modal-panel hub-panel-solo">
-      <div class="hub-header">
-        <span class="hub-badge hub-badge-s">🛒</span>
-        <span>Loja</span>
-        <button type="button" id="closeSoloBtn" class="shop-close" aria-label="Fechar">✕</button>
-      </div>
-      <canvas id="soloCanvas" class="solo-canvas" width="360" height="220"></canvas>
-      <h3 class="solo-shop-title">Loja <span id="shopCoins" class="shop-coins">0 🪙</span></h3>
-      <p id="accountHint" class="account-hint">Skins de armas e personagens</p>
-      <div class="shop-tabs">
-        <button type="button" class="shop-tab selected" data-shop-tab="weapons">Armas</button>
-        <button type="button" class="shop-tab" data-shop-tab="chars">Personagens</button>
-      </div>
-      <div id="shopPanelWeapons" class="shop-panel-tab">
-        <div id="shopGridWeapons" class="shop-grid"></div>
-      </div>
-      <div id="shopPanelChars" class="shop-panel-tab hidden">
-        <div id="shopGridChars" class="shop-grid"></div>
-      </div>
-    </div>
-  </div>
-
-  <div id="arsenalModal" class="hub-modal hidden" aria-hidden="true">
-    <div class="hub-modal-backdrop" id="arsenalModalBackdrop"></div>
-    <div class="hub-modal-panel hub-panel-arsenal">
-      <div class="hub-header">
-        <span class="hub-badge hub-badge-a">🔫</span>
-        <span>Arsenal — suas skins</span>
-        <button type="button" id="closeArsenalBtn" class="shop-close" aria-label="Fechar">✕</button>
-      </div>
-      <p class="hub-sub">Skins compradas • clique para equipar • cor ativa na partida</p>
-      <canvas id="arsenalCanvas" class="arsenal-canvas" width="360" height="240"></canvas>
-      <div id="arsenalWeaponPreview" class="arsenal-weapon-preview">AK-47</div>
-      <div id="arsenalWeaponTabs" class="arsenal-weapon-tabs"></div>
-      <div id="arsenalSkinList" class="arsenal-skin-list"></div>
     </div>
   </div>
 

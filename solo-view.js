@@ -3,6 +3,7 @@
 import { getLoggedInName, refreshShopUI, getCharacterSkin } from "./player-account.js";
 import { normalizeLoadout, DEFAULT_LOADOUT } from "./character-loadout.js";
 import { mountCharacterViewer, destroyViewer, resizeViewer, updateViewerLoadout } from "./character-viewer.js";
+import { switchHubPanel, showPlayHub } from "./menu-hub.js";
 
 function $(id) {
   return document.getElementById(id);
@@ -22,8 +23,12 @@ async function openModal() {
     return;
   }
   await refreshShopUI(name);
-  $("soloModal")?.classList.remove("hidden");
-  $("soloModal")?.setAttribute("aria-hidden", "false");
+  switchHubPanel("shop");
+  const panel = $("ffHubPanelShop");
+  if (panel) {
+    panel.classList.remove("hidden");
+    panel.setAttribute("aria-hidden", "false");
+  }
   const loadout = normalizeLoadout(window.__playerLoadout || DEFAULT_LOADOUT);
   requestAnimationFrame(() => {
     if (!soloMounted) {
@@ -41,14 +46,14 @@ async function openModal() {
 }
 
 function closeModal() {
-  $("soloModal")?.classList.add("hidden");
-  $("soloModal")?.setAttribute("aria-hidden", "true");
+  showPlayHub();
+  const panel = $("ffHubPanelShop");
+  if (panel) panel.setAttribute("aria-hidden", "true");
 }
 
 export function initSoloView() {
   $("openSoloBtn")?.addEventListener("click", openModal);
   $("closeSoloBtn")?.addEventListener("click", closeModal);
-  $("soloModalBackdrop")?.addEventListener("click", closeModal);
 
   document.querySelectorAll(".shop-tab").forEach((tab) => {
     tab.addEventListener("click", () => {
@@ -59,7 +64,8 @@ export function initSoloView() {
     });
   });
   window.addEventListener("resize", () => {
-    if (soloMounted && !$("soloModal")?.classList.contains("hidden")) {
+    const panel = $("ffHubPanelShop");
+    if (soloMounted && panel && !panel.classList.contains("hidden")) {
       resizeViewer("soloCanvas");
     }
   });

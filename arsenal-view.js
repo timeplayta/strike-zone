@@ -15,6 +15,7 @@ import {
   resizeViewer,
   updateViewerLoadout,
 } from "./character-viewer.js";
+import { switchHubPanel, showPlayHub } from "./menu-hub.js";
 
 function $(id) {
   return document.getElementById(id);
@@ -101,8 +102,12 @@ async function openModal() {
     return;
   }
   const acc = await loadAccount(name);
-  $("arsenalModal")?.classList.remove("hidden");
-  $("arsenalModal")?.setAttribute("aria-hidden", "false");
+  switchHubPanel("arsenal");
+  const panel = $("ffHubPanelArsenal");
+  if (panel) {
+    panel.classList.remove("hidden");
+    panel.setAttribute("aria-hidden", "false");
+  }
   renderWeaponTabs(acc);
   renderSkinList(acc);
 
@@ -123,16 +128,17 @@ async function openModal() {
 }
 
 function closeModal() {
-  $("arsenalModal")?.classList.add("hidden");
-  $("arsenalModal")?.setAttribute("aria-hidden", "true");
+  showPlayHub();
+  const panel = $("ffHubPanelArsenal");
+  if (panel) panel.setAttribute("aria-hidden", "true");
 }
 
 export function initArsenalView() {
   $("openArsenalBtn")?.addEventListener("click", openModal);
   $("closeArsenalBtn")?.addEventListener("click", closeModal);
-  $("arsenalModalBackdrop")?.addEventListener("click", closeModal);
   window.addEventListener("resize", () => {
-    if (arsenalMounted && !$("arsenalModal")?.classList.contains("hidden")) {
+    const panel = $("ffHubPanelArsenal");
+    if (arsenalMounted && panel && !panel.classList.contains("hidden")) {
       resizeViewer("arsenalCanvas");
     }
   });

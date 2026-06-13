@@ -10,13 +10,15 @@ import {
 } from "./character-loadout.js";
 import { getCharacterSkin, getLoggedInName, getPlayerLoadout, savePlayerLoadout } from "./player-account.js";
 import { refreshAccountHub } from "./account-hub.js";
+import { switchHubPanel, showPlayHub } from "./menu-hub.js";
 import {
   mountCharacterViewer,
-  updateViewerLoadout,
   destroyViewer,
   resizeViewer,
+  updateViewerLoadout,
   hexStr,
 } from "./character-viewer.js";
+import { switchHubPanel, showPlayHub } from "./menu-hub.js";
 
 function $(id) {
   return document.getElementById(id);
@@ -90,8 +92,12 @@ async function openModal() {
   activeSlot = "helmet";
   renderSlotTabs();
   selectSlot("helmet");
-  $("characterModal")?.classList.remove("hidden");
-  $("characterModal")?.setAttribute("aria-hidden", "false");
+  switchHubPanel("character");
+  const panel = $("ffHubPanelCharacter");
+  if (panel) {
+    panel.classList.remove("hidden");
+    panel.setAttribute("aria-hidden", "false");
+  }
   requestAnimationFrame(() => {
     if (!viewerMounted) {
       mountCharacterViewer("customizerCanvas", {
@@ -108,8 +114,9 @@ async function openModal() {
 }
 
 function closeModal() {
-  $("characterModal")?.classList.add("hidden");
-  $("characterModal")?.setAttribute("aria-hidden", "true");
+  showPlayHub();
+  const panel = $("ffHubPanelCharacter");
+  if (panel) panel.setAttribute("aria-hidden", "true");
 }
 
 async function saveLoadout() {
@@ -140,10 +147,10 @@ async function saveLoadout() {
 export function initCharacterCustomizer() {
   $("openCharacterBtn")?.addEventListener("click", openModal);
   $("closeCharacterBtn")?.addEventListener("click", closeModal);
-  $("characterModalBackdrop")?.addEventListener("click", closeModal);
   $("customSaveBtn")?.addEventListener("click", saveLoadout);
   window.addEventListener("resize", () => {
-    if (viewerMounted && !$("characterModal")?.classList.contains("hidden")) {
+    const panel = $("ffHubPanelCharacter");
+    if (viewerMounted && panel && !panel.classList.contains("hidden")) {
       resizeViewer("customizerCanvas");
     }
   });

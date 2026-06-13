@@ -500,11 +500,20 @@
     });
 
     document.addEventListener("click", (e) => {
-      const panel = $("ffMapPickerPanel");
-      const btn = $("ffMapPickerBtn");
-      if (!panel || panel.classList.contains("hidden")) return;
-      if (panel.contains(e.target) || btn?.contains(e.target)) return;
+      const mapPanel = $("ffMapPickerPanel");
+      const mapBtn = $("ffMapPickerBtn");
+      if (!mapPanel || mapPanel.classList.contains("hidden")) return;
+      if (mapPanel.contains(e.target) || mapBtn?.contains(e.target)) return;
       toggleMapPicker(false);
+    });
+
+    document.addEventListener("click", (e) => {
+      const optPanel = $("ffGameOptionsPanel");
+      const optBtn = $("ffOptionsBtn");
+      if (!optPanel || optPanel.classList.contains("hidden")) return;
+      if (optPanel.contains(e.target) || optBtn?.contains(e.target)) return;
+      optPanel.classList.add("hidden");
+      optPanel.setAttribute("aria-hidden", "true");
     });
 
     document.querySelectorAll(".device-btn").forEach((btn) => {
@@ -543,11 +552,20 @@
       tryStartGame();
     });
 
-    $("ffOptionsBtn")?.addEventListener("click", () => {
-      const el = $("ffGameOptions");
-      if (el) {
-        el.open = true;
-        el.scrollIntoView({ behavior: "smooth", block: "center" });
+    $("ffOptionsBtn")?.addEventListener("click", (e) => {
+      e.preventDefault();
+      const panel = $("ffGameOptionsPanel");
+      if (!panel) return;
+      const open = panel.classList.contains("hidden");
+      panel.classList.toggle("hidden", !open);
+      panel.setAttribute("aria-hidden", open ? "false" : "true");
+    });
+
+    $("ffOptionsCloseBtn")?.addEventListener("click", () => {
+      const panel = $("ffGameOptionsPanel");
+      if (panel) {
+        panel.classList.add("hidden");
+        panel.setAttribute("aria-hidden", "true");
       }
     });
 

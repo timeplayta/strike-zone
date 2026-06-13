@@ -25,7 +25,7 @@ export function selectMenuHub(hub) {
     b.setAttribute("aria-selected", on ? "true" : "false");
   });
   $("playerPanel")?.classList.toggle("hidden", !isPlayer);
-  document.querySelector(".menu-side-fabs")?.classList.toggle("hidden", !isPlayer);
+  $("ffSideNav")?.classList.toggle("hidden", !isPlayer);
   $("adminPanel")?.classList.toggle("hidden", isPlayer);
   document.body.classList.toggle("menu-hub-admin-active", !isPlayer);
 }
@@ -43,7 +43,7 @@ export function showAdminForAccount(account) {
     refreshMapInfo();
   } else {
     $("playerPanel")?.classList.remove("hidden");
-    document.querySelector(".menu-side-fabs")?.classList.remove("hidden");
+    $("ffSideNav")?.classList.remove("hidden");
     $("adminPanel")?.classList.add("hidden");
     document.body.classList.remove("menu-hub-admin-active");
   }
