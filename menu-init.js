@@ -250,7 +250,7 @@
   }
 
   function showWelcomePanel(panelId) {
-    ["welcomeLoginPanel", "welcomeRegisterPanel", "welcomeMigratePanel"].forEach((id) => {
+    ["welcomeLoginPanel", "welcomeRegisterPanel", "welcomeMigratePanel", "welcomePlayerIdPanel"].forEach((id) => {
       const el = $(id);
       if (el) el.classList.toggle("hidden", id !== panelId);
     });
@@ -299,7 +299,6 @@
     loginBtn?.addEventListener("click", async () => {
       const name = $("loginName")?.value?.trim();
       const password = $("loginPassword")?.value || "";
-      const playerId = $("loginPlayerId")?.value?.trim() || "";
       if (!name) {
         alert("Digite o nome da sua conta.");
         $("loginName")?.focus();
@@ -313,14 +312,14 @@
       loginBtn.disabled = true;
       try {
         const mod = await import("./player-account.js");
-        const res = await mod.loginAccount(name, password, playerId);
+        const res = await mod.loginAccount(name, password);
         if (res.ok) {
           await enterMenuWithAccount(name, mod, res.account);
           return;
         }
         if (res.needPlayerId) {
-          alert(res.msg || "Use seu ID SZ-XXXXXX no campo ID da conta.");
-          $("loginPlayerId")?.focus();
+          $("loginPlayerId").value = "";
+          showWelcomePanel("welcomePlayerIdPanel");
           return;
         }
         if (res.needPasswordSetup) {
@@ -337,6 +336,30 @@
         loginBtn.disabled = false;
       }
     });
+
+    $("welcomeLoginWithIdBtn")?.addEventListener("click", async () => {
+      const name = $("loginName")?.value?.trim();
+      const password = $("loginPassword")?.value || "";
+      const playerId = $("loginPlayerId")?.value?.trim() || "";
+      if (!name || !password || !playerId) {
+        alert("Preencha nome, senha e ID SZ-XXXXXX.");
+        return;
+      }
+      const btn = $("welcomeLoginWithIdBtn");
+      btn.disabled = true;
+      try {
+        const mod = await import("./player-account.js");
+        const res = await mod.loginAccount(name, password, playerId);
+        if (res.ok) await enterMenuWithAccount(name, mod, res.account);
+        else alert(res.msg || "Login falhou.");
+      } catch {
+        alert("Servidor offline.");
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    $("welcomeLoginIdBack")?.addEventListener("click", () => showWelcomePanel("welcomeLoginPanel"));
 
     registerBtn?.addEventListener("click", async () => {
       const name = $("registerName")?.value?.trim();
@@ -371,9 +394,10 @@
           const pid = res.account?.playerId || res.playerId;
           const okEl = $("welcomeRegisterSuccess");
           if (okEl && pid) {
-            okEl.textContent = `Conta criada! Guarde seu ID: ${pid}`;
+            okEl.textContent = `Conta criada! Seu ID automático: ${pid} — anote ou tire print`;
             okEl.classList.remove("hidden");
           }
+          alert(`Conta criada!\n\nSeu ID: ${pid}\n\nGuarde este ID — ele é gerado automaticamente.`);
           await enterMenuWithAccount(name, mod, res.account);
         } else alert(res.msg || "Não foi possível criar a conta.");
       } catch {

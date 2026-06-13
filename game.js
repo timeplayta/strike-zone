@@ -49,6 +49,12 @@ import { createWeaponView, setWeaponView, setWeaponADS, triggerMuzzleFlash, trig
 import { spawnMeleePickups, updateMeleePickups, tryPickupMelee, collectMeleePickup } from "./melee-pickups.js";
 import { createExitZone, updateExitZone, checkExitReached } from "./exit-zone.js";
 import { playGunshot, playEmptyClip } from "./audio.js";
+import { showJumpscareOverlay } from "./horror-jumpscare.js";
+import {
+  spawnLabyrinthMonsters,
+  clearLabyrinthMonsters,
+  updateLabyrinthMonsters,
+} from "./horror-monsters.js";
 import { isSessionAdmin } from "./player-account.js";
 import {
   LOW_GRAPHICS,
@@ -175,7 +181,7 @@ let adminPreviewPivot = null;
 let adminPreviewEntity = null;
 let adminCharOrbit = { yaw: 0.6, pitch: 0.25, dist: 4.2 };
 
-let flashlightEquipped = false;
+let deathJumpscareRunning = false;
 let flashlightLight = null;
 let flashlightFill = null;
 let flashlightTarget = null;
@@ -522,6 +528,7 @@ function startGame(config = {}) {
   adminGodMode = false;
   devMoveSpeedMul = 1;
   adminLiveSpectator = false;
+  deathJumpscareRunning = false;
   lastAdminJumpTap = 0;
   if (config.nightVision) applyAdminNightVision(true);
   else if (!config.fromAdmin) applyAdminNightVision(false);
@@ -624,9 +631,10 @@ function startGame(config = {}) {
       document.getElementById("timer").textContent = "∞";
       hud.classList.add("hidden");
     } else if (isLabyrinthMap(mapData)) {
-      showOverlay("Labirinto escuro — pressione J para a lanterna");
+      spawnLabyrinthMonsters(scene, mapData);
+      showOverlay("Labirinto das Trevas — 3 monstros no escuro • J = lanterna");
       document.getElementById("objective").textContent =
-        "J = lanterna • Explore o escuro • Armas no caminho • Saída verde";
+        "J = lanterna • Evite O Devorador, O Observador e O Vazio Eterno";
       document.getElementById("timer").textContent = "∞";
     } else if (isHorrorMap(mapData)) {
       showOverlay("Modo terror — pressione J para equipar a lanterna");
@@ -2050,6 +2058,27 @@ function showDeathChoice(attacker) {
 }
 
 function killPlayer(attacker) {
+  if (isHorrorMap(mapData) && !isLabyrinthMap(mapData) && !deathJumpscareRunning) {
+    playHorrorDeathJumpscare(attacker);
+    return;
+  }
+  showDeathChoice(attacker);
+}
+
+async function playHorrorDeathJumpscare(attacker) {
+  if (player.dead || deathJumpscareRunning) return;
+  deathJumpscareRunning = true;
+  roundActive = false;
+  document.exitPointerLock?.();
+  mobileControls?.hide();
+  await showJumpscareOverlay({
+    style: "death",
+    name: "VOCÊ NÃO DEVERIA TER PASSADO",
+    emoji: "💀",
+    duration: 1500,
+    sound: "death",
+  });
+  deathJumpscareRunning = false;
   showDeathChoice(attacker);
 }
 
@@ -3084,6 +3113,8 @@ function adminExitToMenu() {
   adminPreviewEntity = null;
   applyAdminNightVision(false);
   disposeFlashlight();
+  clearLabyrinthMonsters(scene);
+  deathJumpscareRunning = false;
   roundActive = false;
   matchOver = true;
   inCinematic = false;
@@ -3541,6 +3572,11 @@ function animate() {
     if (isLabyrinthMap(mapData)) {
       updateMeleePickups(meleePickups, dt);
       updateExitZone(exitZone, dt);
+      if (roundActive && !player.dead && !adminSpectator) {
+        updateLabyrinthMonsters(dt, camera, (name, dmg) => {
+          if (!player.dead) damagePlayer(dmg, name);
+        });
+      }
     }
     updateDoor(dt);
     updateInnerBomb(dt);

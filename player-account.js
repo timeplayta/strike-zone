@@ -9,7 +9,32 @@ import {
 
 export const SHOP_ITEMS = ALL_SHOP_ITEMS;
 
-const KILL_REWARD = 12;
+const PLAYER_ID_HINT_KEY = "strikezone_player_ids";
+
+function nameKey(name) {
+  return (name || "").trim().toLowerCase().replace(/\s+/g, "_");
+}
+
+function savePlayerIdHint(name, playerId) {
+  if (!name || !playerId) return;
+  try {
+    const raw = localStorage.getItem(PLAYER_ID_HINT_KEY);
+    const map = raw ? JSON.parse(raw) : {};
+    map[nameKey(name)] = playerId;
+    localStorage.setItem(PLAYER_ID_HINT_KEY, JSON.stringify(map));
+  } catch { /* ignore */ }
+}
+
+function getSavedPlayerIdForName(name) {
+  try {
+    const raw = localStorage.getItem(PLAYER_ID_HINT_KEY);
+    if (!raw) return "";
+    const map = JSON.parse(raw);
+    return map[nameKey(name)] || "";
+  } catch {
+    return "";
+  }
+}
 const SOLO_KILL_REWARD = 55;
 const SESSION_KEY = "strikezone_session_v3";
 const PASSWORD_HINT_KEY = "strikezone_password_hint";
@@ -201,6 +226,7 @@ export async function registerAccount(name, age, password) {
   if (ok && data.ok) {
     saveSession(trimmed, data.token, data.account);
     savePasswordHint(password);
+    savePlayerIdHint(trimmed, data.account.playerId);
     return { ok: true, account: data.account, playerId: data.account.playerId };
   }
   return { ok: false, msg: data.error || "Não foi possível criar a conta" };
@@ -208,15 +234,17 @@ export async function registerAccount(name, age, password) {
 
 export async function loginAccount(name, password, playerId) {
   const trimmed = (name || "").trim();
+  let pid = (playerId || "").trim();
+  if (!pid) pid = getSavedPlayerIdForName(trimmed);
   const { ok, data } = await apiPost("/api/account/login", {
     name: trimmed,
     password,
-    playerId: playerId || undefined,
-    accountId: playerId?.startsWith?.("SZ-") ? undefined : playerId,
+    playerId: pid || undefined,
   });
   if (ok && data.ok) {
     saveSession(trimmed || data.account.name, data.token, data.account);
     savePasswordHint(password);
+    savePlayerIdHint(trimmed || data.account.name, data.account.playerId);
     window.__characterSkin = data.account.characterSkin;
     return { ok: true, account: data.account };
   }

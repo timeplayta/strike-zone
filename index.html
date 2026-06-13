@@ -66,11 +66,17 @@
       <div id="welcomeLoginPanel" class="welcome-panel">
         <label for="loginName">Nome da conta</label>
         <input type="text" id="loginName" maxlength="16" placeholder="Ex: Maria, João..." autocomplete="username" />
-        <label for="loginPlayerId">ID da conta <span class="label-optional">(se o nome é igual ao de outra pessoa)</span></label>
-        <input type="text" id="loginPlayerId" maxlength="12" placeholder="Ex: SZ-A7X2K9" autocomplete="off" />
         <label for="loginPassword">Senha</label>
         <input type="password" id="loginPassword" maxlength="32" placeholder="Sua senha" autocomplete="current-password" />
         <button type="button" id="welcomeLoginBtn" class="btn-primary">ENTRAR</button>
+      </div>
+
+      <div id="welcomePlayerIdPanel" class="welcome-panel hidden">
+        <p class="welcome-migrate-msg">Várias contas com esse nome. Digite o <strong>ID SZ-XXXXXX</strong> que apareceu quando você criou a conta.</p>
+        <label for="loginPlayerId">ID da sua conta</label>
+        <input type="text" id="loginPlayerId" maxlength="12" placeholder="Ex: SZ-A7X2K9" autocomplete="off" />
+        <button type="button" id="welcomeLoginWithIdBtn" class="btn-primary">ENTRAR COM ID</button>
+        <button type="button" id="welcomeLoginIdBack" class="btn-link">Voltar</button>
       </div>
 
       <div id="welcomeRegisterPanel" class="welcome-panel hidden">
@@ -97,7 +103,7 @@
         <button type="button" id="welcomeMigrateBack" class="btn-link">Voltar ao login</button>
       </div>
 
-      <p class="welcome-note">Cada conta tem um <strong>ID único SZ-XXXXXX</strong> — mesmo nome e senha de outra pessoa não mistura os dados</p>
+      <p class="welcome-note">Ao criar conta, você recebe um <strong>ID SZ-XXXXXX</strong> automático — guarde para login se outra pessoa usa o mesmo nome</p>
       <p id="welcomeRegisterSuccess" class="welcome-register-success hidden"></p>
     </div>
   </div>
@@ -371,6 +377,11 @@
       <button type="button" id="startBtn" class="ff-play-btn btn-start-main">JOGAR</button>
     </nav>
 
+  </div>
+
+  <div id="jumpscareOverlay" class="jumpscare-overlay hidden" aria-hidden="true">
+    <div id="jumpscareFace" class="jumpscare-face"></div>
+    <p id="jumpscareName" class="jumpscare-name hidden"></p>
   </div>
 
   <div id="accountModal" class="hub-modal hidden" aria-hidden="true">
