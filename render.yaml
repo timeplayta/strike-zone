@@ -3,8 +3,13 @@ services:
     name: strike-zone
     runtime: node
     plan: free
-    buildCommand: ""
+    region: oregon
+    buildCommand: npm install --omit=dev
     startCommand: node server.js
+    healthCheckPath: /health
+    autoDeploy: true
     envVars:
       - key: NODE_ENV
         value: production
+      - key: RENDER
+        value: "true"
