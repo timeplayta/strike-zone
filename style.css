@@ -291,11 +291,11 @@ body.user-is-admin .menu-hub-tabs:not(.hidden) {
   transform: translate(-50%, -50%);
   z-index: 44;
   margin: 0;
-  padding: 0.35rem;
+  padding: 0.45rem;
   width: max-content;
-  max-width: min(92vw, 320px);
+  max-width: min(94vw, 380px);
   flex-direction: row;
-  gap: 0.45rem;
+  gap: 0.55rem;
   border-radius: 14px;
   border: 1px solid #3a4860;
   background: rgba(10, 14, 22, 0.92);
@@ -305,9 +305,9 @@ body.user-is-admin .menu-hub-tabs:not(.hidden) {
 
 body.user-is-admin .menu-hub-tab {
   flex: 1;
-  min-width: 120px;
-  padding: 0.55rem 0.85rem;
-  font-size: 0.82rem;
+  min-width: 150px;
+  padding: 0.8rem 1.15rem;
+  font-size: 0.95rem;
   line-height: 1.15;
   text-align: center;
 }
@@ -2728,10 +2728,11 @@ body.mode-mobile .flashlight-hud {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.2rem;
-  min-width: 58px;
-  padding: 0.55rem 0.35rem;
-  border-radius: 12px;
+  gap: 0.28rem;
+  min-width: 76px;
+  min-height: 72px;
+  padding: 0.7rem 0.45rem;
+  border-radius: 14px;
   border: 1px solid #3a4860;
   background: rgba(12, 16, 28, 0.9);
   color: #9ab0c8;
@@ -2741,12 +2742,12 @@ body.mode-mobile .flashlight-hud {
 }
 
 .ff-side-icon {
-  font-size: 1.25rem;
+  font-size: 1.5rem;
   line-height: 1;
 }
 
 .ff-side-label {
-  font-size: 0.62rem;
+  font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.02em;
 }
@@ -2836,17 +2837,22 @@ body.mode-mobile .flashlight-hud {
 .ff-options-btn {
   display: flex;
   align-items: center;
-  gap: 0.3rem;
-  padding: 0.45rem 0.65rem;
-  border-radius: 10px;
+  gap: 0.35rem;
+  padding: 0.55rem 0.8rem;
+  border-radius: 12px;
   border: 1px solid #3a4860;
   background: linear-gradient(135deg, #1a2434, #121820);
   color: #e8ecf4;
   cursor: pointer;
-  font-size: 0.75rem;
+  font-size: 0.85rem;
   font-weight: 700;
   font: inherit;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+}
+
+.ff-options-icon {
+  font-size: 1.1rem;
+  line-height: 1;
 }
 
 .ff-top-corner {
@@ -2869,11 +2875,6 @@ body.mode-mobile .flashlight-hud {
   z-index: 61;
   width: min(92vw, 320px);
   pointer-events: auto;
-}
-
-.ff-options-icon {
-  font-size: 0.95rem;
-  line-height: 1;
 }
 
 .ff-options-panel-inner {
@@ -2929,8 +2930,8 @@ body.menu-hub-admin-active .ff-admin-panel {
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 0.32rem;
-  width: min(44vw, 196px);
+  gap: 0.4rem;
+  width: min(50vw, 228px);
   align-items: stretch;
   align-self: auto;
   margin: 0;
@@ -2954,8 +2955,9 @@ body.menu-hub-admin-active .ff-admin-panel {
 .ff-play-dock-corner .ff-play-btn {
   order: 3;
   width: 100%;
-  min-height: 50px;
+  min-height: 58px;
   margin: 0;
+  font-size: 1.12rem;
 }
 
 .ff-bottom-bar {
@@ -2968,12 +2970,17 @@ body.mode-mobile .ff-side-nav {
 }
 
 body.mode-mobile .ff-side-nav-btn {
-  min-width: 52px;
-  padding: 0.45rem 0.3rem;
+  min-width: 68px;
+  min-height: 64px;
+  padding: 0.55rem 0.35rem;
 }
 
 body.mode-mobile .ff-side-label {
-  font-size: 0.58rem;
+  font-size: 0.66rem;
+}
+
+body.mode-mobile .ff-side-icon {
+  font-size: 1.35rem;
 }
 
 body.mode-mobile .ff-hub-overlay {
@@ -3166,13 +3173,13 @@ body.mode-mobile .ff-weapon-grid {
 
 body.mode-mobile .ff-play-dock-corner,
 body.mode-mobile .ff-play-dock {
-  width: min(50vw, 180px);
+  width: min(54vw, 210px);
 }
 
 body.mode-mobile .ff-play-dock-corner .ff-play-btn,
 body.mode-mobile .ff-play-dock .ff-play-btn {
-  min-height: 46px;
-  font-size: 0.9rem;
+  min-height: 52px;
+  font-size: 1rem;
 }
 
 body.mode-mobile .ff-bottom-zone {
@@ -3211,10 +3218,11 @@ body.mode-mobile .ff-bottom-zone {
 .ff-map-picker-btn {
   display: flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.4rem;
   width: 100%;
-  padding: 0.5rem 0.55rem;
-  border-radius: 10px;
+  min-height: 52px;
+  padding: 0.65rem 0.7rem;
+  border-radius: 12px;
   border: 1px solid #3a4860;
   background: linear-gradient(135deg, #1a2434, #121820);
   color: #e8ecf4;
@@ -3224,7 +3232,7 @@ body.mode-mobile .ff-bottom-zone {
 }
 
 .ff-map-picker-label {
-  font-size: 0.62rem;
+  font-size: 0.68rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: #7a8aa0;
@@ -3233,7 +3241,7 @@ body.mode-mobile .ff-bottom-zone {
 
 .ff-map-picker-value {
   flex: 1;
-  font-size: 0.82rem;
+  font-size: 0.92rem;
   font-weight: 700;
   white-space: nowrap;
   overflow: hidden;
@@ -3512,8 +3520,8 @@ body.round-weapon-pick-active #mobileControls {
   flex: 0 0 auto;
   min-width: 0;
   margin-left: 0;
-  padding: 0.75rem 0.5rem;
-  font-size: 1rem;
+  padding: 0.85rem 0.6rem;
+  font-size: 1.12rem;
   font-weight: 800;
   letter-spacing: 0.06em;
   border: none;
@@ -3702,9 +3710,9 @@ body.mode-mobile.user-is-admin .menu-hub-tabs:not(.hidden) {
 }
 
 body.mode-mobile.user-is-admin .menu-hub-tab {
-  min-width: 100px;
-  padding: 0.5rem 0.6rem;
-  font-size: 0.75rem;
+  min-width: 130px;
+  padding: 0.7rem 0.85rem;
+  font-size: 0.88rem;
 }
 
 .jumpscare-overlay {
