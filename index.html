@@ -119,12 +119,59 @@
       </button>
       <div class="ff-header-right">
         <span id="menuCoinsDisplay" class="ff-coins">0 🪙</span>
-        <button type="button" id="ffOptionsBtn" class="ff-options-btn" title="Opções">
-          <span class="ff-options-icon">⚙</span>
-          <span class="ff-options-label">Opções</span>
-        </button>
       </div>
     </header>
+
+    <div class="ff-top-corner" id="ffTopCorner">
+      <div id="ffGameOptionsPanel" class="ff-options-panel hidden" aria-hidden="true">
+        <div class="ff-options-panel-inner">
+          <div class="ff-options-panel-head">
+            <strong>Opções de partida</strong>
+            <button type="button" id="ffOptionsCloseBtn" class="shop-close" aria-label="Fechar">✕</button>
+          </div>
+          <div class="ff-device-row device-select">
+            <button type="button" class="device-btn selected" data-device="desktop">
+              <span class="device-icon">💻</span>
+              <span class="device-name">Computador</span>
+              <span class="device-desc">Mouse + teclado (WASD)</span>
+            </button>
+            <button type="button" class="device-btn" data-device="mobile">
+              <span class="device-icon">📱</span>
+              <span class="device-name">Celular (Android)</span>
+              <span class="device-desc">Estilo Free Fire — joystick + arrastar</span>
+            </button>
+          </div>
+          <input type="text" id="playerName" class="visually-hidden" value="Operador" maxlength="16" autocomplete="nickname" aria-hidden="true" tabindex="-1" />
+          <details class="ff-details labyrinth-hide" id="ffGameOptions" open>
+            <summary class="ff-details-summary">Modo e bots</summary>
+            <div class="ff-details-body">
+              <label class="labyrinth-hide">Modo</label>
+              <select id="gameMode" class="labyrinth-hide">
+                <option value="tdm">Eliminação (primeiro a 15)</option>
+                <option value="defuse">Desarmar bomba (5 rounds)</option>
+              </select>
+              <div class="npc-simple labyrinth-hide">
+                <label class="ally-check-row" for="wantHelpers">
+                  <input type="checkbox" id="wantHelpers" />
+                  <span>Quer 2 ajudantes CT na partida?</span>
+                </label>
+                <label for="botCount">Quantidade de inimigos (1–20)</label>
+                <div class="bot-row">
+                  <input type="range" id="botCount" min="1" max="20" value="4" />
+                  <span id="botCountLabel" class="bot-count-display">4</span>
+                </div>
+                <p id="difficultyPreview" class="difficulty-preview">Dificuldade: equilibrada (4 bots)</p>
+              </div>
+              <input type="checkbox" id="useBotDifficulty" checked class="visually-hidden" tabindex="-1" aria-hidden="true" />
+            </div>
+          </details>
+        </div>
+      </div>
+      <button type="button" id="ffOptionsBtn" class="ff-options-btn ff-options-corner" title="Opções">
+        <span class="ff-options-icon">⚙</span>
+        <span class="ff-options-label">Opções</span>
+      </button>
+    </div>
 
     <div id="menuHubTabs" class="menu-hub-tabs hidden" role="tablist" aria-label="Painel jogador ou admin">
       <button type="button" class="menu-hub-tab selected" data-menu-hub="player" role="tab" aria-selected="true">Jogador</button>
@@ -214,51 +261,6 @@
             </div>
           </div>
         </div>
-      </div>
-    </div>
-
-    <div id="ffGameOptionsPanel" class="ff-options-panel hidden" aria-hidden="true">
-      <div class="ff-options-panel-inner">
-        <div class="ff-options-panel-head">
-          <strong>Opções de partida</strong>
-          <button type="button" id="ffOptionsCloseBtn" class="shop-close" aria-label="Fechar">✕</button>
-        </div>
-        <div class="ff-device-row device-select">
-          <button type="button" class="device-btn selected" data-device="desktop">
-            <span class="device-icon">💻</span>
-            <span class="device-name">Computador</span>
-            <span class="device-desc">Mouse + teclado (WASD)</span>
-          </button>
-          <button type="button" class="device-btn" data-device="mobile">
-            <span class="device-icon">📱</span>
-            <span class="device-name">Celular (Android)</span>
-            <span class="device-desc">Estilo Free Fire — joystick + arrastar</span>
-          </button>
-        </div>
-        <input type="text" id="playerName" class="visually-hidden" value="Operador" maxlength="16" autocomplete="nickname" aria-hidden="true" tabindex="-1" />
-        <details class="ff-details labyrinth-hide" id="ffGameOptions" open>
-          <summary class="ff-details-summary">Modo e bots</summary>
-          <div class="ff-details-body">
-            <label class="labyrinth-hide">Modo</label>
-            <select id="gameMode" class="labyrinth-hide">
-              <option value="tdm">Eliminação (primeiro a 15)</option>
-              <option value="defuse">Desarmar bomba (5 rounds)</option>
-            </select>
-            <div class="npc-simple labyrinth-hide">
-              <label class="ally-check-row" for="wantHelpers">
-                <input type="checkbox" id="wantHelpers" />
-                <span>Quer 2 ajudantes CT na partida?</span>
-              </label>
-              <label for="botCount">Quantidade de inimigos (1–20)</label>
-              <div class="bot-row">
-                <input type="range" id="botCount" min="1" max="20" value="4" />
-                <span id="botCountLabel" class="bot-count-display">4</span>
-              </div>
-              <p id="difficultyPreview" class="difficulty-preview">Dificuldade: equilibrada (4 bots)</p>
-            </div>
-            <input type="checkbox" id="useBotDifficulty" checked class="visually-hidden" tabindex="-1" aria-hidden="true" />
-          </div>
-        </details>
       </div>
     </div>
 

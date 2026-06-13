@@ -509,9 +509,9 @@
 
     document.addEventListener("click", (e) => {
       const optPanel = $("ffGameOptionsPanel");
-      const optBtn = $("ffOptionsBtn");
+      const topCorner = $("ffTopCorner");
       if (!optPanel || optPanel.classList.contains("hidden")) return;
-      if (optPanel.contains(e.target) || optBtn?.contains(e.target)) return;
+      if (optPanel.contains(e.target) || topCorner?.contains(e.target)) return;
       optPanel.classList.add("hidden");
       optPanel.setAttribute("aria-hidden", "true");
     });

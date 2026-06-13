@@ -279,15 +279,37 @@ body.mode-desktop.user-is-admin .menu-layout {
 .menu-hub-tabs {
   display: flex;
   gap: 0.5rem;
-  max-width: 520px;
+  max-width: 320px;
   margin: 0 auto 0.65rem;
   padding: 0 0.5rem;
 }
 
+body.user-is-admin .menu-hub-tabs:not(.hidden) {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 44;
+  margin: 0;
+  padding: 0.35rem;
+  max-width: min(92vw, 340px);
+  width: max-content;
+  border-radius: 14px;
+  border: 1px solid #3a4860;
+  background: rgba(10, 14, 22, 0.92);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(8px);
+}
+
+body.user-is-admin .menu-hub-tab {
+  flex: 1;
+  min-width: 130px;
+  padding: 0.65rem 1rem;
+  font-size: 0.88rem;
+}
+
 body.mode-desktop .menu-hub-tabs {
   max-width: 620px;
-  margin-left: max(0.75rem, calc((100vw - 640px) / 2));
-  margin-right: auto;
 }
 
 .menu-hub-tab {
@@ -2811,28 +2833,43 @@ body.mode-mobile .flashlight-hud {
   display: flex;
   align-items: center;
   gap: 0.3rem;
-  padding: 0.35rem 0.6rem;
-  border-radius: 999px;
+  padding: 0.45rem 0.65rem;
+  border-radius: 10px;
   border: 1px solid #3a4860;
   background: linear-gradient(135deg, #1a2434, #121820);
   color: #e8ecf4;
   cursor: pointer;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 700;
   font: inherit;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+}
+
+.ff-top-corner {
+  position: fixed;
+  top: max(0.35rem, env(safe-area-inset-top));
+  right: max(0.35rem, env(safe-area-inset-right));
+  z-index: 46;
+  pointer-events: none;
+}
+
+.ff-top-corner .ff-options-btn {
+  pointer-events: auto;
+}
+
+.ff-options-panel {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  right: 0;
+  left: auto;
+  z-index: 61;
+  width: min(92vw, 320px);
+  pointer-events: auto;
 }
 
 .ff-options-icon {
   font-size: 0.95rem;
   line-height: 1;
-}
-
-.ff-options-panel {
-  position: absolute;
-  top: 2.85rem;
-  right: 0.5rem;
-  z-index: 60;
-  width: min(92vw, 320px);
 }
 
 .ff-options-panel-inner {
@@ -2947,9 +2984,12 @@ body.mode-mobile .ff-player-shell {
   padding-bottom: 0.15rem;
 }
 
+body.mode-mobile .ff-top-corner {
+  top: max(0.25rem, env(safe-area-inset-top));
+  right: max(0.25rem, env(safe-area-inset-right));
+}
+
 body.mode-mobile .ff-options-panel {
-  top: 2.5rem;
-  right: 0.35rem;
   width: min(96vw, 300px);
 }
 
