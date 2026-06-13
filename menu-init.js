@@ -110,11 +110,36 @@
     $("overlay")?.classList.add("hidden");
   }
 
+  const MAP_LABELS = {
+    dust: "Dust Alley",
+    warehouse: "Cold Storage",
+    horror: "Terror",
+    labyrinth: "Fim das Trevas",
+  };
+
+  function updateSelectedMapLabel() {
+    const map = document.querySelector(".map-btn.selected")?.dataset?.map || "dust";
+    const el = $("ffSelectedMapName");
+    if (el) el.textContent = MAP_LABELS[map] || map;
+  }
+
+  function toggleMapPicker(open) {
+    const panel = $("ffMapPickerPanel");
+    const btn = $("ffMapPickerBtn");
+    if (!panel) return;
+    const show = open ?? panel.classList.contains("hidden");
+    panel.classList.toggle("hidden", !show);
+    panel.setAttribute("aria-hidden", show ? "false" : "true");
+    if (btn) btn.setAttribute("aria-expanded", show ? "true" : "false");
+  }
+
   function selectMapBtn(btn) {
     if (!btn?.dataset?.map) return;
     document.querySelectorAll(".map-btn").forEach((b) => b.classList.remove("selected"));
     btn.classList.add("selected");
     updateMapModeUI();
+    updateSelectedMapLabel();
+    toggleMapPicker(false);
   }
 
   function updateMapModeUI() {
@@ -123,8 +148,6 @@
     document.querySelectorAll(".labyrinth-hide").forEach((el) => {
       el.classList.toggle("hidden", isLab);
     });
-    const labNote = $("ffLabyrinthNote");
-    if (labNote) labNote.classList.toggle("hidden", !isLab);
     updateMenuHint();
   }
 
@@ -285,10 +308,6 @@
       await preloadPlayerLoadout(name);
       const hub = await import("./account-hub.js");
       hub.mountAccountFab?.();
-    } catch { /* optional */ }
-    try {
-      const { initMenuWeaponPreviews } = await import("./menu-weapon-preview.js");
-      requestAnimationFrame(() => initMenuWeaponPreviews());
     } catch { /* optional */ }
   }
 
@@ -469,14 +488,24 @@
     applyDeviceFromURL();
     applyMenuDeviceLayout();
 
-    bindDelegatedClick(".ff-map-scroll", selectMapBtn);
-    bindDelegatedClick(".map-select", selectMapBtn);
+    bindDelegatedClick(".ff-map-picker-panel", selectMapBtn);
+    bindDelegatedClick(".ff-map-cat-grid", selectMapBtn);
+    updateSelectedMapLabel();
     updateMapModeUI();
-    bindDelegatedClick(".weapon-select", selectWeaponBtn);
 
-    import("./menu-weapon-preview.js")
-      .then((m) => requestAnimationFrame(() => m.initMenuWeaponPreviews?.()))
-      .catch(() => {});
+    $("ffMapPickerBtn")?.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      toggleMapPicker();
+    });
+
+    document.addEventListener("click", (e) => {
+      const panel = $("ffMapPickerPanel");
+      const btn = $("ffMapPickerBtn");
+      if (!panel || panel.classList.contains("hidden")) return;
+      if (panel.contains(e.target) || btn?.contains(e.target)) return;
+      toggleMapPicker(false);
+    });
 
     document.querySelectorAll(".device-btn").forEach((btn) => {
       const pick = () => {

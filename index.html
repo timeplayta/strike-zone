@@ -158,50 +158,6 @@
 
       <input type="text" id="playerName" class="visually-hidden" value="Operador" maxlength="16" autocomplete="nickname" aria-hidden="true" tabindex="-1" />
 
-      <section id="ffWeaponSection" class="ff-weapon-section labyrinth-hide" aria-label="Seleção de armas">
-        <p class="ff-section-label">Armas</p>
-        <div class="weapon-select ff-weapon-grid">
-          <button type="button" class="weapon-btn ff-weapon-card selected" data-weapon="ak47">
-            <span class="weapon-preview-wrap">
-              <canvas class="weapon-preview-canvas" data-weapon-preview="ak47" width="120" height="88"></canvas>
-            </span>
-            <span class="weapon-name">AK-47</span>
-          </button>
-          <button type="button" class="weapon-btn ff-weapon-card" data-weapon="scar">
-            <span class="weapon-preview-wrap">
-              <canvas class="weapon-preview-canvas" data-weapon-preview="scar" width="120" height="88"></canvas>
-            </span>
-            <span class="weapon-name">SCAR-H</span>
-          </button>
-          <button type="button" class="weapon-btn ff-weapon-card" data-weapon="m4">
-            <span class="weapon-preview-wrap">
-              <canvas class="weapon-preview-canvas" data-weapon-preview="m4" width="120" height="88"></canvas>
-            </span>
-            <span class="weapon-name">M4A1</span>
-          </button>
-          <button type="button" class="weapon-btn ff-weapon-card" data-weapon="ump45">
-            <span class="weapon-preview-wrap">
-              <canvas class="weapon-preview-canvas" data-weapon-preview="ump45" width="120" height="88"></canvas>
-            </span>
-            <span class="weapon-name">UMP-45</span>
-          </button>
-          <button type="button" class="weapon-btn ff-weapon-card" data-weapon="awm">
-            <span class="weapon-preview-wrap">
-              <canvas class="weapon-preview-canvas" data-weapon-preview="awm" width="120" height="88"></canvas>
-            </span>
-            <span class="weapon-name">AWM</span>
-          </button>
-          <button type="button" class="weapon-btn ff-weapon-card" data-weapon="doze">
-            <span class="weapon-preview-wrap">
-              <canvas class="weapon-preview-canvas" data-weapon-preview="doze" width="120" height="88"></canvas>
-            </span>
-            <span class="weapon-name">Doze</span>
-          </button>
-        </div>
-      </section>
-
-      <p id="ffLabyrinthNote" class="ff-labyrinth-note hidden">Labirinto — sem armas de fogo. Encontre a saída.</p>
-
       <details class="ff-details labyrinth-hide" id="ffGameOptions">
         <summary class="ff-details-summary">Modo e bots</summary>
         <div class="ff-details-body">
@@ -325,29 +281,6 @@
     </div>
 
     <footer class="ff-bottom-zone" aria-label="Mapas e ações">
-      <div class="ff-play-dock">
-        <p class="ff-section-label ff-dock-label">Mapas</p>
-        <div class="ff-map-scroll ff-map-dock">
-          <button type="button" class="map-btn selected" data-map="dust">
-            <span class="map-name">Dust Alley</span>
-            <span class="map-desc">Deserto</span>
-          </button>
-          <button type="button" class="map-btn" data-map="warehouse">
-            <span class="map-name">Cold Storage</span>
-            <span class="map-desc">Armazém</span>
-          </button>
-          <button type="button" class="map-btn map-btn-horror" data-map="horror">
-            <span class="map-name">Terror</span>
-            <span class="map-desc">Escuro</span>
-          </button>
-          <button type="button" class="map-btn map-btn-horror" data-map="labyrinth">
-            <span class="map-name">Labirinto</span>
-            <span class="map-desc">Escape</span>
-          </button>
-        </div>
-        <p id="loadStatus" class="load-status ff-load-status">Carregando motor do jogo...</p>
-        <button type="button" id="startBtn" class="ff-play-btn btn-start-main">JOGAR</button>
-      </div>
       <nav class="ff-bottom-bar" aria-label="Menu principal">
         <button type="button" id="openCharacterBtn" class="ff-nav-btn" title="Personagem">
           <span class="ff-nav-icon">👤</span>
@@ -366,6 +299,45 @@
           <span class="ff-nav-label">Opções</span>
         </button>
       </nav>
+
+      <div class="ff-play-dock ff-play-dock-right">
+        <div id="ffMapPickerPanel" class="ff-map-picker-panel hidden" aria-hidden="true">
+          <div class="ff-map-category">
+            <p class="ff-map-cat-title">Jogo de tiro</p>
+            <div class="ff-map-cat-grid">
+              <button type="button" class="map-btn selected" data-map="dust">
+                <span class="map-name">Dust Alley</span>
+                <span class="map-desc">Deserto</span>
+              </button>
+              <button type="button" class="map-btn" data-map="warehouse">
+                <span class="map-name">Cold Storage</span>
+                <span class="map-desc">Armazém</span>
+              </button>
+            </div>
+          </div>
+          <div class="ff-map-category ff-map-cat-terror">
+            <p class="ff-map-cat-title">Terror</p>
+            <div class="ff-map-cat-grid">
+              <button type="button" class="map-btn map-btn-horror" data-map="horror">
+                <span class="map-name">Terror</span>
+                <span class="map-desc">Combate escuro</span>
+              </button>
+              <button type="button" class="map-btn map-btn-horror" data-map="labyrinth">
+                <span class="map-name">Fim das Trevas</span>
+                <span class="map-desc">Labirinto</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <button type="button" id="ffMapPickerBtn" class="ff-map-picker-btn" aria-expanded="false" aria-controls="ffMapPickerPanel">
+          <span class="ff-map-picker-label">Mapa</span>
+          <span id="ffSelectedMapName" class="ff-map-picker-value">Dust Alley</span>
+          <span class="ff-map-picker-chevron">▾</span>
+        </button>
+        <p id="loadStatus" class="load-status ff-load-status">Carregando motor do jogo...</p>
+        <button type="button" id="startBtn" class="ff-play-btn btn-start-main">JOGAR</button>
+      </div>
     </footer>
 
   </div>
@@ -471,6 +443,52 @@
       <div id="arsenalWeaponPreview" class="arsenal-weapon-preview">AK-47</div>
       <div id="arsenalWeaponTabs" class="arsenal-weapon-tabs"></div>
       <div id="arsenalSkinList" class="arsenal-skin-list"></div>
+    </div>
+  </div>
+
+  <div id="roundWeaponPicker" class="round-weapon-picker hidden" aria-hidden="true">
+    <div class="round-weapon-picker-inner">
+      <h2 class="round-weapon-title">Escolha sua arma</h2>
+      <p class="round-weapon-sub">Round iniciando — selecione a arma principal</p>
+      <div class="weapon-select ff-weapon-grid round-weapon-grid">
+        <button type="button" class="weapon-btn ff-weapon-card selected" data-weapon="ak47">
+          <span class="weapon-preview-wrap">
+            <canvas class="weapon-preview-canvas" data-weapon-preview="ak47" width="120" height="88"></canvas>
+          </span>
+          <span class="weapon-name">AK-47</span>
+        </button>
+        <button type="button" class="weapon-btn ff-weapon-card" data-weapon="scar">
+          <span class="weapon-preview-wrap">
+            <canvas class="weapon-preview-canvas" data-weapon-preview="scar" width="120" height="88"></canvas>
+          </span>
+          <span class="weapon-name">SCAR-H</span>
+        </button>
+        <button type="button" class="weapon-btn ff-weapon-card" data-weapon="m4">
+          <span class="weapon-preview-wrap">
+            <canvas class="weapon-preview-canvas" data-weapon-preview="m4" width="120" height="88"></canvas>
+          </span>
+          <span class="weapon-name">M4A1</span>
+        </button>
+        <button type="button" class="weapon-btn ff-weapon-card" data-weapon="ump45">
+          <span class="weapon-preview-wrap">
+            <canvas class="weapon-preview-canvas" data-weapon-preview="ump45" width="120" height="88"></canvas>
+          </span>
+          <span class="weapon-name">UMP-45</span>
+        </button>
+        <button type="button" class="weapon-btn ff-weapon-card" data-weapon="awm">
+          <span class="weapon-preview-wrap">
+            <canvas class="weapon-preview-canvas" data-weapon-preview="awm" width="120" height="88"></canvas>
+          </span>
+          <span class="weapon-name">AWM</span>
+        </button>
+        <button type="button" class="weapon-btn ff-weapon-card" data-weapon="doze">
+          <span class="weapon-preview-wrap">
+            <canvas class="weapon-preview-canvas" data-weapon-preview="doze" width="120" height="88"></canvas>
+          </span>
+          <span class="weapon-name">Doze</span>
+        </button>
+      </div>
+      <button type="button" id="roundWeaponConfirm" class="btn-primary round-weapon-confirm">CONFIRMAR</button>
     </div>
   </div>
 

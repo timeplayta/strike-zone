@@ -94,6 +94,7 @@ let adsActive = false;
 let bossSpawned = false;
 let coverPoints = [];
 let pointerLocked = false;
+let weaponPickPending = false;
 let yaw = 0, pitch = 0;
 let scoreCT = 0, scoreT = 0, round = 1;
 let matchOver = false, roundActive = true;
@@ -506,6 +507,28 @@ function bakeWallColliders() {
   }
 }
 
+function needsRoundWeaponPick() {
+  if (adminPreviewMode === "map") return false;
+  if (!mapData) return false;
+  return !isLabyrinthMap(mapData);
+}
+
+function offerRoundWeaponPick() {
+  if (!needsRoundWeaponPick()) return Promise.resolve(primaryWeaponId);
+  weaponPickPending = true;
+  return import("./round-weapon-picker.js").then(
+    (mod) =>
+      new Promise((resolve) => {
+        mod.showRoundWeaponPicker((id) => {
+          primaryWeaponId = id;
+          initWeapons();
+          weaponPickPending = false;
+          resolve(id);
+        });
+      })
+  );
+}
+
 function startGame(config = {}) {
   if (typeof config !== "object" || config === null) config = {};
   if (!config.fromAdmin && window.__adminStartConfig) {
@@ -550,7 +573,7 @@ function startGame(config = {}) {
 
     const mapBtn = document.querySelector(".map-btn.selected");
     const mapKey = config.mapKey || mapBtn?.dataset.map || "dust";
-    primaryWeaponId = document.querySelector(".weapon-btn.selected")?.dataset.weapon || "ak47";
+    primaryWeaponId = config.primaryWeaponId || "ak47";
     currentMapKey = mapKey;
     mapData = MAPS[mapKey];
     if (!mapData) {
@@ -625,31 +648,39 @@ function startGame(config = {}) {
     roundActive = true;
     collectedMelee = { facao: false, porrete: false, katana: false };
     currentMeleeId = null;
-    if (mapPreviewOnly) {
-      showOverlay("Espectador — WASD voar • ESC menu");
-      document.getElementById("objective").textContent = "Inspeção de mapa (admin)";
-      document.getElementById("timer").textContent = "∞";
-      hud.classList.add("hidden");
-    } else if (isLabyrinthMap(mapData)) {
-      spawnLabyrinthMonsters(scene, mapData);
-      showOverlay("Labirinto das Trevas — 3 monstros no escuro • J = lanterna");
-      document.getElementById("objective").textContent =
-        "J = lanterna • Evite O Devorador, O Observador e O Vazio Eterno";
-      document.getElementById("timer").textContent = "∞";
-    } else if (isHorrorMap(mapData)) {
-      showOverlay("Modo terror — pressione J para equipar a lanterna");
-      document.getElementById("objective").textContent =
-        "Sobreviva ao escuro — J = lanterna • elimine as ameaças";
-    } else {
-      showOverlay("ROUND 1 — Inimigos entram em 3s");
-      document.getElementById("objective").textContent = isMobileMode()
-        ? gameMode === "defuse"
-          ? "Joystick mover • Direita mirar • ATIRAR • B = bomba"
-          : "Elimine os bandidos — joystick, mira e ATIRAR"
-        : gameMode === "defuse"
-          ? `Passe pelo CENTRO do mapa → sala do guardião (200 HP) • ${botCount} bandido(s) • Botão direito = mirar`
-          : `Elimine ${botCount} bandido(s) — centro do mapa = sala do guardião musculoso • Botão direito = mirar`;
-    }
+
+    const showMatchOverlay = () => {
+      if (mapPreviewOnly) {
+        showOverlay("Espectador — WASD voar • ESC menu");
+        document.getElementById("objective").textContent = "Inspeção de mapa (admin)";
+        document.getElementById("timer").textContent = "∞";
+        hud.classList.add("hidden");
+      } else if (isLabyrinthMap(mapData)) {
+        spawnLabyrinthMonsters(scene, mapData);
+        showOverlay("Labirinto das Trevas — 3 monstros no escuro • J = lanterna");
+        document.getElementById("objective").textContent =
+          "J = lanterna • Evite O Devorador, O Observador e O Vazio Eterno";
+        document.getElementById("timer").textContent = "∞";
+      } else if (isHorrorMap(mapData)) {
+        showOverlay("Modo terror — pressione J para equipar a lanterna");
+        document.getElementById("objective").textContent =
+          "Sobreviva ao escuro — J = lanterna • elimine as ameaças";
+      } else {
+        showOverlay(`ROUND ${round} — Inimigos entram em 3s`);
+        document.getElementById("objective").textContent = isMobileMode()
+          ? gameMode === "defuse"
+            ? "Joystick mover • Direita mirar • ATIRAR • B = bomba"
+            : "Elimine os bandidos — joystick, mira e ATIRAR"
+          : gameMode === "defuse"
+            ? `Passe pelo CENTRO do mapa → sala do guardião (200 HP) • ${botCount} bandido(s) • Botão direito = mirar`
+            : `Elimine ${botCount} bandido(s) — centro do mapa = sala do guardião musculoso • Botão direito = mirar`;
+      }
+    };
+
+    const requestPointerLockIfAllowed = () => {
+      if (!isMobileMode() && adminPreviewMode !== "character" && !weaponPickPending) requestPointerLock();
+    };
+
     updateHUD();
     updateAdminHud();
     updateAdminGameplayHud();
@@ -660,7 +691,12 @@ function startGame(config = {}) {
       window.__gameAnimating = true;
       animate();
     }
-    if (!isMobileMode() && adminPreviewMode !== "character") requestPointerLock();
+
+    offerRoundWeaponPick().then(() => {
+      showMatchOverlay();
+      requestPointerLockIfAllowed();
+    });
+
     if (adminSpectator && weaponView) hideAllWeapons(weaponView);
   } catch (err) {
     console.error(err);
@@ -1802,7 +1838,7 @@ function reload() {
 }
 
 function shoot() {
-  if (player.dead || inCinematic || !roundActive) return;
+  if (player.dead || inCinematic || !roundActive || weaponPickPending) return;
   if (!currentWeapon) {
     if (isLabyrinthMap(mapData)) showOverlay("Desarmado — procure uma arma no labirinto (E ou clique)");
     return;
@@ -2786,7 +2822,7 @@ function endRound(winner) {
     });
     bossSpawned = false;
     spawnBoss(); // guardião sempre volta para a sala no round novo
-    showOverlay(`ROUND ${round}`);
+    offerRoundWeaponPick().then(() => showOverlay(`ROUND ${round}`));
   }, 3000);
 }
 
@@ -2794,6 +2830,8 @@ function endMatch(winner, opts = {}) {
   if (matchOver && !opts.skipCinematic) return;
   matchOver = true;
   roundActive = false;
+  weaponPickPending = false;
+  import("./round-weapon-picker.js").then((m) => m.hideRoundWeaponPicker?.()).catch(() => {});
   mobileControls?.hide();
   document.exitPointerLock?.();
   hud.classList.add("hidden");
