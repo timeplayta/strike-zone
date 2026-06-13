@@ -1,7 +1,7 @@
-/** Contas administradoras — MJuan / 12345 */
+/** Contas administradoras — MJuan / 123456 */
 
 export const ADMIN_ACCOUNTS = {
-  mjuan: "12345",
+  mjuan: "123456",
 };
 
 export function isAdminCredentials(name, password) {

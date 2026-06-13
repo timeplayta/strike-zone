@@ -272,8 +272,59 @@ body.mode-desktop .menu-layout {
 }
 
 body.mode-desktop.user-is-admin .menu-layout {
-  max-width: 940px;
-  margin-left: max(0.5rem, calc((100vw - 940px) / 2));
+  max-width: 620px;
+  margin-left: max(0.5rem, calc((100vw - 640px) / 2));
+}
+
+.menu-hub-tabs {
+  display: flex;
+  gap: 0.5rem;
+  max-width: 520px;
+  margin: 0 auto 0.65rem;
+  padding: 0 0.5rem;
+}
+
+body.mode-desktop .menu-hub-tabs {
+  max-width: 620px;
+  margin-left: max(0.75rem, calc((100vw - 640px) / 2));
+  margin-right: auto;
+}
+
+.menu-hub-tab {
+  flex: 1;
+  padding: 0.55rem 0.75rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  background: #1a2434;
+  border: 1px solid #3d4f66;
+  border-radius: 8px;
+  color: #9fb0c3;
+  cursor: pointer;
+}
+
+.menu-hub-tab.selected {
+  border-color: #4a9eff;
+  color: #fff;
+  background: linear-gradient(145deg, #1e3a5f, #152840);
+}
+
+.menu-hub-tab[data-menu-hub="admin"].selected {
+  border-color: #cc4444;
+  background: linear-gradient(145deg, #3a1818, #241010);
+  color: #ffaa99;
+}
+
+body.menu-hub-admin-active .menu-layout {
+  max-width: 520px;
+}
+
+body.mode-desktop.menu-hub-admin-active .menu-layout {
+  max-width: 620px;
+}
+
+body.mode-desktop.menu-hub-admin-active .menu-card-admin {
+  max-width: 620px;
+  width: min(94vw, 620px);
 }
 
 .menu-card-play,

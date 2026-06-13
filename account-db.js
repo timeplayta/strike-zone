@@ -4,7 +4,8 @@ const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 
-const ADMIN_ACCOUNTS = { mjuan: "12345" };
+const ADMIN_ACCOUNTS = { mjuan: "123456" };
+const ADMIN_BOOTSTRAP_PASSWORD = "123456";
 
 const DB_FILE = path.join(__dirname, "data", "accounts.json");
 const SESSION_DAYS = 30;
@@ -34,12 +35,17 @@ function ensureBootstrapAdmin() {
   const id = "mjuan";
   if (!db.players[id]) {
     const p = defaultPlayer("MJuan", 18);
-    setPasswordOnPlayer(p, ADMIN_ACCOUNTS.mjuan);
+    setPasswordOnPlayer(p, ADMIN_BOOTSTRAP_PASSWORD);
     p.isAdmin = true;
     db.players[id] = p;
     writeDb(db);
-  } else if (!db.players[id].isAdmin) {
-    db.players[id].isAdmin = ADMIN_ACCOUNTS.mjuan === "12345";
+  } else {
+    const p = db.players[id];
+    p.isAdmin = true;
+    if (!verifyPassword(p, ADMIN_BOOTSTRAP_PASSWORD)) {
+      setPasswordOnPlayer(p, ADMIN_BOOTSTRAP_PASSWORD);
+    }
+    db.players[id] = p;
     writeDb(db);
   }
 }

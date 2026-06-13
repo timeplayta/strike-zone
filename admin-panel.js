@@ -17,15 +17,36 @@ function logAdmin(msg) {
   while (el.children.length > 12) el.lastChild.remove();
 }
 
+export function selectMenuHub(hub) {
+  const isPlayer = hub === "player";
+  document.querySelectorAll(".menu-hub-tab").forEach((b) => {
+    const on = b.dataset.menuHub === hub;
+    b.classList.toggle("selected", on);
+    b.setAttribute("aria-selected", on ? "true" : "false");
+  });
+  $("playerPanel")?.classList.toggle("hidden", !isPlayer);
+  document.querySelector(".menu-side-fabs")?.classList.toggle("hidden", !isPlayer);
+  $("adminPanel")?.classList.toggle("hidden", isPlayer);
+  document.body.classList.toggle("menu-hub-admin-active", !isPlayer);
+}
+
 export function setAdminPanelVisible(show) {
-  const panel = $("adminPanel");
-  if (panel) panel.classList.toggle("hidden", !show);
   document.body.classList.toggle("user-is-admin", show);
+  $("menuHubTabs")?.classList.toggle("hidden", !show);
 }
 
 export function showAdminForAccount(account) {
-  setAdminPanelVisible(isAdminAccount(account));
-  if (isAdminAccount(account)) refreshMapInfo();
+  const admin = isAdminAccount(account);
+  setAdminPanelVisible(admin);
+  if (admin) {
+    selectMenuHub("player");
+    refreshMapInfo();
+  } else {
+    $("playerPanel")?.classList.remove("hidden");
+    document.querySelector(".menu-side-fabs")?.classList.remove("hidden");
+    $("adminPanel")?.classList.add("hidden");
+    document.body.classList.remove("menu-hub-admin-active");
+  }
 }
 
 function refreshMapInfo() {
@@ -57,6 +78,10 @@ function syncAdminMapToMenu(mapKey) {
 }
 
 function initAdminPanel() {
+  document.querySelectorAll(".menu-hub-tab").forEach((btn) => {
+    btn.addEventListener("click", () => selectMenuHub(btn.dataset.menuHub));
+  });
+
   document.querySelectorAll(".admin-tab").forEach((btn) => {
     btn.addEventListener("click", () => selectAdminTab(btn.dataset.adminTab));
   });
@@ -125,13 +150,11 @@ function initAdminPanel() {
 
   $("adminCmdSend")?.addEventListener("click", runCmd);
   $("adminCmdInput")?.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") runCmd();
+    if (e.key === "Enter") {
+      e.preventDefault();
+      runCmd();
+    }
   });
-
-  MAP_KEYS.forEach((k) => {
-    if (!MAPS[k]) return;
-  });
-  refreshMapInfo();
 }
 
 if (document.readyState === "loading") {
@@ -141,4 +164,5 @@ if (document.readyState === "loading") {
 }
 
 window.showAdminForAccount = showAdminForAccount;
+window.selectMenuHub = selectMenuHub;
 window.adminLog = logAdmin;
