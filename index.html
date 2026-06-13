@@ -131,7 +131,11 @@
       <button type="button" class="menu-hub-tab" data-menu-hub="admin" role="tab" aria-selected="false">Admin</button>
     </div>
 
-    <div id="playerPanel" class="ff-menu-body">
+    <div id="playerPanel" class="ff-player-shell">
+      <div class="ff-menu-canvas" aria-hidden="true">
+        <p id="menuHint" class="visually-hidden">WASD mover • Mouse mirar</p>
+      </div>
+
       <nav class="ff-side-nav" id="ffSideNav" aria-label="Personagem, armas e loja">
         <button type="button" id="openCharacterBtn" class="ff-side-nav-btn" data-hub="character" title="Boneco">
           <span class="ff-side-icon">👤</span>
@@ -147,12 +151,8 @@
         </button>
       </nav>
 
-      <div class="ff-hub-stage" id="ffHubStage">
-        <div id="ffHubPanelPlay" class="ff-hub-panel menu-card menu-card-play ff-panel active">
-          <p class="ff-hub-play-title">Strike Zone</p>
-          <p class="ff-hub-play-sub">Escolha o mapa e clique em JOGAR</p>
-          <p class="hint ff-hint" id="menuHint">WASD mover • Mouse mirar • Botão direito = mirar</p>
-        </div>
+      <div class="ff-hub-overlay" id="ffHubStage">
+        <div id="ffHubPanelPlay" class="ff-hub-panel hidden" aria-hidden="true"></div>
 
         <div id="ffHubPanelCharacter" class="ff-hub-panel hub-panel-character hidden" aria-hidden="true">
           <div class="hub-header hub-header-inline">
