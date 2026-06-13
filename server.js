@@ -113,6 +113,10 @@ const server = http.createServer(async (req, res) => {
 
   if (pathname === "/health") return sendJson(res, { ok: true });
   if (pathname === "/api/ip") return sendJson(res, { ip: getLocalIP() });
+  if (pathname === "/celular" || pathname === "/celular.html") {
+    res.writeHead(302, { Location: "/index.html?device=mobile", "Cache-Control": "no-cache" });
+    return res.end();
+  }
   if (pathname.startsWith("/api/account")) {
     try {
       return await handleAccountApi(req, res, pathname);
@@ -128,8 +132,9 @@ const server = http.createServer(async (req, res) => {
   if (pathname === "/vendor/three.module.js") return serveThree(res);
 
   const rel = resolveFile(pathname);
-  const file = path.normalize(path.join(ROOT, rel));
-  if (!file.startsWith(ROOT)) {
+  const file = path.resolve(ROOT, rel);
+  const rootResolved = path.resolve(ROOT);
+  if (!file.startsWith(rootResolved + path.sep) && file !== rootResolved) {
     res.writeHead(403);
     return res.end("Forbidden");
   }
