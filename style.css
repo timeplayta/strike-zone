@@ -2867,7 +2867,54 @@ body.menu-hub-admin-active .ff-admin-panel {
 }
 
 .ff-bottom-zone {
-  justify-content: flex-end;
+  position: fixed;
+  right: max(0.35rem, env(safe-area-inset-right));
+  bottom: max(0.35rem, env(safe-area-inset-bottom));
+  left: auto;
+  top: auto;
+  width: auto;
+  max-width: none;
+  padding: 0;
+  margin: 0;
+  background: none;
+  border: none;
+  z-index: 45;
+  pointer-events: none;
+  flex-shrink: 0;
+}
+
+.ff-play-dock-corner {
+  pointer-events: auto;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.32rem;
+  width: min(44vw, 196px);
+  align-items: stretch;
+  align-self: auto;
+  margin: 0;
+}
+
+.ff-play-dock-corner .ff-map-picker-btn {
+  order: 1;
+  flex-shrink: 0;
+}
+
+.ff-play-dock-corner .ff-load-status {
+  order: 2;
+  margin: 0;
+  padding: 0;
+  font-size: 0.58rem;
+  line-height: 1.15;
+  text-align: right;
+  opacity: 0.8;
+}
+
+.ff-play-dock-corner .ff-play-btn {
+  order: 3;
+  width: 100%;
+  min-height: 50px;
+  margin: 0;
 }
 
 .ff-bottom-bar {
@@ -3073,38 +3120,42 @@ body.mode-mobile .ff-weapon-grid {
   grid-template-columns: repeat(2, 1fr);
 }
 
+body.mode-mobile .ff-play-dock-corner,
 body.mode-mobile .ff-play-dock {
-  width: min(52vw, 200px);
+  width: min(50vw, 180px);
 }
 
-body.mode-mobile .ff-map-dock .map-btn {
-  width: 64px;
-  min-height: 48px;
-}
-
+body.mode-mobile .ff-play-dock-corner .ff-play-btn,
 body.mode-mobile .ff-play-dock .ff-play-btn {
-  min-height: 48px;
-  font-size: 0.92rem;
+  min-height: 46px;
+  font-size: 0.9rem;
+}
+
+body.mode-mobile .ff-bottom-zone {
+  right: max(0.25rem, env(safe-area-inset-right));
+  bottom: max(0.25rem, env(safe-area-inset-bottom));
 }
 
 .ff-bottom-zone {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 0.4rem;
-  padding: 0.4rem 0.5rem calc(0.45rem + env(safe-area-inset-bottom));
-  background: linear-gradient(180deg, rgba(8, 10, 18, 0.15), rgba(8, 10, 18, 0.97));
-  border-top: 1px solid #2a3848;
+  position: fixed;
+  right: max(0.35rem, env(safe-area-inset-right));
+  bottom: max(0.35rem, env(safe-area-inset-bottom));
+  left: auto;
+  top: auto;
+  width: auto;
+  padding: 0;
+  margin: 0;
+  background: none;
+  border: none;
+  z-index: 45;
+  pointer-events: none;
   flex-shrink: 0;
-  position: sticky;
-  bottom: 0;
-  z-index: 40;
+  display: block;
 }
 
 .ff-play-dock-right {
-  margin-left: auto;
-  order: 2;
-  position: relative;
+  margin-left: 0;
+  order: unset;
 }
 
 .ff-bottom-bar {
@@ -3251,11 +3302,11 @@ body.round-weapon-pick-active #mobileControls {
 
 .ff-play-dock {
   flex: 0 0 auto;
-  width: min(48vw, 240px);
+  width: min(44vw, 196px);
   display: flex;
   flex-direction: column;
-  gap: 0.28rem;
-  align-self: stretch;
+  gap: 0.32rem;
+  align-self: auto;
 }
 
 .ff-dock-label {
