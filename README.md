@@ -41,3 +41,30 @@ No menu, escolha **Computador** ou **Celular (Android)** antes de iniciar.
 - **Desarmar bomba** — melhor de 5 rounds; elimine os Ts ou desarme com **B**
 
 Você joga como **CT** contra 4 terroristas controlados por IA.
+
+## Publicar na internet (Render — grátis)
+
+O projeto já inclui `package.json`, `render.yaml` e porta dinâmica para nuvem.
+
+### 1. Enviar ao GitHub
+
+Duplo clique em **`enviar-github.bat`** (digite usuário e nome do repositório) ou, no terminal:
+
+```bash
+git remote add origin https://github.com/SEU_USUARIO/SEU_REPO.git
+git branch -M main
+git push -u origin main
+```
+
+### 2. Deploy no Render
+
+1. [render.com](https://render.com) → **New +** → **Blueprint** (usa `render.yaml`) **ou** **Web Service**
+2. Conecte o repositório do GitHub
+3. **Start Command:** `node server.js`
+4. **Environment:** adicione `NODE_ENV` = `production`
+5. Plano **Free** → **Create**
+
+Link público: `https://nome-do-servico.onrender.com`  
+Celular: `https://nome-do-servico.onrender.com/celular`
+
+**Nota:** no plano grátis o servidor “dorme” após ~15 min sem uso; contas novas são criadas no servidor (não vão no GitHub).
