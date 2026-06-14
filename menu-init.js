@@ -9,7 +9,17 @@
     return document.getElementById(id);
   }
 
+  function isWelcomeVisible() {
+    const welcome = $("welcomeScreen");
+    return !!welcome && !welcome.classList.contains("hidden");
+  }
+
+  function isValidEmail(email) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || "").trim());
+  }
+
   function showLoadError(msg) {
+    if (isWelcomeVisible() && location.protocol !== "file:") return;
     let el = $("loadError");
     if (!el) {
       el = document.createElement("div");
@@ -304,9 +314,9 @@
     loginEmail?.addEventListener("blur", async () => {
       const email = loginEmail.value.trim();
       if (!email) return setLoginStatus("");
-      if (!email.includes("@")) return setLoginStatus("Digite um email válido.", "error");
+      if (!isValidEmail(email)) return setLoginStatus("Digite um email válido.", "error");
       try {
-        const mod = await import("./player-account.js");
+        const mod = await import("./player-account.js?v=74");
         const res = await mod.checkEmailExists(email);
         if (!res.ok) return;
         const msg = res.exists ? "Email encontrado. Agora digite sua senha." : "Email não existe.";
@@ -318,8 +328,8 @@
       const email = loginEmail?.value?.trim();
       const password = loginPassword?.value || "";
       setLoginStatus("");
-      if (!email || !email.includes("@")) {
-        setLoginStatus("Digite o email da sua conta.", "error");
+      if (!email || !isValidEmail(email)) {
+        setLoginStatus("Digite um email válido.", "error");
         loginEmail?.focus();
         return;
       }
@@ -330,7 +340,7 @@
       }
       loginBtn.disabled = true;
       try {
-        const mod = await import("./player-account.js");
+        const mod = await import("./player-account.js?v=74");
         const res = await mod.loginAccount(email, password);
         if (res.ok) {
           await enterMenuWithAccount(res.account?.name || email, mod, res.account);
@@ -369,7 +379,7 @@
       const btn = $("welcomeLoginWithIdBtn");
       btn.disabled = true;
       try {
-        const mod = await import("./player-account.js");
+        const mod = await import("./player-account.js?v=74");
         const res = await mod.loginAccount(email, password, playerId);
         if (res.ok) await enterMenuWithAccount(res.account?.name || email, mod, res.account);
         else setLoginStatus(res.msg || "Login falhou.", "error");
@@ -399,7 +409,7 @@
         $("registerAge")?.focus();
         return;
       }
-      if (!email || !email.includes("@")) {
+      if (!email || !isValidEmail(email)) {
         alert("Digite um email válido.");
         $("registerEmail")?.focus();
         return;
@@ -421,7 +431,7 @@
       }
       registerBtn.disabled = true;
       try {
-        const mod = await import("./player-account.js");
+        const mod = await import("./player-account.js?v=74");
         const res = await mod.registerAccount(name, age, email, birthDate, password);
         if (res.ok) {
           const pid = res.account?.playerId || res.playerId;
@@ -452,7 +462,7 @@
       }
       migrateBtn.disabled = true;
       try {
-        const mod = await import("./player-account.js");
+        const mod = await import("./player-account.js?v=74");
         const res = await mod.migrateLegacyAccount(name, age, email, birthDate, password);
         if (res.ok) await enterMenuWithAccount(res.account?.name || name, mod, res.account);
         else alert(res.msg || "Não foi possível definir a senha.");
@@ -471,7 +481,7 @@
     // Ao abrir: tentar sessão salva ou preencher último nome
     (async () => {
       try {
-        const mod = await import("./player-account.js");
+        const mod = await import("./player-account.js?v=74");
         const saved = mod.getSavedSession();
         if (saved?.account?.email) {
           $("loginEmail").value = saved.account.email;
@@ -488,7 +498,7 @@
   }
 
   function initShopModal() {
-    import("./player-account.js").then((m) => {
+    import("./player-account.js?v=74").then((m) => {
       m.bindShopUI?.();
     });
   }

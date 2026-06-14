@@ -252,7 +252,7 @@ export async function loginAccount(email, password, playerId) {
 
 export async function checkEmailExists(email) {
   const mail = (email || "").trim();
-  if (!mail || !mail.includes("@")) {
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail)) {
     return { ok: false, exists: false, msg: "Digite um email válido." };
   }
   try {

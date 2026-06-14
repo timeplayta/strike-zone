@@ -1,6 +1,10 @@
 async function loadGame() {
 
   const loadStatus = document.getElementById("loadStatus");
+  const isWelcomeVisible = () => {
+    const welcome = document.getElementById("welcomeScreen");
+    return !!welcome && !welcome.classList.contains("hidden");
+  };
 
   try {
 
@@ -70,6 +74,8 @@ async function loadGame() {
       loadStatus.className = "load-status load-bad";
 
     }
+
+    if (isWelcomeVisible() && location.protocol !== "file:") return;
 
     let el = document.getElementById("loadError");
 
