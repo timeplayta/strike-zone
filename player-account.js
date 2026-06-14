@@ -41,7 +41,6 @@ function getSavedPlayerIdForName(name) {
 const KILL_REWARD = 12;
 const SOLO_KILL_REWARD = 55;
 const SESSION_KEY = "strikezone_session_v3";
-const PASSWORD_HINT_KEY = "strikezone_password_hint";
 
 let cachedAccount = null;
 let cachedName = "";
@@ -80,7 +79,6 @@ export function clearSession() {
   cachedIsAdmin = false;
   try {
     localStorage.removeItem(SESSION_KEY);
-    localStorage.removeItem(PASSWORD_HINT_KEY);
   } catch { /* ignore */ }
 }
 
@@ -113,20 +111,6 @@ export function isLoggedIn() {
 export function isSessionAdmin() {
   if (cachedIsAdmin) return true;
   return !!getSavedSession()?.account?.isAdmin;
-}
-
-export function savePasswordHint(password) {
-  try {
-    if (password) localStorage.setItem(PASSWORD_HINT_KEY, String(password));
-  } catch { /* ignore */ }
-}
-
-export function getSessionPassword() {
-  try {
-    return localStorage.getItem(PASSWORD_HINT_KEY) || "";
-  } catch {
-    return "";
-  }
 }
 
 export function getSavedAvatar() {
@@ -220,35 +204,34 @@ export async function tryRestoreSession() {
   return null;
 }
 
-export async function registerAccount(name, age, password) {
+export async function registerAccount(name, age, email, birthDate, password) {
   const trimmed = (name || "").trim();
   const { ok, data } = await apiPost("/api/account/register", {
     name: trimmed,
     age,
+    email,
+    birthDate,
     password,
   });
   if (ok && data.ok) {
-    saveSession(trimmed, data.token, data.account);
-    savePasswordHint(password);
+    saveSession(data.account?.name || trimmed, data.token, data.account);
     savePlayerIdHint(trimmed, data.account.playerId);
     return { ok: true, account: data.account, playerId: data.account.playerId };
   }
   return { ok: false, msg: data.error || "Não foi possível criar a conta" };
 }
 
-export async function loginAccount(name, password, playerId) {
-  const trimmed = (name || "").trim();
+export async function loginAccount(email, password, playerId) {
+  const mail = (email || "").trim();
   let pid = (playerId || "").trim();
-  if (!pid) pid = getSavedPlayerIdForName(trimmed);
   const { ok, data } = await apiPost("/api/account/login", {
-    name: trimmed,
+    email: mail,
     password,
     playerId: pid || undefined,
   });
   if (ok && data.ok) {
-    saveSession(trimmed || data.account.name, data.token, data.account);
-    savePasswordHint(password);
-    savePlayerIdHint(trimmed || data.account.name, data.account.playerId);
+    saveSession(data.account.name || mail, data.token, data.account);
+    savePlayerIdHint(data.account.name || mail, data.account.playerId);
     window.__characterSkin = data.account.characterSkin;
     return { ok: true, account: data.account };
   }
@@ -261,16 +244,17 @@ export async function loginAccount(name, password, playerId) {
   };
 }
 
-export async function migrateLegacyAccount(name, age, password) {
+export async function migrateLegacyAccount(name, age, email, birthDate, password) {
   const trimmed = (name || "").trim();
   const { ok, data } = await apiPost("/api/account/migrate", {
     name: trimmed,
     age,
+    email,
+    birthDate,
     password,
   });
   if (ok && data.ok) {
-    saveSession(trimmed, data.token, data.account);
-    savePasswordHint(password);
+    saveSession(data.account?.name || trimmed, data.token, data.account);
     return { ok: true, account: data.account };
   }
   return { ok: false, msg: data.error || "Não foi possível definir a senha" };

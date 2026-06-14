@@ -3912,6 +3912,15 @@ body.round-weapon-pick-active #mobileControls {
   box-shadow: 0 0 8px rgba(180, 100, 255, 0.4);
 }
 
+.shop-tier-mítica {
+  border-color: rgba(180, 90, 255, 0.75);
+  box-shadow: 0 0 18px rgba(140, 70, 255, 0.22);
+}
+
+.shop-tier-mítica .shop-swatch {
+  box-shadow: 0 0 12px rgba(190, 130, 255, 0.75);
+}
+
 .hub-panel-arsenal {
   width: min(92vw, 720px);
 }

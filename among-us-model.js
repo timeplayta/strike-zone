@@ -13,6 +13,8 @@ const SKIN_COLORS = {
   among_cyan: 0x22dddd,
   neon_runner: 0x00ffaa,
   shadow: 0x1a1028,
+  trevas_horror: 0x14091f,
+  birthday_hero: 0xffcc44,
   soldier: 0x8899aa,
 };
 
@@ -61,6 +63,48 @@ export function buildAmongUsCharacter(skinId = "among_red", scale = 1) {
   if (skinId === "shadow") {
     bodyMat.emissive = new THREE.Color(0x4422aa);
     bodyMat.emissiveIntensity = 0.2;
+  }
+  if (skinId === "trevas_horror") {
+    bodyMat.emissive = new THREE.Color(0x5a22aa);
+    bodyMat.emissiveIntensity = 0.22;
+    visorMat.color.setHex(0xff3355);
+    visorMat.emissive = new THREE.Color(0xaa0018);
+    visorMat.emissiveIntensity = 0.55;
+    const hornMat = new THREE.MeshStandardMaterial({ color: 0x0a0610, roughness: 0.62, metalness: 0.18 });
+    const hornL = new THREE.Mesh(new THREE.ConeGeometry(0.055, 0.28, 10), hornMat);
+    const hornR = hornL.clone();
+    hornL.position.set(-0.14, 1.5, 0.02);
+    hornR.position.set(0.14, 1.5, 0.02);
+    hornL.rotation.z = 0.35;
+    hornR.rotation.z = -0.35;
+    const auraMat = new THREE.MeshBasicMaterial({
+      color: 0x7a44ff,
+      transparent: true,
+      opacity: 0.28,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    });
+    const aura = new THREE.Mesh(new THREE.TorusGeometry(0.46, 0.014, 8, 42), auraMat);
+    aura.position.set(0, 0.86, 0.02);
+    aura.rotation.x = Math.PI / 2;
+    group.add(hornL, hornR, aura);
+  }
+  if (skinId === "birthday_hero") {
+    const hatMat = new THREE.MeshStandardMaterial({ color: 0xff44aa, roughness: 0.42, metalness: 0.08 });
+    const hat = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.42, 18), hatMat);
+    hat.position.set(0, 1.62, 0.02);
+    const pom = new THREE.Mesh(
+      new THREE.SphereGeometry(0.055, 10, 8),
+      new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.4 })
+    );
+    pom.position.set(0, 1.86, 0.02);
+    const stripe = new THREE.Mesh(
+      new THREE.TorusGeometry(0.15, 0.014, 6, 18),
+      new THREE.MeshStandardMaterial({ color: 0x66ccff, roughness: 0.35 })
+    );
+    stripe.position.set(0, 1.52, 0.02);
+    stripe.rotation.x = Math.PI / 2;
+    group.add(hat, pom, stripe);
   }
 
   return { group, hitMeshes: [body, visor], head: visor };

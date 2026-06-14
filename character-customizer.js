@@ -121,7 +121,7 @@ function renderPresets() {
   grid.innerHTML = "";
   if (activeSlot === "outfits") {
     const ownedOutfits = OUTFIT_SETS.filter(ownsOutfit);
-    const ownedCharacters = CHARACTER_SKINS.filter((c) => c.price === 0 || ownedIds().has(c.id));
+    const ownedCharacters = CHARACTER_SKINS.filter((c) => c.skinId === "soldier" || ownedIds().has(c.id));
     const bodyItems = [
       ...ownedOutfits.map((outfit) => ({ kind: "outfit", outfit })),
       ...ownedCharacters.map((skin) => ({ kind: "character", skin })),

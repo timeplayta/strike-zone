@@ -3,7 +3,6 @@
 import {
   getLoggedInName,
   getAccountCoins,
-  getSessionPassword,
   getSavedAvatar,
   getCharacterSkin,
   saveAvatarChoice,
@@ -83,17 +82,11 @@ function refreshAccountPanel(name) {
 
   if ($("accountNameDisplay")) $("accountNameDisplay").textContent = name;
   if ($("accountPlayerIdDisplay")) $("accountPlayerIdDisplay").textContent = account.playerId || "—";
-  if ($("accountAgeDisplay")) $("accountAgeDisplay").textContent = account.age ? `${account.age} anos` : "—";
+  if ($("accountEmailDisplay")) $("accountEmailDisplay").textContent = account.email || "—";
+  if ($("accountAgeDisplay")) $("accountAgeDisplay").textContent =
+    account.birthDate ? `${account.age || "?"} anos • ${account.birthDate}` : account.age ? `${account.age} anos` : "—";
   if ($("accountCoinsDisplay")) $("accountCoinsDisplay").textContent = `${getAccountCoins(name)} 🪙`;
   if ($("accountKillsDisplay")) $("accountKillsDisplay").textContent = String(account.kills || 0);
-
-  const pw = getSessionPassword();
-  const showPw = $("accountShowPassword")?.checked === true;
-  if ($("accountPasswordDisplay")) {
-    $("accountPasswordDisplay").textContent = pw
-      ? showPw ? pw : "••••••••"
-      : "(faça login de novo)";
-  }
 
   document.querySelectorAll(".avatar-pick").forEach((btn) => {
     btn.classList.toggle("selected", btn.dataset.avatar === avatar);
@@ -145,7 +138,6 @@ export function initAccountHub() {
   $("openAccountBtn")?.addEventListener("click", openModal);
   $("closeAccountBtn")?.addEventListener("click", closeModal);
   $("accountModalBackdrop")?.addEventListener("click", closeModal);
-  $("accountShowPassword")?.addEventListener("change", () => refreshAccountPanel());
 
   $("playerName")?.addEventListener("input", () => updateFabName($("playerName")?.value?.trim()));
 

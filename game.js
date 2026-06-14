@@ -46,6 +46,7 @@ import { createMapMaterials, addWallBaseboard } from "./environment-textures.js"
 import { buildWorldDecor, buildDoorAndInnerRoom } from "./world-decor.js";
 import { getDoorHitMeshes, buildConnectedCeiling } from "./furniture.js";
 import { createWeaponView, setWeaponView, setWeaponADS, triggerMuzzleFlash, triggerMeleeSwing, triggerReloadAnimation, updateWeaponView, hideAllWeapons, applyWeaponSkinToView } from "./weapon-view.js";
+import { findWeaponSkinItem } from "./weapon-skin-apply.js";
 import { spawnMeleePickups, updateMeleePickups, tryPickupMelee, collectMeleePickup } from "./melee-pickups.js";
 import { createExitZone, updateExitZone, checkExitReached } from "./exit-zone.js";
 import { playGunshot, playEmptyClip } from "./audio.js";
@@ -118,7 +119,7 @@ const INNER_BOMB_TIME = 90;
 const ENEMY_FIRE_MS = 540;
 const BOSS_FIRE_MS = 353;
 const BASE_FOV = 75;
-const ADS_WEAPONS = ["ak47", "scar", "awm"];
+const ADS_WEAPONS = ["ak47", "scar", "awm", "bazooka"];
 const ENEMY_SPAWN_DELAY_MS = 3000;
 const MIN_SPAWN_DIST_FROM_PLAYER = 18;
 
@@ -1352,7 +1353,7 @@ function initWeapons() {
 function applyPlayerWeaponSkins() {
   if (!weaponView || !playerName) return;
   const skins = {};
-  for (const id of ["ak47", "scar", "m4", "ump45", "awm", "doze", "glock"]) {
+  for (const id of ["ak47", "scar", "m4", "ump45", "awm", "doze", "bazooka", "glock"]) {
     const color = getWeaponSkinColor(playerName, id);
     if (color) skins[id] = color;
   }
@@ -1927,16 +1928,21 @@ function shoot() {
     return;
   }
 
+  const shotDirBeforeKick = getShootDirection();
   w.lastShot = now;
+  const skinItem = currentWeaponSkinItem();
+  const mythicSkin = skinItem?.tier === "mítica";
   if (!w.melee) {
     w.mag--;
     playGunshot(w.name);
     if (weaponView) triggerMuzzleFlash(weaponView);
+    applyShotKick(w, mythicSkin);
   }
   updateAmmoHUD();
 
   const origin = camera.position.clone();
-  const baseDir = getShootDirection();
+  const baseDir = shotDirBeforeKick;
+  if (skinItem?.cosmic) spawnCosmicShotFx(skinItem.cosmic, origin, baseDir);
 
   if (w.melee) {
     if (weaponView) triggerMeleeSwing(weaponView);
@@ -1965,7 +1971,30 @@ function shoot() {
     if (e.alive) hitTargets.push(...e.hitMeshes);
   }
 
-  const spreadBase = adsActive && w.adsSpread != null ? w.adsSpread : w.spread;
+  const rawSpread = adsActive && w.adsSpread != null ? w.adsSpread : w.spread;
+  const spreadBase = rawSpread * (mythicSkin ? 0.72 : 1);
+  const damageMul = mythicSkin ? 1.1 : 1;
+
+  if (w.explosive) {
+    const dir = baseDir.clone();
+    dir.x += (Math.random() - 0.5) * spreadBase;
+    dir.y += (Math.random() - 0.5) * spreadBase;
+    dir.z += (Math.random() - 0.5) * spreadBase;
+    dir.normalize();
+    const ray = new THREE.Raycaster(origin, dir, 0, 80);
+    const hits = ray.intersectObjects([...hitTargets, ...wallMeshCache, ...doorHitMeshes], false);
+    const impactPoint = hits[0]?.point || origin.clone().add(dir.multiplyScalar(26));
+    spawnExplosion(impactPoint, 4.2);
+    spawnImpact(impactPoint, false);
+    for (const e of enemies) {
+      if (!e.alive) continue;
+      const dist = e.group.position.distanceTo(impactPoint);
+      if (dist > 4.2) continue;
+      const splash = w.damage * damageMul * Math.max(0.25, 1 - dist / 4.2);
+      damageEnemy(e, splash, false, e.group.position.clone().add(new THREE.Vector3(0, 1, 0)));
+    }
+    return;
+  }
 
   for (let pi = 0; pi < pellets; pi++) {
     const dir = baseDir.clone();
@@ -1996,7 +2025,7 @@ function shoot() {
       if (enemy) {
         const headshot = hits[0].object.userData?.hitPart === "head";
         const dist = origin.distanceTo(hits[0].point);
-        const dmg = calcWeaponDamage(w, dist, headshot);
+        const dmg = calcWeaponDamage(w, dist, headshot) * damageMul;
         damageEnemy(enemy, dmg, headshot, hits[0].point);
         spawnImpact(hits[0].point, true);
         hitEnemy = true;
@@ -2029,6 +2058,162 @@ function spawnImpact(pos, blood) {
   p.position.copy(pos);
   scene.add(p);
   setTimeout(() => scene.remove(p), 150);
+}
+
+function applyShotKick(w, mythicSkin = false) {
+  const base = {
+    ak47: 0.012,
+    m4: 0.008,
+    scar: 0.01,
+    ump45: 0.007,
+    awm: 0.018,
+    doze: 0.02,
+    bazooka: 0.026,
+    glock: 0.009,
+  }[w.id] ?? 0.01;
+  pitch = Math.max(-1.45, Math.min(1.45, pitch + base * (mythicSkin ? 0.82 : 1)));
+  yaw += (Math.random() - 0.5) * base * 0.35;
+  applyCameraRotation();
+}
+
+function cosmicMaterial(color, opacity = 0.85) {
+  return new THREE.MeshBasicMaterial({
+    color,
+    transparent: true,
+    opacity,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+  });
+}
+
+function buildCosmicProjectile(kind) {
+  const g = new THREE.Group();
+  if (kind === "satellite") {
+    const body = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.04, 0.04), cosmicMaterial(0xddeeff));
+    const panelMat = cosmicMaterial(0x66aaff, 0.7);
+    const p1 = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.025, 0.004), panelMat);
+    const p2 = p1.clone();
+    p1.position.x = -0.08;
+    p2.position.x = 0.08;
+    g.add(body, p1, p2);
+  } else if (kind === "galaxy") {
+    const core = new THREE.Mesh(new THREE.SphereGeometry(0.035, 10, 8), cosmicMaterial(0xffffff));
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.08, 0.008, 6, 24), cosmicMaterial(0x9966ff, 0.8));
+    ring.rotation.x = Math.PI / 2.4;
+    g.add(core, ring);
+  } else if (kind === "planet") {
+    const planet = new THREE.Mesh(new THREE.SphereGeometry(0.055, 12, 8), cosmicMaterial(0x66bbff));
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.08, 0.006, 6, 24), cosmicMaterial(0xffcc88, 0.7));
+    ring.rotation.x = Math.PI / 2.6;
+    g.add(planet, ring);
+  } else if (kind === "comet") {
+    g.add(new THREE.Mesh(new THREE.SphereGeometry(0.045, 10, 8), cosmicMaterial(0x88ddff)));
+    const trail = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.18, 10), cosmicMaterial(0x66ccff, 0.45));
+    trail.position.z = 0.11;
+    trail.rotation.x = Math.PI / 2;
+    g.add(trail);
+  } else if (kind === "asteroid") {
+    g.add(new THREE.Mesh(new THREE.DodecahedronGeometry(0.055, 0), cosmicMaterial(0xaa8866, 0.9)));
+  } else if (kind === "moon") {
+    g.add(new THREE.Mesh(new THREE.SphereGeometry(0.05, 10, 8), cosmicMaterial(0xd8d8ff, 0.8)));
+  } else if (kind === "blackhole") {
+    g.add(new THREE.Mesh(new THREE.SphereGeometry(0.038, 12, 8), cosmicMaterial(0x090011, 1)));
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.08, 0.01, 6, 28), cosmicMaterial(0xaa66ff, 0.85));
+    ring.rotation.x = Math.PI / 2;
+    g.add(ring);
+  } else {
+    g.add(new THREE.Mesh(new THREE.SphereGeometry(0.055, 12, 8), cosmicMaterial(0xffcc44, 0.9)));
+    const glow = new THREE.Mesh(new THREE.SphereGeometry(0.09, 12, 8), cosmicMaterial(0xff8844, 0.28));
+    g.add(glow);
+  }
+  return g;
+}
+
+function spawnCosmicShotFx(kind, origin, dir) {
+  const g = buildCosmicProjectile(kind);
+  const right = new THREE.Vector3().crossVectors(dir, new THREE.Vector3(0, 1, 0)).normalize();
+  const start = origin.clone().add(dir.clone().multiplyScalar(0.9)).add(right.multiplyScalar(0.18));
+  start.y -= 0.12;
+  g.position.copy(start);
+  g.scale.setScalar(0.75);
+  scene.add(g);
+  const born = performance.now();
+  const velocity = dir.clone().multiplyScalar(0.34);
+  const tick = () => {
+    const age = (performance.now() - born) / 1000;
+    g.position.add(velocity);
+    g.rotation.x += 0.12;
+    g.rotation.y += 0.16;
+    g.traverse((o) => {
+      if (o.material?.opacity != null) o.material.opacity = Math.max(0, o.material.opacity - 0.018);
+    });
+    if (age < 0.75) requestAnimationFrame(tick);
+    else scene.remove(g);
+  };
+  tick();
+}
+
+function spawnExplosion(pos, radius = 3) {
+  const core = new THREE.Mesh(
+    new THREE.SphereGeometry(0.35, 12, 10),
+    new THREE.MeshBasicMaterial({ color: 0xff8844, transparent: true, opacity: 0.82 })
+  );
+  core.position.copy(pos);
+  scene.add(core);
+  const ring = new THREE.Mesh(
+    new THREE.TorusGeometry(radius * 0.32, 0.025, 8, 36),
+    new THREE.MeshBasicMaterial({ color: 0xffcc66, transparent: true, opacity: 0.75 })
+  );
+  ring.position.copy(pos);
+  ring.rotation.x = Math.PI / 2;
+  scene.add(ring);
+  setTimeout(() => {
+    scene.remove(core);
+    scene.remove(ring);
+  }, 220);
+}
+
+function spawnGhostSoul(pos) {
+  const ghost = new THREE.Group();
+  const mat = new THREE.MeshBasicMaterial({
+    color: 0xcdbbff,
+    transparent: true,
+    opacity: 0.75,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+  });
+  const body = new THREE.Mesh(new THREE.SphereGeometry(0.18, 12, 10), mat);
+  body.scale.set(0.8, 1.25, 0.65);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.11, 10, 8), mat.clone());
+  head.position.y = 0.22;
+  ghost.add(body, head);
+  ghost.position.copy(pos).add(new THREE.Vector3(0, 0.9, 0));
+  scene.add(ghost);
+  const started = performance.now();
+  const tick = () => {
+    const t = (performance.now() - started) / 1000;
+    ghost.position.y += 0.018;
+    ghost.position.x += Math.sin(t * 5) * 0.004;
+    ghost.rotation.y += 0.04;
+    ghost.traverse((o) => {
+      if (o.material) o.material.opacity = Math.max(0, 0.75 - t * 0.45);
+    });
+    if (t < 1.7) requestAnimationFrame(tick);
+    else scene.remove(ghost);
+  };
+  tick();
+}
+
+function currentWeaponSkinItem() {
+  if (!currentWeapon || currentWeapon.melee) return null;
+  const id = currentWeapon.id === "glock" ? "glock" : primaryWeaponId;
+  const color = getWeaponSkinColor(playerName, id);
+  return findWeaponSkinItem(id, color);
+}
+
+function shouldSpawnGhostKillFx() {
+  const item = currentWeaponSkinItem();
+  return item?.tier === "mítica" || item?.id === "ak_shadow";
 }
 
 function flashEnemy(e) {
@@ -2099,6 +2284,7 @@ async function killEnemy(e, headshot) {
 
   const bloodPos = e.group.position.clone();
   bloodPools.push(spawnBloodPool(scene, bloodPos, 1.35));
+  if (shouldSpawnGhostKillFx()) spawnGhostSoul(bloodPos);
   bloodParticles.push(
     ...spawnBloodSpray(
       scene,

@@ -4,31 +4,42 @@ const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 
-const ADMIN_ACCOUNTS = { mjuan: "123456" };
+const ADMIN_ACCOUNTS = { "mjuan@strikezone.local": "123456" };
 const ADMIN_BOOTSTRAP_PASSWORD = "123456";
+const ADMIN_BOOTSTRAP_EMAIL = "mjuan@strikezone.local";
 
 const DB_FILE = path.join(__dirname, "data", "accounts.json");
 const SESSION_DAYS = 30;
 const MIN_PASSWORD_LEN = 4;
 const LOGIN_FAIL_MSG =
-  "Conta não encontrada ou senha errada. Use seu ID SZ-XXXXXX se o nome é igual ao de outra pessoa.";
+  "Email ou senha errados. Confira o email usado para criar a conta.";
 
 const SHOP = {
-  ak_blue: { type: "weapon", weapon: "ak47", color: 0x2266cc, price: 45 },
-  ak_red: { type: "weapon", weapon: "ak47", color: 0xcc3322, price: 45 },
-  ak_gold: { type: "weapon", weapon: "ak47", color: 0xc9a227, price: 120 },
-  ak_neon: { type: "weapon", weapon: "ak47", color: 0x00ffcc, price: 95 },
-  scar_blue: { type: "weapon", weapon: "scar", color: 0x3355aa, price: 55 },
-  scar_green: { type: "weapon", weapon: "scar", color: 0x2a6644, price: 55 },
-  scar_purple: { type: "weapon", weapon: "scar", color: 0x8844cc, price: 75 },
-  m4_carbon: { type: "weapon", weapon: "m4", color: 0x2a2a32, price: 50 },
-  m4_sakura: { type: "weapon", weapon: "m4", color: 0xff88aa, price: 70 },
-  ump_orange: { type: "weapon", weapon: "ump45", color: 0xff6622, price: 40 },
-  awm_black: { type: "weapon", weapon: "awm", color: 0x1a1a22, price: 90 },
-  awm_ice: { type: "weapon", weapon: "awm", color: 0xa8e8ff, price: 110 },
-  doze_wood: { type: "weapon", weapon: "doze", color: 0x6b4423, price: 35 },
-  doze_toxic: { type: "weapon", weapon: "doze", color: 0x44cc44, price: 55 },
-  glock_pink: { type: "weapon", weapon: "glock", color: 0xcc4488, price: 30 },
+  ak_blue: { type: "weapon", weapon: "ak47", color: 0x2266cc, price: 80 },
+  ak_red: { type: "weapon", weapon: "ak47", color: 0xcc3322, price: 95 },
+  ak_gold: { type: "weapon", weapon: "ak47", color: 0xc9a227, price: 720 },
+  ak_neon: { type: "weapon", weapon: "ak47", color: 0x00ffcc, price: 320 },
+  ak_shadow: { type: "weapon", weapon: "ak47", color: 0x1b1028, price: 1200 },
+  ak_galaxy: { type: "weapon", weapon: "ak47", color: 0x090818, price: 1450 },
+  scar_blue: { type: "weapon", weapon: "scar", color: 0x3355aa, price: 90 },
+  scar_green: { type: "weapon", weapon: "scar", color: 0x2a6644, price: 140 },
+  scar_purple: { type: "weapon", weapon: "scar", color: 0x8844cc, price: 310 },
+  scar_galaxy: { type: "weapon", weapon: "scar", color: 0x0b1028, price: 1350 },
+  m4_carbon: { type: "weapon", weapon: "m4", color: 0x2a2a32, price: 160 },
+  m4_sakura: { type: "weapon", weapon: "m4", color: 0xff88aa, price: 340 },
+  m4_galaxy: { type: "weapon", weapon: "m4", color: 0x0a1324, price: 1400 },
+  ump_orange: { type: "weapon", weapon: "ump45", color: 0xff6622, price: 70 },
+  ump_galaxy: { type: "weapon", weapon: "ump45", color: 0x111024, price: 1150 },
+  awm_black: { type: "weapon", weapon: "awm", color: 0x1a1a22, price: 180 },
+  awm_ice: { type: "weapon", weapon: "awm", color: 0xa8e8ff, price: 850 },
+  awm_galaxy: { type: "weapon", weapon: "awm", color: 0x08061a, price: 1800 },
+  doze_wood: { type: "weapon", weapon: "doze", color: 0x6b4423, price: 65 },
+  doze_toxic: { type: "weapon", weapon: "doze", color: 0x44cc44, price: 280 },
+  doze_galaxy: { type: "weapon", weapon: "doze", color: 0x12091e, price: 1250 },
+  glock_pink: { type: "weapon", weapon: "glock", color: 0xcc4488, price: 55 },
+  glock_galaxy: { type: "weapon", weapon: "glock", color: 0x0b0b20, price: 1050 },
+  bazooka_mythic: { type: "weapon", weapon: "bazooka", color: 0x8b45ff, price: 1000 },
+  bazooka_galaxy: { type: "weapon", weapon: "bazooka", color: 0x120727, price: 2200 },
   char_among_red: { type: "character", skinId: "among_red", color: 0xff3355, price: 150 },
   char_among_blue: { type: "character", skinId: "among_blue", color: 0x2266ee, price: 150 },
   char_among_green: { type: "character", skinId: "among_green", color: 0x33aa44, price: 120 },
@@ -39,6 +50,8 @@ const SHOP = {
   char_among_cyan: { type: "character", skinId: "among_cyan", color: 0x22dddd, price: 110 },
   char_neon_runner: { type: "character", skinId: "neon_runner", color: 0x00ffaa, price: 180 },
   char_shadow: { type: "character", skinId: "shadow", color: 0x1a1028, price: 140 },
+  char_trevas_horror: { type: "character", skinId: "trevas_horror", color: 0x14091f, price: 1200 },
+  char_birthday: { type: "character", skinId: "birthday_hero", color: 0xffcc44, price: 0 },
   outfit_ct_elite: {
     type: "outfit",
     color: 0x2266aa,
@@ -258,6 +271,33 @@ function normalizeName(name) {
   return (name || "").trim().slice(0, 24);
 }
 
+function normalizeEmail(email) {
+  return String(email || "").trim().toLowerCase().slice(0, 80);
+}
+
+function emailValid(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizeEmail(email));
+}
+
+function normalizeBirthDate(date) {
+  const s = String(date || "").trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return "";
+  const d = new Date(`${s}T00:00:00Z`);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toISOString().slice(0, 10);
+}
+
+function ageFromBirthDate(birthDate, now = new Date()) {
+  const clean = normalizeBirthDate(birthDate);
+  if (!clean) return null;
+  const [y, m, d] = clean.split("-").map(Number);
+  let age = now.getFullYear() - y;
+  const month = now.getMonth() + 1;
+  const day = now.getDate();
+  if (month < m || (month === m && day < d)) age--;
+  return age;
+}
+
 function normalizePlayerId(id) {
   return String(id || "").trim().toUpperCase();
 }
@@ -267,24 +307,34 @@ function accountIdFromName(name) {
 }
 
 function applyAdminFlag(p, password) {
-  const id = accountIdFromName(p.name);
-  p.isAdmin = ADMIN_ACCOUNTS[id] === String(password) || p.isAdmin === true;
+  const email = normalizeEmail(p.email);
+  p.isAdmin = ADMIN_ACCOUNTS[email] === String(password) || p.isAdmin === true;
   return p.isAdmin;
 }
 
 function migrateDb(db) {
   if (!db.players) db.players = {};
-  if (db._version >= 2) return db;
+  let changed = db._version < 3;
 
   const newPlayers = {};
   for (const [oldKey, p] of Object.entries(db.players)) {
-    if (!p.id) p.id = crypto.randomUUID();
-    if (!p.playerId) p.playerId = generatePlayerId();
+    if (!p.id) { p.id = crypto.randomUUID(); changed = true; }
+    if (!p.playerId) { p.playerId = generatePlayerId(); changed = true; }
+    if (accountIdFromName(p.name) === "mjuan" && !p.email) { p.email = ADMIN_BOOTSTRAP_EMAIL; changed = true; }
+    if (p.email) {
+      const mail = normalizeEmail(p.email);
+      if (mail !== p.email) { p.email = mail; changed = true; }
+    }
+    if (p.birthDate) {
+      const born = normalizeBirthDate(p.birthDate);
+      if (born !== p.birthDate) { p.birthDate = born; changed = true; }
+    }
+    if (!p.birthdayRewards) { p.birthdayRewards = {}; changed = true; }
     newPlayers[p.id] = p;
   }
   db.players = newPlayers;
-  db._version = 2;
-  writeDb(db);
+  db._version = 3;
+  if (changed) writeDb(db);
   return db;
 }
 
@@ -295,13 +345,14 @@ function ensureBootstrapAdmin() {
     if (accountIdFromName(p.name) === "mjuan") admin = p;
   }
   if (!admin) {
-    admin = defaultPlayer("MJuan", 18);
+    admin = defaultPlayer("MJuan", 18, ADMIN_BOOTSTRAP_EMAIL, "2008-01-01");
     admin.playerId = generatePlayerId();
     setPasswordOnPlayer(admin, ADMIN_BOOTSTRAP_PASSWORD);
     admin.isAdmin = true;
     db.players[admin.id] = admin;
     writeDb(db);
   } else {
+    admin.email = normalizeEmail(admin.email || ADMIN_BOOTSTRAP_EMAIL);
     admin.isAdmin = true;
     if (!verifyPassword(admin, ADMIN_BOOTSTRAP_PASSWORD)) {
       setPasswordOnPlayer(admin, ADMIN_BOOTSTRAP_PASSWORD);
@@ -370,6 +421,13 @@ function getPlayerByPlayerId(playerId) {
   return null;
 }
 
+function getPlayerByEmail(email) {
+  const mail = normalizeEmail(email);
+  if (!mail) return null;
+  const db = readDb();
+  return Object.values(db.players).find((p) => normalizeEmail(p.email) === mail) || null;
+}
+
 function findPlayersByName(name) {
   const n = normalizeName(name).toLowerCase();
   const db = readDb();
@@ -382,12 +440,14 @@ function savePlayer(p) {
   writeDb(db);
 }
 
-function defaultPlayer(name, age = null) {
+function defaultPlayer(name, age = null, email = "", birthDate = "") {
   return {
     id: crypto.randomUUID(),
     playerId: generatePlayerId(),
     name: normalizeName(name),
+    email: normalizeEmail(email),
     age: age ?? null,
+    birthDate: normalizeBirthDate(birthDate),
     coins: 0,
     purchases: [],
     skins: {},
@@ -396,6 +456,7 @@ function defaultPlayer(name, age = null) {
     characterSkin: "soldier",
     outfitId: null,
     loadout: null,
+    birthdayRewards: {},
     passwordSalt: null,
     passwordHash: null,
     sessionToken: null,
@@ -406,11 +467,14 @@ function defaultPlayer(name, age = null) {
 }
 
 function exportAccount(p) {
+  grantBirthdayReward(p);
   return {
     id: p.id,
     playerId: p.playerId,
     name: p.name,
+    email: p.email || "",
     age: p.age,
+    birthDate: p.birthDate || "",
     coins: p.coins || 0,
     purchases: p.purchases || [],
     skins: p.skins || {},
@@ -421,7 +485,30 @@ function exportAccount(p) {
     characterSkin: p.characterSkin || "soldier",
     outfitId: p.outfitId || null,
     loadout: p.loadout || null,
+    birthdayMessage: p.birthdayMessage || "",
   };
+}
+
+function grantBirthdayReward(p, now = new Date()) {
+  if (!p?.birthDate) return false;
+  const birth = normalizeBirthDate(p.birthDate);
+  if (!birth) return false;
+  const [, month, day] = birth.split("-").map(Number);
+  if (now.getMonth() + 1 !== month || now.getDate() !== day) {
+    p.birthdayMessage = "";
+    return false;
+  }
+  const year = String(now.getFullYear());
+  p.birthdayRewards = p.birthdayRewards || {};
+  if (p.birthdayRewards[year]) return false;
+  p.coins = (p.coins || 0) + 3000;
+  p.purchases = p.purchases || [];
+  if (!p.purchases.includes("char_birthday")) p.purchases.push("char_birthday");
+  p.characterSkin = "birthday_hero";
+  p.birthdayRewards[year] = new Date().toISOString();
+  p.birthdayMessage = "Feliz aniversário! Você ganhou 3000 moedas e a skin Aniversariante.";
+  savePlayer(p);
+  return true;
 }
 
 function validatePasswordInput(password) {
@@ -431,16 +518,23 @@ function validatePasswordInput(password) {
   return { ok: true };
 }
 
-function registerAccount(name, age, password) {
+function registerAccount(name, age, email, birthDate, password) {
   const n = normalizeName(name);
   if (!n) return { ok: false, error: "Nome inválido" };
+  const mail = normalizeEmail(email);
+  const born = normalizeBirthDate(birthDate);
+  if (!emailValid(mail)) return { ok: false, error: "Digite um email válido" };
+  if (getPlayerByEmail(mail)) return { ok: false, error: "Este email já tem conta. Faça login com ele." };
+  const ageByDate = ageFromBirthDate(born);
+  if (!born || ageByDate == null) return { ok: false, error: "Digite sua data de nascimento" };
   if (!age || age < 8 || age > 99) return { ok: false, error: "Idade inválida (8 a 99)" };
+  if (Math.abs(Number(age) - ageByDate) > 1) return { ok: false, error: "Idade não confere com a data de nascimento" };
 
   const pwCheck = validatePasswordInput(password);
   if (!pwCheck.ok) return pwCheck;
 
   const db = readDb();
-  const p = defaultPlayer(n, age);
+  const p = defaultPlayer(n, ageByDate, mail, born);
   setPasswordOnPlayer(p, password);
   applyAdminFlag(p, password);
   const token = createSessionToken(p);
@@ -451,25 +545,26 @@ function registerAccount(name, age, password) {
   return { ok: true, account: exportAccount(p), token };
 }
 
-function loginAccount(name, password, accountIdOrPlayerId) {
+function loginAccount(email, password, accountIdOrPlayerId) {
   const pwCheck = validatePasswordInput(password);
   if (!pwCheck.ok) return { ok: false, error: LOGIN_FAIL_MSG };
 
   let candidates = [];
+  const mail = normalizeEmail(email);
+  if (!emailValid(mail)) return { ok: false, error: "Digite o email da conta" };
 
   const pid = normalizePlayerId(accountIdOrPlayerId);
   if (pid.startsWith("SZ-")) {
     const byPid = getPlayerByPlayerId(pid);
-    if (byPid) candidates = [byPid];
+    if (byPid && normalizeEmail(byPid.email) === mail) candidates = [byPid];
   } else if (accountIdOrPlayerId) {
     const byId = getPlayerById(accountIdOrPlayerId);
-    if (byId) candidates = [byId];
+    if (byId && normalizeEmail(byId.email) === mail) candidates = [byId];
   }
 
   if (!candidates.length) {
-    const n = normalizeName(name);
-    if (!n) return { ok: false, error: "Digite o nome ou ID da conta" };
-    candidates = findPlayersByName(n);
+    const byEmail = getPlayerByEmail(mail);
+    if (byEmail) candidates = [byEmail];
   }
 
   if (!candidates.length) return { ok: false, error: LOGIN_FAIL_MSG };
@@ -495,9 +590,15 @@ function loginAccount(name, password, accountIdOrPlayerId) {
   return { ok: true, account: exportAccount(p), token };
 }
 
-function migrateLegacyPassword(name, age, password) {
+function migrateLegacyPassword(name, age, email, birthDate, password) {
   const n = normalizeName(name);
   if (!n) return { ok: false, error: "Nome inválido" };
+  const mail = normalizeEmail(email);
+  const born = normalizeBirthDate(birthDate);
+  if (!emailValid(mail)) return { ok: false, error: "Digite um email válido" };
+  if (!born) return { ok: false, error: "Digite sua data de nascimento" };
+  const existingEmailOwner = getPlayerByEmail(mail);
+  if (existingEmailOwner) return { ok: false, error: "Este email já tem conta" };
 
   const matches = findPlayersByName(n);
   const p = matches[0];
@@ -510,6 +611,8 @@ function migrateLegacyPassword(name, age, password) {
 
   setPasswordOnPlayer(p, password);
   if (age != null) p.age = age;
+  p.email = mail;
+  p.birthDate = born;
   if (!p.playerId) p.playerId = generatePlayerId();
   const token = createSessionToken(p);
   p.lastLogin = new Date().toISOString();
@@ -639,21 +742,21 @@ async function handleAccountApi(req, res, pathname) {
 
   if (pathname === "/api/account/register" && req.method === "POST") {
     const body = await parseBody(req);
-    const result = registerAccount(body.name, body.age, body.password);
+    const result = registerAccount(body.name, body.age, body.email, body.birthDate, body.password);
     res.writeHead(result.ok ? 200 : 400, { "Content-Type": "application/json" });
     return res.end(JSON.stringify(result));
   }
 
   if (pathname === "/api/account/login" && req.method === "POST") {
     const body = await parseBody(req);
-    const result = loginAccount(body.name, body.password, body.accountId || body.playerId);
+    const result = loginAccount(body.email || body.name, body.password, body.accountId || body.playerId);
     res.writeHead(result.ok ? 200 : 400, { "Content-Type": "application/json" });
     return res.end(JSON.stringify(result));
   }
 
   if (pathname === "/api/account/migrate" && req.method === "POST") {
     const body = await parseBody(req);
-    const result = migrateLegacyPassword(body.name, body.age, body.password);
+    const result = migrateLegacyPassword(body.name, body.age, body.email, body.birthDate, body.password);
     res.writeHead(result.ok ? 200 : 400, { "Content-Type": "application/json" });
     return res.end(JSON.stringify(result));
   }

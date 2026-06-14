@@ -57,6 +57,10 @@ export function createWeaponView(camera) {
 
   shotgunGroup.visible = false;
 
+  const bazookaGroup = makeFpsWeapon("bazooka", 2.65, 0x45305f);
+
+  bazookaGroup.visible = false;
+
 
 
   const glockGroup = makeFpsWeapon("glock", 1.85, 0x2a2a30);
@@ -102,7 +106,7 @@ export function createWeaponView(camera) {
 
   root.add(
 
-    akGroup, scarGroup, m4Group, umpGroup, awmGroup, shotgunGroup, glockGroup,
+    akGroup, scarGroup, m4Group, umpGroup, awmGroup, shotgunGroup, bazookaGroup, glockGroup,
 
     knifeGroup, meleeModels.facao, meleeModels.porrete, meleeModels.katana
 
@@ -152,6 +156,8 @@ export function createWeaponView(camera) {
 
       doze: shotgunGroup,
 
+      bazooka: bazookaGroup,
+
     },
 
     meleeModels,
@@ -192,6 +198,8 @@ const MUZZLE_Z = {
   awm: -0.68,
 
   doze: -0.58,
+
+  bazooka: -0.72,
 
 };
 
@@ -312,6 +320,7 @@ export function triggerReloadAnimation(view) {
 export function updateWeaponView(view, dt, moving = false) {
 
   const t = performance.now() * 0.001;
+  animateSkinFx(view, t);
 
   const targetAds = view.adsWeapon ? 1 : 0;
 
@@ -339,6 +348,8 @@ export function updateWeaponView(view, dt, moving = false) {
     awm: { x: 0, y: -0.1, z: -0.22 },
 
     doze: { x: 0, y: -0.055, z: -0.1 },
+
+    bazooka: { x: 0, y: -0.075, z: -0.15 },
 
   };
 
@@ -393,6 +404,40 @@ export function updateWeaponView(view, dt, moving = false) {
 
 }
 
+function animateSkinFx(view, t) {
+  const groups = [
+    ...Object.values(view.primaryModels || {}),
+    view.models?.[2],
+  ].filter((g) => g?.visible);
+  for (const g of groups) {
+    if (g.userData.galaxySkin) {
+      g.traverse((o) => {
+        if (o.material?.map?.isCanvasTexture) {
+          o.material.map.offset.x = (t * 0.025) % 1;
+          o.material.map.offset.y = (t * 0.012) % 1;
+        }
+      });
+    }
+    g.traverse((o) => {
+      if (!o.userData?.skinFx) return;
+      if (o.userData.spin) o.rotation.z += 0.02 * o.userData.spin;
+      if (o.userData.pulse) {
+        const s = 1 + Math.sin(t * 4 + o.userData.pulse) * 0.18;
+        o.scale.setScalar(s);
+      }
+      if (o.userData.float) {
+        o.position.y = 0.12 + Math.sin(t * 2.6) * 0.025;
+      }
+      if (o.userData.ghost != null) {
+        const phase = t * 2.1 + o.userData.ghost * 2.2;
+        o.position.y = 0.1 + o.userData.ghost * 0.015 + Math.sin(phase) * 0.035;
+        o.position.x = (o.userData.ghost - 1) * 0.06 + Math.cos(phase) * 0.025;
+        if (o.material) o.material.opacity = 0.25 + (Math.sin(phase) + 1) * 0.18;
+      }
+    });
+  }
+}
+
 function getReloadModel(view, weaponId) {
   if (weaponId === "glock") return view.models?.[2];
   return view.primaryModels?.[weaponId] || null;
@@ -422,6 +467,7 @@ function applyReloadPose(view, reload) {
     ump45: { x: 0.08, y: -0.09, z: 0.05, rx: -0.24, ry: 0.18, rz: -0.12, mag: 0.03 },
     awm: { x: 0.06, y: -0.08, z: 0.1, rx: -0.18, ry: -0.22, rz: 0.08, bolt: 0.075 },
     doze: { x: 0.05, y: -0.08, z: 0.1, rx: -0.2, ry: 0.08, rz: -0.08, pump: 0.12 },
+    bazooka: { x: 0.08, y: -0.12, z: 0.14, rx: -0.24, ry: 0.1, rz: -0.12, bolt: 0.12 },
     glock: { x: 0.07, y: -0.08, z: 0.05, rx: -0.26, ry: 0.12, rz: -0.1, slide: 0.07 },
   }[weaponId] || { x: 0.09, y: -0.1, z: 0.06, rx: -0.25, ry: 0.18, rz: -0.14, mag: 0.03 };
 

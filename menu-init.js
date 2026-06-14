@@ -303,6 +303,9 @@
       const acc = account || { isAdmin: mod.isSessionAdmin?.() };
       window.showAdminForAccount?.(acc);
     } catch { /* painel admin opcional */ }
+    if (account?.birthdayMessage) {
+      setTimeout(() => alert(account.birthdayMessage), 250);
+    }
     try {
       const { preloadPlayerLoadout } = await import("./character-customizer.js");
       await preloadPlayerLoadout(name);
@@ -322,11 +325,11 @@
     $("welcomeMigrateBack")?.addEventListener("click", () => setWelcomeTab("login"));
 
     loginBtn?.addEventListener("click", async () => {
-      const name = $("loginName")?.value?.trim();
+      const email = $("loginEmail")?.value?.trim();
       const password = $("loginPassword")?.value || "";
-      if (!name) {
-        alert("Digite o nome da sua conta.");
-        $("loginName")?.focus();
+      if (!email || !email.includes("@")) {
+        alert("Digite o email da sua conta.");
+        $("loginEmail")?.focus();
         return;
       }
       if (!password) {
@@ -337,9 +340,9 @@
       loginBtn.disabled = true;
       try {
         const mod = await import("./player-account.js");
-        const res = await mod.loginAccount(name, password);
+        const res = await mod.loginAccount(email, password);
         if (res.ok) {
-          await enterMenuWithAccount(name, mod, res.account);
+          await enterMenuWithAccount(res.account?.name || email, mod, res.account);
           return;
         }
         if (res.needPlayerId) {
@@ -348,8 +351,10 @@
           return;
         }
         if (res.needPasswordSetup) {
-          $("migrateName").value = name;
+          $("migrateName").value = "";
           $("migrateAge").value = "";
+          $("migrateEmail").value = email;
+          $("migrateBirthDate").value = "";
           $("migratePassword").value = "";
           showWelcomePanel("welcomeMigratePanel");
           return;
@@ -363,19 +368,19 @@
     });
 
     $("welcomeLoginWithIdBtn")?.addEventListener("click", async () => {
-      const name = $("loginName")?.value?.trim();
+      const email = $("loginEmail")?.value?.trim();
       const password = $("loginPassword")?.value || "";
       const playerId = $("loginPlayerId")?.value?.trim() || "";
-      if (!name || !password || !playerId) {
-        alert("Preencha nome, senha e ID SZ-XXXXXX.");
+      if (!email || !password || !playerId) {
+        alert("Preencha email, senha e ID SZ-XXXXXX.");
         return;
       }
       const btn = $("welcomeLoginWithIdBtn");
       btn.disabled = true;
       try {
         const mod = await import("./player-account.js");
-        const res = await mod.loginAccount(name, password, playerId);
-        if (res.ok) await enterMenuWithAccount(name, mod, res.account);
+        const res = await mod.loginAccount(email, password, playerId);
+        if (res.ok) await enterMenuWithAccount(res.account?.name || email, mod, res.account);
         else alert(res.msg || "Login falhou.");
       } catch {
         alert("Servidor offline.");
@@ -388,7 +393,9 @@
 
     registerBtn?.addEventListener("click", async () => {
       const name = $("registerName")?.value?.trim();
+      const email = $("registerEmail")?.value?.trim();
       const age = parseInt($("registerAge")?.value, 10);
+      const birthDate = $("registerBirthDate")?.value || "";
       const password = $("registerPassword")?.value || "";
       const confirm = $("registerPasswordConfirm")?.value || "";
       if (!name) {
@@ -399,6 +406,16 @@
       if (!age || age < 8 || age > 99) {
         alert("Digite uma idade válida (8 a 99).");
         $("registerAge")?.focus();
+        return;
+      }
+      if (!email || !email.includes("@")) {
+        alert("Digite um email válido.");
+        $("registerEmail")?.focus();
+        return;
+      }
+      if (!birthDate) {
+        alert("Digite sua data de nascimento.");
+        $("registerBirthDate")?.focus();
         return;
       }
       if (password.length < 4) {
@@ -414,7 +431,7 @@
       registerBtn.disabled = true;
       try {
         const mod = await import("./player-account.js");
-        const res = await mod.registerAccount(name, age, password);
+        const res = await mod.registerAccount(name, age, email, birthDate, password);
         if (res.ok) {
           const pid = res.account?.playerId || res.playerId;
           const okEl = $("welcomeRegisterSuccess");
@@ -435,16 +452,18 @@
     migrateBtn?.addEventListener("click", async () => {
       const name = $("migrateName")?.value?.trim();
       const age = parseInt($("migrateAge")?.value, 10);
+      const email = $("migrateEmail")?.value?.trim();
+      const birthDate = $("migrateBirthDate")?.value || "";
       const password = $("migratePassword")?.value || "";
-      if (!name || !age || password.length < 4) {
-        alert("Preencha nome, idade e senha (mín. 4 caracteres).");
+      if (!name || !age || !email || !birthDate || password.length < 4) {
+        alert("Preencha nome, idade, email, data de nascimento e senha (mín. 4 caracteres).");
         return;
       }
       migrateBtn.disabled = true;
       try {
         const mod = await import("./player-account.js");
-        const res = await mod.migrateLegacyAccount(name, age, password);
-        if (res.ok) await enterMenuWithAccount(name, mod, res.account);
+        const res = await mod.migrateLegacyAccount(name, age, email, birthDate, password);
+        if (res.ok) await enterMenuWithAccount(res.account?.name || name, mod, res.account);
         else alert(res.msg || "Não foi possível definir a senha.");
       } catch {
         alert("Servidor offline. Abra JOGAR.bat e tente de novo.");
@@ -463,8 +482,10 @@
       try {
         const mod = await import("./player-account.js");
         const saved = mod.getSavedSession();
+        if (saved?.account?.email) {
+          $("loginEmail").value = saved.account.email;
+        }
         if (saved?.name) {
-          $("loginName").value = saved.name;
           $("registerName").value = saved.name;
         }
         const account = await mod.tryRestoreSession();

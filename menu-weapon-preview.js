@@ -10,6 +10,7 @@ const TINTS = {
   ump45: 0x2a2a32,
   awm: 0x4a3a28,
   doze: 0x6b4423,
+  bazooka: 0x45305f,
 };
 
 const viewers = [];
@@ -57,7 +58,7 @@ function mountWeaponPreview(canvas, weaponId) {
 
   const gun = buildNpcWeapon(weaponId, TINTS[weaponId] || 0x5c3a1e);
   gun.rotation.set(-0.15, Math.PI / 2, 0);
-  gun.scale.setScalar(1.75);
+  gun.scale.setScalar(weaponId === "bazooka" ? 1.55 : 1.75);
   scene.add(gun);
 
   renderer.render(scene, camera);

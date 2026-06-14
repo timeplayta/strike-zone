@@ -64,15 +64,15 @@
       </div>
 
       <div id="welcomeLoginPanel" class="welcome-panel">
-        <label for="loginName">Nome da conta</label>
-        <input type="text" id="loginName" maxlength="16" placeholder="Ex: Maria, João..." autocomplete="username" />
+        <label for="loginEmail">Email da conta</label>
+        <input type="email" id="loginEmail" maxlength="80" placeholder="voce@email.com" autocomplete="email" />
         <label for="loginPassword">Senha</label>
         <input type="password" id="loginPassword" maxlength="32" placeholder="Sua senha" autocomplete="current-password" />
         <button type="button" id="welcomeLoginBtn" class="btn-primary">ENTRAR</button>
       </div>
 
       <div id="welcomePlayerIdPanel" class="welcome-panel hidden">
-        <p class="welcome-migrate-msg">Várias contas com esse nome. Digite o <strong>ID SZ-XXXXXX</strong> que apareceu quando você criou a conta.</p>
+        <p class="welcome-migrate-msg">Confirme o <strong>ID SZ-XXXXXX</strong> da sua conta junto com o email.</p>
         <label for="loginPlayerId">ID da sua conta</label>
         <input type="text" id="loginPlayerId" maxlength="12" placeholder="Ex: SZ-A7X2K9" autocomplete="off" />
         <button type="button" id="welcomeLoginWithIdBtn" class="btn-primary">ENTRAR COM ID</button>
@@ -82,8 +82,12 @@
       <div id="welcomeRegisterPanel" class="welcome-panel hidden">
         <label for="registerName">Escolha um nome</label>
         <input type="text" id="registerName" maxlength="16" placeholder="Ex: Maria, João..." autocomplete="off" />
+        <label for="registerEmail">Seu email</label>
+        <input type="email" id="registerEmail" maxlength="80" placeholder="voce@email.com" autocomplete="email" />
         <label for="registerAge">Sua idade</label>
         <input type="number" id="registerAge" min="8" max="99" placeholder="Ex: 16" />
+        <label for="registerBirthDate">Data de nascimento</label>
+        <input type="date" id="registerBirthDate" />
         <label for="registerPassword">Crie uma senha</label>
         <input type="password" id="registerPassword" maxlength="32" placeholder="Mínimo 4 caracteres" autocomplete="new-password" />
         <label for="registerPasswordConfirm">Confirmar senha</label>
@@ -97,13 +101,17 @@
         <input type="text" id="migrateName" maxlength="16" readonly />
         <label for="migrateAge">Idade (confirmação)</label>
         <input type="number" id="migrateAge" min="8" max="99" />
+        <label for="migrateEmail">Email para proteger a conta</label>
+        <input type="email" id="migrateEmail" maxlength="80" placeholder="voce@email.com" autocomplete="email" />
+        <label for="migrateBirthDate">Data de nascimento</label>
+        <input type="date" id="migrateBirthDate" />
         <label for="migratePassword">Nova senha</label>
         <input type="password" id="migratePassword" maxlength="32" placeholder="Mínimo 4 caracteres" autocomplete="new-password" />
         <button type="button" id="welcomeMigrateBtn" class="btn-primary">DEFINIR SENHA E ENTRAR</button>
         <button type="button" id="welcomeMigrateBack" class="btn-link">Voltar ao login</button>
       </div>
 
-      <p class="welcome-note">Ao criar conta, você recebe um <strong>ID SZ-XXXXXX</strong> automático — guarde para login se outra pessoa usa o mesmo nome</p>
+      <p class="welcome-note">Agora login usa <strong>email + senha</strong>. O ID SZ-XXXXXX continua como segurança extra.</p>
       <p id="welcomeRegisterSuccess" class="welcome-register-success hidden"></p>
     </div>
   </div>
@@ -446,8 +454,7 @@
       <div class="account-info-grid">
         <div class="account-field"><span class="account-label">ID único</span><strong id="accountPlayerIdDisplay">—</strong></div>
         <div class="account-field"><span class="account-label">Conta</span><strong id="accountNameDisplay">—</strong></div>
-        <div class="account-field"><span class="account-label">Senha</span><strong id="accountPasswordDisplay">—</strong></div>
-        <label class="account-show-pw"><input type="checkbox" id="accountShowPassword" /> Mostrar senha</label>
+        <div class="account-field"><span class="account-label">Email</span><strong id="accountEmailDisplay">—</strong></div>
         <div class="account-field"><span class="account-label">Idade</span><span id="accountAgeDisplay">—</span></div>
         <div class="account-field"><span class="account-label">Moedas</span><span id="accountCoinsDisplay">0 🪙</span></div>
         <div class="account-field"><span class="account-label">Abates</span><span id="accountKillsDisplay">0</span></div>
@@ -512,6 +519,12 @@
             <canvas class="weapon-preview-canvas" data-weapon-preview="doze" width="120" height="88"></canvas>
           </span>
           <span class="weapon-name">Doze</span>
+        </button>
+        <button type="button" class="weapon-btn ff-weapon-card" data-weapon="bazooka">
+          <span class="weapon-preview-wrap">
+            <canvas class="weapon-preview-canvas" data-weapon-preview="bazooka" width="120" height="88"></canvas>
+          </span>
+          <span class="weapon-name">Bazuca</span>
         </button>
       </div>
       <button type="button" id="roundWeaponConfirm" class="btn-primary round-weapon-confirm">CONFIRMAR</button>

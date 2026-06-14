@@ -3,21 +3,31 @@
 import { OUTFIT_SETS, SLOT_META, SLOT_PRESETS, DEFAULT_LOADOUT_PRESET_IDS } from "./character-loadout.js";
 
 export const WEAPON_SKINS = [
-  { id: "ak_blue", type: "weapon", weapon: "ak47", color: 0x2266cc, price: 45, label: "AK-47 Azul", tier: "comum" },
-  { id: "ak_red", type: "weapon", weapon: "ak47", color: 0xcc3322, price: 45, label: "AK-47 Vermelha", tier: "comum" },
-  { id: "ak_gold", type: "weapon", weapon: "ak47", color: 0xc9a227, price: 120, label: "AK-47 Dourada", tier: "lendária" },
-  { id: "ak_neon", type: "weapon", weapon: "ak47", color: 0x00ffcc, price: 95, label: "AK-47 Neon", tier: "épica" },
-  { id: "scar_blue", type: "weapon", weapon: "scar", color: 0x3355aa, price: 55, label: "SCAR Azul", tier: "comum" },
-  { id: "scar_green", type: "weapon", weapon: "scar", color: 0x2a6644, price: 55, label: "SCAR Verde", tier: "comum" },
-  { id: "scar_purple", type: "weapon", weapon: "scar", color: 0x8844cc, price: 75, label: "SCAR Roxa", tier: "épica" },
-  { id: "m4_carbon", type: "weapon", weapon: "m4", color: 0x2a2a32, price: 50, label: "M4 Carbono", tier: "comum" },
-  { id: "m4_sakura", type: "weapon", weapon: "m4", color: 0xff88aa, price: 70, label: "M4 Sakura", tier: "épica" },
-  { id: "ump_orange", type: "weapon", weapon: "ump45", color: 0xff6622, price: 40, label: "UMP Laranja", tier: "comum" },
-  { id: "awm_black", type: "weapon", weapon: "awm", color: 0x1a1a22, price: 90, label: "AWM Preta", tier: "rara" },
-  { id: "awm_ice", type: "weapon", weapon: "awm", color: 0xa8e8ff, price: 110, label: "AWM Gelo", tier: "lendária" },
-  { id: "doze_wood", type: "weapon", weapon: "doze", color: 0x6b4423, price: 35, label: "Doze Madeira", tier: "comum" },
-  { id: "doze_toxic", type: "weapon", weapon: "doze", color: 0x44cc44, price: 55, label: "Doze Tóxica", tier: "épica" },
-  { id: "glock_pink", type: "weapon", weapon: "glock", color: 0xcc4488, price: 30, label: "Glock Rosa", tier: "comum" },
+  { id: "ak_blue", type: "weapon", weapon: "ak47", color: 0x2266cc, price: 80, label: "AK-47 Azul", tier: "comum" },
+  { id: "ak_red", type: "weapon", weapon: "ak47", color: 0xcc3322, price: 95, label: "AK-47 Vermelha", tier: "comum" },
+  { id: "ak_gold", type: "weapon", weapon: "ak47", color: 0xc9a227, price: 720, label: "AK-47 Dourada", tier: "lendária" },
+  { id: "ak_neon", type: "weapon", weapon: "ak47", color: 0x00ffcc, price: 320, label: "AK-47 Neon", tier: "épica" },
+  { id: "ak_shadow", type: "weapon", weapon: "ak47", color: 0x1b1028, price: 1200, label: "AK-47 Sombria", tier: "mítica" },
+  { id: "ak_galaxy", type: "weapon", weapon: "ak47", color: 0x090818, price: 1450, label: "AK-47 Galáxia", tier: "mítica", cosmic: "sun" },
+  { id: "scar_blue", type: "weapon", weapon: "scar", color: 0x3355aa, price: 90, label: "SCAR Azul", tier: "comum" },
+  { id: "scar_green", type: "weapon", weapon: "scar", color: 0x2a6644, price: 140, label: "SCAR Verde", tier: "rara" },
+  { id: "scar_purple", type: "weapon", weapon: "scar", color: 0x8844cc, price: 310, label: "SCAR Roxa", tier: "épica" },
+  { id: "scar_galaxy", type: "weapon", weapon: "scar", color: 0x0b1028, price: 1350, label: "SCAR Galáxia", tier: "mítica", cosmic: "planet" },
+  { id: "m4_carbon", type: "weapon", weapon: "m4", color: 0x2a2a32, price: 160, label: "M4 Carbono", tier: "rara" },
+  { id: "m4_sakura", type: "weapon", weapon: "m4", color: 0xff88aa, price: 340, label: "M4 Sakura", tier: "épica" },
+  { id: "m4_galaxy", type: "weapon", weapon: "m4", color: 0x0a1324, price: 1400, label: "M4 Galáxia", tier: "mítica", cosmic: "satellite" },
+  { id: "ump_orange", type: "weapon", weapon: "ump45", color: 0xff6622, price: 70, label: "UMP Laranja", tier: "comum" },
+  { id: "ump_galaxy", type: "weapon", weapon: "ump45", color: 0x111024, price: 1150, label: "UMP Galáxia", tier: "mítica", cosmic: "comet" },
+  { id: "awm_black", type: "weapon", weapon: "awm", color: 0x1a1a22, price: 180, label: "AWM Preta", tier: "rara" },
+  { id: "awm_ice", type: "weapon", weapon: "awm", color: 0xa8e8ff, price: 850, label: "AWM Gelo", tier: "lendária" },
+  { id: "awm_galaxy", type: "weapon", weapon: "awm", color: 0x08061a, price: 1800, label: "AWM Galáxia", tier: "mítica", cosmic: "galaxy" },
+  { id: "doze_wood", type: "weapon", weapon: "doze", color: 0x6b4423, price: 65, label: "Doze Madeira", tier: "comum" },
+  { id: "doze_toxic", type: "weapon", weapon: "doze", color: 0x44cc44, price: 280, label: "Doze Tóxica", tier: "épica" },
+  { id: "doze_galaxy", type: "weapon", weapon: "doze", color: 0x12091e, price: 1250, label: "Doze Galáxia", tier: "mítica", cosmic: "asteroid" },
+  { id: "glock_pink", type: "weapon", weapon: "glock", color: 0xcc4488, price: 55, label: "Glock Rosa", tier: "comum" },
+  { id: "glock_galaxy", type: "weapon", weapon: "glock", color: 0x0b0b20, price: 1050, label: "Glock Galáxia", tier: "mítica", cosmic: "moon" },
+  { id: "bazooka_mythic", type: "weapon", weapon: "bazooka", color: 0x8b45ff, price: 1000, label: "Bazuca Mítica", tier: "mítica" },
+  { id: "bazooka_galaxy", type: "weapon", weapon: "bazooka", color: 0x120727, price: 2200, label: "Bazuca Galáxia", tier: "mítica", cosmic: "blackhole" },
 ];
 
 export const CHARACTER_SKINS = [
@@ -31,6 +41,8 @@ export const CHARACTER_SKINS = [
   { id: "char_among_cyan", type: "character", skinId: "among_cyan", color: 0x22dddd, price: 110, label: "Among Us Ciano", tier: "rara" },
   { id: "char_neon_runner", type: "character", skinId: "neon_runner", color: 0x00ffaa, price: 180, label: "Neon Runner", tier: "lendária" },
   { id: "char_shadow", type: "character", skinId: "shadow", color: 0x1a1028, price: 140, label: "Sombra", tier: "épica" },
+  { id: "char_trevas_horror", type: "character", skinId: "trevas_horror", color: 0x14091f, price: 1200, label: "Caçador das Trevas", tier: "mítica" },
+  { id: "char_birthday", type: "character", skinId: "birthday_hero", color: 0xffcc44, price: 0, label: "Aniversariante", tier: "presente" },
   { id: "char_soldier_pro", type: "character", skinId: "soldier", color: 0x8899aa, price: 0, label: "Soldado (padrão)", tier: "grátis" },
 ];
 
@@ -74,7 +86,7 @@ export const ALL_SHOP_ITEMS = [
   ...LOADOUT_ITEMS,
 ];
 
-export const WEAPON_IDS = ["ak47", "scar", "m4", "ump45", "awm", "doze", "glock"];
+export const WEAPON_IDS = ["ak47", "scar", "m4", "ump45", "awm", "doze", "bazooka", "glock"];
 
 export function getShopItem(id) {
   return WEAPON_SKINS.find((i) => i.id === id) ||
@@ -91,6 +103,7 @@ export function getWeaponLabel(id) {
     ump45: "UMP-45",
     awm: "AWM",
     doze: "Doze",
+    bazooka: "Bazuca",
     glock: "Glock",
   };
   return map[id] || id;

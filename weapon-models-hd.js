@@ -95,6 +95,23 @@ function addMuzzleBrake(g, metal, z, big = false) {
   g.add(box(radius * 1.7, 0.006, 0.012, metal, 0, 0.02, z + 0.008));
 }
 
+function addSidePanels(g, mat, zStart, zEnd, y = 0.028, x = 0.04) {
+  const len = zEnd - zStart;
+  g.add(box(0.008, 0.032, len, mat, x, y, (zStart + zEnd) / 2));
+  g.add(box(0.008, 0.032, len, mat, -x, y, (zStart + zEnd) / 2));
+  for (let i = 0; i < 4; i++) {
+    const z = zStart + (i + 0.5) * (len / 4);
+    g.add(box(0.012, 0.008, 0.028, cloneMat(mat), x + 0.002, y + 0.025, z));
+    g.add(box(0.012, 0.008, 0.028, cloneMat(mat), -x - 0.002, y + 0.025, z));
+  }
+}
+
+function addTriggerGuard(g, dark, z = 0.055) {
+  g.add(box(0.06, 0.006, 0.052, dark, 0, -0.045, z));
+  g.add(box(0.006, 0.04, 0.006, dark, -0.028, -0.03, z));
+  g.add(box(0.006, 0.04, 0.006, dark, 0.028, -0.03, z));
+}
+
 function addScope(g, metal, dark, z = -0.18, long = false) {
   const len = long ? 0.18 : 0.12;
   g.add(box(0.014, 0.035, 0.08, dark, 0, 0.072, z + len * 0.1));
@@ -146,6 +163,8 @@ function rifleCore(g, tint, opts = {}) {
   g.add(box(0.05, 0.03, 0.06, dark, 0, -0.02, -0.09));
   g.add(box(0.045, 0.008, 0.055, dark, 0, -0.03, 0.035));
   g.add(box(0.01, 0.038, 0.012, metal, 0, -0.046, 0.038, 0.18));
+  addSidePanels(g, modern ? metal : body, -0.16, 0.1);
+  addTriggerGuard(g, dark);
   return { metal, dark, body, grip };
 }
 
@@ -163,6 +182,7 @@ export function buildHdAk47(tint = 0x6b4423) {
   g.add(tube(0.007, 0.36, 10, metal, 0, 0.044, -0.11, Math.PI / 2));
   g.add(box(0.034, 0.018, 0.17, metal, 0, 0.041, 0.02));
   g.add(box(0.052, 0.012, 0.06, dark, 0, 0.072, 0.085));
+  g.add(box(0.075, 0.028, 0.11, body, 0, 0.026, -0.19));
   addIronSights(g, dark, -0.32, 0.11);
   addMuzzleBrake(g, metal, -0.61);
 
@@ -184,6 +204,7 @@ export function buildHdScar(tint = 0x3a4550) {
   g.add(box(0.048, 0.056, 0.1, grip, 0, 0.012, 0.095));
   g.add(box(0.03, 0.08, 0.026, dark, 0, 0.04, 0.145));
   g.add(box(0.016, 0.02, 0.09, metal, 0, 0.05, -0.235));
+  addScope(g, metal, dark, -0.08, false);
   addIronSights(g, dark, -0.34, 0.12);
   addMuzzleBrake(g, metal, -0.56);
 
@@ -208,6 +229,7 @@ export function buildHdM4(tint = 0x3d4a38) {
     g.add(box(0.005, 0.012, 0.145, cloneMat(metal), -0.027, 0.019, -0.02 - i * 0.032));
   }
   g.add(box(0.04, 0.058, 0.072, grip, 0, -0.004, 0.092));
+  addScope(g, metal, dark, -0.09, false);
   addIronSights(g, dark, -0.31, 0.1);
   addMuzzleBrake(g, metal, -0.52);
 
@@ -228,6 +250,7 @@ export function buildHdUmp45(tint = 0x2a2a32) {
   addRibbedGrip(g, matGrip(), 0, -0.064, -0.018, 0.095);
   g.add(box(0.04, 0.026, 0.055, dark, 0, -0.013, -0.11));
   addRail(g, dark, -0.09, 0.09, 0.058);
+  addSidePanels(g, grip, -0.13, 0.08, 0.018, 0.038);
   addIronSights(g, dark, -0.25, 0.08);
 
   return markWeapon(g, "ump45");
@@ -246,6 +269,7 @@ export function buildHdAwm(tint = 0x5c4030) {
   g.add(box(0.05, 0.032, 0.28, body, 0, 0.01, 0.02));
   addScope(g, metal, dark, -0.24, true);
   g.add(box(0.036, 0.032, 0.13, dark, 0, 0.064, -0.13));
+  g.add(box(0.052, 0.012, 0.42, dark, 0, 0.048, -0.32));
   g.add(box(0.012, 0.052, 0.03, dark, -0.025, -0.045, 0.13, 0.35));
   g.add(box(0.012, 0.052, 0.03, dark, 0.025, -0.045, 0.13, 0.35));
   g.add(box(0.026, 0.06, 0.035, dark, 0.032, -0.03, -0.02, 0.08));
@@ -267,6 +291,7 @@ export function buildHdShotgun(tint = 0x6b4423) {
   g.add(box(0.048, 0.06, 0.09, dark, 0, 0.012, 0.02));
   g.add(box(0.038, 0.032, 0.16, body, 0, -0.005, -0.16));
   addRibbedGrip(g, matGrip(), 0, -0.057, -0.02, 0.1);
+  addSidePanels(g, body, -0.44, -0.05, 0.025, 0.05);
   g.add(box(0.018, 0.04, 0.06, dark, 0, 0.041, 0.105));
   addIronSights(g, dark, -0.48, 0.095);
 
@@ -288,8 +313,32 @@ export function buildHdGlock(tint = 0x2a2a30) {
   g.add(box(0.028, 0.009, 0.075, dark, 0, 0.069, -0.112));
   g.add(box(0.026, 0.004, 0.12, cloneMat(dark), 0.029, 0.058, -0.055));
   g.add(box(0.026, 0.004, 0.12, cloneMat(dark), -0.029, 0.058, -0.055));
+  addTriggerGuard(g, dark, 0.005);
 
   return markWeapon(g, "glock");
+}
+
+export function buildHdBazooka(tint = 0x45305f) {
+  const g = new THREE.Group();
+  const metal = matMetal(0x8a8a96);
+  const dark = matDark(0x17131f);
+  const body = matBody(tint);
+  const grip = matGrip(0x24182f);
+
+  g.add(tube(0.07, 0.72, 28, body, 0, 0.03, -0.18, Math.PI / 2));
+  g.add(tube(0.086, 0.08, 28, metal, 0, 0.03, -0.58, Math.PI / 2));
+  g.add(tube(0.092, 0.1, 28, dark, 0, 0.03, 0.22, Math.PI / 2));
+  g.add(box(0.15, 0.032, 0.42, dark, 0, 0.115, -0.08));
+  addRail(g, metal, -0.35, 0.1, 0.145);
+  addScope(g, metal, dark, -0.08, true);
+  addRibbedGrip(g, grip, 0, -0.08, 0.02, 0.13);
+  g.add(box(0.12, 0.08, 0.14, body, 0, -0.005, 0.18));
+  g.add(box(0.036, 0.12, 0.05, grip, 0, -0.055, -0.18, -0.18));
+  g.add(box(0.18, 0.018, 0.06, metal, 0, 0.035, -0.6));
+  g.add(box(0.16, 0.018, 0.06, metal, 0, 0.035, 0.27));
+  addSidePanels(g, metal, -0.44, 0.12, 0.03, 0.08);
+
+  return markWeapon(g, "bazooka");
 }
 
 export function buildHdWeapon(type = "ak47", tint = 0x5c3a1e) {
@@ -299,6 +348,7 @@ export function buildHdWeapon(type = "ak47", tint = 0x5c3a1e) {
     case "ump45": return buildHdUmp45(tint);
     case "awm": return buildHdAwm(tint);
     case "doze": return buildHdShotgun(tint);
+    case "bazooka": return buildHdBazooka(tint);
     case "glock": return buildHdGlock(tint);
     default: return buildHdAk47(tint);
   }

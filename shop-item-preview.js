@@ -67,7 +67,7 @@ export function getShopItemThumbDataUrl(item) {
     const gun = buildNpcWeapon(item.weapon, item.color);
     applyWeaponSkin(gun, item.weapon, item.color, item.id);
     gun.rotation.set(-0.08, Math.PI / 2, 0);
-    gun.scale.setScalar(2.45);
+    gun.scale.setScalar(item.weapon === "bazooka" ? 2.05 : 2.45);
     pivot.add(gun);
     camera.position.set(0.02, 0.04, 1.05);
     camera.lookAt(0, 0, 0);
