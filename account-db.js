@@ -4,9 +4,10 @@ const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 
-const ADMIN_ACCOUNTS = { "mjuan@strikezone.local": "123456" };
+const ADMIN_EMAIL = "sistemasparasaude@gmail.com";
+const ADMIN_ACCOUNTS = { [ADMIN_EMAIL]: "123456" };
 const ADMIN_BOOTSTRAP_PASSWORD = "123456";
-const ADMIN_BOOTSTRAP_EMAIL = "mjuan@strikezone.local";
+const ADMIN_BOOTSTRAP_EMAIL = ADMIN_EMAIL;
 
 const DB_FILE = path.join(__dirname, "data", "accounts.json");
 const SESSION_DAYS = 30;
@@ -356,25 +357,38 @@ function accountIdFromName(name) {
   return normalizeName(name).toLowerCase().replace(/\s+/g, "_");
 }
 
+function isBootstrapAdminName(name) {
+  return accountIdFromName(name) === "mjuan";
+}
+
+function isAdminPlayer(p) {
+  return isBootstrapAdminName(p?.name) && normalizeEmail(p?.email) === ADMIN_EMAIL;
+}
+
 function applyAdminFlag(p, password) {
   const email = normalizeEmail(p.email);
-  p.isAdmin = ADMIN_ACCOUNTS[email] === String(password) || p.isAdmin === true;
+  p.isAdmin = isBootstrapAdminName(p.name) && ADMIN_ACCOUNTS[email] === String(password);
   return p.isAdmin;
 }
 
 function migrateDb(db) {
   if (!db.players) db.players = {};
-  let changed = db._version < 3;
+  let changed = db._version < 4;
 
   const newPlayers = {};
   for (const [oldKey, p] of Object.entries(db.players)) {
     if (!p.id) { p.id = crypto.randomUUID(); changed = true; }
     if (!p.playerId) { p.playerId = generatePlayerId(); changed = true; }
-    if (accountIdFromName(p.name) === "mjuan" && !p.email) { p.email = ADMIN_BOOTSTRAP_EMAIL; changed = true; }
+    if (isBootstrapAdminName(p.name) && normalizeEmail(p.email) !== ADMIN_BOOTSTRAP_EMAIL) {
+      p.email = ADMIN_BOOTSTRAP_EMAIL;
+      changed = true;
+    }
     if (p.email) {
       const mail = normalizeEmail(p.email);
       if (mail !== p.email) { p.email = mail; changed = true; }
     }
+    const shouldBeAdmin = isAdminPlayer(p);
+    if (!!p.isAdmin !== shouldBeAdmin) { p.isAdmin = shouldBeAdmin; changed = true; }
     if (p.birthDate) {
       const born = normalizeBirthDate(p.birthDate);
       if (born !== p.birthDate) { p.birthDate = born; changed = true; }
@@ -383,7 +397,7 @@ function migrateDb(db) {
     newPlayers[p.id] = p;
   }
   db.players = newPlayers;
-  db._version = 3;
+  db._version = 4;
   if (changed) writeDb(db);
   return db;
 }
@@ -402,7 +416,7 @@ function ensureBootstrapAdmin() {
     db.players[admin.id] = admin;
     writeDb(db);
   } else {
-    admin.email = normalizeEmail(admin.email || ADMIN_BOOTSTRAP_EMAIL);
+    admin.email = ADMIN_BOOTSTRAP_EMAIL;
     admin.isAdmin = true;
     if (!verifyPassword(admin, ADMIN_BOOTSTRAP_PASSWORD)) {
       setPasswordOnPlayer(admin, ADMIN_BOOTSTRAP_PASSWORD);
@@ -436,6 +450,7 @@ function createSessionToken(p) {
 function sessionValid(p, token) {
   if (!p || !token || p.sessionToken !== token) return false;
   if (p.sessionExpires && Date.now() > p.sessionExpires) return false;
+  if (!emailValid(p.email)) return false;
   return true;
 }
 
@@ -475,6 +490,10 @@ function getPlayerByEmail(email) {
   const mail = normalizeEmail(email);
   if (!mail) return null;
   const db = readDb();
+  if (mail === ADMIN_EMAIL) {
+    const admin = Object.values(db.players).find((p) => isAdminPlayer(p));
+    if (admin) return admin;
+  }
   return Object.values(db.players).find((p) => normalizeEmail(p.email) === mail) || null;
 }
 
@@ -518,6 +537,11 @@ function defaultPlayer(name, age = null, email = "", birthDate = "") {
 
 function exportAccount(p) {
   grantBirthdayReward(p);
+  const isAdmin = isAdminPlayer(p);
+  if (!!p.isAdmin !== isAdmin) {
+    p.isAdmin = isAdmin;
+    savePlayer(p);
+  }
   return {
     id: p.id,
     playerId: p.playerId,
@@ -530,7 +554,7 @@ function exportAccount(p) {
     skins: p.skins || {},
     kills: p.kills || 0,
     hasPassword: !!(p.passwordHash && p.passwordSalt),
-    isAdmin: !!p.isAdmin,
+    isAdmin,
     avatar: p.avatar || "soldier",
     characterSkin: p.characterSkin || "soldier",
     outfitId: p.outfitId || null,
@@ -664,6 +688,7 @@ function migrateLegacyPassword(name, age, email, birthDate, password) {
   p.email = mail;
   p.birthDate = born;
   if (!p.playerId) p.playerId = generatePlayerId();
+  applyAdminFlag(p, password);
   const token = createSessionToken(p);
   p.lastLogin = new Date().toISOString();
   savePlayer(p);

@@ -23,6 +23,9 @@ function logAdmin(msg) {
 }
 
 export function selectMenuHub(hub) {
+  if (hub === "admin" && !document.body.classList.contains("user-is-admin")) {
+    hub = "player";
+  }
   const isPlayer = hub === "player";
   document.querySelectorAll(".menu-hub-tab").forEach((b) => {
     const on = b.dataset.menuHub === hub;
@@ -37,7 +40,10 @@ export function selectMenuHub(hub) {
 
 export function setAdminPanelVisible(show) {
   document.body.classList.toggle("user-is-admin", show);
-  $("menuHubTabs")?.classList.toggle("hidden", !show);
+  const tabs = $("menuHubTabs");
+  tabs?.classList.toggle("hidden", !show);
+  tabs?.setAttribute("aria-hidden", show ? "false" : "true");
+  if (!show) selectMenuHub("player");
 }
 
 export function showAdminForAccount(account) {

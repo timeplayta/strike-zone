@@ -48,6 +48,10 @@ let cachedAccountId = "";
 let sessionToken = "";
 let cachedIsAdmin = false;
 
+function hasValidEmail(account) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(account?.email || "").trim());
+}
+
 function emptyAccount() {
   return { coins: 0, skins: {}, purchases: [], characterSkin: "soldier" };
 }
@@ -194,13 +198,14 @@ export async function tryRestoreSession() {
     }
   } catch { /* offline */ }
 
-  if (saved.account) {
+  if (saved.account && hasValidEmail(saved.account)) {
     cachedName = saved.name;
     sessionToken = saved.token;
     cachedAccountId = saved.accountId;
     cachedAccount = saved.account;
     return saved.account;
   }
+  clearSession();
   return null;
 }
 
