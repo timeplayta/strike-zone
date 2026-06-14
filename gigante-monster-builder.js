@@ -15,7 +15,7 @@ import {
   GIANT_HAND_HEIGHT,
 } from "./grimy-hand-loader.js";
 
-export const ROGER_BODY_HEIGHT = 1.55;
+export const ROGER_BODY_HEIGHT = 1.42;
 /** Comprimento do braço (ombro → punho) em metros */
 export const GIGANTE_ARM_LENGTH = 5.8;
 

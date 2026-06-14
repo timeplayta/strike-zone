@@ -103,6 +103,8 @@ function buildGiganteMesh(def) {
 function buildPeluciaMesh(def) {
   const group = new THREE.Group();
   const { fur, belly, eyeW, eyeB } = makePeluciaMaterials();
+  const stitchMat = new THREE.MeshStandardMaterial({ color: 0x21140f, roughness: 0.95, metalness: 0.02 });
+  const buttonMat = new THREE.MeshStandardMaterial({ color: 0x08090d, roughness: 0.35, metalness: 0.25 });
 
   const body = new THREE.Mesh(new THREE.SphereGeometry(0.42, 24, 20), fur);
   body.scale.set(1, 0.9, 0.95);
@@ -114,8 +116,12 @@ function buildPeluciaMesh(def) {
   head.position.set(0, 0.82, 0.05);
   const earL = new THREE.Mesh(new THREE.SphereGeometry(0.12, 14, 12), fur);
   earL.position.set(-0.28, 1.02, 0);
+  earL.scale.set(0.8, 1.25, 0.7);
+  earL.rotation.z = 0.28;
   const earR = earL.clone();
   earR.position.x = 0.28;
+  earR.scale.set(1.05, 0.72, 0.7);
+  earR.rotation.z = -0.55;
 
   const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.07, 14, 12), eyeW);
   eyeL.position.set(-0.1, 0.86, 0.28);
@@ -125,7 +131,35 @@ function buildPeluciaMesh(def) {
   const nose = new THREE.Mesh(new THREE.SphereGeometry(0.05, 12, 10), belly);
   nose.position.set(0, 0.78, 0.35);
 
-  group.add(body, bellyMesh, head, earL, earR, eyeL, eyeR, nose);
+  const armL = new THREE.Mesh(new THREE.CapsuleGeometry(0.065, 0.38, 6, 10), fur);
+  armL.position.set(-0.42, 0.5, 0.02);
+  armL.rotation.z = 0.72;
+  const armR = armL.clone();
+  armR.position.x = 0.42;
+  armR.rotation.z = -0.62;
+  const legL = new THREE.Mesh(new THREE.CapsuleGeometry(0.085, 0.22, 5, 10), fur);
+  legL.position.set(-0.16, 0.06, 0.05);
+  legL.rotation.z = 0.12;
+  const legR = legL.clone();
+  legR.position.x = 0.16;
+  legR.rotation.z = -0.12;
+
+  const mouth = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.014, 0.018), stitchMat);
+  mouth.position.set(0, 0.69, 0.36);
+  for (let i = 0; i < 5; i++) {
+    const s = new THREE.Mesh(new THREE.BoxGeometry(0.014, 0.045, 0.018), stitchMat);
+    s.position.set(-0.085 + i * 0.042, 0.69, 0.372);
+    s.rotation.z = i % 2 ? 0.28 : -0.28;
+    group.add(s);
+  }
+  const button = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.018, 14), buttonMat);
+  button.position.set(0.13, 0.45, 0.39);
+  button.rotation.x = Math.PI / 2;
+  const scar = new THREE.Mesh(new THREE.BoxGeometry(0.018, 0.38, 0.018), stitchMat);
+  scar.position.set(-0.08, 0.47, 0.39);
+  scar.rotation.z = -0.18;
+
+  group.add(body, bellyMesh, head, earL, earR, eyeL, eyeR, nose, armL, armR, legL, legR, mouth, button, scar);
   group.scale.setScalar(def.scale);
   return { group, parts: { body, head } };
 }

@@ -2565,7 +2565,7 @@ body.mode-mobile .flashlight-hud {
   align-items: center;
   justify-content: center;
   width: 100%;
-  height: 96px;
+  height: 104px;
   border-radius: 8px;
   background: radial-gradient(ellipse at 50% 42%, #2a3850 0%, #0a0e14 78%);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -2573,7 +2573,7 @@ body.mode-mobile .flashlight-hud {
 .shop-preview-img {
   display: block;
   width: 100%;
-  height: 92px;
+  height: 100px;
   object-fit: contain;
 }
 .shop-item-name {
@@ -2759,11 +2759,13 @@ body.mode-mobile .flashlight-hud {
 }
 .customizer-layout {
   display: grid;
-  grid-template-columns: minmax(200px, 1fr) minmax(240px, 1.2fr);
+  grid-template-columns: minmax(240px, 1fr) minmax(260px, 1.15fr);
   gap: 16px;
   align-items: start;
 }
+.customizer-slots { order: 1; }
 .customizer-canvas {
+  order: 2;
   width: 100%;
   height: 360px;
   border-radius: 10px;
@@ -2876,9 +2878,8 @@ body.mode-mobile .flashlight-hud {
   background: #0a0e14;
 }
 .shop-hub-preview .solo-canvas {
-  flex: 0 0 220px;
-  width: 220px;
-  max-width: 220px;
+  width: 100%;
+  max-width: none;
   height: 200px;
   min-height: 180px;
 }
@@ -3042,7 +3043,7 @@ body.mode-mobile .flashlight-hud {
 .customizer-layout-hub .customizer-canvas {
   max-height: min(52vh, 360px);
   width: 100%;
-  max-width: 320px;
+  max-width: none;
 }
 
 .arsenal-hub-layout,
@@ -3055,9 +3056,46 @@ body.mode-mobile .flashlight-hud {
 
 .shop-hub-preview {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   gap: 0.75rem;
   align-items: stretch;
+  order: 2;
+}
+
+.shop-selected-preview {
+  display: grid;
+  grid-template-columns: minmax(120px, 0.85fr) minmax(120px, 1fr);
+  gap: 0.75rem;
+  align-items: center;
+  min-height: 150px;
+  padding: 0.75rem;
+  border: 1px solid rgba(120, 150, 200, 0.18);
+  border-radius: 12px;
+  background:
+    radial-gradient(circle at 28% 35%, rgba(80, 150, 255, 0.2), transparent 38%),
+    linear-gradient(145deg, rgba(18, 26, 40, 0.94), rgba(7, 10, 16, 0.98));
+}
+
+.shop-selected-preview-img {
+  display: block;
+  width: 100%;
+  min-height: 112px;
+  object-fit: contain;
+  border-radius: 10px;
+  background: radial-gradient(ellipse at 50% 45%, #23344e 0%, #080b12 76%);
+}
+
+.shop-selected-preview-meta h3 {
+  margin: 0 0 0.25rem;
+  color: #f2c46a;
+  font-size: 0.95rem;
+}
+
+.shop-selected-preview-meta p {
+  margin: 0;
+  color: #aab8cc;
+  font-size: 0.78rem;
+  line-height: 1.35;
 }
 
 .shop-hub-meta {
@@ -3073,6 +3111,45 @@ body.mode-mobile .flashlight-hud {
   padding: 0 2px 6px;
   scrollbar-width: thin;
   scrollbar-color: #f0a030 #101722;
+  order: 1;
+}
+
+.hub-panel-map { width: min(96vw, 860px); }
+
+.map-hub-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-height: 0;
+}
+
+.map-hub-list {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.map-hub-preview {
+  border: 1px solid rgba(120, 150, 200, 0.18);
+  border-radius: 12px;
+  padding: 0.8rem;
+  min-height: 220px;
+  background:
+    radial-gradient(circle at 30% 20%, rgba(255, 170, 80, 0.18), transparent 32%),
+    radial-gradient(circle at 76% 78%, rgba(120, 70, 255, 0.22), transparent 34%),
+    linear-gradient(145deg, rgba(16, 24, 38, 0.96), rgba(6, 8, 14, 0.98));
+}
+
+.map-hub-preview-title {
+  margin: 0 0 0.35rem;
+  color: #f0a030;
+  font-size: 1rem;
+}
+
+.map-hub-preview-desc {
+  margin: 0;
+  color: #aab8cc;
+  font-size: 0.82rem;
+  line-height: 1.45;
 }
 
 @media (max-width: 520px) {
@@ -3098,7 +3175,7 @@ body.mode-mobile .flashlight-hud {
 
 @media (min-width: 640px) {
   .arsenal-hub-layout {
-    flex-direction: row;
+    flex-direction: row-reverse;
     align-items: flex-start;
   }
 
@@ -3113,9 +3190,32 @@ body.mode-mobile .flashlight-hud {
   }
 
   .shop-hub-layout .solo-canvas {
-    flex: 0 0 220px;
-    width: 220px;
-    max-width: 220px;
+    width: 100%;
+    max-width: none;
+    height: min(48vh, 360px);
+  }
+
+  .shop-hub-layout {
+    display: grid;
+    grid-template-columns: minmax(260px, 0.95fr) minmax(280px, 1.15fr);
+    align-items: start;
+  }
+
+  .shop-hub-layout .shop-grid {
+    grid-template-columns: 1fr;
+    max-height: min(56vh, 520px);
+    overflow-y: auto;
+    padding-right: 6px;
+  }
+
+  .shop-hub-layout .shop-item {
+    min-height: 128px;
+  }
+
+  .map-hub-layout {
+    display: grid;
+    grid-template-columns: minmax(260px, 0.9fr) minmax(280px, 1.1fr);
+    align-items: stretch;
   }
 }
 

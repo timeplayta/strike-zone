@@ -22,7 +22,74 @@ export function getAmongUsColor(skinId) {
   return SKIN_COLORS[skinId] || SKIN_COLORS.soldier;
 }
 
-export function buildAmongUsCharacter(skinId = "among_red", scale = 1) {
+function mat(color, emissive = null) {
+  const material = new THREE.MeshStandardMaterial({ color, roughness: 0.5, metalness: 0.08 });
+  if (emissive) {
+    material.emissive = new THREE.Color(emissive);
+    material.emissiveIntensity = 0.35;
+  }
+  return material;
+}
+
+function addAmongLoadout(group, loadout, bodyMat) {
+  if (!loadout) return;
+  const helmet = loadout.helmet || {};
+  const gloves = loadout.gloves || {};
+  const helmetColor = helmet.color ?? 0x222831;
+  const gloveColor = gloves.color ?? 0x111111;
+  const gloveMat = mat(gloveColor, gloves.neon ? gloveColor : null);
+
+  const armMat = bodyMat.clone();
+  const armL = new THREE.Mesh(new THREE.CapsuleGeometry(0.075, 0.26, 4, 8), armMat);
+  const armR = armL.clone();
+  armL.position.set(-0.38, 0.86, 0.08);
+  armR.position.set(0.38, 0.86, 0.08);
+  armL.rotation.z = -0.32;
+  armR.rotation.z = 0.32;
+  const gloveL = new THREE.Mesh(new THREE.SphereGeometry(0.095, 12, 10), gloveMat);
+  const gloveR = gloveL.clone();
+  gloveL.position.set(-0.44, 0.66, 0.13);
+  gloveR.position.set(0.44, 0.66, 0.13);
+  group.add(armL, armR, gloveL, gloveR);
+
+  const helmetMat = mat(helmetColor, helmet.neon ? helmetColor : null);
+  if (helmet.style === "cap") {
+    const cap = new THREE.Mesh(new THREE.SphereGeometry(0.28, 18, 12, 0, Math.PI * 2, 0, Math.PI * 0.5), helmetMat);
+    cap.position.set(0, 1.49, 0.02);
+    const brim = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.045, 0.16), helmetMat);
+    brim.position.set(0, 1.39, 0.22);
+    group.add(cap, brim);
+    return;
+  }
+  if (helmet.style === "mask" || helmet.style === "bandana") {
+    const mask = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.12, 0.04), helmetMat);
+    mask.position.set(0, 1.18, 0.47);
+    const line = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.035, 0.02), mat(0x05070a));
+    line.position.set(0, 1.19, 0.5);
+    group.add(mask, line);
+    return;
+  }
+  if (helmet.style === "glasses") {
+    const lens = mat(helmetColor, helmetColor);
+    lens.transparent = true;
+    lens.opacity = 0.75;
+    const left = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.075, 0.025), lens);
+    const right = left.clone();
+    left.position.set(-0.11, 1.2, 0.48);
+    right.position.set(0.11, 1.2, 0.48);
+    group.add(left, right);
+    return;
+  }
+  if (helmet.style) {
+    const shell = new THREE.Mesh(new THREE.SphereGeometry(0.34, 20, 14, 0, Math.PI * 2, 0, Math.PI * 0.62), helmetMat);
+    shell.position.set(0, 1.42, 0.02);
+    const rim = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 0.05, 20), helmetMat);
+    rim.position.set(0, 1.29, 0.02);
+    group.add(shell, rim);
+  }
+}
+
+export function buildAmongUsCharacter(skinId = "among_red", scale = 1, loadout = null) {
   const color = getAmongUsColor(skinId);
   const group = new THREE.Group();
 
@@ -54,7 +121,6 @@ export function buildAmongUsCharacter(skinId = "among_red", scale = 1) {
   legR.position.x = 0.18;
 
   group.add(body, pack, visor, legL, legR);
-  group.scale.setScalar(scale);
 
   if (skinId === "neon_runner") {
     bodyMat.emissive = new THREE.Color(0x00ffaa);
@@ -106,6 +172,9 @@ export function buildAmongUsCharacter(skinId = "among_red", scale = 1) {
     stripe.rotation.x = Math.PI / 2;
     group.add(hat, pom, stripe);
   }
+
+  addAmongLoadout(group, loadout, bodyMat);
+  group.scale.setScalar(scale);
 
   return { group, hitMeshes: [body, visor], head: visor };
 }

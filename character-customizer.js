@@ -51,6 +51,15 @@ function ownedIds() {
   return new Set(currentAccount?.purchases || []);
 }
 
+function isAmongSkin(skinId = currentCharacterSkin) {
+  return !!skinId && skinId.startsWith("among");
+}
+
+function canCurrentSkinUseSlot(slot) {
+  if (!isAmongSkin()) return true;
+  return slot === "helmet" || slot === "gloves";
+}
+
 function ownsPreset(slot, presetId) {
   if (DEFAULT_LOADOUT_PRESET_IDS.includes(presetId)) return true;
   const owned = ownedIds();
@@ -170,6 +179,12 @@ function renderPresets() {
     }
     return;
   }
+  if (!canCurrentSkinUseSlot(activeSlot)) {
+    grid.innerHTML =
+      `<p class="custom-empty">O Among Us só aceita capacetes e luvas. Para camisa, calça e tênis, equipe o Soldado ou um conjunto.</p>`;
+    return;
+  }
+
   const presets = (SLOT_PRESETS[activeSlot] || []).filter((p) => ownsPreset(activeSlot, p.id));
   const current = currentLoadout[activeSlot];
   if (!presets.length) {
@@ -186,7 +201,9 @@ function renderPresets() {
       `<span class="custom-preset-theme">${p.theme === "a8" ? "Asphalt 8" : "Free Fire"}</span>`;
     card.addEventListener("click", () => {
       currentLoadout = applyPresetToLoadout(currentLoadout, activeSlot, p.id);
-      currentCharacterSkin = "soldier";
+      if (!isAmongSkin() || !canCurrentSkinUseSlot(activeSlot)) {
+        currentCharacterSkin = "soldier";
+      }
       renderPresets();
       refreshPreview();
     });

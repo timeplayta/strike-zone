@@ -192,6 +192,10 @@
       </div>
 
       <nav class="ff-side-nav" id="ffSideNav" aria-label="Personagem, armas e loja">
+        <button type="button" id="openAccountSideBtn" class="ff-side-nav-btn" title="Conta">
+          <span class="ff-side-icon">☻</span>
+          <span class="ff-side-label">Conta</span>
+        </button>
         <button type="button" id="openCharacterBtn" class="ff-side-nav-btn" data-hub="character" title="Boneco">
           <span class="ff-side-icon">👤</span>
           <span class="ff-side-label">Boneco</span>
@@ -203,6 +207,10 @@
         <button type="button" id="openSoloBtn" class="ff-side-nav-btn" data-hub="shop" title="Loja">
           <span class="ff-side-icon">🛒</span>
           <span class="ff-side-label">Loja</span>
+        </button>
+        <button type="button" id="openMapHubBtn" class="ff-side-nav-btn" data-hub="map" title="Mapa">
+          <span class="ff-side-icon">⌖</span>
+          <span class="ff-side-label">Mapa</span>
         </button>
       </nav>
 
@@ -271,6 +279,13 @@
           </div>
           <div class="shop-hub-layout">
             <div class="shop-hub-preview">
+              <div class="shop-selected-preview">
+                <img id="shopSelectedPreviewImg" class="shop-selected-preview-img" alt="" />
+                <div class="shop-selected-preview-meta">
+                  <h3 id="shopSelectedPreviewTitle">Selecione um item</h3>
+                  <p id="shopSelectedPreviewDesc">Clique em uma arma, roupa ou personagem para ver maior aqui.</p>
+                </div>
+              </div>
               <canvas id="soloCanvas" class="solo-canvas" width="400" height="240"></canvas>
               <div class="shop-hub-meta">
                 <h3 class="solo-shop-title">Loja <span id="shopCoins" class="shop-coins">0 🪙</span></h3>
@@ -286,6 +301,49 @@
             </div>
             <div id="shopPanelChars" class="shop-panel-tab shop-catalog hidden">
               <div id="shopGridChars" class="shop-grid"></div>
+            </div>
+          </div>
+        </div>
+
+        <div id="ffHubPanelMap" class="ff-hub-panel hub-panel-map hidden" aria-hidden="true">
+          <div class="hub-header hub-header-inline">
+            <span class="hub-badge">⌖</span>
+            <span>Mapa</span>
+            <button type="button" id="closeMapHubBtn" class="shop-close hub-back-btn" aria-label="Voltar">✕</button>
+          </div>
+          <p class="hub-sub">Escolha o mapa na esquerda. O jogo vai usar o mapa selecionado quando iniciar.</p>
+          <div class="map-hub-layout">
+            <div class="map-hub-list">
+              <div class="ff-map-category">
+                <p class="ff-map-cat-title">Jogo de tiro</p>
+                <div class="ff-map-cat-grid">
+                  <button type="button" class="map-btn" data-map="dust">
+                    <span class="map-name">Dust Alley</span>
+                    <span class="map-desc">Deserto</span>
+                  </button>
+                  <button type="button" class="map-btn" data-map="warehouse">
+                    <span class="map-name">Cold Storage</span>
+                    <span class="map-desc">Armazém</span>
+                  </button>
+                </div>
+              </div>
+              <div class="ff-map-category ff-map-cat-terror">
+                <p class="ff-map-cat-title">Terror</p>
+                <div class="ff-map-cat-grid">
+                  <button type="button" class="map-btn map-btn-horror" data-map="horror">
+                    <span class="map-name">Terror</span>
+                    <span class="map-desc">Combate escuro</span>
+                  </button>
+                  <button type="button" class="map-btn map-btn-horror" data-map="labyrinth">
+                    <span class="map-name">Fim das Trevas</span>
+                    <span class="map-desc">Labirinto</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="map-hub-preview">
+              <h3 id="mapHubTitle" class="map-hub-preview-title">Dust Alley</h3>
+              <p id="mapHubDesc" class="map-hub-preview-desc">Mapa aberto de tiro, bom para testar armas e movimentação.</p>
             </div>
           </div>
         </div>
@@ -755,6 +813,7 @@
   <script type="module" src="account-hub.js"></script>
   <script type="module" src="character-customizer.js"></script>
   <script type="module" src="solo-view.js"></script>
+  <script type="module" src="map-view.js"></script>
 
   <script type="importmap">
   {

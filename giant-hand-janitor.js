@@ -4,8 +4,8 @@ import { buildRealisticGiantHand } from "./horror-hand-builder.js";
 
 export function buildGiantJanitorHand(side = 1, cutIndex = -1) {
   return buildRealisticGiantHand(side, cutIndex, {
-    scale: 1.38,
-    fatness: 1,
+    scale: 1.62,
+    fatness: 1.14,
     wristOnly: true,
     cutIndex,
   });

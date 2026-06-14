@@ -11,6 +11,7 @@ const TINTS = {
   awm: 0x4a3a28,
   doze: 0x6b4423,
   bazooka: 0x45305f,
+  glock: 0x2a2a30,
 };
 
 const viewers = [];
@@ -37,7 +38,7 @@ function mountWeaponPreview(canvas, weaponId) {
   const renderer = new THREE.WebGLRenderer({
     canvas,
     alpha: true,
-    antialias: false,
+    antialias: true,
     powerPreference: "low-power",
   });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
@@ -45,8 +46,6 @@ function mountWeaponPreview(canvas, weaponId) {
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(32, w / h, 0.05, 8);
-  camera.position.set(0.05, 0.12, 1.05);
-  camera.lookAt(0, 0.02, 0);
 
   scene.add(new THREE.AmbientLight(0xffffff, 0.55));
   const key = new THREE.DirectionalLight(0xffeed8, 1.1);
@@ -58,8 +57,9 @@ function mountWeaponPreview(canvas, weaponId) {
 
   const gun = buildNpcWeapon(weaponId, TINTS[weaponId] || 0x5c3a1e);
   gun.rotation.set(-0.15, Math.PI / 2, 0);
-  gun.scale.setScalar(weaponId === "bazooka" ? 1.55 : 1.75);
+  gun.scale.setScalar(weaponId === "bazooka" ? 1.55 : weaponId === "glock" ? 3.0 : 1.9);
   scene.add(gun);
+  frameWeapon(camera, gun, weaponId === "glock" ? 1.4 : 1.12);
 
   renderer.render(scene, camera);
   viewers.push({ renderer, scene, camera, gun, canvas, weaponId });
@@ -73,6 +73,24 @@ function mountWeaponPreview(canvas, weaponId) {
     renderer.render(scene, camera);
   });
   if (wrap) ro.observe(wrap);
+}
+
+function frameWeapon(camera, gun, zoom = 1.12) {
+  gun.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(gun);
+  if (box.isEmpty()) {
+    camera.position.set(0.05, 0.12, 1.05);
+    camera.lookAt(0, 0.02, 0);
+    return;
+  }
+  const center = new THREE.Vector3();
+  const size = new THREE.Vector3();
+  box.getCenter(center);
+  box.getSize(size);
+  const maxDim = Math.max(size.x, size.y * 2.2, size.z, 0.22);
+  const dist = (maxDim / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2))) / zoom;
+  camera.position.set(center.x + 0.03, center.y + 0.05, center.z + Math.max(0.55, dist));
+  camera.lookAt(center);
 }
 
 export function disposeMenuWeaponPreviews() {

@@ -66,6 +66,7 @@ export function initSoloView() {
       const which = tab.dataset.shopTab;
       $("shopPanelWeapons")?.classList.toggle("hidden", which !== "weapons");
       $("shopPanelChars")?.classList.toggle("hidden", which !== "chars");
+      refreshShopUI(getLoggedInName());
     });
   });
   window.addEventListener("resize", () => {

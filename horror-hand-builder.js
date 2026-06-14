@@ -576,8 +576,8 @@ export function buildRealisticGiantHand(side = 1, cutIndex = 1, opts = {}) {
 /** Mão gorda para o janitor — só punho + palma (sem manga) */
 export function buildFatJanitorHand(side = 1, cutIndex = -1) {
   return buildRealisticGiantHand(side, cutIndex, {
-    scale: 1.42,
-    fatness: 1.34,
+    scale: 1.62,
+    fatness: 1.48,
     wristOnly: true,
     cutIndex,
   });
@@ -586,13 +586,13 @@ export function buildFatJanitorHand(side = 1, cutIndex = -1) {
 /** Par de mãos nas paredes — procedural grimy FPS */
 export function buildProceduralGiantWallHandsPair() {
   const root = new THREE.Group();
-  const left = buildRealisticGiantHand(-1, -1);
-  const right = buildRealisticGiantHand(1, 1);
+  const left = buildRealisticGiantHand(-1, -1, { scale: 1.58, fatness: 1.12 });
+  const right = buildRealisticGiantHand(1, 1, { scale: 1.58, fatness: 1.12 });
 
-  left.group.position.set(-1.65, 2.85, 0);
+  left.group.position.set(-1.85, 2.85, 0);
   left.group.rotation.x = -0.38;
   left.group.rotation.z = 0.06;
-  right.group.position.set(1.65, 2.85, 0);
+  right.group.position.set(1.85, 2.85, 0);
   right.group.rotation.x = -0.38;
   right.group.rotation.z = -0.06;
 

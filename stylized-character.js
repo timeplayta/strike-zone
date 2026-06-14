@@ -121,7 +121,18 @@ function buildArm(side, sm, mSleeve, mSkin, mGlove) {
   hand.position.y = -0.22;
   elbow.add(hand);
 
-  hand.add(part(new THREE.BoxGeometry(0.05, 0.038, 0.055), mGlove, 0, 0, 0.018));
+  hand.add(part(new THREE.BoxGeometry(0.052, 0.04, 0.058), mGlove, 0, 0, 0.018));
+  for (let i = 0; i < 4; i++) {
+    hand.add(part(
+      new THREE.CapsuleGeometry(0.0065 * sm, 0.028, 2, 6),
+      mGlove,
+      -0.02 + i * 0.013,
+      -0.014,
+      0.055,
+      Math.PI / 2
+    ));
+  }
+  hand.add(part(new THREE.CapsuleGeometry(0.007 * sm, 0.026, 2, 6), mGlove, side === "L" ? -0.032 : 0.032, -0.004, 0.038, 0.35, 0, side === "L" ? -0.8 : 0.8));
 
   return { shoulder, elbow, hand, upper, fore };
 }
@@ -192,6 +203,8 @@ export function buildStylizedHuman(opts = {}) {
   const mPants = mat(pants, 0.88, pantsNeon);
   const mBoot = mat(shoes, 0.7, shoesNeon);
   const mGlove = mat(gloves, 0.75, glovesNeon);
+  const mDark = mat(0x111722, 0.72);
+  const mAccent = mat(shirtNeon || 0xffb04a, 0.45, shirtNeon);
 
   const bodyBob = new THREE.Group();
   root.add(bodyBob);
@@ -199,15 +212,27 @@ export function buildStylizedHuman(opts = {}) {
   const torso = new THREE.Group();
   bodyBob.add(torso);
 
-  // Tronco único — sem buracos entre peças
+  // Base mais "personagem inicial de shooter": corpo legível, roupa separada e acessórios visíveis.
   torso.add(part(new THREE.CapsuleGeometry(0.13 * sm, 0.52, 6, SEG), mShirt, 0, 1.18, 0));
   torso.add(part(new THREE.CapsuleGeometry(0.115 * sm, 0.2, 4, SEG), mPants, 0, 0.82, 0));
+  torso.add(
+    part(new THREE.BoxGeometry(0.31 * sm, 0.035, 0.13), mDark, 0, 1.45, 0.018),
+    part(new THREE.BoxGeometry(0.13, 0.038, 0.145), mDark, -0.155 * sm, 1.38, 0.02, 0, 0, 0.18),
+    part(new THREE.BoxGeometry(0.13, 0.038, 0.145), mDark, 0.155 * sm, 1.38, 0.02, 0, 0, -0.18),
+    part(new THREE.BoxGeometry(0.32 * sm, 0.045, 0.135), mDark, 0, 0.94, 0.025),
+    part(new THREE.BoxGeometry(0.09, 0.055, 0.035), mAccent, -0.075, 1.25, 0.092),
+    part(new THREE.BoxGeometry(0.09, 0.055, 0.035), mAccent, 0.075, 1.25, 0.092)
+  );
 
   addTacticalGear(torso, sm, muscular ? 0x2a2a2a : 0x3a4530, 0x1a1a1a, profile);
 
   const legL = buildLeg("L", sm, mPants, mBoot);
   const legR = buildLeg("R", sm, mPants, mBoot);
   torso.add(legL.hip, legR.hip);
+  legL.knee.add(part(new THREE.BoxGeometry(0.088, 0.038, 0.045), mDark, 0, -0.185, 0.055));
+  legR.knee.add(part(new THREE.BoxGeometry(0.088, 0.038, 0.045), mDark, 0, -0.185, 0.055));
+  legL.foot.add(part(new THREE.BoxGeometry(0.076, 0.018, 0.105), mAccent, 0, 0.028, 0.03));
+  legR.foot.add(part(new THREE.BoxGeometry(0.076, 0.018, 0.105), mAccent, 0, 0.028, 0.03));
 
   const armL = buildArm("L", sm, mShirt, mSkin, mGlove);
   const armR = buildArm("R", sm, mShirt, mSkin, mGlove);

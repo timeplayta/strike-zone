@@ -13,14 +13,17 @@ let scene;
 let camera;
 let pivot;
 let lightsAdded = false;
+const PREVIEW_W = 192;
+const PREVIEW_H = 132;
 
 function ensurePreview() {
   if (renderer) return;
   renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, preserveDrawingBuffer: true });
-  renderer.setSize(120, 88);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.setSize(PREVIEW_W, PREVIEW_H);
   renderer.setClearColor(0x000000, 0);
   scene = new THREE.Scene();
-  camera = new THREE.PerspectiveCamera(32, 120 / 88, 0.05, 20);
+  camera = new THREE.PerspectiveCamera(30, PREVIEW_W / PREVIEW_H, 0.05, 20);
   pivot = new THREE.Group();
   scene.add(pivot);
 }
@@ -54,9 +57,25 @@ function addLights() {
   lightsAdded = true;
 }
 
+function frameObject(obj, zoom = 1.15) {
+  obj.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(obj);
+  if (box.isEmpty()) return;
+  const center = new THREE.Vector3();
+  const size = new THREE.Vector3();
+  box.getCenter(center);
+  box.getSize(size);
+  const maxDim = Math.max(size.x, size.y * 2.2, size.z, 0.25);
+  const fov = THREE.MathUtils.degToRad(camera.fov);
+  const dist = (maxDim / (2 * Math.tan(fov / 2))) / zoom;
+  camera.position.set(center.x + 0.02, center.y + 0.04, center.z + Math.max(0.62, dist));
+  camera.lookAt(center.x, center.y, center.z);
+  camera.updateProjectionMatrix();
+}
+
 export function getShopItemThumbDataUrl(item) {
   if (!item?.id) return null;
-  const key = `${item.id}_v6`;
+  const key = `${item.id}_v8`;
   if (cache.has(key)) return cache.get(key);
 
   ensurePreview();
@@ -67,10 +86,9 @@ export function getShopItemThumbDataUrl(item) {
     const gun = buildNpcWeapon(item.weapon, item.color);
     applyWeaponSkin(gun, item.weapon, item.color, item.id);
     gun.rotation.set(-0.08, Math.PI / 2, 0);
-    gun.scale.setScalar(item.weapon === "bazooka" ? 2.05 : 2.45);
+    gun.scale.setScalar(item.weapon === "bazooka" ? 1.9 : item.weapon === "glock" ? 3.5 : 2.45);
     pivot.add(gun);
-    camera.position.set(0.02, 0.04, 1.05);
-    camera.lookAt(0, 0, 0);
+    frameObject(gun, item.weapon === "glock" ? 1.42 : item.weapon === "doze" ? 1.32 : 1.16);
   } else if (item.type === "loadout") {
     const loadout = applyPresetToLoadout(DEFAULT_LOADOUT, item.slot, item.presetId);
     const opts = loadoutToBuildOpts(loadout);

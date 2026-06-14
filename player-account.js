@@ -336,21 +336,43 @@ export function getAccountWeaponSkins() {
   return cachedAccount?.skins || getSavedSession()?.account?.skins || {};
 }
 
+function getShopItemState(item, acc) {
+  const owned = (acc.purchases || []).includes(item.id);
+  const isWeapon = item.type === "weapon";
+  const isOutfit = item.type === "outfit";
+  const isLoadout = item.type === "loadout";
+  const active = isWeapon
+    ? acc.skins?.[item.weapon] === item.color
+    : isOutfit
+      ? (acc.outfitId === item.id || acc.loadout?.outfitId === item.id)
+      : isLoadout
+        ? acc.loadout?.[item.slot]?.presetId === item.presetId
+        : acc.characterSkin === item.skinId;
+  return { owned, active };
+}
+
+function updateShopSelectedPreview(item, owned = false, active = false) {
+  const img = document.getElementById("shopSelectedPreviewImg");
+  const title = document.getElementById("shopSelectedPreviewTitle");
+  const desc = document.getElementById("shopSelectedPreviewDesc");
+  if (!item || !img || !title || !desc) return;
+  const url = getShopItemThumbDataUrl(item);
+  if (url) img.src = url;
+  title.textContent = item.label;
+  const action = owned ? (active ? "Já está equipado." : "Clique para equipar.") : `Clique para comprar por ${item.price} moedas.`;
+  const type =
+    item.type === "weapon" ? "Arma"
+    : item.type === "outfit" ? "Conjunto"
+    : item.type === "loadout" ? item.category || "Peça"
+    : "Personagem";
+  desc.textContent = `${type} • ${item.tier || "comum"} • ${action}`;
+}
+
 function renderShopGrid(grid, items, acc, onBuy) {
   if (!grid) return;
   grid.innerHTML = "";
   for (const item of items) {
-    const owned = (acc.purchases || []).includes(item.id);
-    const isWeapon = item.type === "weapon";
-    const isOutfit = item.type === "outfit";
-    const isLoadout = item.type === "loadout";
-    const active = isWeapon
-      ? acc.skins?.[item.weapon] === item.color
-      : isOutfit
-        ? (acc.outfitId === item.id || acc.loadout?.outfitId === item.id)
-        : isLoadout
-          ? acc.loadout?.[item.slot]?.presetId === item.presetId
-          : acc.characterSkin === item.skinId;
+    const { owned, active } = getShopItemState(item, acc);
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className =
@@ -371,7 +393,12 @@ function renderShopGrid(grid, items, acc, onBuy) {
       const url = getShopItemThumbDataUrl(item);
       if (url) thumb.src = url;
     }
-    btn.addEventListener("click", () => onBuy(item, owned, active));
+    btn.addEventListener("mouseenter", () => updateShopSelectedPreview(item, owned, active));
+    btn.addEventListener("focus", () => updateShopSelectedPreview(item, owned, active));
+    btn.addEventListener("click", () => {
+      updateShopSelectedPreview(item, owned, active);
+      onBuy(item, owned, active);
+    });
     grid.appendChild(btn);
   }
 }
@@ -414,17 +441,26 @@ export async function refreshShopUI(username) {
     } else alert(res.msg);
   };
 
+  const charItems = [
+    ...CHARACTER_SKINS.filter((c) => c.price > 0),
+    ...SHOP_OUTFITS,
+    ...LOADOUT_ITEMS.filter((i) => i.price > 0),
+  ];
+
   renderShopGrid(weaponGrid, WEAPON_SKINS, acc, handleBuy);
   renderShopGrid(
     charGrid,
-    [
-      ...CHARACTER_SKINS.filter((c) => c.price > 0),
-      ...SHOP_OUTFITS,
-      ...LOADOUT_ITEMS.filter((i) => i.price > 0),
-    ],
+    charItems,
     acc,
     handleBuy
   );
+
+  const activeTab = document.querySelector(".shop-tab.selected")?.dataset?.shopTab || "weapons";
+  const firstItem = activeTab === "chars" ? charItems[0] : WEAPON_SKINS[0];
+  if (firstItem) {
+    const { owned, active } = getShopItemState(firstItem, acc);
+    updateShopSelectedPreview(firstItem, owned, active);
+  }
 
   const legacyGrid = document.getElementById("shopGrid");
   if (legacyGrid && !weaponGrid) {

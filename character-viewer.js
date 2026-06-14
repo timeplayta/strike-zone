@@ -62,7 +62,7 @@ export function buildPreviewCharacter(loadout, team = "ct", portrait = false, ch
       skinId === "birthday_hero"
     )
   ) {
-    const body = buildAmongUsCharacter(skinId, portrait ? 0.95 : 1.1);
+    const body = buildAmongUsCharacter(skinId, portrait ? 0.95 : 1.1, normalizeLoadout(loadout));
     return { group: body.group, mixer: null, human: false, among: true };
   }
 

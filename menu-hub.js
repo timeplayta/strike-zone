@@ -6,6 +6,7 @@ export function switchHubPanel(panel) {
     character: "ffHubPanelCharacter",
     arsenal: "ffHubPanelArsenal",
     shop: "ffHubPanelShop",
+    map: "ffHubPanelMap",
   };
 
   for (const [key, id] of Object.entries(map)) {

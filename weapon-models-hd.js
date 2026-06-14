@@ -300,20 +300,28 @@ export function buildHdShotgun(tint = 0x6b4423) {
 
 export function buildHdGlock(tint = 0x2a2a30) {
   const g = new THREE.Group();
-  const metal = matMetal();
-  const dark = matDark();
+  const metal = matMetal(0xb8c2d0);
+  const dark = matDark(0x090b10);
   const grip = matGrip(tint);
 
-  g.add(box(0.04, 0.12, 0.145, grip, 0, -0.002, 0.02, 0.06));
-  g.add(box(0.052, 0.044, 0.17, metal, 0, 0.055, -0.055));
-  g.add(box(0.046, 0.012, 0.165, dark, 0, 0.08, -0.055));
-  g.add(tube(0.011, 0.13, 14, metal, 0, 0.056, -0.155, Math.PI / 2));
-  g.add(box(0.032, 0.04, 0.06, dark, 0, -0.042, 0.042));
-  g.add(box(0.01, 0.012, 0.045, metal, 0, 0.084, -0.02));
-  g.add(box(0.028, 0.009, 0.075, dark, 0, 0.069, -0.112));
-  g.add(box(0.026, 0.004, 0.12, cloneMat(dark), 0.029, 0.058, -0.055));
-  g.add(box(0.026, 0.004, 0.12, cloneMat(dark), -0.029, 0.058, -0.055));
+  g.add(box(0.052, 0.122, 0.13, grip, 0, -0.022, 0.055, -0.12));
+  g.add(box(0.062, 0.05, 0.27, metal, 0, 0.06, -0.09));
+  g.add(box(0.064, 0.016, 0.255, dark, 0, 0.089, -0.09));
+  g.add(box(0.055, 0.032, 0.19, dark, 0, 0.034, -0.065));
+  g.add(tube(0.013, 0.19, 18, metal, 0, 0.057, -0.205, Math.PI / 2));
+  g.add(tube(0.018, 0.035, 18, dark, 0, 0.057, -0.31, Math.PI / 2));
+  g.add(box(0.038, 0.075, 0.055, grip, 0, -0.087, 0.082, -0.12));
+  g.add(box(0.05, 0.012, 0.08, metal, 0, -0.142, 0.115, -0.12));
+  g.add(box(0.042, 0.026, 0.07, dark, 0, -0.044, -0.012));
+  g.add(box(0.052, 0.012, 0.052, metal, 0, 0.093, -0.02));
+  g.add(box(0.032, 0.01, 0.075, dark, 0, 0.098, -0.21));
+  for (let i = 0; i < 4; i++) {
+    g.add(box(0.004, 0.034, 0.026, cloneMat(dark), 0.033, 0.058, -0.165 + i * 0.025, 0, 0, -0.28));
+    g.add(box(0.004, 0.034, 0.026, cloneMat(dark), -0.033, 0.058, -0.165 + i * 0.025, 0, 0, 0.28));
+  }
   addTriggerGuard(g, dark, 0.005);
+  g.add(box(0.006, 0.034, 0.01, metal, 0, 0.105, 0.028));
+  g.add(box(0.008, 0.03, 0.012, metal, 0, 0.106, -0.236));
 
   return markWeapon(g, "glock");
 }
