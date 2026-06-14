@@ -5,6 +5,8 @@ import { buildStylizedHuman } from "./stylized-character.js";
 import { loadoutToBuildOpts, normalizeLoadout } from "./character-loadout.js";
 import { buildHumanCharacter, configureCharacterRenderer, isHumanModelReady } from "./human-model.js";
 import { buildAmongUsCharacter } from "./among-us-model.js";
+import { applyWeaponSkinsToCharacter } from "./weapon-skin-apply.js";
+import { getAccountWeaponSkins } from "./player-account.js";
 
 const viewers = new Map();
 
@@ -22,7 +24,32 @@ function disposeGroup(group) {
   });
 }
 
-export function buildPreviewCharacter(loadout, team = "ct", portrait = false, characterSkin) {
+function frameAccountFabPortrait(charGroup, camera) {
+  charGroup.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(charGroup);
+  if (box.isEmpty()) return;
+
+  const center = new THREE.Vector3();
+  const size = new THREE.Vector3();
+  box.getCenter(center);
+  box.getSize(size);
+
+  const height = Math.max(size.y, 0.5);
+  const faceY = box.max.y - height * 0.14;
+  const dist = height * 0.48;
+
+  camera.position.set(center.x, faceY + height * 0.06, center.z + dist);
+  camera.lookAt(center.x, faceY - height * 0.02, center.z);
+  camera.fov = 20;
+  camera.updateProjectionMatrix();
+}
+
+function applyPreviewWeaponSkins(charGroup) {
+  const skins = getAccountWeaponSkins();
+  if (Object.keys(skins).length) applyWeaponSkinsToCharacter(charGroup, skins);
+}
+
+export function buildPreviewCharacter(loadout, team = "ct", portrait = false, characterSkin, accountFab = false) {
   const skinId = characterSkin || window.__characterSkin || "soldier";
   if (
     skinId &&
@@ -36,12 +63,13 @@ export function buildPreviewCharacter(loadout, team = "ct", portrait = false, ch
   const opts = loadoutToBuildOpts(loadout);
   opts.team = team;
   opts.scale = portrait ? 0.92 : 1;
-  opts.withRifle = true;
+  opts.withRifle = !accountFab;
   opts.weaponType = "ak47";
 
   if (isHumanModelReady()) {
     try {
       const body = buildHumanCharacter(opts);
+      applyPreviewWeaponSkins(body.group);
       return { group: body.group, mixer: body.mixer, human: true };
     } catch (err) {
       console.warn("Preview humano:", err);
@@ -49,6 +77,7 @@ export function buildPreviewCharacter(loadout, team = "ct", portrait = false, ch
   }
 
   const body = buildStylizedHuman(opts);
+  applyPreviewWeaponSkins(body.group);
   return { group: body.group, mixer: null, human: false };
 }
 
@@ -126,9 +155,10 @@ export function mountCharacterViewer(canvasId, opts = {}) {
   scene.add(pivot);
 
   const loadout = normalizeLoadout(opts.loadout);
+  const isAccountFab = canvasId === "accountFabCanvas";
   const built = opts.enemy
     ? buildEnemyPreview()
-    : buildPreviewCharacter(loadout, opts.team || "ct", !!opts.portrait, opts.characterSkin);
+    : buildPreviewCharacter(loadout, opts.team || "ct", !!opts.portrait, opts.characterSkin, isAccountFab);
   const charGroup = built.group;
   pivot.add(charGroup);
 
@@ -137,12 +167,18 @@ export function mountCharacterViewer(canvasId, opts = {}) {
     scene.background = null;
     renderer.setClearColor(0x000000, 0);
     scene.remove(floor);
-    camera.position.set(0, 1.52, 1.35);
-    camera.lookAt(0, 1.42, 0);
-    camera.fov = 32;
-    camera.updateProjectionMatrix();
-    pivot.rotation.y = 0.12;
-    charGroup.position.y = 0;
+    if (isAccountFab) {
+      pivot.rotation.y = 0;
+      charGroup.position.set(0, 0, 0);
+      frameAccountFabPortrait(charGroup, camera);
+    } else {
+      camera.position.set(0, 1.52, 1.35);
+      camera.lookAt(0, 1.42, 0);
+      camera.fov = 32;
+      camera.updateProjectionMatrix();
+      pivot.rotation.y = 0.12;
+      charGroup.position.y = 0;
+    }
     key.intensity = 1.15;
     rim.intensity = 0.5;
   }
@@ -155,11 +191,12 @@ export function mountCharacterViewer(canvasId, opts = {}) {
     pivot,
     charGroup,
     mixer: built.mixer,
-    orbit: portrait ? 0.12 : 0,
+    orbit: portrait && isAccountFab ? 0 : portrait ? 0.12 : 0,
     autoSpin: portrait ? false : opts.autoSpin !== false,
     portrait,
     raf: 0,
     loadout,
+    characterSkin: opts.characterSkin || window.__characterSkin || "soldier",
     enemy: !!opts.enemy,
     human: built.human,
     clock: new THREE.Clock(),
@@ -188,11 +225,32 @@ export function updateViewerLoadout(canvasId, loadout) {
   v.pivot.remove(v.charGroup);
   disposeGroup(v.charGroup);
   v.loadout = normalizeLoadout(loadout);
-  const built = buildPreviewCharacter(v.loadout, "ct", v.portrait);
+  const isAccountFab = canvasId === "accountFabCanvas";
+  const built = buildPreviewCharacter(v.loadout, "ct", v.portrait, v.characterSkin, isAccountFab);
   v.charGroup = built.group;
   v.mixer = built.mixer;
   v.human = built.human;
   v.pivot.add(v.charGroup);
+  if (v.portrait && isAccountFab) {
+    frameAccountFabPortrait(v.charGroup, v.camera);
+  }
+}
+
+export function updateViewerCharacterSkin(canvasId, characterSkin) {
+  const v = viewers.get(canvasId);
+  if (!v || v.enemy) return;
+  v.characterSkin = characterSkin || "soldier";
+  v.pivot.remove(v.charGroup);
+  disposeGroup(v.charGroup);
+  const isAccountFab = canvasId === "accountFabCanvas";
+  const built = buildPreviewCharacter(v.loadout, "ct", v.portrait, v.characterSkin, isAccountFab);
+  v.charGroup = built.group;
+  v.mixer = built.mixer;
+  v.human = built.human;
+  v.pivot.add(v.charGroup);
+  if (v.portrait && isAccountFab) {
+    frameAccountFabPortrait(v.charGroup, v.camera);
+  }
 }
 
 function disposeViewer(v) {

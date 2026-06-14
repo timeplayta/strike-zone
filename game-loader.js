@@ -7,8 +7,18 @@ async function loadGame() {
     if (loadStatus) loadStatus.textContent = "Carregando personagens 3D...";
 
     const { preloadHumanModels, isHumanModelReady } = await import("./human-model.js");
-
     await preloadHumanModels();
+
+    const { preloadWeaponModels } = await import("./npc-weapon.js");
+    await preloadWeaponModels();
+
+    const { preloadGrimyHand } = await import("./grimy-hand-loader.js");
+    await preloadGrimyHand();
+    const { preloadRogerJanitor } = await import("./gigante-monster-builder.js");
+    await preloadRogerJanitor();
+
+    const { preloadMapSurfaceTextures } = await import("./environment-textures.js");
+    await preloadMapSurfaceTextures();
 
     if (!isHumanModelReady()) {
 

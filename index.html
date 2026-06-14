@@ -110,14 +110,14 @@
 
   <div id="menu" class="screen ff-menu hidden">
 
-    <header class="ff-header">
-      <button type="button" id="openAccountBtn" class="ff-profile-chip menu-fab menu-fab-c" title="Conta">
-        <span class="fab-c-portrait">
-          <canvas id="accountFabCanvas" width="208" height="168"></canvas>
-        </span>
-        <span id="accountFabName" class="fab-c-name">Operador</span>
-      </button>
-      <div class="ff-header-right">
+    <header class="ff-header ff-header-minimal">
+      <div class="ff-account-cluster">
+        <button type="button" id="openAccountBtn" class="ff-profile-chip menu-fab menu-fab-c" title="Conta">
+          <span class="fab-c-portrait">
+            <canvas id="accountFabCanvas" width="208" height="168"></canvas>
+          </span>
+          <span id="accountFabName" class="fab-c-name">Operador</span>
+        </button>
         <span id="menuCoinsDisplay" class="ff-coins">0 🪙</span>
       </div>
     </header>
@@ -214,10 +214,28 @@
               <div id="customSlotTabs" class="custom-slot-tabs"></div>
               <p class="custom-active-slot">Peça: <strong id="customActiveSlotLabel">Capacete</strong></p>
               <div id="customPresetGrid" class="custom-preset-grid"></div>
-              <button type="button" id="customSaveBtn" class="btn-primary custom-save-btn">SALVAR PERSONAGEM</button>
-              <p id="customSaveHint" class="custom-save-hint"></p>
+            <button type="button" id="customSaveBtn" class="btn-primary custom-save-btn">SALVAR PERSONAGEM</button>
+            <p id="customSaveHint" class="custom-save-hint"></p>
+          </div>
+          <div class="trevas-monsters-section">
+            <h3 class="trevas-monsters-title">Monstros — Fim das Trevas</h3>
+            <p class="trevas-monsters-sub">Você vai encontrar estes 3 na partida</p>
+            <div class="trevas-monsters-grid">
+              <div class="trevas-monster-card">
+                <canvas id="trevasMonster0" width="140" height="120" aria-label="O Gosmento"></canvas>
+                <span>O Gosmento</span>
+              </div>
+              <div class="trevas-monster-card">
+                <canvas id="trevasMonster1" width="140" height="120" aria-label="O Gigante"></canvas>
+                <span>O Gigante</span>
+              </div>
+              <div class="trevas-monster-card">
+                <canvas id="trevasMonster2" width="140" height="120" aria-label="Bam-Bam"></canvas>
+                <span>Bam-Bam</span>
+              </div>
             </div>
           </div>
+        </div>
         </div>
 
         <div id="ffHubPanelArsenal" class="ff-hub-panel hub-panel-arsenal hidden" aria-hidden="true">
@@ -244,20 +262,22 @@
             <button type="button" id="closeSoloBtn" class="shop-close hub-back-btn" aria-label="Voltar">✕</button>
           </div>
           <div class="shop-hub-layout">
-            <canvas id="soloCanvas" class="solo-canvas" width="360" height="220"></canvas>
-            <div class="shop-hub-side">
-              <h3 class="solo-shop-title">Loja <span id="shopCoins" class="shop-coins">0 🪙</span></h3>
-              <p id="accountHint" class="account-hint">Skins de armas e personagens</p>
-              <div class="shop-tabs">
-                <button type="button" class="shop-tab selected" data-shop-tab="weapons">Armas</button>
-                <button type="button" class="shop-tab" data-shop-tab="chars">Personagens</button>
+            <div class="shop-hub-preview">
+              <canvas id="soloCanvas" class="solo-canvas" width="400" height="240"></canvas>
+              <div class="shop-hub-meta">
+                <h3 class="solo-shop-title">Loja <span id="shopCoins" class="shop-coins">0 🪙</span></h3>
+                <p id="accountHint" class="account-hint">Skins de armas e personagens</p>
+                <div class="shop-tabs">
+                  <button type="button" class="shop-tab selected" data-shop-tab="weapons">Armas</button>
+                  <button type="button" class="shop-tab" data-shop-tab="chars">Personagens</button>
+                </div>
               </div>
-              <div id="shopPanelWeapons" class="shop-panel-tab">
-                <div id="shopGridWeapons" class="shop-grid"></div>
-              </div>
-              <div id="shopPanelChars" class="shop-panel-tab hidden">
-                <div id="shopGridChars" class="shop-grid"></div>
-              </div>
+            </div>
+            <div id="shopPanelWeapons" class="shop-panel-tab shop-catalog">
+              <div id="shopGridWeapons" class="shop-grid"></div>
+            </div>
+            <div id="shopPanelChars" class="shop-panel-tab shop-catalog hidden">
+              <div id="shopGridChars" class="shop-grid"></div>
             </div>
           </div>
         </div>
@@ -323,9 +343,30 @@
           <option value="helper:1">Operador Bravo (CT)</option>
           <option value="boss">Chefão / Guardião</option>
           <option value="horror:0">Terrorista horror</option>
+          <option value="trevas:gosmento">☣ O Gosmento (Fim das Trevas)</option>
+          <option value="trevas:gigante">☣ O Gigante — mãos</option>
+          <option value="trevas:pelucia">☣ Bam-Bam (pelúcia)</option>
         </select>
         <button type="button" id="adminViewCharBtn" class="btn-primary">VER PERSONAGEM 3D</button>
         <p class="section-desc">Câmera livre ao redor do boneco. Mouse gira • Scroll zoom • ESC volta ao menu.</p>
+
+        <div class="admin-trevas-monsters">
+          <h3 class="admin-trevas-title">Monstros — Fim das Trevas</h3>
+          <div class="admin-trevas-grid">
+            <div class="admin-trevas-card">
+              <canvas id="adminTrevasMonster0" width="160" height="130" aria-label="O Gosmento"></canvas>
+              <span>O Gosmento</span>
+            </div>
+            <div class="admin-trevas-card">
+              <canvas id="adminTrevasMonster1" width="160" height="130" aria-label="O Gigante"></canvas>
+              <span>O Gigante</span>
+            </div>
+            <div class="admin-trevas-card">
+              <canvas id="adminTrevasMonster2" width="160" height="130" aria-label="Bam-Bam"></canvas>
+              <span>Bam-Bam</span>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div id="adminTabMaps" class="admin-panel-section hidden">
@@ -387,7 +428,10 @@
   </div>
 
   <div id="jumpscareOverlay" class="jumpscare-overlay hidden" aria-hidden="true">
-    <div id="jumpscareFace" class="jumpscare-face"></div>
+    <div class="jumpscare-vignette"></div>
+    <div class="jumpscare-blood"></div>
+    <div class="jumpscare-static"></div>
+    <div class="jumpscare-claws" aria-hidden="true"></div>
     <p id="jumpscareName" class="jumpscare-name hidden"></p>
   </div>
 

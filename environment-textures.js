@@ -1,4 +1,18 @@
 import * as THREE from "three";
+import { MAX_TEXTURE_ANISO } from "./perf-config.js";
+
+/** Bricks094 — ambientCG CC0 https://ambientcg.com/view?id=Bricks094 */
+const DUST_BRICKS_BASE = "./assets/textures/dust/bricks094/Bricks094_1K-JPG";
+/** WoodFloor062 — chão Dust Alley https://ambientcg.com/view?id=WoodFloor062 */
+const DUST_WOOD_BASE = "./assets/textures/dust/woodfloor062/WoodFloor062_1K-JPG";
+/** DiamondPlate009 — Fim das Trevas https://ambientcg.com/view?id=DiamondPlate009 */
+const LABYRINTH_DIAMOND_BASE = "./assets/textures/labyrinth/diamondplate009/DiamondPlate009_1K-JPG";
+
+let dustBricksCache = null;
+let dustBricksLoadPromise = null;
+let dustWoodCache = null;
+let labyrinthDiamondCache = null;
+let extraTexturesPromise = null;
 
 function noise(ctx, w, h, amount = 8) {
   const img = ctx.getImageData(0, 0, w, h);
@@ -15,7 +29,211 @@ function hexToRgb(hex) {
   return { r: (hex >> 16) & 255, g: (hex >> 8) & 255, b: hex & 255 };
 }
 
-/** Piso desértico (dust) / concreto (warehouse) / terra rachada (horror) */
+function configureColorMap(tex, repeatX, repeatY) {
+  if (!tex) return tex;
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  tex.repeat.set(repeatX, repeatY);
+  tex.anisotropy = MAX_TEXTURE_ANISO;
+  tex.minFilter = THREE.LinearMipmapLinearFilter;
+  tex.magFilter = THREE.LinearFilter;
+  tex.generateMipmaps = true;
+  return tex;
+}
+
+function configureDataMap(tex, repeatX, repeatY) {
+  if (!tex) return tex;
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  tex.repeat.set(repeatX, repeatY);
+  tex.anisotropy = MAX_TEXTURE_ANISO;
+  tex.minFilter = THREE.LinearMipmapLinearFilter;
+  tex.generateMipmaps = true;
+  return tex;
+}
+
+function cloneMap(tex, repeatX, repeatY, isColor = true) {
+  const t = tex.clone();
+  t.repeat.set(repeatX, repeatY);
+  if (isColor) t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+
+async function loadPbrPack(loader, base, withMetalness = false) {
+  const metalnessPromise = withMetalness
+    ? loader.loadAsync(`${base}_Metalness.jpg`).catch(() => null)
+    : Promise.resolve(null);
+  const [color, normal, roughness, metalness] = await Promise.all([
+    loader.loadAsync(`${base}_Color.jpg`),
+    loader.loadAsync(`${base}_NormalGL.jpg`),
+    loader.loadAsync(`${base}_Roughness.jpg`),
+    metalnessPromise,
+  ]);
+  configureColorMap(color, 1, 1);
+  configureDataMap(normal, 1, 1);
+  configureDataMap(roughness, 1, 1);
+  if (metalness) configureDataMap(metalness, 1, 1);
+  return { color, normal, roughness, metalness };
+}
+
+function makePbrMaterial(pack, repeatX, repeatY, opts = {}) {
+  const {
+    color = 0xffffff,
+    metalness = 0.02,
+    normalScale = 0.75,
+  } = opts;
+  const map = cloneMap(pack.color, repeatX, repeatY, true);
+  const normalMap = cloneMap(pack.normal, repeatX, repeatY, false);
+  const roughnessMap = cloneMap(pack.roughness, repeatX, repeatY, false);
+  const mat = new THREE.MeshStandardMaterial({
+    map,
+    normalMap,
+    roughnessMap,
+    color,
+    roughness: 1,
+    metalness: pack.metalness ? 1 : metalness,
+    normalScale: new THREE.Vector2(normalScale, normalScale),
+  });
+  if (pack.metalness) {
+    mat.metalnessMap = cloneMap(pack.metalness, repeatX, repeatY, false);
+  }
+  return mat;
+}
+
+export async function preloadDustBricksTextures() {
+  await preloadMapSurfaceTextures();
+  return dustBricksCache;
+}
+
+export async function preloadMapSurfaceTextures() {
+  if (dustBricksCache && dustWoodCache && labyrinthDiamondCache) {
+    return { dustBricksCache, dustWoodCache, labyrinthDiamondCache };
+  }
+
+  if (!dustBricksLoadPromise) {
+    const loader = new THREE.TextureLoader();
+    dustBricksLoadPromise = loadPbrPack(loader, DUST_BRICKS_BASE, false)
+      .then((pack) => {
+        dustBricksCache = pack;
+        return pack;
+      })
+      .catch((err) => {
+        console.warn("[Strike Zone] Bricks094 não carregou:", err);
+        dustBricksLoadPromise = null;
+        return null;
+      });
+  }
+
+  if (!extraTexturesPromise) {
+    const loader = new THREE.TextureLoader();
+    extraTexturesPromise = Promise.all([
+      loadPbrPack(loader, DUST_WOOD_BASE, false).catch((err) => {
+        console.warn("[Strike Zone] WoodFloor062 não carregou:", err);
+        return null;
+      }),
+      loadPbrPack(loader, LABYRINTH_DIAMOND_BASE, true).catch((err) => {
+        console.warn("[Strike Zone] DiamondPlate009 não carregou:", err);
+        return null;
+      }),
+    ]).then(([wood, diamond]) => {
+      if (wood) dustWoodCache = wood;
+      if (diamond) labyrinthDiamondCache = diamond;
+      return { wood, diamond };
+    });
+  }
+
+  await Promise.all([dustBricksLoadPromise, extraTexturesPromise]);
+  return { dustBricksCache, dustWoodCache, labyrinthDiamondCache };
+}
+
+function dustBricksMaterials() {
+  if (!dustBricksCache) return null;
+
+  const { color, normal, roughness } = dustBricksCache;
+
+  const wallMap = cloneMap(color, 4, 2.8, true);
+  const wallNormal = cloneMap(normal, 4, 2.8, false);
+  const wallRough = cloneMap(roughness, 4, 2.8, false);
+
+  const accentMap = cloneMap(color, 3, 2.2, true);
+  const accentNormal = cloneMap(normal, 3, 2.2, false);
+  const accentRough = cloneMap(roughness, 3, 2.2, false);
+
+  const floorMat = dustWoodCache
+    ? makePbrMaterial(dustWoodCache, 14, 12, {
+        color: 0xe8dcc8,
+        metalness: 0.02,
+        normalScale: 0.5,
+      })
+    : new THREE.MeshStandardMaterial({
+        map: cloneMap(color, 16, 14, true),
+        normalMap: cloneMap(normal, 16, 14, false),
+        roughnessMap: cloneMap(roughness, 16, 14, false),
+        color: 0xd8c8a8,
+        roughness: 1,
+        metalness: 0.02,
+        normalScale: new THREE.Vector2(0.65, 0.65),
+      });
+
+  const wallMat = new THREE.MeshStandardMaterial({
+    map: wallMap,
+    normalMap: wallNormal,
+    roughnessMap: wallRough,
+    color: 0xffffff,
+    roughness: 1,
+    metalness: 0.03,
+    normalScale: new THREE.Vector2(0.85, 0.85),
+  });
+
+  const accentMat = new THREE.MeshStandardMaterial({
+    map: accentMap,
+    normalMap: accentNormal,
+    roughnessMap: accentRough,
+    color: 0xc8a878,
+    roughness: 1,
+    metalness: 0.04,
+    normalScale: new THREE.Vector2(0.75, 0.75),
+  });
+
+  return {
+    floorMat,
+    wallMat,
+    accentMat,
+    floorMap: floorMat.map,
+    wallMap,
+  };
+}
+
+function labyrinthDiamondMaterials() {
+  if (!labyrinthDiamondCache) return null;
+
+  const floorMat = makePbrMaterial(labyrinthDiamondCache, 26, 22, {
+    color: 0x4a4a50,
+    metalness: 0.82,
+    normalScale: 0.7,
+  });
+
+  const wallMat = makePbrMaterial(labyrinthDiamondCache, 4.2, 3.4, {
+    color: 0xb0b0b8,
+    metalness: 0.94,
+    normalScale: 1.15,
+  });
+
+  const accentMat = makePbrMaterial(labyrinthDiamondCache, 3.2, 2.6, {
+    color: 0x9a9aa2,
+    metalness: 0.9,
+    normalScale: 1.05,
+  });
+
+  return {
+    floorMat,
+    wallMat,
+    accentMat,
+    floorMap: floorMat.map,
+    wallMap: wallMat.map,
+  };
+}
+
+/** Piso desértico (dust) / concreto (warehouse) / terra rachada (terror) */
 function floorTexture(mapKey, baseColor) {
   const c = document.createElement("canvas");
   c.width = 256;
@@ -175,7 +393,7 @@ function accentTexture(baseColor, mapKey) {
   return tex;
 }
 
-export function createMapMaterials(mapData, mapKey) {
+function proceduralMapMaterials(mapData, mapKey) {
   const floorMap = floorTexture(mapKey, mapData.floorColor);
   const wallMap = wallTexture(mapKey, mapData.wallColor);
   const accentMap = accentTexture(mapData.accentColor, mapKey);
@@ -199,6 +417,18 @@ export function createMapMaterials(mapData, mapKey) {
   });
 
   return { floorMat, wallMat, accentMat, floorMap, wallMap };
+}
+
+export function createMapMaterials(mapData, mapKey) {
+  if (mapKey === "labyrinth") {
+    const diamond = labyrinthDiamondCache ? labyrinthDiamondMaterials() : null;
+    if (diamond) return diamond;
+  }
+  if (mapKey === "dust" && dustBricksCache) {
+    const bricks = dustBricksMaterials();
+    if (bricks) return bricks;
+  }
+  return proceduralMapMaterials(mapData, mapKey);
 }
 
 export function addWallBaseboard(scene, x, z, w, d, h, mapKey) {

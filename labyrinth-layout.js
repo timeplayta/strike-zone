@@ -122,54 +122,66 @@ function pathPointAt(path, t, cols, rows, cellSize) {
   return cellCenter(path[idx].c, path[idx].r, cols, rows, cellSize);
 }
 
-function scatterDecor(cells, cols, rows, cellSize, pathSet) {
-  const props = [];
-  const pillars = [];
-  let seed = 42;
+function clearSpawnPoint(path, cols, rows, cellSize) {
+  const spawn = cellCenter(0, 0, cols, rows, cellSize);
+  if (!path || path.length < 2) return spawn;
+  const next = cellCenter(path[1].c, path[1].r, cols, rows, cellSize);
+  const dx = next.x - spawn.x;
+  const dz = next.z - spawn.z;
+  const len = Math.hypot(dx, dz) || 1;
+  return {
+    x: spawn.x + (dx / len) * 1.5,
+    z: spawn.z + (dz / len) * 1.5,
+  };
+}
 
-  for (let row = 0; row < rows; row++) {
-    for (let col = 0; col < cols; col++) {
-      seed = (seed * 16807 + 7) % 2147483647;
-      const r01 = seed / 2147483647;
-      const pk = `${row},${col}`;
-      if (!pathSet.has(pk)) continue;
-      const { x, z } = cellCenter(col, row, cols, rows, cellSize);
+function scatterDecor() {
+  return { props: [], pillars: [] };
+}
 
-      if (r01 < 0.07) {
-        props.push({ type: "skull_pile", x, z, rot: r01 * 6 });
-      } else if (r01 < 0.14) {
-        props.push({ type: "chain", x, z, rot: r01 * 3 });
-      } else if (r01 < 0.22) {
-        props.push({ type: "barrel", x, z, rot: r01 });
-      } else if (r01 < 0.28) {
-        props.push({ type: "crate", x, z, rot: r01 * 2 });
-      } else if (r01 < 0.34) {
-        props.push({ type: "torch", x, z, rot: 0 });
-      } else if (r01 < 0.38 && (row + col) % 3 === 0) {
-        pillars.push({ x, z });
-      }
+/** Monstros encostados na parede — fora do centro do corredor */
+function monsterSpawnsOffPath(path, cols, rows, cellSize, distances = [42, 58, 72]) {
+  const spawns = [];
+  if (!path?.length) return spawns;
+  let acc = 0;
+  const inset = cellSize * 0.44;
+
+  for (let i = 1; i < path.length && spawns.length < distances.length; i++) {
+    const a = cellCenter(path[i - 1].c, path[i - 1].r, cols, rows, cellSize);
+    const b = cellCenter(path[i].c, path[i].r, cols, rows, cellSize);
+    acc += Math.hypot(b.x - a.x, b.z - a.z);
+    if (acc >= distances[spawns.length]) {
+      const dx = b.x - a.x;
+      const dz = b.z - a.z;
+      const len = Math.hypot(dx, dz) || 1;
+      const px = -dz / len;
+      const pz = dx / len;
+      const side = spawns.length % 2 === 0 ? 1 : -1;
+      spawns.push({
+        x: b.x + px * side * inset,
+        z: b.z + pz * side * inset,
+      });
     }
   }
-
-  return { props, pillars };
+  return spawns;
 }
 
 export function buildLabyrinthLayout(cols = 33, rows = 33, cellSize = 3.6) {
   const cells = createMazeCells(cols, rows);
   const walls = wallsFromMaze(cells, cols, rows, cellSize);
   const path = bfsPath(cells, cols, rows, 0, 0, cols - 1, rows - 1);
-  const pathSet = new Set(path.map((p) => `${p.r},${p.c}`));
-
-  const spawn = cellCenter(0, 0, cols, rows, cellSize);
+  const spawn = clearSpawnPoint(path, cols, rows, cellSize);
   const exit = cellCenter(cols - 1, rows - 1, cols, rows, cellSize);
 
   const meleePickups = [
-    { id: "facao", ...pathPointAt(path, 0.22, cols, rows, cellSize) },
-    { id: "porrete", ...pathPointAt(path, 0.52, cols, rows, cellSize) },
-    { id: "katana", ...pathPointAt(path, 0.78, cols, rows, cellSize) },
+    { id: "facao", ...pathPointAt(path, 0.5, cols, rows, cellSize) },
+    { id: "porrete", ...pathPointAt(path, 0.68, cols, rows, cellSize) },
+    { id: "katana", ...pathPointAt(path, 0.85, cols, rows, cellSize) },
   ];
 
-  const { props, pillars } = scatterDecor(cells, cols, rows, cellSize, pathSet);
+  const monsterSpawns = monsterSpawnsOffPath(path, cols, rows, cellSize, [48, 64, 82]);
+
+  const { props, pillars } = scatterDecor();
   const floorW = cols * cellSize + 12;
   const floorH = rows * cellSize + 12;
   const bound = Math.max(floorW, floorH) / 2 - 1;
@@ -183,6 +195,7 @@ export function buildLabyrinthLayout(cols = 33, rows = 33, cellSize = 3.6) {
     patrolPoints: path.filter((_, i) => i % 8 === 0).map((p) =>
       cellCenter(p.c, p.r, cols, rows, cellSize)
     ),
+    monsterSpawns,
     spawnPlayer: spawn,
     spawnCT: spawn,
     spawnT: exit,

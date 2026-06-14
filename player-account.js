@@ -6,6 +6,7 @@ import {
   CHARACTER_SKINS,
   getShopItem,
 } from "./shop-catalog.js";
+import { getShopItemThumbDataUrl } from "./shop-item-preview.js";
 
 export const SHOP_ITEMS = ALL_SHOP_ITEMS;
 
@@ -343,6 +344,10 @@ export function getWeaponSkinColor(username, weaponId) {
   return cachedAccount?.skins?.[weaponId] || getSavedSession()?.account?.skins?.[weaponId] || null;
 }
 
+export function getAccountWeaponSkins() {
+  return cachedAccount?.skins || getSavedSession()?.account?.skins || {};
+}
+
 function renderShopGrid(grid, items, acc, onBuy) {
   if (!grid) return;
   grid.innerHTML = "";
@@ -362,10 +367,16 @@ function renderShopGrid(grid, items, acc, onBuy) {
     btn.dataset.itemId = item.id;
     const colorHex = (item.color >>> 0).toString(16).padStart(6, "0");
     btn.innerHTML =
-      `<span class="shop-swatch" style="background:#${colorHex}"></span>` +
-      `<span class="shop-item-name">${item.label}</span>` +
+      `<span class="shop-preview-wrap"><img class="shop-preview-img" alt="" /></span>` +
+      `<span class="shop-item-row"><span class="shop-swatch" style="background:#${colorHex}"></span>` +
+      `<span class="shop-item-name">${item.label}</span></span>` +
       `<span class="shop-item-tier">${item.tier || ""}</span>` +
       `<span class="shop-item-price">${owned ? (active ? "Em uso" : "Equipar") : item.price + " 🪙"}</span>`;
+    const thumb = btn.querySelector(".shop-preview-img");
+    if (thumb) {
+      const url = getShopItemThumbDataUrl(item);
+      if (url) thumb.src = url;
+    }
     btn.addEventListener("click", () => onBuy(item, owned, active));
     grid.appendChild(btn);
   }
@@ -402,6 +413,7 @@ export async function refreshShopUI(username) {
     const res = await equipShopItem(item.id);
     if (res.ok) {
       await refreshShopUI(username);
+      import("./solo-view.js").then((m) => m.refreshSoloCharacterSkin?.());
       import("./arsenal-view.js").then((m) => m.refreshArsenal?.());
       import("./account-hub.js").then((m) => m.refreshAccountHub?.());
     } else alert(res.msg);

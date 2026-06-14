@@ -1,6 +1,7 @@
 import * as THREE from "three";
 
 import { buildNpcWeapon } from "./npc-weapon.js";
+import { applyWeaponSkin, findWeaponSkinItem } from "./weapon-skin-apply.js";
 
 import { buildMeleeFpsModel } from "./melee-weapons.js";
 
@@ -373,8 +374,23 @@ export function updateWeaponView(view, dt, moving = false) {
 
 
 
-export function hideAllWeapons(view) {
+export function applyWeaponSkinToView(view, skins = {}) {
+  if (!view) return;
+  for (const [id, group] of Object.entries(view.primaryModels || {})) {
+    const color = skins[id];
+    if (color && group) {
+      const item = findWeaponSkinItem(id, color);
+      applyWeaponSkin(group, id, color, item?.id);
+    }
+  }
+  const glockColor = skins.glock;
+  if (glockColor && view.models?.[2]) {
+    const item = findWeaponSkinItem("glock", glockColor);
+    applyWeaponSkin(view.models[2], "glock", glockColor, item?.id);
+  }
+}
 
+export function hideAllWeapons(view) {
   if (!view) return;
 
   Object.values(view.primaryModels).forEach((g) => { g.visible = false; });

@@ -130,6 +130,11 @@ const THEMES = {
     spawnCT: { x: -18, z: 0 },
     spawnT: { x: 18, z: 0 },
     bombSites: [{ x: 12, z: -8, id: "A" }, { x: 12, z: 8, id: "B" }],
+    monsterSpawns: [
+      { x: -12, z: -6 },
+      { x: 8, z: -14 },
+      { x: 14, z: 10 },
+    ],
   },
   labyrinth: {
     mode: "labyrinth",

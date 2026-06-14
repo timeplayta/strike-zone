@@ -15,6 +15,7 @@ import {
   resizeViewer,
   updateViewerLoadout,
 } from "./character-viewer.js";
+import { getShopItemThumbDataUrl } from "./shop-item-preview.js";
 import { switchHubPanel, showPlayHub } from "./menu-hub.js";
 
 function $(id) {
@@ -61,10 +62,16 @@ function renderSkinList(acc) {
     row.type = "button";
     row.className = "arsenal-skin-row" + (owned ? " owned" : "") + (active ? " active" : "");
     row.innerHTML =
+      `<img class="arsenal-skin-thumb" alt="" width="48" height="48" />` +
       `<span class="arsenal-swatch" style="background:${hex(item.color)}"></span>` +
       `<span class="arsenal-skin-name">${item.label}</span>` +
       `<span class="arsenal-skin-tier">${item.tier || ""}</span>` +
       `<span class="arsenal-skin-status">${active ? "✓ Em uso" : owned ? "Equipar" : "Loja"}</span>`;
+    const thumb = row.querySelector(".arsenal-skin-thumb");
+    if (thumb) {
+      const url = getShopItemThumbDataUrl(item);
+      if (url) thumb.src = url;
+    }
     row.addEventListener("click", async () => {
       if (!owned) {
         alert("Compre esta skin na loja primeiro.");
@@ -81,8 +88,24 @@ function renderSkinList(acc) {
 
   const preview = $("arsenalWeaponPreview");
   if (preview) {
-    preview.style.background = activeColor ? hex(activeColor) : "#334455";
-    preview.textContent = getWeaponLabel(activeWeapon);
+    const activeItem = items.find((i) => i.color === activeColor);
+    preview.innerHTML = "";
+    if (activeItem) {
+      const img = document.createElement("img");
+      img.className = "arsenal-weapon-thumb";
+      img.width = 80;
+      img.height = 80;
+      img.alt = activeItem.label;
+      const url = getShopItemThumbDataUrl(activeItem);
+      if (url) img.src = url;
+      preview.appendChild(img);
+      const label = document.createElement("span");
+      label.textContent = getWeaponLabel(activeWeapon);
+      preview.appendChild(label);
+    } else {
+      preview.textContent = getWeaponLabel(activeWeapon);
+      preview.style.background = "#334455";
+    }
   }
 }
 

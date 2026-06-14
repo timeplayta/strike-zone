@@ -1,0 +1,10 @@
+---
+description: Sempre publicar implementações no GitHub
+alwaysApply: true
+---
+
+# Publicação No GitHub
+
+- Sempre que fizer uma nova implementação no projeto, crie um commit e envie para o GitHub ao finalizar.
+- Antes de commitar, rode uma checagem básica das mudanças e não inclua arquivos temporários, segredos ou lixo local.
+- Se o push falhar por autenticação, conflito remoto ou arquivo grande, avise o usuário de forma direta e diga exatamente o que falta resolver.

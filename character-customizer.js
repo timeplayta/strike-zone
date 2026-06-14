@@ -18,7 +18,11 @@ import {
   updateViewerLoadout,
   hexStr,
 } from "./character-viewer.js";
-import { switchHubPanel, showPlayHub } from "./menu-hub.js";
+import {
+  mountTrevasMonsterPreviews,
+  destroyAllTrevasMonsterPreviews,
+  resizeTrevasMonsterPreviews,
+} from "./trevas-monsters-preview.js";
 
 function $(id) {
   return document.getElementById(id);
@@ -110,6 +114,8 @@ async function openModal() {
       updateViewerLoadout("customizerCanvas", currentLoadout);
     }
     resizeViewer("customizerCanvas");
+    mountTrevasMonsterPreviews();
+    resizeTrevasMonsterPreviews();
   });
 }
 
@@ -152,6 +158,7 @@ export function initCharacterCustomizer() {
     const panel = $("ffHubPanelCharacter");
     if (viewerMounted && panel && !panel.classList.contains("hidden")) {
       resizeViewer("customizerCanvas");
+      resizeTrevasMonsterPreviews();
     }
   });
 }

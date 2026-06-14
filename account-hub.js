@@ -15,6 +15,7 @@ import {
   destroyViewer,
   resizeViewer,
   updateViewerLoadout,
+  updateViewerCharacterSkin,
 } from "./character-viewer.js";
 
 function $(id) {
@@ -100,10 +101,10 @@ function refreshAccountPanel(name) {
 
   const loadout = normalizeLoadout(window.__playerLoadout || DEFAULT_LOADOUT);
   if (viewersMounted) {
-    updateViewerLoadout("accountPlayerCanvas", loadout);
+    updateViewerCharacterSkin("accountPlayerCanvas", characterSkin);
   }
   if (fabPortraitMounted) {
-    updateViewerLoadout("accountFabCanvas", loadout);
+    updateViewerCharacterSkin("accountFabCanvas", characterSkin);
   }
 }
 

@@ -45,15 +45,17 @@ import { createWall, getPropCollider, buildMapProps } from "./map-props.js";
 import { createMapMaterials, addWallBaseboard } from "./environment-textures.js";
 import { buildWorldDecor, buildDoorAndInnerRoom } from "./world-decor.js";
 import { getDoorHitMeshes, buildConnectedCeiling } from "./furniture.js";
-import { createWeaponView, setWeaponView, setWeaponADS, triggerMuzzleFlash, triggerMeleeSwing, updateWeaponView, hideAllWeapons } from "./weapon-view.js";
+import { createWeaponView, setWeaponView, setWeaponADS, triggerMuzzleFlash, triggerMeleeSwing, updateWeaponView, hideAllWeapons, applyWeaponSkinToView } from "./weapon-view.js";
 import { spawnMeleePickups, updateMeleePickups, tryPickupMelee, collectMeleePickup } from "./melee-pickups.js";
 import { createExitZone, updateExitZone, checkExitReached } from "./exit-zone.js";
 import { playGunshot, playEmptyClip } from "./audio.js";
-import { showJumpscareOverlay } from "./horror-jumpscare.js";
+import { showJumpscareOverlay, isJumpscareActive } from "./horror-jumpscare.js";
 import {
   spawnLabyrinthMonsters,
   clearLabyrinthMonsters,
   updateLabyrinthMonsters,
+  createTrevasMonsterMesh,
+  LABYRINTH_MONSTER_DEFS,
 } from "./horror-monsters.js";
 import { isSessionAdmin } from "./player-account.js";
 import {
@@ -177,6 +179,8 @@ let devFogFarBonus = 0;
 let adminGodMode = false;
 let devMoveSpeedMul = 1;
 let lastAdminJumpTap = 0;
+let lastAdminCharPreviewJumpTap = 0;
+let adminCharPreviewFly = false;
 const ADMIN_DOUBLE_JUMP_MS = 450;
 let adminPreviewPivot = null;
 let adminPreviewEntity = null;
@@ -310,6 +314,7 @@ function teleportSuperEnemy(e) {
 }
 
 function enemyShootPlayer(e) {
+  if (weaponPickPending) return;
   if (e.reloading && performance.now() < e.reloadFinishAt) return;
   if (e.reloading && performance.now() >= e.reloadFinishAt) {
     finishEnemyReload(e);
@@ -491,6 +496,14 @@ function applyPlayModeUI() {
   document.body.classList.toggle("mode-mobile", isMobileMode());
   document.body.classList.toggle("mode-desktop", !isMobileMode());
   document.body.classList.toggle("game-active", !menu.classList.contains("active"));
+  document.body.classList.toggle("play-labyrinth", isLabyrinthMap(mapData));
+  document.body.classList.toggle("play-defuse", gameMode === "defuse" && !isLabyrinthMap(mapData));
+
+  const mobBomb = document.getElementById("btnBomb");
+  if (mobBomb) mobBomb.classList.toggle("hidden", gameMode !== "defuse" || isLabyrinthMap(mapData));
+
+  const fireBtn = document.getElementById("btnFire");
+  if (fireBtn) fireBtn.textContent = isLabyrinthMap(mapData) ? "ATACAR" : "ATIRAR";
 
   if (isMobileMode()) {
     initMobileControls();
@@ -514,6 +527,16 @@ function needsRoundWeaponPick() {
   return !isLabyrinthMap(mapData);
 }
 
+function finishRoundWeaponPick(id) {
+  primaryWeaponId = id;
+  initWeapons();
+  weaponPickPending = false;
+  enemyMoveAllowedAt = Math.max(
+    enemyMoveAllowedAt,
+    performance.now() + ENEMY_SPAWN_DELAY_MS
+  );
+}
+
 function offerRoundWeaponPick() {
   if (!needsRoundWeaponPick()) return Promise.resolve(primaryWeaponId);
   weaponPickPending = true;
@@ -521,9 +544,7 @@ function offerRoundWeaponPick() {
     (mod) =>
       new Promise((resolve) => {
         mod.showRoundWeaponPicker((id) => {
-          primaryWeaponId = id;
-          initWeapons();
-          weaponPickPending = false;
+          finishRoundWeaponPick(id);
           resolve(id);
         });
       })
@@ -640,6 +661,9 @@ function startGame(config = {}) {
     buildMap();
     bakeWallColliders();
     initPlayer();
+    if (!adminPreviewMode && isHorrorMap(mapData) && !isLabyrinthMap(mapData)) {
+      spawnLabyrinthMonsters(scene, mapData);
+    }
     enemyMoveAllowedAt = performance.now() + (isLabyrinthMap(mapData) ? 0 : botCount === 1 ? 900 : ENEMY_SPAWN_DELAY_MS);
     const mapPreviewOnly = adminPreviewMode === "map";
     if (!mapPreviewOnly && !isNoCombatMap(mapData)) spawnEnemies();
@@ -652,20 +676,19 @@ function startGame(config = {}) {
 
     const showMatchOverlay = () => {
       if (mapPreviewOnly) {
-        showOverlay("Espectador — WASD voar • ESC menu");
+        showOverlay("Espectador — W na mira • Espaço/Ctrl/X subir/descer • ESC menu");
         document.getElementById("objective").textContent = "Inspeção de mapa (admin)";
         document.getElementById("timer").textContent = "∞";
         hud.classList.add("hidden");
       } else if (isLabyrinthMap(mapData)) {
-        spawnLabyrinthMonsters(scene, mapData);
         showOverlay("Labirinto das Trevas — 3 monstros no escuro • J = lanterna");
         document.getElementById("objective").textContent =
-          "J = lanterna • Evite O Devorador, O Observador e O Vazio Eterno";
+          "J = lanterna • O Gosmento, o Gigante e Bam-Bam estão nas trevas";
         document.getElementById("timer").textContent = "∞";
       } else if (isHorrorMap(mapData)) {
-        showOverlay("Modo terror — pressione J para equipar a lanterna");
+        showOverlay("Modo terror — 3 monstros nas sombras • J = lanterna");
         document.getElementById("objective").textContent =
-          "Sobreviva ao escuro — J = lanterna • elimine as ameaças";
+          "Sobreviva — Gosmento, Gigante e Bam-Bam estão no mapa • J = lanterna";
       } else {
         showOverlay(`ROUND ${round} — Inimigos entram em 3s`);
         document.getElementById("objective").textContent = isMobileMode()
@@ -731,17 +754,17 @@ function applyMapAtmosphere() {
   if (renderer) configureCharacterRenderer(renderer, labyrinth ? 0.74 : horror ? 0.86 : 1.05);
 
   if (labyrinth) {
-    hemiLight.color.setHex(0x1a1418);
-    hemiLight.groundColor.setHex(0x030202);
-    hemiLight.intensity = 0.13;
-    ambientLight.color.setHex(0x0a0808);
-    ambientLight.intensity = 0.11;
-    sunLight.color.setHex(0x443322);
-    sunLight.intensity = 0.2;
-    fillLight.color.setHex(0x1a2233);
-    fillLight.intensity = 0.11;
-    scene.background = new THREE.Color(0x060404);
-    scene.fog = new THREE.Fog(0x050303, 4, 24);
+    hemiLight.color.setHex(0x120a10);
+    hemiLight.groundColor.setHex(0x020101);
+    hemiLight.intensity = 0.09;
+    ambientLight.color.setHex(0x080606);
+    ambientLight.intensity = 0.07;
+    sunLight.color.setHex(0x331818);
+    sunLight.intensity = 0.14;
+    fillLight.color.setHex(0x0a1018);
+    fillLight.intensity = 0.08;
+    scene.background = new THREE.Color(0x030202);
+    scene.fog = new THREE.Fog(0x040202, 2.5, 18);
   } else if (horror) {
     hemiLight.color.setHex(0x554466);
     hemiLight.groundColor.setHex(0x0c0a0a);
@@ -912,6 +935,7 @@ function initThree() {
   if (!weaponView) {
     weaponView = createWeaponView(camera);
     setWeaponView(weaponView, 1, primaryWeaponId);
+    applyPlayerWeaponSkins();
   }
   renderer = new THREE.WebGLRenderer({
     canvas,
@@ -937,7 +961,7 @@ function initThree() {
       return;
     }
     if (e.button !== 0) return;
-    if (!pointerLocked && !matchOver) requestPointerLock();
+    if (!pointerLocked && !matchOver && !weaponPickPending && !player.dead) requestPointerLock();
     if (pointerLocked && roundActive && !player.dead && !inCinematic) {
       if (tryInteractWorld()) return;
       mouseDown = true;
@@ -979,6 +1003,54 @@ function onResize() {
 function requestPointerLock() {
   if (isMobileMode()) return;
   canvas.requestPointerLock?.();
+}
+
+function buildLabyrinthHorrorAmbience(scene, mapData) {
+  if (!scene || !mapData) return;
+
+  const bloodMat = new THREE.MeshStandardMaterial({
+    color: 0x4a0a0a,
+    transparent: true,
+    opacity: 0.65,
+    emissive: 0x330000,
+    emissiveIntensity: 0.35,
+    depthWrite: false,
+  });
+  const dripMat = bloodMat.clone();
+  dripMat.opacity = 0.45;
+
+  const spawns = mapData.monsterSpawns || [];
+  for (let i = 0; i < spawns.length; i++) {
+    const p = spawns[i];
+    const pool = new THREE.Mesh(new THREE.CircleGeometry(1.1, 10), bloodMat);
+    pool.rotation.x = -Math.PI / 2;
+    pool.position.set(p.x, 0.025, p.z);
+    scene.add(pool);
+
+    const warn = new THREE.PointLight(
+      i === 0 ? 0x44ff66 : i === 1 ? 0xff3311 : 0xffaa66,
+      0.35,
+      10,
+      2
+    );
+    warn.position.set(p.x, 1.2, p.z);
+    scene.add(warn);
+
+    for (let d = 0; d < 3; d++) {
+      const streak = new THREE.Mesh(new THREE.PlaneGeometry(0.35, 1.8), dripMat);
+      streak.position.set(p.x + (d - 1) * 0.5, 1.4, p.z + 0.55);
+      scene.add(streak);
+    }
+  }
+
+  const pathPts = mapData.patrolPoints?.slice(0, 24) || [];
+  for (let i = 0; i < pathPts.length; i += 3) {
+    const p = pathPts[i];
+    const smear = new THREE.Mesh(new THREE.CircleGeometry(0.45, 6), dripMat);
+    smear.rotation.x = -Math.PI / 2;
+    smear.position.set(p.x + 1.1, 0.02, p.z - 1.1);
+    scene.add(smear);
+  }
 }
 
 function buildMap() {
@@ -1029,20 +1101,13 @@ function buildMap() {
   }
 
   if (isLabyrinthMap(mapData)) {
-    buildMapProps(scene, mapData.props || [], mapData.propTint);
+    // Sem props no labirinto — corredores 100% livres
   } else {
     buildWorldDecor(scene, mapData, wallMeshesForCeil);
   }
 
-  if (isLabyrinthMap(mapData) && mapData.pillars) {
-    for (const p of mapData.pillars) {
-      const col = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.28, 0.32, mapData.ceilingH || 4.2, 8),
-        accentMat
-      );
-      col.position.set(p.x, (mapData.ceilingH || 4.2) / 2, p.z);
-      scene.add(col);
-    }
+  if (isLabyrinthMap(mapData)) {
+    // pilares removidos
   }
 
   if (!mapData.skipBossRoom) {
@@ -1086,6 +1151,7 @@ function buildMap() {
     ammoStation = null;
   }
   for (const p of mapData.props || []) {
+    if (isLabyrinthMap(mapData)) continue;
     const col = getPropCollider(p);
     walls.push({
       mesh: null,
@@ -1111,6 +1177,8 @@ function buildMap() {
     meleePickups = spawnMeleePickups(scene, mapData.meleePickups || []);
     exitZone = createExitZone(mapData.exitZone);
     scene.add(exitZone.group);
+    buildLabyrinthHorrorAmbience(scene, mapData);
+    spawnLabyrinthMonsters(scene, mapData);
   }
 }
 
@@ -1283,16 +1351,12 @@ function initWeapons() {
 
 function applyPlayerWeaponSkins() {
   if (!weaponView || !playerName) return;
-  for (const [id, group] of Object.entries(weaponView.primaryModels)) {
+  const skins = {};
+  for (const id of ["ak47", "scar", "m4", "ump45", "awm", "doze", "glock"]) {
     const color = getWeaponSkinColor(playerName, id);
-    if (!color || !group) continue;
-    group.traverse((o) => {
-      if (!o.isMesh || !o.material) return;
-      const m = o.material;
-      if (m.metalness != null && m.metalness > 0.45) return;
-      if (m.color) m.color.setHex(color);
-    });
+    if (color) skins[id] = color;
   }
+  applyWeaponSkinToView(weaponView, skins);
 }
 
 /** Posições longe do jogador — outro lado do mapa / espalhadas */
@@ -1349,6 +1413,7 @@ function pickEnemySpawnPositions(n, playerX, playerZ) {
 }
 
 function enemiesCanAct() {
+  if (weaponPickPending) return false;
   return performance.now() >= enemyMoveAllowedAt;
 }
 
@@ -1735,6 +1800,14 @@ function onKeyDown(e) {
     toggleFlashlight();
     return;
   }
+  if (adminPreviewMode === "character") {
+    if (e.code === "Space") {
+      e.preventDefault();
+      if (tryAdminCharPreviewFlyToggle()) return;
+    }
+    if (!adminCharPreviewFly) return;
+    return;
+  }
   if (adminSpectator || adminPreviewMode) return;
   if (e.code === "KeyR") reload();
   if (e.code === "KeyE") tryInteractWorld();
@@ -1754,7 +1827,7 @@ function onKeyUp(e) {
 
 function onMouseMove(e) {
   if (isMobileMode() || inCinematic) return;
-  if (adminPreviewMode === "character") {
+  if (adminPreviewMode === "character" || (adminSpectator && adminNoclip)) {
     lookDelta.x += e.movementX;
     lookDelta.y += e.movementY;
     return;
@@ -1794,7 +1867,7 @@ function updateADS(dt) {
 
 function processLook() {
   if (inCinematic) return;
-  if (adminPreviewMode === "character") return;
+  if (adminPreviewMode === "character" && !adminCharPreviewFly) return;
   if (player.dead && !adminSpectator) return;
   if (!isMobileMode() && !pointerLocked && !adminSpectator) return;
   if (lookDelta.x === 0 && lookDelta.y === 0) return;
@@ -2059,6 +2132,15 @@ function killHelper(h, attacker) {
 
 function showDeathChoice(attacker) {
   if (player.dead) return;
+  if (weaponPickPending) {
+    weaponPickPending = false;
+    const rwPanel = document.getElementById("roundWeaponPicker");
+    if (rwPanel) {
+      rwPanel.classList.add("hidden");
+      rwPanel.setAttribute("aria-hidden", "true");
+    }
+    document.body.classList.remove("round-weapon-pick-active");
+  }
   player.dead = true;
   player.health = 0;
   deaths++;
@@ -2084,7 +2166,7 @@ function showDeathChoice(attacker) {
   document.exitPointerLock?.();
   mobileControls?.hide();
   hud.classList.add("hidden");
-  document.body.classList.add("show-cursor");
+  document.body.classList.add("show-cursor", "death-screen-active");
 
   const msg = document.getElementById("deathMsg");
   if (msg) {
@@ -2108,22 +2190,67 @@ async function playHorrorDeathJumpscare(attacker) {
   roundActive = false;
   document.exitPointerLock?.();
   mobileControls?.hide();
+  if (weaponView) hideAllWeapons(weaponView);
+
+  const src = getHorrorJumpscareSource(attacker);
+
   await showJumpscareOverlay({
-    style: "death",
-    name: "VOCÊ NÃO DEVERIA TER PASSADO",
-    emoji: "💀",
+    camera,
+    scene,
+    renderer,
+    sourceGroup: src.sourceGroup,
+    def: src.def,
+    style: src.style,
+    name: src.name,
     duration: 1500,
     sound: "death",
   });
+
   deathJumpscareRunning = false;
   showDeathChoice(attacker);
+}
+
+function getHorrorJumpscareSource(attacker) {
+  const fallback = {
+    sourceGroup: null,
+    style: "death",
+    name: attacker || "VOCÊ NÃO DEVERIA TER PASSADO",
+    def: { color: 0x220808, eye: 0xff1100, scale: 1.45, height: 2.6 },
+  };
+
+  if (!enemies?.length) return fallback;
+
+  let match = null;
+  if (attacker) {
+    match = enemies.find((e) => e.alive && e.group && e.name === attacker);
+  }
+  if (!match) {
+    let best = 1e9;
+    for (const e of enemies) {
+      if (!e.alive || !e.group) continue;
+      const d = camera.position.distanceTo(e.group.position);
+      if (d < best) {
+        best = d;
+        match = e;
+      }
+    }
+  }
+
+  if (!match?.group) return fallback;
+
+  return {
+    sourceGroup: match.group,
+    style: "death",
+    name: match.name || attacker || "AMEAÇA",
+    def: null,
+  };
 }
 
 function hideDeathChoice() {
   deathScreen?.classList.add("hidden");
   deathScreen?.classList.remove("active");
   hud.classList.remove("hidden");
-  document.body.classList.remove("show-cursor");
+  document.body.classList.remove("show-cursor", "death-screen-active");
   if (isMobileMode()) mobileControls?.show();
 }
 
@@ -2135,7 +2262,7 @@ function finishMatchFromDeath() {
 }
 
 function damagePlayer(dmg, attacker) {
-  if (adminGodMode || adminSpectator || player.dead || inCinematic) return;
+  if (adminGodMode || adminSpectator || player.dead || inCinematic || weaponPickPending) return;
   player.health -= dmg;
   updateHealthHUD();
   document.body.classList.add("damage-flash");
@@ -2204,7 +2331,7 @@ function botPlantBomb(pos) {
 }
 
 function updateEnemies(dt) {
-  if (inCinematic) return;
+  if (inCinematic || isJumpscareActive()) return;
   const px = camera.position.x;
   const pz = camera.position.z;
   lastPlayerPos = { x: px, z: pz };
@@ -2607,7 +2734,8 @@ function collides(x, z, r, who = "player") {
 
 function updatePlayer(dt) {
   if (adminPreviewMode === "character") {
-    updateAdminCharOrbit(dt);
+    if (adminCharPreviewFly) updateAdminFly(dt);
+    else updateAdminCharOrbit(dt);
     updateAdminHud();
     return;
   }
@@ -2620,6 +2748,8 @@ function updatePlayer(dt) {
 
   updateADS(dt);
   processLook();
+
+  if (isJumpscareActive()) return;
 
   if (!roundActive || player.dead || inCinematic) {
     applyCameraRotation();
@@ -2930,9 +3060,20 @@ function showEndScreen(won) {
 }
 
 function updateHUD() {
-  document.getElementById("scoreCT").textContent = scoreCT;
-  document.getElementById("scoreT").textContent = scoreT;
-  document.getElementById("roundText").textContent = `ROUND ${round}`;
+  const lab = isLabyrinthMap(mapData);
+  document.body.classList.toggle("hud-labyrinth", lab);
+
+  if (!lab) {
+    document.getElementById("scoreCT").textContent = scoreCT;
+    document.getElementById("scoreT").textContent = scoreT;
+    document.getElementById("roundText").textContent = `ROUND ${round}`;
+  } else {
+    const roundEl = document.getElementById("roundText");
+    if (roundEl) roundEl.textContent = "FIM DAS TREVAS";
+    const timerEl = document.getElementById("timer");
+    if (timerEl) timerEl.textContent = "☠";
+  }
+
   const coinsEl = document.getElementById("hudCoins");
   if (coinsEl) coinsEl.textContent = `${sessionCoins} 🪙`;
 }
@@ -2989,6 +3130,62 @@ function handlePlayerJump() {
   tryJump(player);
 }
 
+function tryAdminCharPreviewFlyToggle() {
+  if (adminPreviewMode !== "character") return false;
+  const now = performance.now();
+  const doubleTap = now - lastAdminCharPreviewJumpTap <= ADMIN_DOUBLE_JUMP_MS;
+  lastAdminCharPreviewJumpTap = now;
+  if (doubleTap) {
+    lastAdminCharPreviewJumpTap = 0;
+    toggleAdminCharPreviewFly(!adminCharPreviewFly);
+    return true;
+  }
+  return false;
+}
+
+function syncFlyAnglesFromCamera() {
+  const dir = new THREE.Vector3();
+  camera.getWorldDirection(dir);
+  yaw = Math.atan2(dir.x, -dir.z);
+  pitch = Math.asin(Math.max(-1, Math.min(1, dir.y)));
+}
+
+function syncCharOrbitFromCamera() {
+  if (!adminPreviewPivot) return;
+  const p = adminPreviewPivot.position;
+  const lookY =
+    adminPreviewEntity?.isTrevasMonster
+      ? (adminPreviewEntity.monsterId === "gosmento" ? 1.8 : adminPreviewEntity.monsterId === "gigante" ? 1.4 : 0.85)
+      : 1.15;
+  const dx = camera.position.x - p.x;
+  const dy = camera.position.y - p.y - lookY;
+  const dz = camera.position.z - p.z;
+  const dist = Math.hypot(dx, dy, dz);
+  if (dist > 0.5) {
+    adminCharOrbit.dist = dist;
+    adminCharOrbit.yaw = Math.atan2(dx, dz);
+    adminCharOrbit.pitch = Math.asin(Math.max(-0.15, Math.min(1.35, dy / dist)));
+  }
+}
+
+function toggleAdminCharPreviewFly(force) {
+  if (adminPreviewMode !== "character") return;
+  const next = typeof force === "boolean" ? force : !adminCharPreviewFly;
+  adminCharPreviewFly = next;
+  if (next) {
+    syncFlyAnglesFromCamera();
+    lookDelta.x = 0;
+    lookDelta.y = 0;
+    showOverlay("Preview voador — W na mira • Espaço/Ctrl/X subir/descer • 2× PULAR volta à órbita");
+  } else {
+    syncCharOrbitFromCamera();
+    lookDelta.x = 0;
+    lookDelta.y = 0;
+    showOverlay("Preview órbita — mouse gira • 2× PULAR para voar");
+  }
+  updateAdminHud();
+}
+
 function tryAdminJumpSpectatorToggle() {
   if (!isSessionAdmin() || !isHorrorMap(mapData) || adminPreviewMode) return false;
   const now = performance.now();
@@ -3022,7 +3219,7 @@ function toggleAdminLiveSpectator(force) {
     moveVel.x = 0;
     moveVel.z = 0;
     if (weaponView) hideAllWeapons(weaponView);
-    showOverlay("Espectador admin — voe sem colisão • 2× PULAR ou ESC para voltar");
+    showOverlay("Espectador admin — W na mira • Espaço/Ctrl/X subir/descer • 2× PULAR ou ESC para voltar");
   } else {
     camera.position.y = PLAYER_EYE_HEIGHT + (player.jumpOffset || 0);
     restorePlayerWeaponView();
@@ -3062,9 +3259,21 @@ function updateAdminHud() {
   el.classList.remove("hidden");
   const meta = getMapMeta(currentMapKey);
   if (adminPreviewMode === "character") {
-    el.innerHTML =
-      "<strong>Preview personagem</strong><br>" +
-      "Mouse gira • Scroll zoom • ESC menu";
+    const monsterLabel =
+      adminPreviewEntity?.isTrevasMonster
+        ? LABYRINTH_MONSTER_DEFS.find((d) => d.id === adminPreviewEntity.monsterId)?.name || "Monstro"
+        : null;
+    if (adminCharPreviewFly) {
+      el.innerHTML =
+        "<strong>Preview personagem — voo</strong><br>" +
+        (monsterLabel ? `${monsterLabel}<br>` : "") +
+        "WASD voar (W na mira) • Espaço/Ctrl/X subir/descer • 2× PULAR órbita • ESC menu";
+    } else {
+      el.innerHTML =
+        "<strong>Preview personagem</strong><br>" +
+        (monsterLabel ? `${monsterLabel}<br>` : "") +
+        "Mouse gira • Scroll zoom • 2× PULAR voar • ESC menu";
+    }
     return;
   }
   const nvg = adminNightVision ? "ON" : "OFF";
@@ -3076,41 +3285,46 @@ function updateAdminHud() {
     `<strong>Admin espectador</strong><br>` +
     `Mapa: ${meta.name}<br>` +
     `Tamanho: <strong>${meta.widthM} m × ${meta.heightM} m</strong> (~${meta.areaM2} m²)<br>` +
-    `WASD voar • Espaço/Ctrl subir/descer • N visão noturna (${nvg})${darkHint} • ESC menu${liveHint}`;
+    `WASD voar (W na mira) • Espaço/Ctrl/X subir/descer • N visão noturna (${nvg})${darkHint} • ESC menu${liveHint}`;
+}
+
+function isAdminFlyDescendKey() {
+  return (
+    keys["ControlLeft"] ||
+    keys["ControlRight"] ||
+    keys["KeyC"] ||
+    keys["KeyX"] ||
+    keys["AltLeft"]
+  );
 }
 
 function updateAdminFly(dt) {
   processLook();
-  _vForward.set(0, 0, -1).applyAxisAngle(_vUp, yaw);
-  _vRight.set(1, 0, 0).applyAxisAngle(_vUp, yaw);
-  let mx = 0;
-  let mz = 0;
-  let my = 0;
-  if (keys["KeyW"]) {
-    mx += _vForward.x;
-    mz += _vForward.z;
-  }
-  if (keys["KeyS"]) {
-    mx -= _vForward.x;
-    mz -= _vForward.z;
-  }
-  if (keys["KeyA"]) {
-    mx -= _vRight.x;
-    mz -= _vRight.z;
-  }
-  if (keys["KeyD"]) {
-    mx += _vRight.x;
-    mz += _vRight.z;
-  }
-  if (keys["Space"]) my += 1;
-  if (keys["ControlLeft"] || keys["KeyC"]) my -= 1;
+  applyCameraRotation();
+
+  const move = new THREE.Vector3();
+  const forward = new THREE.Vector3();
+  camera.getWorldDirection(forward);
+
+  const camRight = new THREE.Vector3().crossVectors(_vUp, forward);
+  if (camRight.lengthSq() < 1e-6) camRight.set(1, 0, 0);
+  else camRight.normalize();
+
+  if (keys["KeyW"]) move.add(forward);
+  if (keys["KeyS"]) move.sub(forward);
+  if (keys["KeyA"]) move.sub(camRight);
+  if (keys["KeyD"]) move.add(camRight);
+
+  // Vertical no mundo — independente da mira (sempre sobe/desce de verdade)
+  if (keys["Space"]) move.y += 1;
+  if (isAdminFlyDescendKey()) move.y -= 1;
+
   const boost = keys["ShiftLeft"] ? 2.6 : 1;
   const speed = adminFlySpeed * boost * devMoveSpeedMul;
-  const len = Math.hypot(mx, mz, my);
-  if (len > 0) {
-    camera.position.x += (mx / len) * speed * dt;
-    camera.position.y += (my / len) * speed * dt;
-    camera.position.z += (mz / len) * speed * dt;
+
+  if (move.lengthSq() > 0) {
+    move.normalize();
+    camera.position.addScaledVector(move, speed * dt);
   }
   applyCameraRotation();
 }
@@ -3126,27 +3340,33 @@ function updateAdminCharOrbit(dt) {
   const p = adminPreviewPivot.position;
   const d = adminCharOrbit.dist;
   const cp = Math.cos(adminCharOrbit.pitch);
+  const lookY =
+    adminPreviewEntity?.isTrevasMonster
+      ? (adminPreviewEntity.monsterId === "gosmento" ? 1.8 : adminPreviewEntity.monsterId === "gigante" ? 1.4 : 0.85)
+      : 1.15;
   camera.position.set(
     p.x + Math.sin(adminCharOrbit.yaw) * cp * d,
-    p.y + 1.25 + Math.sin(adminCharOrbit.pitch) * d,
+    p.y + lookY + Math.sin(adminCharOrbit.pitch) * d,
     p.z + Math.cos(adminCharOrbit.yaw) * cp * d
   );
-  camera.lookAt(p.x, p.y + 1.15, p.z);
+  camera.lookAt(p.x, p.y + lookY, p.z);
 }
 
 function onAdminWheel(e) {
-  if (adminPreviewMode !== "character") return;
+  if (adminPreviewMode !== "character" || adminCharPreviewFly) return;
   e.preventDefault();
-  adminCharOrbit.dist = Math.max(1.8, Math.min(12, adminCharOrbit.dist + e.deltaY * 0.008));
+  adminCharOrbit.dist = Math.max(1.8, Math.min(18, adminCharOrbit.dist + e.deltaY * 0.008));
 }
 
 function adminExitToMenu() {
   adminSpectator = false;
   adminNoclip = false;
+  adminCharPreviewFly = false;
   adminLiveSpectator = false;
   adminHorrorFullLight = false;
   window.__adminHorrorFullLight = false;
   lastAdminJumpTap = 0;
+  lastAdminCharPreviewJumpTap = 0;
   adminPreviewMode = null;
   adminPreviewPivot = null;
   adminPreviewEntity = null;
@@ -3171,7 +3391,12 @@ function adminExitToMenu() {
   }
 }
 
-function buildAdminPreviewCharacter(type, index) {
+function buildAdminPreviewCharacter(type, index, monsterId) {
+  if (type === "trevas") {
+    const id = monsterId || LABYRINTH_MONSTER_DEFS[index]?.id || "gosmento";
+    const group = createTrevasMonsterMesh(id, { preview: true });
+    return { group, isTrevasMonster: true, monsterId: id };
+  }
   if (type === "boss") return createBoss();
   if (type === "helper") return createHelper(index, "dust");
   if (type === "horror") return createBandit(index, "horror");
@@ -3185,6 +3410,8 @@ function startCharacterPreviewSession(config) {
     adminPreviewMode = "character";
     adminSpectator = true;
     adminNoclip = true;
+    adminCharPreviewFly = false;
+    lastAdminCharPreviewJumpTap = 0;
     adminCharOrbit = { yaw: 0.6, pitch: 0.25, dist: 4.2 };
     currentMapKey = "dust";
     mapData = MAPS.dust;
@@ -3209,25 +3436,43 @@ function startCharacterPreviewSession(config) {
 
     const type = config.charType || "bandit";
     const idx = config.charIndex || 0;
-    const char = buildAdminPreviewCharacter(type, idx);
-    char.group.position.set(0, 0, 0);
-    scene.add(char.group);
-    adminPreviewPivot = char.group;
-    adminPreviewEntity = {
-      group: char.group,
-      rig: char.rig,
-      mixer: char.mixer,
-      animActions: char.animActions,
-      gun: char.gun,
-      weaponPivot: char.weaponPivot,
-      npcWeapon: char.weaponType || "ak47",
-      bones: char.bones,
-      horrorMode: type === "horror",
-      alwaysHoldWeapon: !!char.gun && type !== "horror",
-      alive: true,
-      baseY: 0,
-    };
-    initCharacterAnim(adminPreviewEntity);
+    const monsterId = config.monsterId;
+    const char = buildAdminPreviewCharacter(type, idx, monsterId);
+
+    if (char.isTrevasMonster) {
+      char.group.position.set(0, 0, 0);
+      scene.add(char.group);
+      adminPreviewPivot = char.group;
+      adminPreviewEntity = { group: char.group, isTrevasMonster: true, monsterId: char.monsterId };
+      adminCharOrbit.dist =
+        char.monsterId === "gosmento" ? 12
+        : char.monsterId === "gigante" ? 14
+        : 4.2;
+      if (char.monsterId === "gigante") {
+        adminCharOrbit.yaw = 0;
+        adminCharOrbit.pitch = 0.18;
+      }
+    } else {
+      char.group.position.set(0, 0, 0);
+      scene.add(char.group);
+      adminPreviewPivot = char.group;
+      adminPreviewEntity = {
+        group: char.group,
+        rig: char.rig,
+        mixer: char.mixer,
+        animActions: char.animActions,
+        gun: char.gun,
+        weaponPivot: char.weaponPivot,
+        npcWeapon: char.weaponType || "ak47",
+        bones: char.bones,
+        horrorMode: type === "horror",
+        alwaysHoldWeapon: !!char.gun && type !== "horror",
+        alive: true,
+        baseY: 0,
+      };
+      initCharacterAnim(adminPreviewEntity);
+      adminCharOrbit = { yaw: 0.6, pitch: 0.25, dist: 4.2 };
+    }
 
     matchOver = false;
     roundActive = true;
@@ -3612,10 +3857,14 @@ function animate() {
       updateMeleePickups(meleePickups, dt);
       updateExitZone(exitZone, dt);
       if (roundActive && !player.dead && !adminSpectator) {
-        updateLabyrinthMonsters(dt, camera, (name, dmg) => {
+        updateLabyrinthMonsters(dt, camera, scene, renderer, (name, dmg) => {
           if (!player.dead) damagePlayer(dmg, name);
         });
       }
+    } else if (isHorrorMap(mapData) && roundActive && !player.dead && !adminSpectator) {
+      updateLabyrinthMonsters(dt, camera, scene, renderer, (name, dmg) => {
+        if (!player.dead) damagePlayer(dmg, name);
+      });
     }
     updateDoor(dt);
     updateInnerBomb(dt);
@@ -3629,7 +3878,7 @@ function animate() {
     }
   }
 
-  renderer.render(scene, camera);
+  if (!isJumpscareActive()) renderer.render(scene, camera);
 }
 
 window.startStrikeZone = startGame;

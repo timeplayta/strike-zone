@@ -29,7 +29,8 @@ export function showRoundWeaponPicker(callback) {
 
   panel.classList.remove("hidden");
   panel.setAttribute("aria-hidden", "false");
-  document.body.classList.add("round-weapon-pick-active");
+  document.body.classList.add("round-weapon-pick-active", "show-cursor");
+  document.exitPointerLock?.();
 
   requestAnimationFrame(() => initMenuWeaponPreviews());
 
@@ -53,6 +54,9 @@ export function confirmRoundWeaponPick() {
     panel.setAttribute("aria-hidden", "true");
   }
   document.body.classList.remove("round-weapon-pick-active");
+  if (!document.body.classList.contains("death-screen-active")) {
+    document.body.classList.remove("show-cursor");
+  }
   const id = selectedId || "ak47";
   if (onConfirm) onConfirm(id);
   onConfirm = null;
@@ -65,5 +69,8 @@ export function hideRoundWeaponPicker() {
     panel.setAttribute("aria-hidden", "true");
   }
   document.body.classList.remove("round-weapon-pick-active");
+  if (!document.body.classList.contains("death-screen-active")) {
+    document.body.classList.remove("show-cursor");
+  }
   onConfirm = null;
 }

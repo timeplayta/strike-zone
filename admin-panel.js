@@ -2,6 +2,11 @@
 
 import { MAPS, getMapMeta, MAP_KEYS } from "./maps.js";
 import { isAdminAccount } from "./admin-config.js";
+import {
+  mountTrevasMonsterPreviewsOn,
+  destroyTrevasMonsterPreviewsOn,
+  resizeTrevasMonsterPreviewsOn,
+} from "./trevas-monsters-preview.js";
 
 function $(id) {
   return document.getElementById(id);
@@ -68,6 +73,15 @@ function selectAdminTab(tab) {
   $("adminTabPlay")?.classList.toggle("hidden", tab !== "play");
   $("adminTabChars")?.classList.toggle("hidden", tab !== "chars");
   $("adminTabMaps")?.classList.toggle("hidden", tab !== "maps");
+
+  if (tab === "chars") {
+    requestAnimationFrame(() => {
+      mountTrevasMonsterPreviewsOn(["adminTrevasMonster0", "adminTrevasMonster1", "adminTrevasMonster2"]);
+      setTimeout(() => resizeTrevasMonsterPreviewsOn(["adminTrevasMonster0", "adminTrevasMonster1", "adminTrevasMonster2"]), 100);
+    });
+  } else {
+    destroyTrevasMonsterPreviewsOn(["adminTrevasMonster0", "adminTrevasMonster1", "adminTrevasMonster2"]);
+  }
 }
 
 function syncAdminMapToMenu(mapKey) {
@@ -118,11 +132,14 @@ function initAdminPanel() {
 
   $("adminViewCharBtn")?.addEventListener("click", () => {
     const val = $("adminCharSelect")?.value || "bandit:0";
-    const [type, idx] = val.includes(":") ? val.split(":") : [val, "0"];
+    const parts = val.split(":");
+    const type = parts[0];
+    const sub = parts[1] || "0";
     window.__adminStartConfig = {
       preview: "character",
       charType: type,
-      charIndex: parseInt(idx, 10) || 0,
+      charIndex: type === "trevas" ? 0 : parseInt(sub, 10) || 0,
+      monsterId: type === "trevas" ? sub : undefined,
       fromAdmin: true,
     };
     if (typeof window.startAdminPreview === "function") {

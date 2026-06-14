@@ -2,7 +2,7 @@
 
 import { getLoggedInName, refreshShopUI, getCharacterSkin } from "./player-account.js";
 import { normalizeLoadout, DEFAULT_LOADOUT } from "./character-loadout.js";
-import { mountCharacterViewer, destroyViewer, resizeViewer, updateViewerLoadout } from "./character-viewer.js";
+import { mountCharacterViewer, destroyViewer, resizeViewer, updateViewerLoadout, updateViewerCharacterSkin } from "./character-viewer.js";
 import { switchHubPanel, showPlayHub } from "./menu-hub.js";
 
 function $(id) {
@@ -14,6 +14,11 @@ let soloMounted = false;
 export function refreshSoloViewer() {
   if (!soloMounted) return;
   updateViewerLoadout("soloCanvas", normalizeLoadout(window.__playerLoadout || DEFAULT_LOADOUT));
+}
+
+export function refreshSoloCharacterSkin() {
+  if (!soloMounted) return;
+  updateViewerCharacterSkin("soloCanvas", getCharacterSkin());
 }
 
 async function openModal() {
