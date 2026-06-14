@@ -289,6 +289,7 @@
               <canvas id="soloCanvas" class="solo-canvas" width="400" height="240"></canvas>
               <div class="shop-hub-meta">
                 <h3 class="solo-shop-title">Loja <span id="shopCoins" class="shop-coins">0 🪙</span></h3>
+                <button type="button" id="buyCoinsBtn" class="btn-buy-coins">+ Moedas 💳</button>
                 <p id="accountHint" class="account-hint">Skins de armas e personagens</p>
                 <div class="shop-tabs">
                   <button type="button" class="shop-tab selected" data-shop-tab="weapons">Armas</button>
@@ -814,6 +815,26 @@
   <script type="module" src="character-customizer.js"></script>
   <script type="module" src="solo-view.js"></script>
   <script type="module" src="map-view.js"></script>
+
+  <!-- Modal de compra de moedas -->
+  <div id="coinPackModal" class="coin-pack-modal hidden" role="dialog" aria-modal="true" aria-labelledby="coinPackModalTitle">
+    <div class="coin-pack-backdrop" id="coinPackBackdrop"></div>
+    <div class="coin-pack-panel">
+      <div class="coin-pack-header">
+        <span class="coin-pack-title" id="coinPackModalTitle">💳 Comprar Moedas</span>
+        <button type="button" id="coinPackCloseBtn" class="shop-close" aria-label="Fechar">✕</button>
+      </div>
+      <p class="coin-pack-sub">Moedas para usar na loja — skins de arma, personagem e outfit.</p>
+      <div id="coinPackGrid" class="coin-pack-grid">
+        <div class="coin-pack-loading">Carregando pacotes...</div>
+      </div>
+      <p class="coin-pack-note">Pagamento seguro via Stripe. Pix e cartão aceitos. Sem assinatura.</p>
+      <div id="coinPackSuccess" class="coin-pack-success hidden">
+        <span class="coin-pack-success-icon">✅</span>
+        <span id="coinPackSuccessMsg">Moedas creditadas com sucesso!</span>
+      </div>
+    </div>
+  </div>
 
   <script type="importmap">
   {

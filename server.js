@@ -9,6 +9,7 @@ const PORT = Number(process.env.PORT) || 8080;
 const IS_CLOUD = process.env.NODE_ENV === "production" || process.env.RENDER === "true";
 const ROOT = __dirname;
 const { handleAccountApi, ensureBootstrapAdmin } = require("./account-db.js");
+const { handleStripeApi } = require("./stripe-handlers.js");
 ensureBootstrapAdmin();
 const VENDOR_DIR = path.join(ROOT, "vendor");
 const THREE_FILE = path.join(VENDOR_DIR, "three.module.js");
@@ -124,6 +125,18 @@ const server = http.createServer(async (req, res) => {
       res.writeHead(500, { "Content-Type": "application/json" });
       return res.end(JSON.stringify({ error: err.message || "Erro no servidor" }));
     }
+  }
+  if (pathname.startsWith("/api/stripe")) {
+    try {
+      return await handleStripeApi(req, res, pathname);
+    } catch (err) {
+      res.writeHead(500, { "Content-Type": "application/json" });
+      return res.end(JSON.stringify({ error: err.message || "Erro no servidor" }));
+    }
+  }
+  if (pathname === "/stripe-handlers.js" || pathname === "/stripe-config.js" || pathname === "/.env") {
+    res.writeHead(403);
+    return res.end("Forbidden");
   }
   if (pathname.startsWith("/data/") || pathname === "/account-db.js") {
     res.writeHead(403);

@@ -689,6 +689,25 @@ function authPlayer(accountId, token) {
   return p;
 }
 
+function creditCoins(accountId, stripeSessionId, amount) {
+  const db = readDb();
+  const p = db.players[accountId];
+  if (!p) return { ok: false, error: "Conta não encontrada" };
+
+  p.payments = p.payments || [];
+  if (p.payments.includes(stripeSessionId)) {
+    return { ok: false, error: "Pagamento já processado (idempotente)" };
+  }
+
+  p.coins = (p.coins || 0) + amount;
+  p.payments.push(stripeSessionId);
+  db.players[accountId] = p;
+  writeDb(db);
+
+  console.log(`[Stripe] +${amount} moedas → ${p.name} (${p.playerId})`);
+  return { ok: true, coins: p.coins };
+}
+
 function addKill(accountId, token, solo) {
   const p = authPlayer(accountId, token);
   if (!p) return { ok: false, error: "Não autorizado" };
@@ -863,6 +882,7 @@ module.exports = {
   registerAccount,
   loginAccount,
   getPlayerById,
+  creditCoins,
   SHOP,
   ensureBootstrapAdmin,
 };

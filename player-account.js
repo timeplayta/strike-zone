@@ -472,4 +472,117 @@ export function bindShopUI() {
   const refresh = () => refreshShopUI(getLoggedInName());
   document.getElementById("playerName")?.addEventListener("input", refresh);
   refresh();
+
+  document.getElementById("buyCoinsBtn")?.addEventListener("click", openCoinPackModal);
+  document.getElementById("coinPackCloseBtn")?.addEventListener("click", closeCoinPackModal);
+  document.getElementById("coinPackBackdrop")?.addEventListener("click", closeCoinPackModal);
+
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("payment") === "success") {
+    const coins = params.get("coins") || "";
+    const pack = params.get("pack") || "";
+    window.history.replaceState({}, "", window.location.pathname);
+    showCoinPackSuccess(coins, pack);
+    refresh();
+  }
+}
+
+async function openCoinPackModal() {
+  const modal = document.getElementById("coinPackModal");
+  if (!modal) return;
+  modal.classList.remove("hidden");
+  const grid = document.getElementById("coinPackGrid");
+  if (!grid) return;
+  grid.innerHTML = '<div class="coin-pack-loading">Carregando pacotes...</div>';
+
+  try {
+    const res = await fetch("/api/stripe/packs");
+    const data = await res.json();
+    if (!data.ok || !data.packs?.length) {
+      grid.innerHTML = '<div class="coin-pack-loading">Pacotes indisponíveis no momento.</div>';
+      return;
+    }
+    renderCoinPacks(grid, data.packs);
+  } catch {
+    grid.innerHTML = '<div class="coin-pack-loading">Erro ao carregar pacotes. Verifique sua conexão.</div>';
+  }
+}
+
+function closeCoinPackModal() {
+  document.getElementById("coinPackModal")?.classList.add("hidden");
+  const success = document.getElementById("coinPackSuccess");
+  if (success) success.classList.add("hidden");
+}
+
+function renderCoinPacks(grid, packs) {
+  grid.innerHTML = "";
+  for (const pack of packs) {
+    const card = document.createElement("div");
+    card.className = "coin-pack-card" + (pack.highlight ? " highlight" : "");
+
+    if (pack.highlight) {
+      const badge = document.createElement("div");
+      badge.className = "coin-pack-badge";
+      badge.textContent = "🔥 MAIS POPULAR";
+      card.appendChild(badge);
+    }
+
+    card.innerHTML += `
+      <span class="coin-pack-emoji">${pack.emoji}</span>
+      <div class="coin-pack-name">${pack.label}</div>
+      <div class="coin-pack-coins">${pack.coins.toLocaleString("pt-BR")} 🪙</div>
+      <div class="coin-pack-bonus">${pack.bonus || ""}</div>
+      <div class="coin-pack-price">${pack.display}</div>
+      <button type="button" class="coin-pack-buy-btn" data-pack-id="${pack.id}">Comprar</button>
+    `;
+
+    const btn = card.querySelector(".coin-pack-buy-btn");
+    btn?.addEventListener("click", (e) => {
+      e.stopPropagation();
+      startCoinPurchase(pack.id, btn);
+    });
+
+    grid.appendChild(card);
+  }
+}
+
+async function startCoinPurchase(packId, btnEl) {
+  const accountId = getAccountId();
+  const token = sessionToken;
+  if (!accountId || !token) {
+    alert("Faça login para comprar moedas.");
+    return;
+  }
+
+  if (btnEl) { btnEl.disabled = true; btnEl.textContent = "Aguarde..."; }
+
+  try {
+    const res = await fetch("/api/stripe/checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ packId, accountId, token }),
+    });
+    const data = await res.json();
+    if (data.ok && data.url) {
+      window.location.href = data.url;
+    } else {
+      alert(data.error || "Erro ao iniciar pagamento. Tente novamente.");
+      if (btnEl) { btnEl.disabled = false; btnEl.textContent = "Comprar"; }
+    }
+  } catch {
+    alert("Servidor offline. Tente novamente.");
+    if (btnEl) { btnEl.disabled = false; btnEl.textContent = "Comprar"; }
+  }
+}
+
+function showCoinPackSuccess(coins, pack) {
+  const modal = document.getElementById("coinPackModal");
+  const success = document.getElementById("coinPackSuccess");
+  const msg = document.getElementById("coinPackSuccessMsg");
+  if (!modal || !success) return;
+  modal.classList.remove("hidden");
+  success.classList.remove("hidden");
+  if (msg && coins) {
+    msg.textContent = `+${Number(coins).toLocaleString("pt-BR")} moedas creditadas! Aproveite a loja.`;
+  }
 }
