@@ -136,7 +136,6 @@ export function refreshAccountHub() {
 
 export function initAccountHub() {
   $("openAccountBtn")?.addEventListener("click", openModal);
-  $("openAccountSideBtn")?.addEventListener("click", openModal);
   $("closeAccountBtn")?.addEventListener("click", closeModal);
   $("accountModalBackdrop")?.addEventListener("click", closeModal);
 
