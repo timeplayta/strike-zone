@@ -5,5 +5,10 @@ Thumbs.db
 .env
 .env.*
 
+# Scripts e arquivos de setup com segredos — não commitar
+stripe-setup.js
+stripe_acessos_instruc.md
+temp_download.json
+
 # Contas locais — o servidor cria accounts.json na nuvem
 data/accounts.json
