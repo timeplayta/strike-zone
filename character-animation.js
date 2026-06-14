@@ -77,21 +77,22 @@ function applyGltfArmPose(entity, pose, dt, sway = 0, speed = 22) {
 function applyJumpPose(entity, dt, jumpH, jumpVel, aiming) {
   const b = entity.bones;
   if (!b || jumpH < 0.02) return;
-  const sp = Math.min(1, dt * 12);
+  const sp = Math.min(1, dt * 14);
   const rise = jumpVel > 0.5;
-  const tuck = rise ? 0.16 : 0.08;
-  const legBend = rise ? -0.24 : -0.14;
+  const tuck = rise ? 0.08 : 0.05;
+  const legBend = rise ? -0.1 : -0.06;
 
   if (b.upLegL) b.upLegL.rotation.x = lerp(b.upLegL.rotation.x, tuck, sp);
   if (b.upLegR) b.upLegR.rotation.x = lerp(b.upLegR.rotation.x, tuck, sp);
   if (b.legL) b.legL.rotation.x = lerp(b.legL.rotation.x, legBend, sp);
   if (b.legR) b.legR.rotation.x = lerp(b.legR.rotation.x, legBend, sp);
-  if (b.hips) b.hips.rotation.x = lerp(b.hips.rotation.x, rise ? -0.035 : 0.02, sp);
+  if (b.hips) b.hips.rotation.x = lerp(b.hips.rotation.x, 0, sp);
   if (b.spine) b.spine.rotation.x = lerp(b.spine.rotation.x, 0, sp);
+  if (b.neck) b.neck.rotation.x = lerp(b.neck.rotation.x, 0, sp);
 
   if (!aiming && b.armR) {
-    b.armR.rotation.x = lerp(b.armR.rotation.x, rise ? -0.08 : 0.04, sp);
-    if (b.foreR) b.foreR.rotation.x = lerp(b.foreR.rotation.x, rise ? -0.05 : 0.03, sp);
+    b.armR.rotation.x = lerp(b.armR.rotation.x, rise ? -0.035 : 0.02, sp);
+    if (b.foreR) b.foreR.rotation.x = lerp(b.foreR.rotation.x, rise ? -0.025 : 0.015, sp);
   }
 }
 
@@ -311,11 +312,12 @@ export function updateHumanAnimation(entity, dt, opts = {}) {
   }
 
   if (jumping || jumpHeight > 0.05) {
-    st.hipL = smooth(st.hipL, 0.12, dt, 10);
-    st.hipR = smooth(st.hipR, 0.12, dt, 10);
-    st.kneeL = smooth(st.kneeL, 0.24, dt, 10);
-    st.kneeR = smooth(st.kneeR, 0.24, dt, 10);
-    st.bob = smooth(st.bob, jumpHeight * 0.04, dt, 10);
+    st.hipL = smooth(st.hipL, 0.06, dt, 12);
+    st.hipR = smooth(st.hipR, 0.06, dt, 12);
+    st.kneeL = smooth(st.kneeL, 0.1, dt, 12);
+    st.kneeR = smooth(st.kneeR, 0.1, dt, 12);
+    st.bob = smooth(st.bob, jumpHeight * 0.025, dt, 12);
+    st.leanZ = smooth(st.leanZ, 0, dt, 14);
   } else if (crouching) {
     st.kneeL = smooth(st.kneeL, 0.65, dt, 10);
     st.kneeR = smooth(st.kneeR, 0.65, dt, 10);
@@ -330,7 +332,10 @@ export function updateHumanAnimation(entity, dt, opts = {}) {
   entity._aimBlend = smooth(entity._aimBlend ?? 0, aiming || shooting ? 1 : 0, dt, shooting ? 20 : 12);
   applyRifleHold(rig, isMoving ? Math.sin(t * 10) * 0.02 : 0, entity._aimBlend);
   rig.bodyBob.position.y = st.bob;
-  if (rig.torsoPivot) rig.torsoPivot.rotation.z = st.leanZ;
+  if (rig.torsoPivot) {
+    rig.torsoPivot.rotation.x = jumping || jumpHeight > 0.05 ? smooth(rig.torsoPivot.rotation.x, 0, dt, 14) : rig.torsoPivot.rotation.x;
+    rig.torsoPivot.rotation.z = st.leanZ;
+  }
   updateWeaponVisual(entity, dt, shooting, entity._aimBlend);
 }
 

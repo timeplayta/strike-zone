@@ -4,7 +4,7 @@ import * as THREE from "three";
 import { buildNpcWeapon } from "./npc-weapon.js";
 import { buildAmongUsCharacter } from "./among-us-model.js";
 import { buildStylizedHuman } from "./stylized-character.js";
-import { DEFAULT_LOADOUT, applyOutfitToLoadout, loadoutToBuildOpts } from "./character-loadout.js";
+import { DEFAULT_LOADOUT, applyOutfitToLoadout, applyPresetToLoadout, loadoutToBuildOpts } from "./character-loadout.js";
 import { applyWeaponSkin } from "./weapon-skin-apply.js";
 
 const cache = new Map();
@@ -56,7 +56,7 @@ function addLights() {
 
 export function getShopItemThumbDataUrl(item) {
   if (!item?.id) return null;
-  const key = `${item.id}_v5`;
+  const key = `${item.id}_v6`;
   if (cache.has(key)) return cache.get(key);
 
   ensurePreview();
@@ -66,11 +66,20 @@ export function getShopItemThumbDataUrl(item) {
   if (item.type === "weapon") {
     const gun = buildNpcWeapon(item.weapon, item.color);
     applyWeaponSkin(gun, item.weapon, item.color, item.id);
-    gun.rotation.set(-0.2, Math.PI / 6, 0);
-    gun.scale.setScalar(2.2);
+    gun.rotation.set(-0.08, Math.PI / 2, 0);
+    gun.scale.setScalar(2.45);
     pivot.add(gun);
-    camera.position.set(0.08, 0.04, 0.95);
+    camera.position.set(0.02, 0.04, 1.05);
     camera.lookAt(0, 0, 0);
+  } else if (item.type === "loadout") {
+    const loadout = applyPresetToLoadout(DEFAULT_LOADOUT, item.slot, item.presetId);
+    const opts = loadoutToBuildOpts(loadout);
+    opts.withRifle = false;
+    opts.scale = 0.72;
+    const body = buildStylizedHuman(opts);
+    pivot.add(body.group);
+    camera.position.set(0, 1.05, 2.15);
+    camera.lookAt(0, 0.9, 0);
   } else if (item.type === "outfit") {
     const loadout = applyOutfitToLoadout(DEFAULT_LOADOUT, item.id);
     const opts = loadoutToBuildOpts(loadout);

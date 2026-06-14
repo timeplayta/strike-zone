@@ -87,7 +87,11 @@ function mat(color) {
 
 function barrel(x, z, color = 0x444455) {
   const g = new THREE.Group();
-  g.add(mesh(new THREE.CylinderGeometry(0.35, 0.38, 0.9, 6), metalMat(color), [0, 0.45, 0]));
+  const m = metalMat(color);
+  const dark = metalMat(0x222228);
+  g.add(mesh(new THREE.CylinderGeometry(0.42, 0.45, 1.05, 10), m, [0, 0.52, 0]));
+  g.add(mesh(new THREE.CylinderGeometry(0.46, 0.46, 0.06, 10), dark, [0, 0.2, 0]));
+  g.add(mesh(new THREE.CylinderGeometry(0.45, 0.45, 0.06, 10), dark, [0, 0.84, 0]));
   g.position.set(x, 0, z);
   return g;
 }
@@ -95,8 +99,12 @@ function barrel(x, z, color = 0x444455) {
 function crateStack(x, z) {
   const g = new THREE.Group();
   const m = woodMat(0x8b6914);
-  [[0.7, 0.5, 0.7, 0.25], [0.6, 0.45, 0.6, 0.73]].forEach(([w, h, d, y]) => {
-    g.add(mesh(new THREE.BoxGeometry(w, h, d), m, [0, y, 0]));
+  [[0.86, 0.6, 0.86, 0.3], [0.72, 0.5, 0.72, 0.85]].forEach(([w, h, d, y]) => {
+    const box = mesh(new THREE.BoxGeometry(w, h, d), m, [0, y, 0]);
+    g.add(box);
+    g.add(mesh(new THREE.BoxGeometry(w * 0.95, 0.045, 0.05), m, [0, y + h * 0.25, d * 0.52]));
+    g.add(mesh(new THREE.BoxGeometry(0.05, h * 0.86, 0.05), m, [-w * 0.36, y, d * 0.52]));
+    g.add(mesh(new THREE.BoxGeometry(0.05, h * 0.86, 0.05), m, [w * 0.36, y, d * 0.52]));
   });
   g.position.set(x, 0, z);
   return g;
@@ -106,8 +114,8 @@ function sandbags(x, z, rot = 0) {
   const g = new THREE.Group();
   const m = fabricMat(0x9a8b6a);
   for (let row = 0; row < 2; row++)
-    for (let col = 0; col < 3; col++)
-      g.add(mesh(new THREE.BoxGeometry(0.55, 0.28, 0.32), m, [(col - 1) * 0.52, 0.14 + row * 0.26, 0]));
+    for (let col = 0; col < 4; col++)
+      g.add(mesh(new THREE.BoxGeometry(0.6, 0.3, 0.34), m, [(col - 1.5) * 0.5, 0.15 + row * 0.28, row % 2 ? 0.08 : 0]));
   g.position.set(x, 0, z);
   g.rotation.y = rot;
   return g;
@@ -127,15 +135,21 @@ function tireStack(x, z) {
 
 function supplyBox(x, z, color = 0x556633) {
   const g = new THREE.Group();
-  g.add(mesh(new THREE.BoxGeometry(0.9, 0.55, 0.55), woodMat(color), [0, 0.28, 0]));
+  const m = woodMat(color);
+  const metal = metalMat(0x333840);
+  g.add(mesh(new THREE.BoxGeometry(1.12, 0.68, 0.68), m, [0, 0.34, 0]));
+  g.add(mesh(new THREE.BoxGeometry(1.18, 0.06, 0.08), metal, [0, 0.62, 0.36]));
+  g.add(mesh(new THREE.BoxGeometry(0.08, 0.72, 0.72), metal, [-0.34, 0.35, 0]));
+  g.add(mesh(new THREE.BoxGeometry(0.08, 0.72, 0.72), metal, [0.34, 0.35, 0]));
   g.position.set(x, 0, z);
   return g;
 }
 
 function trafficCone(x, z) {
   const g = new THREE.Group();
-  g.add(mesh(new THREE.CylinderGeometry(0.02, 0.22, 0.55, 6), mat(0xff6600), [0, 0.28, 0]));
-  g.add(mesh(new THREE.BoxGeometry(0.4, 0.04, 0.4), mat(0x333333), [0, 0.02, 0]));
+  g.add(mesh(new THREE.CylinderGeometry(0.025, 0.26, 0.68, 8), mat(0xff6600), [0, 0.34, 0]));
+  g.add(mesh(new THREE.CylinderGeometry(0.18, 0.2, 0.035, 8), mat(0xffffff), [0, 0.43, 0]));
+  g.add(mesh(new THREE.BoxGeometry(0.48, 0.05, 0.48), mat(0x333333), [0, 0.025, 0]));
   g.position.set(x, 0, z);
   return g;
 }
@@ -158,8 +172,9 @@ function hydrant(x, z) {
 
 function toolbox(x, z) {
   const g = new THREE.Group();
-  g.add(mesh(new THREE.BoxGeometry(0.55, 0.35, 0.3), mat(0xcc4400), [0, 0.18, 0]));
-  g.add(mesh(new THREE.BoxGeometry(0.5, 0.06, 0.05), mat(0x888888), [0, 0.36, 0]));
+  g.add(mesh(new THREE.BoxGeometry(0.68, 0.42, 0.36), mat(0xcc4400), [0, 0.21, 0]));
+  g.add(mesh(new THREE.BoxGeometry(0.6, 0.07, 0.06), mat(0xaaaaaa), [0, 0.43, 0]));
+  g.add(mesh(new THREE.BoxGeometry(0.64, 0.035, 0.38), mat(0x772200), [0, 0.42, 0]));
   g.position.set(x, 0, z);
   return g;
 }
@@ -234,15 +249,15 @@ function chainHang(x, z, rot = 0) {
 /** Caixa de colisão aproximada para IA e física */
 export function getPropCollider(prop) {
   const r = {
-    barrel: [0.45, 0.95],
-    crate: [0.85, 1.05],
-    sandbags: [1.0, 0.7],
+    barrel: [0.55, 1.1],
+    crate: [1.0, 1.15],
+    sandbags: [1.25, 0.78],
     tires: [0.55, 0.75],
-    supply: [0.55, 0.65],
-    cone: [0.35, 0.6],
+    supply: [0.68, 0.78],
+    cone: [0.42, 0.72],
     lamp: [0.2, 2.9],
     hydrant: [0.35, 0.65],
-    toolbox: [0.4, 0.45],
+    toolbox: [0.5, 0.5],
     pallet: [0.75, 0.35],
     dumpster: [0.9, 1.1],
     woodpile: [0.85, 0.55],

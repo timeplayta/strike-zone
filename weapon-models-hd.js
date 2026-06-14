@@ -136,11 +136,16 @@ function rifleCore(g, tint, opts = {}) {
   g.add(box(0.052, 0.045, handguardLen, body, 0, 0.015, -0.105));
   g.add(box(0.048, 0.024, stockLen, body, 0, 0.01, 0.21 + stockLen * 0.12));
   g.add(box(0.062, 0.05, 0.08, body, 0, -0.005, 0.16));
+  g.add(box(0.068, 0.01, receiverLen * 0.72, metal, 0, 0.046, 0.04));
+  g.add(box(0.008, 0.024, receiverLen * 0.46, dark, 0.036, 0.012, 0.035));
+  g.add(box(0.008, 0.024, receiverLen * 0.46, dark, -0.036, 0.012, 0.035));
   g.add(tube(0.013, barrelLen, 20, metal, 0, 0.024, -barrelLen / 2 - 0.16, Math.PI / 2));
   g.add(tube(0.019, 0.09, 16, metal, 0, 0.024, -0.16, Math.PI / 2));
   addRail(g, dark, -0.18, 0.14, 0.057);
   addRibbedGrip(g, grip, 0, -0.07, -0.02);
   g.add(box(0.05, 0.03, 0.06, dark, 0, -0.02, -0.09));
+  g.add(box(0.045, 0.008, 0.055, dark, 0, -0.03, 0.035));
+  g.add(box(0.01, 0.038, 0.012, metal, 0, -0.046, 0.038, 0.18));
   return { metal, dark, body, grip };
 }
 

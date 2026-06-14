@@ -34,7 +34,6 @@ async function renderWeaponTabs(acc) {
   if (!tabs) return;
   tabs.innerHTML = "";
   for (const w of WEAPON_IDS) {
-    if (w === "glock") continue;
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "arsenal-weapon-tab" + (w === activeWeapon ? " selected" : "");

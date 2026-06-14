@@ -1,6 +1,6 @@
-/** Catálogo da loja — skins de arma e personagem */
+/** Catálogo da loja — skins de arma, personagem e peças do boneco */
 
-import { OUTFIT_SETS } from "./character-loadout.js";
+import { OUTFIT_SETS, SLOT_META, SLOT_PRESETS, DEFAULT_LOADOUT_PRESET_IDS } from "./character-loadout.js";
 
 export const WEAPON_SKINS = [
   { id: "ak_blue", type: "weapon", weapon: "ak47", color: 0x2266cc, price: 45, label: "AK-47 Azul", tier: "comum" },
@@ -44,10 +44,34 @@ export const SHOP_OUTFITS = OUTFIT_SETS.map((o) => ({
   loadout: o.loadout,
 }));
 
+const LOADOUT_SLOT_PRICE = {
+  helmet: 35,
+  shirt: 40,
+  pants: 38,
+  gloves: 25,
+  shoes: 30,
+};
+
+export const LOADOUT_ITEMS = Object.entries(SLOT_PRESETS).flatMap(([slot, presets]) =>
+  presets.map((p) => ({
+    id: `loadout_${slot}_${p.id}`,
+    type: "loadout",
+    slot,
+    presetId: p.id,
+    color: p.color,
+    price: DEFAULT_LOADOUT_PRESET_IDS.includes(p.id) ? 0 : LOADOUT_SLOT_PRICE[slot],
+    label: `${SLOT_META[slot].label}: ${p.name}`,
+    tier: p.neon ? "épica" : "comum",
+    category: SLOT_META[slot].label,
+    theme: p.theme,
+  }))
+);
+
 export const ALL_SHOP_ITEMS = [
   ...WEAPON_SKINS,
   ...CHARACTER_SKINS.filter((i) => i.price > 0),
   ...SHOP_OUTFITS,
+  ...LOADOUT_ITEMS,
 ];
 
 export const WEAPON_IDS = ["ak47", "scar", "m4", "ump45", "awm", "doze", "glock"];
@@ -55,7 +79,8 @@ export const WEAPON_IDS = ["ak47", "scar", "m4", "ump45", "awm", "doze", "glock"
 export function getShopItem(id) {
   return WEAPON_SKINS.find((i) => i.id === id) ||
     CHARACTER_SKINS.find((i) => i.id === id) ||
-    SHOP_OUTFITS.find((i) => i.id === id);
+    SHOP_OUTFITS.find((i) => i.id === id) ||
+    LOADOUT_ITEMS.find((i) => i.id === id);
 }
 
 export function getWeaponLabel(id) {
@@ -75,6 +100,15 @@ export function getWeaponLabel(id) {
 export const SHOP_SERVER = Object.fromEntries(
   ALL_SHOP_ITEMS.map((i) => [
     i.id,
-    { price: i.price, weapon: i.weapon, color: i.color, skinId: i.skinId, loadout: i.loadout, type: i.type },
+    {
+      price: i.price,
+      weapon: i.weapon,
+      color: i.color,
+      skinId: i.skinId,
+      loadout: i.loadout,
+      slot: i.slot,
+      presetId: i.presetId,
+      type: i.type,
+    },
   ])
 );

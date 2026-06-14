@@ -69,31 +69,174 @@ const LOADOUT_PRESETS = {
   ff_helmet_blue: { color: 0x2a4a7a, style: "helmet", neon: false },
   ff_helmet_black: { color: 0x1a1a22, style: "helmet", neon: false },
   a8_helmet_neon: { color: 0x00eeff, style: "helmet", neon: true },
+  a8_helmet_fire: { color: 0xff6600, style: "helmet", neon: true },
   ff_cap_olive: { color: 0x3a4a28, style: "cap", neon: false },
+  ff_cap_red: { color: 0x992222, style: "cap", neon: false },
+  ff_mask_skull: { color: 0x222222, style: "mask", neon: false },
+  a8_helmet_pink: { color: 0xff44aa, style: "helmet", neon: true },
   ff_ct_blue: { color: 0x2266aa, style: "combat", neon: false },
   ff_urban_gray: { color: 0x4a4a52, style: "combat", neon: false },
   ff_desert: { color: 0xc9a227, style: "combat", neon: false },
   a8_neon_blue: { color: 0x0088ff, style: "racing", neon: true },
+  a8_neon_red: { color: 0xff2244, style: "racing", neon: true },
+  a8_neon_green: { color: 0x22ff88, style: "racing", neon: true },
+  ff_camo: { color: 0x3a4a2a, style: "combat", neon: false },
+  a8_chrome: { color: 0xccccdd, style: "racing", neon: true },
   ff_navy: { color: 0x1c2233, style: "cargo", neon: false },
   ff_black_ops: { color: 0x1a1a22, style: "cargo", neon: false },
   ff_khaki: { color: 0x3d2817, style: "cargo", neon: false },
   a8_neon_purple: { color: 0xaa44ff, style: "racing", neon: true },
+  a8_neon_yellow: { color: 0xffdd00, style: "racing", neon: true },
+  ff_urban: { color: 0x252530, style: "cargo", neon: false },
   ff_black: { color: 0x111111, style: "tactical", neon: false },
   ff_tan: { color: 0x6b5030, style: "tactical", neon: false },
   a8_neon_white: { color: 0xeeffff, style: "racing", neon: true },
+  a8_neon_red: { color: 0xff3355, style: "racing", neon: true },
+  ff_green: { color: 0x2a3a22, style: "tactical", neon: false },
+  a8_chrome_gloves: { color: 0xb0b8c8, style: "racing", neon: true },
   ff_combat: { color: 0x222228, style: "boot", neon: false },
   ff_boot_black: { color: 0x141418, style: "boot", neon: false },
   ff_boot_brown: { color: 0x3d2810, style: "boot", neon: false },
+  a8_sneaker_red: { color: 0xff2244, style: "sneaker", neon: true },
   a8_sneaker_cyan: { color: 0x00ccff, style: "sneaker", neon: true },
+  a8_sneaker_lime: { color: 0x88ff22, style: "sneaker", neon: true },
 };
+
+const SLOT_PRESETS = {
+  helmet: ["ff_helmet_blue", "ff_helmet_black", "a8_helmet_neon", "a8_helmet_fire", "ff_cap_olive", "ff_cap_red", "ff_mask_skull", "a8_helmet_pink"],
+  shirt: ["ff_ct_blue", "ff_desert", "a8_neon_blue", "a8_neon_red", "ff_urban_gray", "a8_neon_green", "ff_camo", "a8_chrome"],
+  pants: ["ff_black_ops", "ff_navy", "a8_neon_purple", "ff_khaki", "a8_neon_yellow", "ff_urban"],
+  gloves: ["ff_black", "ff_tan", "a8_neon_white", "a8_neon_red", "ff_green", "a8_chrome"],
+  shoes: ["ff_boot_black", "ff_boot_brown", "a8_sneaker_red", "a8_sneaker_cyan", "ff_combat", "a8_sneaker_lime"],
+};
+
+const LOADOUT_PRESETS_BY_SLOT = {
+  helmet: {
+    ff_helmet_blue: { color: 0x2a4a7a, style: "helmet", neon: false },
+    ff_helmet_black: { color: 0x1a1a22, style: "helmet", neon: false },
+    a8_helmet_neon: { color: 0x00eeff, style: "helmet", neon: true },
+    a8_helmet_fire: { color: 0xff6600, style: "helmet", neon: true },
+    ff_cap_olive: { color: 0x3a4a28, style: "cap", neon: false },
+    ff_cap_red: { color: 0x992222, style: "cap", neon: false },
+    ff_mask_skull: { color: 0x222222, style: "mask", neon: false },
+    a8_helmet_pink: { color: 0xff44aa, style: "helmet", neon: true },
+  },
+  shirt: {
+    ff_ct_blue: { color: 0x2266aa, style: "combat", neon: false },
+    ff_desert: { color: 0xc9a227, style: "combat", neon: false },
+    a8_neon_blue: { color: 0x0088ff, style: "racing", neon: true },
+    a8_neon_red: { color: 0xff2244, style: "racing", neon: true },
+    ff_urban_gray: { color: 0x4a4a52, style: "combat", neon: false },
+    a8_neon_green: { color: 0x22ff88, style: "racing", neon: true },
+    ff_camo: { color: 0x3a4a2a, style: "combat", neon: false },
+    a8_chrome: { color: 0xccccdd, style: "racing", neon: true },
+  },
+  pants: {
+    ff_black_ops: { color: 0x1a1a22, style: "cargo", neon: false },
+    ff_navy: { color: 0x1c2233, style: "cargo", neon: false },
+    a8_neon_purple: { color: 0xaa44ff, style: "racing", neon: true },
+    ff_khaki: { color: 0x3d2817, style: "cargo", neon: false },
+    a8_neon_yellow: { color: 0xffdd00, style: "racing", neon: true },
+    ff_urban: { color: 0x252530, style: "cargo", neon: false },
+  },
+  gloves: {
+    ff_black: { color: 0x111111, style: "tactical", neon: false },
+    ff_tan: { color: 0x6b5030, style: "tactical", neon: false },
+    a8_neon_white: { color: 0xeeffff, style: "racing", neon: true },
+    a8_neon_red: { color: 0xff3355, style: "racing", neon: true },
+    ff_green: { color: 0x2a3a22, style: "tactical", neon: false },
+    a8_chrome: { color: 0xb0b8c8, style: "racing", neon: true },
+  },
+  shoes: {
+    ff_boot_black: { color: 0x141418, style: "boot", neon: false },
+    ff_boot_brown: { color: 0x3d2810, style: "boot", neon: false },
+    a8_sneaker_red: { color: 0xff2244, style: "sneaker", neon: true },
+    a8_sneaker_cyan: { color: 0x00ccff, style: "sneaker", neon: true },
+    ff_combat: { color: 0x222228, style: "boot", neon: false },
+    a8_sneaker_lime: { color: 0x88ff22, style: "sneaker", neon: true },
+  },
+};
+
+function getLoadoutPreset(slot, presetId) {
+  return LOADOUT_PRESETS_BY_SLOT[slot]?.[presetId] || LOADOUT_PRESETS[presetId] || null;
+}
+
+const DEFAULT_LOADOUT_PRESETS = ["ff_helmet_blue", "ff_ct_blue", "ff_black_ops", "ff_black", "ff_boot_black"];
+const LOADOUT_SLOT_PRICE = { helmet: 35, shirt: 40, pants: 38, gloves: 25, shoes: 30 };
+
+for (const [slot, presetIds] of Object.entries(SLOT_PRESETS)) {
+  for (const presetId of presetIds) {
+    const preset = getLoadoutPreset(slot, presetId);
+    if (!preset) continue;
+    SHOP[`loadout_${slot}_${presetId}`] = {
+      type: "loadout",
+      slot,
+      presetId,
+      color: preset.color,
+      price: DEFAULT_LOADOUT_PRESETS.includes(presetId) ? 0 : LOADOUT_SLOT_PRICE[slot],
+    };
+  }
+}
 
 function materializeOutfitLoadout(outfit = {}) {
   const loadout = {};
   for (const [slot, presetId] of Object.entries(outfit)) {
-    const preset = LOADOUT_PRESETS[presetId];
+    const preset = getLoadoutPreset(slot, presetId);
     if (!preset) continue;
     loadout[slot] = { presetId, ...preset };
   }
+  return loadout;
+}
+
+function applyLoadoutItemOnPlayer(p, item) {
+  const preset = getLoadoutPreset(item.slot, item.presetId);
+  if (!preset) return false;
+  p.loadout = p.loadout || materializeOutfitLoadout({
+    helmet: "ff_helmet_blue",
+    shirt: "ff_ct_blue",
+    pants: "ff_black_ops",
+    gloves: "ff_black",
+    shoes: "ff_boot_black",
+  });
+  p.loadout[item.slot] = { presetId: item.presetId, ...preset };
+  p.loadout.outfitId = null;
+  p.outfitId = null;
+  p.characterSkin = p.characterSkin || "soldier";
+  return true;
+}
+
+function ownsLoadoutPreset(p, slot, presetId) {
+  if (DEFAULT_LOADOUT_PRESETS.includes(presetId)) return true;
+  const itemId = `loadout_${slot}_${presetId}`;
+  if ((p.purchases || []).includes(itemId)) return true;
+  return (p.purchases || []).some((id) => {
+    const item = SHOP[id];
+    return item?.type === "outfit" && item.loadout?.[slot] === presetId;
+  });
+}
+
+function ownsOutfit(p, outfitId) {
+  const outfit = SHOP[outfitId];
+  if (!outfit || outfit.type !== "outfit") return false;
+  if ((p.purchases || []).includes(outfitId)) return true;
+  return Object.entries(outfit.loadout || {}).every(([slot, presetId]) => ownsLoadoutPreset(p, slot, presetId));
+}
+
+function sanitizeLoadoutForPlayer(p, raw) {
+  const loadout = materializeOutfitLoadout({
+    helmet: "ff_helmet_blue",
+    shirt: "ff_ct_blue",
+    pants: "ff_black_ops",
+    gloves: "ff_black",
+    shoes: "ff_boot_black",
+  });
+  for (const slot of Object.keys(SLOT_PRESETS)) {
+    const presetId = raw?.[slot]?.presetId;
+    if (!presetId || !ownsLoadoutPreset(p, slot, presetId)) continue;
+    const preset = getLoadoutPreset(slot, presetId);
+    if (preset) loadout[slot] = { presetId, ...preset };
+  }
+  if (raw?.outfitId && ownsOutfit(p, raw.outfitId)) loadout.outfitId = raw.outfitId;
   return loadout;
 }
 
@@ -421,6 +564,8 @@ function purchase(accountId, token, itemId) {
     p.outfitId = itemId;
   } else if (item.type === "outfit") {
     equipOutfitOnPlayer(p, item, itemId);
+  } else if (item.type === "loadout") {
+    applyLoadoutItemOnPlayer(p, item);
   }
   savePlayer(p);
   return { ok: true, account: exportAccount(p) };
@@ -442,6 +587,8 @@ function equipSkin(accountId, token, itemId) {
     p.outfitId = itemId;
   } else if (item.type === "outfit") {
     equipOutfitOnPlayer(p, item, itemId);
+  } else if (item.type === "loadout") {
+    applyLoadoutItemOnPlayer(p, item);
   }
   savePlayer(p);
   return { ok: true, account: exportAccount(p) };
@@ -458,8 +605,8 @@ function saveProfile(accountId, token, data) {
     if (data.characterSkin === "soldier" || owned) p.characterSkin = data.characterSkin;
   }
   if (data.loadout && typeof data.loadout === "object") {
-    p.loadout = data.loadout;
-    p.outfitId = data.loadout.outfitId || null;
+    p.loadout = sanitizeLoadoutForPlayer(p, data.loadout);
+    p.outfitId = p.loadout.outfitId || null;
   }
   savePlayer(p);
   return { ok: true, account: exportAccount(p) };

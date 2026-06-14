@@ -14,6 +14,8 @@ function makeFpsWeapon(type, scale, tint) {
   g.scale.setScalar(scale);
 
   g.rotation.set(0, Math.PI, 0);
+  g.userData.basePos = { x: 0, y: 0, z: 0 };
+  g.userData.baseRot = { x: 0, y: Math.PI, z: 0 };
 
   g.position.set(0, 0, 0);
 
@@ -302,6 +304,7 @@ export function triggerMeleeSwing(view) {
 export function triggerReloadAnimation(view) {
   if (!view) return;
   view.reloadAnim = 1;
+  view.reloadWeapon = view.models?.[2]?.visible ? "glock" : view.currentPrimary || "ak47";
 }
 
 
@@ -317,6 +320,7 @@ export function updateWeaponView(view, dt, moving = false) {
   const b = view.adsBlend;
   view.reloadAnim = Math.max(0, (view.reloadAnim || 0) - dt * 2.8);
   const reload = view.reloadAnim || 0;
+  resetWeaponModelPose(view);
 
 
 
@@ -349,13 +353,7 @@ export function updateWeaponView(view, dt, moving = false) {
   view.root.position.z = hip.z + off.z * b;
 
   if (reload > 0) {
-    const pull = Math.sin(reload * Math.PI);
-    view.root.position.x += 0.1 * pull;
-    view.root.position.y -= 0.11 * pull;
-    view.root.position.z += 0.08 * pull;
-    view.root.rotation.x = -0.28 * pull;
-    view.root.rotation.y = 0.22 * pull;
-    view.root.rotation.z = -0.18 * pull;
+    applyReloadPose(view, reload);
     return;
   }
 
@@ -368,6 +366,8 @@ export function updateWeaponView(view, dt, moving = false) {
     view.root.position.z += view.recoil * 0.55 * (1 - b * 0.5);
 
     view.root.rotation.x = view.recoil * 2.2;
+    view.root.rotation.y = 0;
+    view.root.rotation.z = 0;
 
   } else if (moving && b < 0.3) {
 
@@ -376,6 +376,7 @@ export function updateWeaponView(view, dt, moving = false) {
     view.root.position.y = hip.y + off.y * b + Math.abs(Math.cos(t * 14)) * 0.009;
 
     view.root.rotation.x = Math.sin(t * 7) * 0.018;
+    view.root.rotation.y = 0;
 
     view.root.rotation.z = Math.sin(t * 5) * 0.008;
 
@@ -384,11 +385,58 @@ export function updateWeaponView(view, dt, moving = false) {
     view.root.position.z = hip.z + off.z * b + Math.sin(t * 2) * 0.004 * (1 - b);
 
     view.root.rotation.x = 0;
+    view.root.rotation.y = 0;
 
     view.root.rotation.z = 0;
 
   }
 
+}
+
+function getReloadModel(view, weaponId) {
+  if (weaponId === "glock") return view.models?.[2];
+  return view.primaryModels?.[weaponId] || null;
+}
+
+function resetWeaponModelPose(view) {
+  const groups = [...Object.values(view.primaryModels || {}), view.models?.[2]].filter(Boolean);
+  for (const g of groups) {
+    const p = g.userData.basePos || { x: 0, y: 0, z: 0 };
+    const r = g.userData.baseRot || { x: 0, y: Math.PI, z: 0 };
+    g.position.set(p.x, p.y, p.z);
+    g.rotation.set(r.x, r.y, r.z);
+  }
+}
+
+function applyReloadPose(view, reload) {
+  const weaponId = view.reloadWeapon || view.currentPrimary || "ak47";
+  const progress = 1 - reload;
+  const pull = Math.sin(progress * Math.PI);
+  const snap = Math.sin(progress * Math.PI * 2);
+  const model = getReloadModel(view, weaponId);
+
+  const profile = {
+    ak47: { x: 0.12, y: -0.12, z: 0.08, rx: -0.34, ry: 0.28, rz: -0.2, mag: 0.045 },
+    m4: { x: 0.1, y: -0.1, z: 0.06, rx: -0.28, ry: 0.2, rz: -0.16, mag: 0.035 },
+    scar: { x: 0.11, y: -0.11, z: 0.07, rx: -0.3, ry: 0.24, rz: -0.18, mag: 0.038 },
+    ump45: { x: 0.08, y: -0.09, z: 0.05, rx: -0.24, ry: 0.18, rz: -0.12, mag: 0.03 },
+    awm: { x: 0.06, y: -0.08, z: 0.1, rx: -0.18, ry: -0.22, rz: 0.08, bolt: 0.075 },
+    doze: { x: 0.05, y: -0.08, z: 0.1, rx: -0.2, ry: 0.08, rz: -0.08, pump: 0.12 },
+    glock: { x: 0.07, y: -0.08, z: 0.05, rx: -0.26, ry: 0.12, rz: -0.1, slide: 0.07 },
+  }[weaponId] || { x: 0.09, y: -0.1, z: 0.06, rx: -0.25, ry: 0.18, rz: -0.14, mag: 0.03 };
+
+  view.root.position.x += profile.x * pull;
+  view.root.position.y += profile.y * pull;
+  view.root.position.z += profile.z * pull;
+  view.root.rotation.x = profile.rx * pull;
+  view.root.rotation.y = profile.ry * pull;
+  view.root.rotation.z = profile.rz * pull;
+
+  if (!model) return;
+  if (profile.mag) model.position.y -= profile.mag * Math.max(0, snap);
+  if (profile.bolt) model.position.z += profile.bolt * Math.max(0, snap);
+  if (profile.pump) model.position.z += profile.pump * pull;
+  if (profile.slide) model.position.z += profile.slide * Math.max(0, snap);
 }
 
 

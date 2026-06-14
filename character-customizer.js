@@ -10,15 +10,25 @@ import {
   applyPresetToLoadout,
   applyOutfitToLoadout,
   DEFAULT_LOADOUT,
+  DEFAULT_LOADOUT_PRESET_IDS,
 } from "./character-loadout.js";
-import { getCharacterSkin, getLoggedInName, getPlayerLoadout, savePlayerLoadout } from "./player-account.js";
+import {
+  equipShopItem,
+  getCharacterSkin,
+  getLoggedInName,
+  getPlayerLoadout,
+  loadAccount,
+  savePlayerLoadout,
+} from "./player-account.js";
 import { refreshAccountHub } from "./account-hub.js";
 import { switchHubPanel, showPlayHub } from "./menu-hub.js";
+import { CHARACTER_SKINS } from "./shop-catalog.js";
 import {
   mountCharacterViewer,
   destroyViewer,
   resizeViewer,
   updateViewerLoadout,
+  updateViewerCharacterSkin,
   hexStr,
 } from "./character-viewer.js";
 import {
@@ -32,8 +42,39 @@ function $(id) {
 }
 
 let currentLoadout = normalizeLoadout(DEFAULT_LOADOUT);
+let currentAccount = null;
+let currentCharacterSkin = "soldier";
 let activeSlot = "helmet";
 let viewerMounted = false;
+
+function ownedIds() {
+  return new Set(currentAccount?.purchases || []);
+}
+
+function ownsPreset(slot, presetId) {
+  if (DEFAULT_LOADOUT_PRESET_IDS.includes(presetId)) return true;
+  const owned = ownedIds();
+  if (owned.has(`loadout_${slot}_${presetId}`)) return true;
+  return OUTFIT_SETS.some((outfit) => owned.has(outfit.id) && outfit.loadout?.[slot] === presetId);
+}
+
+function ownsOutfit(outfit) {
+  const owned = ownedIds();
+  return owned.has(outfit.id) ||
+    Object.entries(outfit.loadout || {}).every(([slot, presetId]) => ownsPreset(slot, presetId));
+}
+
+function refreshPreview() {
+  window.__playerLoadout = currentLoadout;
+  window.__characterSkin = currentCharacterSkin;
+  if (viewerMounted) {
+    updateViewerLoadout("customizerCanvas", currentLoadout);
+    updateViewerCharacterSkin("customizerCanvas", currentCharacterSkin);
+  }
+  import("./solo-view.js").then((m) => m.refreshSoloViewer?.());
+  refreshAccountHub();
+  import("./account-hub.js").then((m) => m.mountAccountFab?.());
+}
 
 function renderSlotTabs() {
   const tabs = $("customSlotTabs");
@@ -79,29 +120,62 @@ function renderPresets() {
   if (!grid) return;
   grid.innerHTML = "";
   if (activeSlot === "outfits") {
-    for (const outfit of OUTFIT_SETS) {
+    const ownedOutfits = OUTFIT_SETS.filter(ownsOutfit);
+    const ownedCharacters = CHARACTER_SKINS.filter((c) => c.price === 0 || ownedIds().has(c.id));
+    const bodyItems = [
+      ...ownedOutfits.map((outfit) => ({ kind: "outfit", outfit })),
+      ...ownedCharacters.map((skin) => ({ kind: "character", skin })),
+    ];
+
+    if (!bodyItems.length) {
+      grid.innerHTML = `<p class="custom-empty">Você ainda não tem conjuntos. Compra na loja primeiro.</p>`;
+      return;
+    }
+
+    for (const item of bodyItems) {
       const card = document.createElement("button");
       card.type = "button";
-      card.className = "custom-preset-card custom-outfit-card" + (currentLoadout.outfitId === outfit.id ? " selected" : "");
+      const isOutfit = item.kind === "outfit";
+      const outfit = item.outfit;
+      const skin = item.skin;
+      const selected = isOutfit
+        ? currentLoadout.outfitId === outfit.id && currentCharacterSkin === "soldier"
+        : currentCharacterSkin === skin.skinId;
+      card.className = "custom-preset-card custom-outfit-card" + (selected ? " selected" : "");
       card.innerHTML =
-        `<span class="custom-swatch" style="background:${hexStr(outfit.color)}"></span>` +
-        `<span class="custom-preset-name">${outfit.name}</span>` +
-        `<span class="custom-preset-theme">${outfit.tier || "conjunto"}</span>`;
-      card.addEventListener("click", () => {
-        currentLoadout = applyOutfitToLoadout(currentLoadout, outfit.id);
-        window.__playerLoadout = currentLoadout;
+        `<span class="custom-swatch" style="background:${hexStr(isOutfit ? outfit.color : skin.color)}"></span>` +
+        `<span class="custom-preset-name">${isOutfit ? outfit.name : skin.label}</span>` +
+        `<span class="custom-preset-theme">${isOutfit ? outfit.tier || "conjunto" : "corpo inteiro"}</span>`;
+      card.addEventListener("click", async () => {
+        if (isOutfit) {
+          currentCharacterSkin = "soldier";
+          if (ownedIds().has(outfit.id)) {
+            const res = await equipShopItem(outfit.id);
+            if (res.ok) currentAccount = res.account;
+            else return alert(res.msg);
+          }
+          currentLoadout = applyOutfitToLoadout(currentLoadout, outfit.id);
+        } else {
+          if (skin.price > 0) {
+            const res = await equipShopItem(skin.id);
+            if (res.ok) currentAccount = res.account;
+            else return alert(res.msg);
+          }
+          currentCharacterSkin = skin.skinId;
+        }
         renderPresets();
-        if (viewerMounted) updateViewerLoadout("customizerCanvas", currentLoadout);
-        import("./solo-view.js").then((m) => m.refreshSoloViewer?.());
-        refreshAccountHub();
-        import("./account-hub.js").then((m) => m.mountAccountFab?.());
+        refreshPreview();
       });
       grid.appendChild(card);
     }
     return;
   }
-  const presets = SLOT_PRESETS[activeSlot] || [];
+  const presets = (SLOT_PRESETS[activeSlot] || []).filter((p) => ownsPreset(activeSlot, p.id));
   const current = currentLoadout[activeSlot];
+  if (!presets.length) {
+    grid.innerHTML = `<p class="custom-empty">Nada comprado nesta categoria ainda. Vai na loja para liberar.</p>`;
+    return;
+  }
   for (const p of presets) {
     const card = document.createElement("button");
     card.type = "button";
@@ -112,12 +186,9 @@ function renderPresets() {
       `<span class="custom-preset-theme">${p.theme === "a8" ? "Asphalt 8" : "Free Fire"}</span>`;
     card.addEventListener("click", () => {
       currentLoadout = applyPresetToLoadout(currentLoadout, activeSlot, p.id);
-      window.__playerLoadout = currentLoadout;
+      currentCharacterSkin = "soldier";
       renderPresets();
-      if (viewerMounted) updateViewerLoadout("customizerCanvas", currentLoadout);
-      import("./solo-view.js").then((m) => m.refreshSoloViewer?.());
-      refreshAccountHub();
-      import("./account-hub.js").then((m) => m.mountAccountFab?.());
+      refreshPreview();
     });
     grid.appendChild(card);
   }
@@ -129,8 +200,11 @@ async function openModal() {
     alert("Faça login para customizar.");
     return;
   }
-  currentLoadout = normalizeLoadout(await getPlayerLoadout(name));
+  currentAccount = await loadAccount(name);
+  currentCharacterSkin = currentAccount?.characterSkin || getCharacterSkin();
+  currentLoadout = normalizeLoadout(await getPlayerLoadout(name) || currentAccount?.loadout);
   window.__playerLoadout = currentLoadout;
+  window.__characterSkin = currentCharacterSkin;
   activeSlot = "helmet";
   renderSlotTabs();
   selectSlot("helmet");
@@ -145,7 +219,7 @@ async function openModal() {
       mountCharacterViewer("customizerCanvas", {
         loadout: currentLoadout,
         autoSpin: true,
-        characterSkin: getCharacterSkin(),
+        characterSkin: currentCharacterSkin,
       });
       viewerMounted = true;
     } else {
@@ -171,6 +245,8 @@ async function saveLoadout() {
   try {
     const res = await savePlayerLoadout(name, currentLoadout);
     if (res.ok) {
+      currentAccount = res.account || currentAccount;
+      currentLoadout = normalizeLoadout(res.account?.loadout || currentLoadout);
       window.__playerLoadout = currentLoadout;
       const hint = $("customSaveHint");
       if (hint) {
@@ -203,8 +279,11 @@ export function initCharacterCustomizer() {
 
 export async function preloadPlayerLoadout(name) {
   if (!name) return;
-  currentLoadout = normalizeLoadout(await getPlayerLoadout(name));
+  currentAccount = await loadAccount(name);
+  currentCharacterSkin = currentAccount?.characterSkin || getCharacterSkin();
+  currentLoadout = normalizeLoadout(await getPlayerLoadout(name) || currentAccount?.loadout);
   window.__playerLoadout = currentLoadout;
+  window.__characterSkin = currentCharacterSkin;
 }
 
 if (document.readyState === "loading") {

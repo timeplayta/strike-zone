@@ -5,6 +5,7 @@ import {
   WEAPON_SKINS,
   CHARACTER_SKINS,
   SHOP_OUTFITS,
+  LOADOUT_ITEMS,
   getShopItem,
 } from "./shop-catalog.js";
 import { getShopItemThumbDataUrl } from "./shop-item-preview.js";
@@ -358,11 +359,14 @@ function renderShopGrid(grid, items, acc, onBuy) {
     const owned = (acc.purchases || []).includes(item.id);
     const isWeapon = item.type === "weapon";
     const isOutfit = item.type === "outfit";
+    const isLoadout = item.type === "loadout";
     const active = isWeapon
       ? acc.skins?.[item.weapon] === item.color
       : isOutfit
         ? (acc.outfitId === item.id || acc.loadout?.outfitId === item.id)
-        : acc.characterSkin === item.skinId;
+        : isLoadout
+          ? acc.loadout?.[item.slot]?.presetId === item.presetId
+          : acc.characterSkin === item.skinId;
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className =
@@ -376,7 +380,7 @@ function renderShopGrid(grid, items, acc, onBuy) {
       `<span class="shop-preview-wrap"><img class="shop-preview-img" alt="" /></span>` +
       `<span class="shop-item-row"><span class="shop-swatch" style="background:#${colorHex}"></span>` +
       `<span class="shop-item-name">${item.label}</span></span>` +
-      `<span class="shop-item-tier">${item.tier || ""}</span>` +
+      `<span class="shop-item-tier">${item.category || item.tier || ""}</span>` +
       `<span class="shop-item-price">${owned ? (active ? "Em uso" : "Equipar") : item.price + " 🪙"}</span>`;
     const thumb = btn.querySelector(".shop-preview-img");
     if (thumb) {
@@ -427,7 +431,16 @@ export async function refreshShopUI(username) {
   };
 
   renderShopGrid(weaponGrid, WEAPON_SKINS, acc, handleBuy);
-  renderShopGrid(charGrid, [...CHARACTER_SKINS.filter((c) => c.price > 0), ...SHOP_OUTFITS], acc, handleBuy);
+  renderShopGrid(
+    charGrid,
+    [
+      ...CHARACTER_SKINS.filter((c) => c.price > 0),
+      ...SHOP_OUTFITS,
+      ...LOADOUT_ITEMS.filter((i) => i.price > 0),
+    ],
+    acc,
+    handleBuy
+  );
 
   const legacyGrid = document.getElementById("shopGrid");
   if (legacyGrid && !weaponGrid) {

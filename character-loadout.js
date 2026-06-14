@@ -84,6 +84,8 @@ export const DEFAULT_LOADOUT = {
   shoes: { presetId: "ff_boot_black", color: 0x141418, style: "boot", neon: false },
 };
 
+export const DEFAULT_LOADOUT_PRESET_IDS = SLOT_ORDER.map((slot) => DEFAULT_LOADOUT[slot].presetId);
+
 export const OUTFIT_SETS = [
   {
     id: "outfit_ct_elite",
