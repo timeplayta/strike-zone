@@ -2432,6 +2432,29 @@ body.mode-mobile .flashlight-hud {
   margin-bottom: 0.75rem;
   text-align: left;
 }
+
+.login-status-msg {
+  margin: 0.65rem 0 0;
+  padding: 0.55rem 0.65rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 90, 90, 0.35);
+  background: rgba(80, 18, 24, 0.55);
+  color: #ff9a9a;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  text-align: left;
+}
+
+.login-status-msg.ok {
+  border-color: rgba(80, 220, 130, 0.35);
+  background: rgba(18, 70, 36, 0.55);
+  color: #8ff0a8;
+}
+
+.login-status-msg.hidden {
+  display: none;
+}
+
 .btn-link {
   margin-top: 0.75rem;
   background: none;

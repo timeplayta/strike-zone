@@ -20,7 +20,7 @@
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
   <link rel="apple-touch-icon" href="icon-192.png" />
 
-  <link rel="stylesheet" href="style.css?v=72" />
+  <link rel="stylesheet" href="style.css?v=73" />
 
   <script>
 
@@ -68,6 +68,7 @@
         <input type="email" id="loginEmail" maxlength="80" placeholder="voce@email.com" autocomplete="email" />
         <label for="loginPassword">Senha</label>
         <input type="password" id="loginPassword" maxlength="32" placeholder="Sua senha" autocomplete="current-password" />
+        <p id="loginStatusMsg" class="login-status-msg hidden" aria-live="polite"></p>
         <button type="button" id="welcomeLoginBtn" class="btn-primary">ENTRAR</button>
       </div>
 
@@ -722,14 +723,14 @@
 
   <canvas id="gameCanvas"></canvas>
 
-  <script src="menu-init.js?v=72"></script>
+  <script src="menu-init.js?v=73"></script>
   <script type="module" src="admin-panel.js"></script>
   <script type="module" src="dev-chat.js"></script>
   <script type="module" src="arsenal-view.js"></script>
   <script type="module" src="account-hub.js"></script>
   <script type="module" src="character-customizer.js"></script>
   <script type="module" src="solo-view.js"></script>
-  <script type="module" src="map-view.js?v=72"></script>
+  <script type="module" src="map-view.js?v=73"></script>
 
   <!-- Modal de compra de moedas -->
   <div id="coinPackModal" class="coin-pack-modal hidden" role="dialog" aria-modal="true" aria-labelledby="coinPackModalTitle">
@@ -759,9 +760,9 @@
   }
   </script>
 
-  <script type="module" src="game-loader.js?v=72"></script>
+  <script type="module" src="game-loader.js?v=73"></script>
   <script type="module">
-    import { bindShopUI } from "./player-account.js?v=72";
+    import { bindShopUI } from "./player-account.js?v=73";
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", bindShopUI);
     else bindShopUI();
   </script>

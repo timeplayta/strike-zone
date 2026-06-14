@@ -243,10 +243,27 @@ export async function loginAccount(email, password, playerId) {
   return {
     ok: false,
     msg: data.error || "Login falhou.",
+    reason: data.reason || "",
     needPasswordSetup: !!data.needPasswordSetup,
     needPlayerId: !!data.needPlayerId,
     playerIds: data.playerIds,
   };
+}
+
+export async function checkEmailExists(email) {
+  const mail = (email || "").trim();
+  if (!mail || !mail.includes("@")) {
+    return { ok: false, exists: false, msg: "Digite um email válido." };
+  }
+  try {
+    const res = await fetch(`/api/account/email-exists?email=${encodeURIComponent(mail)}`, {
+      cache: "no-store",
+    });
+    const data = await res.json();
+    return { ok: !!data.ok, exists: !!data.exists };
+  } catch {
+    return { ok: false, exists: false, msg: "Servidor offline." };
+  }
 }
 
 export async function migrateLegacyAccount(name, age, email, birthDate, password) {

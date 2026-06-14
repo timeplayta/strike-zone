@@ -285,22 +285,47 @@
     const registerBtn = $("welcomeRegisterBtn");
     const migrateBtn = $("welcomeMigrateBtn");
     const playerName = $("playerName");
+    const loginEmail = $("loginEmail");
+    const loginPassword = $("loginPassword");
+
+    function setLoginStatus(msg = "", type = "error") {
+      const el = $("loginStatusMsg");
+      if (!el) return;
+      el.textContent = msg;
+      el.className = `login-status-msg ${msg ? "" : "hidden"} ${type}`;
+    }
 
     $("welcomeTabLogin")?.addEventListener("click", () => setWelcomeTab("login"));
     $("welcomeTabRegister")?.addEventListener("click", () => setWelcomeTab("register"));
     $("welcomeMigrateBack")?.addEventListener("click", () => setWelcomeTab("login"));
+    loginEmail?.addEventListener("input", () => setLoginStatus(""));
+    loginPassword?.addEventListener("input", () => setLoginStatus(""));
+
+    loginEmail?.addEventListener("blur", async () => {
+      const email = loginEmail.value.trim();
+      if (!email) return setLoginStatus("");
+      if (!email.includes("@")) return setLoginStatus("Digite um email válido.", "error");
+      try {
+        const mod = await import("./player-account.js");
+        const res = await mod.checkEmailExists(email);
+        if (!res.ok) return;
+        const msg = res.exists ? "Email encontrado. Agora digite sua senha." : "Email não existe.";
+        setLoginStatus(msg, res.exists ? "ok" : "error");
+      } catch { /* login ainda pode tentar normalmente */ }
+    });
 
     loginBtn?.addEventListener("click", async () => {
-      const email = $("loginEmail")?.value?.trim();
-      const password = $("loginPassword")?.value || "";
+      const email = loginEmail?.value?.trim();
+      const password = loginPassword?.value || "";
+      setLoginStatus("");
       if (!email || !email.includes("@")) {
-        alert("Digite o email da sua conta.");
-        $("loginEmail")?.focus();
+        setLoginStatus("Digite o email da sua conta.", "error");
+        loginEmail?.focus();
         return;
       }
       if (!password) {
-        alert("Digite sua senha.");
-        $("loginPassword")?.focus();
+        setLoginStatus("Digite sua senha.", "error");
+        loginPassword?.focus();
         return;
       }
       loginBtn.disabled = true;
@@ -325,9 +350,9 @@
           showWelcomePanel("welcomeMigratePanel");
           return;
         }
-        alert(res.msg || "Login falhou.");
+        setLoginStatus(res.msg || "Email ou senha errado.", "error");
       } catch {
-        alert("Servidor offline. Abra JOGAR.bat e tente de novo.");
+        setLoginStatus("Servidor offline. Abra JOGAR.bat e tente de novo.", "error");
       } finally {
         loginBtn.disabled = false;
       }
@@ -338,7 +363,7 @@
       const password = $("loginPassword")?.value || "";
       const playerId = $("loginPlayerId")?.value?.trim() || "";
       if (!email || !password || !playerId) {
-        alert("Preencha email, senha e ID SZ-XXXXXX.");
+        setLoginStatus("Preencha email, senha e ID SZ-XXXXXX.", "error");
         return;
       }
       const btn = $("welcomeLoginWithIdBtn");
@@ -347,9 +372,9 @@
         const mod = await import("./player-account.js");
         const res = await mod.loginAccount(email, password, playerId);
         if (res.ok) await enterMenuWithAccount(res.account?.name || email, mod, res.account);
-        else alert(res.msg || "Login falhou.");
+        else setLoginStatus(res.msg || "Login falhou.", "error");
       } catch {
-        alert("Servidor offline.");
+        setLoginStatus("Servidor offline.", "error");
       } finally {
         btn.disabled = false;
       }

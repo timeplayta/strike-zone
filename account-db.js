@@ -12,8 +12,7 @@ const ADMIN_BOOTSTRAP_EMAIL = ADMIN_EMAIL;
 const DB_FILE = path.join(__dirname, "data", "accounts.json");
 const SESSION_DAYS = 30;
 const MIN_PASSWORD_LEN = 4;
-const LOGIN_FAIL_MSG =
-  "Email ou senha errados. Confira o email usado para criar a conta.";
+const LOGIN_FAIL_MSG = "Email ou senha errados. Confira os dados e tente de novo.";
 
 const SHOP = {
   ak_blue: { type: "weapon", weapon: "ak47", color: 0x2266cc, price: 80 },
@@ -621,11 +620,13 @@ function registerAccount(name, age, email, birthDate, password) {
 
 function loginAccount(email, password, accountIdOrPlayerId) {
   const pwCheck = validatePasswordInput(password);
-  if (!pwCheck.ok) return { ok: false, error: LOGIN_FAIL_MSG };
+  if (!pwCheck.ok) {
+    return { ok: false, error: "Senha deve ter pelo menos 4 caracteres", reason: "password_too_short" };
+  }
 
   let candidates = [];
   const mail = normalizeEmail(email);
-  if (!emailValid(mail)) return { ok: false, error: "Digite o email da conta" };
+  if (!emailValid(mail)) return { ok: false, error: "Digite um email válido", reason: "invalid_email" };
 
   const pid = normalizePlayerId(accountIdOrPlayerId);
   if (pid.startsWith("SZ-")) {
@@ -641,10 +642,10 @@ function loginAccount(email, password, accountIdOrPlayerId) {
     if (byEmail) candidates = [byEmail];
   }
 
-  if (!candidates.length) return { ok: false, error: LOGIN_FAIL_MSG };
+  if (!candidates.length) return { ok: false, error: "Email não existe.", reason: "email_not_found" };
 
   const matched = candidates.filter((p) => verifyPassword(p, password));
-  if (!matched.length) return { ok: false, error: LOGIN_FAIL_MSG };
+  if (!matched.length) return { ok: false, error: "Email ou senha errado.", reason: "wrong_password" };
 
   if (matched.length > 1) {
     return {
@@ -706,6 +707,11 @@ function validateSession(accountId, token) {
 
 function accountExists(name) {
   return findPlayersByName(name).length > 0;
+}
+
+function emailExists(email) {
+  const mail = normalizeEmail(email);
+  return emailValid(mail) && !!getPlayerByEmail(mail);
 }
 
 function authPlayer(accountId, token) {
@@ -896,6 +902,13 @@ async function handleAccountApi(req, res, pathname) {
     const name = url.searchParams.get("name");
     res.writeHead(200, { "Content-Type": "application/json" });
     return res.end(JSON.stringify({ exists: accountExists(name) }));
+  }
+
+  if (pathname === "/api/account/email-exists" && req.method === "GET") {
+    const url = new URL(req.url, "http://localhost");
+    const email = url.searchParams.get("email");
+    res.writeHead(200, { "Content-Type": "application/json", "Cache-Control": "no-cache" });
+    return res.end(JSON.stringify({ ok: true, exists: emailExists(email) }));
   }
 
   res.writeHead(404, { "Content-Type": "application/json" });
