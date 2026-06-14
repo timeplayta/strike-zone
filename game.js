@@ -571,7 +571,9 @@ function startGame(config = {}) {
       gameMode = "escape";
     } else {
       wantHelpers = document.getElementById("wantHelpers")?.checked === true;
-      botCount = Math.min(20, Math.max(1, parseInt(document.getElementById("botCount")?.value || "4", 10)));
+      const requestedBots = parseInt(document.getElementById("botCount")?.value || "10", 10);
+      const maxBots = mapData.maxBots || 20;
+      botCount = mapData.defaultBotCount || Math.min(maxBots, Math.max(1, requestedBots));
       gameMode = document.getElementById("gameMode").value;
     }
     useBotDifficulty = true;
@@ -621,6 +623,10 @@ function startGame(config = {}) {
     document.body.classList.add("game-active");
 
     initThree();
+    if (camera && mapData.openWorld) {
+      camera.far = 1800;
+      camera.updateProjectionMatrix();
+    }
     buildMap();
     bakeWallColliders();
     initPlayer();
@@ -728,6 +734,18 @@ function applyMapAtmosphere() {
     fillLight.intensity = 0.08;
     scene.background = new THREE.Color(0x030202);
     scene.fog = new THREE.Fog(0x040202, 2.5, 18);
+  } else if (mapData.openWorld) {
+    hemiLight.color.setHex(0xd7f2ff);
+    hemiLight.groundColor.setHex(0x5f8a45);
+    hemiLight.intensity = 0.62;
+    ambientLight.color.setHex(0xcfe8ff);
+    ambientLight.intensity = 0.48;
+    sunLight.color.setHex(0xffe3a0);
+    sunLight.intensity = 1.05;
+    fillLight.color.setHex(0x90c7ff);
+    fillLight.intensity = 0.58;
+    scene.background = new THREE.Color(mapData.sky);
+    scene.fog = new THREE.Fog(mapData.fog, 260, 1450);
   } else if (horror) {
     hemiLight.color.setHex(0x554466);
     hemiLight.groundColor.setHex(0x0c0a0a);
@@ -1016,6 +1034,52 @@ function buildLabyrinthHorrorAmbience(scene, mapData) {
   }
 }
 
+function buildOpenWorldScenery(scene, mapData) {
+  buildMapProps(scene, mapData.props || [], mapData.propTint || {});
+
+  const water = new THREE.Mesh(
+    new THREE.PlaneGeometry(2300, 2300, 1, 1),
+    new THREE.MeshLambertMaterial({ color: 0x2f75b6, transparent: true, opacity: 0.55 })
+  );
+  water.rotation.x = -Math.PI / 2;
+  water.position.y = -0.035;
+  scene.add(water);
+
+  const roadMat = new THREE.MeshLambertMaterial({ color: 0x5a554a });
+  const roads = [
+    { x: 0, z: -160, w: 1300, d: 12, rot: 0.12 },
+    { x: -210, z: 120, w: 12, d: 920, rot: -0.25 },
+    { x: 360, z: 120, w: 12, d: 760, rot: 0.42 },
+  ];
+  for (const r of roads) {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(r.w, r.d), roadMat);
+    m.rotation.x = -Math.PI / 2;
+    m.rotation.z = r.rot;
+    m.position.set(r.x, 0.018, r.z);
+    scene.add(m);
+  }
+
+  const cloudMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.72 });
+  for (let i = 0; i < 16; i++) {
+    const cloud = new THREE.Group();
+    for (let j = 0; j < 4; j++) {
+      const puff = new THREE.Mesh(new THREE.SphereGeometry(18 + j * 3, 10, 8), cloudMat);
+      puff.position.set(j * 18, Math.sin(j) * 5, 0);
+      puff.scale.y = 0.38;
+      cloud.add(puff);
+    }
+    cloud.position.set(-780 + (i % 8) * 220, 150 + (i % 3) * 28, -740 + Math.floor(i / 8) * 1280);
+    scene.add(cloud);
+  }
+
+  const sun = new THREE.Mesh(
+    new THREE.SphereGeometry(28, 16, 12),
+    new THREE.MeshBasicMaterial({ color: 0xffef9a })
+  );
+  sun.position.set(560, 420, -740);
+  scene.add(sun);
+}
+
 function buildMap() {
   walls = [];
   meleePickups = null;
@@ -1063,7 +1127,9 @@ function buildMap() {
     scene.add(ring);
   }
 
-  if (isLabyrinthMap(mapData)) {
+  if (mapData.openWorld) {
+    buildOpenWorldScenery(scene, mapData);
+  } else if (isLabyrinthMap(mapData)) {
     // Sem props no labirinto — corredores 100% livres
   } else {
     buildWorldDecor(scene, mapData, wallMeshesForCeil);
@@ -1400,7 +1466,8 @@ function spawnEnemies() {
   enemies = enemies.filter((e) => e.isBoss);
 
   useBotDifficulty = true;
-  botCount = Math.min(20, Math.max(1, parseInt(document.getElementById("botCount")?.value || String(botCount), 10)));
+  const maxBots = mapData.maxBots || 20;
+  botCount = mapData.defaultBotCount || Math.min(maxBots, Math.max(1, parseInt(document.getElementById("botCount")?.value || String(botCount), 10)));
   botDifficulty = getBotDifficulty(botCount);
 
   const diff = botDifficulty;

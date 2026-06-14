@@ -209,6 +209,62 @@ function woodpile(x, z) {
   return g;
 }
 
+function house(x, z, rot = 0, floors = 1) {
+  const g = new THREE.Group();
+  const wall = mat(0xb98f66);
+  const roof = mat(0x7a2e1f);
+  const dark = mat(0x1b1f28);
+  const wood = woodMat(0x5c3a1e);
+  const h = floors === 2 ? 4.4 : 2.6;
+  g.add(mesh(new THREE.BoxGeometry(5.8, h, 4.8), wall, [0, h / 2, 0]));
+  g.add(mesh(new THREE.ConeGeometry(4.3, 1.25, 4), roof, [0, h + 0.62, 0]));
+  g.children[g.children.length - 1].rotation.y = Math.PI / 4;
+  g.add(mesh(new THREE.BoxGeometry(0.95, 1.6, 0.08), wood, [0, 0.8, -2.43]));
+  for (const sx of [-1.9, 1.9]) {
+    g.add(mesh(new THREE.BoxGeometry(0.75, 0.65, 0.08), dark, [sx, 1.65, -2.44]));
+    if (floors === 2) g.add(mesh(new THREE.BoxGeometry(0.75, 0.65, 0.08), dark, [sx, 3.25, -2.44]));
+  }
+  g.position.set(x, 0, z);
+  g.rotation.y = rot;
+  return g;
+}
+
+function rock(x, z, scale = 1, color = 0x686860) {
+  const g = new THREE.Group();
+  const m = mat(color);
+  for (let i = 0; i < 3; i++) {
+    const r = mesh(new THREE.DodecahedronGeometry((0.8 + i * 0.22) * scale, 0), m, [(i - 1) * 0.6 * scale, 0.45 * scale, (i % 2) * 0.38 * scale]);
+    r.scale.y = 0.55 + i * 0.12;
+    r.rotation.set(0.3 * i, 0.8 * i, 0.1);
+    g.add(r);
+  }
+  g.position.set(x, 0, z);
+  return g;
+}
+
+function pineTree(x, z, scale = 1) {
+  const g = new THREE.Group();
+  g.add(mesh(new THREE.CylinderGeometry(0.16 * scale, 0.22 * scale, 1.6 * scale, 6), woodMat(0x5b3318), [0, 0.8 * scale, 0]));
+  const leaf = mat(0x24441f);
+  for (let i = 0; i < 3; i++) {
+    g.add(mesh(new THREE.ConeGeometry((1.05 - i * 0.18) * scale, 1.35 * scale, 8), leaf, [0, (1.55 + i * 0.7) * scale, 0]));
+  }
+  g.position.set(x, 0, z);
+  return g;
+}
+
+function borderMountain(x, z, scale = 1, rot = 0) {
+  const g = new THREE.Group();
+  const m = mat(0x5b5f58);
+  const snow = mat(0xd8dde6);
+  const base = mesh(new THREE.ConeGeometry(18 * scale, 36 * scale, 7), m, [0, 18 * scale, 0]);
+  base.rotation.y = rot;
+  g.add(base);
+  g.add(mesh(new THREE.ConeGeometry(6 * scale, 7 * scale, 7), snow, [0, 34 * scale, 0]));
+  g.position.set(x, 0, z);
+  return g;
+}
+
 function wallTorch(x, z) {
   const g = new THREE.Group();
   g.add(mesh(new THREE.BoxGeometry(0.12, 0.35, 0.18), mat(0x2a1810), [0, 1.5, 0.08]));
@@ -264,6 +320,11 @@ export function getPropCollider(prop) {
     torch: [0.15, 2.0],
     skull_pile: [0.35, 0.25],
     chain: [0.2, 2.5],
+    house: [3.8, 2.8],
+    house2: [4.2, 4.8],
+    rock: [1.6 * (prop.scale || 1), 1.2 * (prop.scale || 1)],
+    tree: [0.75 * (prop.scale || 1), 4.2 * (prop.scale || 1)],
+    mountain: [12 * (prop.scale || 1), 32 * (prop.scale || 1)],
   }[prop.type] || [0.5, 0.8];
   return { x: prop.x, z: prop.z, w: r[0], h: r[1] };
 }
@@ -290,6 +351,11 @@ const BUILDERS = {
   torch: (p) => wallTorch(p.x, p.z),
   skull_pile: (p) => skullPile(p.x, p.z, p.rot || 0),
   chain: (p) => chainHang(p.x, p.z, p.rot || 0),
+  house: (p) => house(p.x, p.z, p.rot || 0, 1),
+  house2: (p) => house(p.x, p.z, p.rot || 0, 2),
+  rock: (p) => rock(p.x, p.z, p.scale || 1),
+  tree: (p) => pineTree(p.x, p.z, p.scale || 1),
+  mountain: (p) => borderMountain(p.x, p.z, p.scale || 1, p.rot || 0),
 };
 
 export function buildMapProps(scene, propList, propTint = {}) {

@@ -149,7 +149,110 @@ const THEMES = {
     woodColor: 0x120808,
     propTint: { barrel: 0x110808, supply: 0x0a0606 },
   },
+  frontier: {
+    mode: "open_world",
+    name: "Ilha Frontier — 2000m",
+    scale: 1,
+    sky: 0x7ecbff,
+    fog: 0xb8d9ff,
+    floorColor: 0x6aa04d,
+    wallColor: 0x8a7a58,
+    accentColor: 0x7d6a44,
+    ceilColor: 0xdff3ff,
+    woodColor: 0x7a4f2a,
+    propTint: { barrel: 0x4f5b68, supply: 0x556b35 },
+    spawnCT: { x: -820, z: -760 },
+    spawnT: { x: 780, z: 720 },
+    bombSites: [],
+    floorW: 2000,
+    floorH: 2000,
+    bounds: { limX: 980, limZ: 980 },
+    skipBossRoom: true,
+    skipAmmoChests: false,
+    openWorld: true,
+    maxBots: 100,
+    defaultBotCount: 100,
+  },
 };
+
+function seededPoint(i, radius = 780) {
+  const a = i * 2.399963;
+  const r = 90 + ((i * 73) % radius);
+  return {
+    x: Math.round(Math.cos(a) * r),
+    z: Math.round(Math.sin(a) * r),
+  };
+}
+
+function buildFrontierProps() {
+  const props = [];
+  const towns = [
+    { x: -520, z: -360, n: 9 },
+    { x: 180, z: -520, n: 8 },
+    { x: 520, z: 280, n: 10 },
+    { x: -160, z: 420, n: 7 },
+  ];
+  for (const town of towns) {
+    for (let i = 0; i < town.n; i++) {
+      const col = i % 3;
+      const row = Math.floor(i / 3);
+      props.push({
+        type: i % 4 === 0 ? "house2" : "house",
+        x: town.x + (col - 1) * 42 + (i % 2) * 9,
+        z: town.z + (row - 1) * 38,
+        rot: (i % 5) * 0.22,
+      });
+    }
+  }
+  for (let i = 0; i < 70; i++) {
+    const p = seededPoint(i, 850);
+    props.push({ type: i % 3 === 0 ? "rock" : "tree", x: p.x, z: p.z, scale: 0.8 + (i % 5) * 0.16 });
+  }
+  for (let i = 0; i < 44; i++) {
+    const side = i % 4;
+    const t = -900 + (i % 11) * 180;
+    const edge = 940;
+    props.push({
+      type: "mountain",
+      x: side === 0 ? t : side === 1 ? edge : side === 2 ? t : -edge,
+      z: side === 0 ? -edge : side === 1 ? t : side === 2 ? edge : t,
+      scale: 1.45 + (i % 4) * 0.2,
+      rot: i * 0.4,
+    });
+  }
+  return props;
+}
+
+function buildFrontierMap(theme) {
+  const patrolPoints = [];
+  for (let i = 0; i < 120; i++) patrolPoints.push(seededPoint(i, 900));
+  patrolPoints.push(theme.spawnCT, theme.spawnT);
+  return {
+    ...theme,
+    key: "frontier",
+    ceilingH: 0,
+    walls: [],
+    covers: [
+      { x: -760, z: -710, w: 18, d: 8, h: 2.2 },
+      { x: 710, z: 690, w: 18, d: 8, h: 2.2 },
+      { x: -40, z: -30, w: 24, d: 10, h: 2.4 },
+    ],
+    tables: [],
+    props: buildFrontierProps(),
+    patrolPoints,
+    bossSpawn: { x: 0, z: 0 },
+    innerBomb: { x: 0, z: 0 },
+    innerRoom: {
+      minX: 5000,
+      maxX: 5010,
+      minZ: 5000,
+      maxZ: 5010,
+      wallH: 0,
+      doorGap: { side: "west", width: 0, centerZ: 0 },
+    },
+    door: { x: 5000, z: 5000, width: 0, height: 0, depth: 0 },
+  };
+}
 
 function scaleVal(v, s) {
   return Math.round(v * s * 100) / 100;
@@ -162,6 +265,8 @@ export function getMap(key) {
     const layout = buildLabyrinthLayout(33, 33, 3.6);
     return { ...theme, ...layout, key: "labyrinth", scale: 1 };
   }
+
+  if (key === "frontier") return buildFrontierMap(theme);
 
   const s = theme.scale;
   return {
@@ -213,6 +318,7 @@ export const MAPS = {
   warehouse: getMap("warehouse"),
   horror: getMap("horror"),
   labyrinth: getMap("labyrinth"),
+  frontier: getMap("frontier"),
 };
 
 export function isHorrorMap(mapData) {

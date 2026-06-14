@@ -115,6 +115,7 @@
     warehouse: "Cold Storage",
     horror: "Terror",
     labyrinth: "Fim das Trevas",
+    frontier: "Ilha Frontier",
   };
 
   function updateSelectedMapLabel() {

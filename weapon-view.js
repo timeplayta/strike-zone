@@ -23,6 +23,72 @@ function makeFpsWeapon(type, scale, tint) {
 
 }
 
+function matHand(color, roughness = 0.72) {
+  return new THREE.MeshStandardMaterial({ color, roughness, metalness: 0.02 });
+}
+
+function makeArmSegment(radius, length, material, x, y, z, rx = Math.PI / 2, rz = 0) {
+  const mesh = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius * 0.92, length, 14), material);
+  mesh.position.set(x, y, z);
+  mesh.rotation.set(rx, 0, rz);
+  return mesh;
+}
+
+function makeFpsHand(side, skinMat, gloveMat) {
+  const s = side === "left" ? -1 : 1;
+  const g = new THREE.Group();
+  const sleeveMat = new THREE.MeshStandardMaterial({ color: 0x1b2534, roughness: 0.88, metalness: 0.05 });
+
+  const upper = makeArmSegment(0.038, 0.34, sleeveMat, s * 0.21, -0.24, 0.06, Math.PI / 2, s * 0.1);
+  upper.scale.x = 0.86;
+  const forearm = makeArmSegment(0.034, 0.36, sleeveMat, s * 0.15, -0.18, -0.16, Math.PI / 2, s * 0.18);
+  forearm.scale.x = 0.82;
+
+  const wrist = new THREE.Mesh(new THREE.SphereGeometry(0.041, 14, 10), gloveMat);
+  wrist.position.set(s * 0.105, -0.13, -0.31);
+  wrist.scale.set(1.2, 0.7, 0.9);
+
+  const palm = new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.052, 0.085), gloveMat);
+  palm.position.set(s * 0.075, -0.11, -0.36);
+  palm.rotation.set(0.18, 0, s * 0.12);
+
+  const thumb = makeArmSegment(0.011, 0.07, skinMat, s * 0.12, -0.09, -0.36, 1.05, s * 0.9);
+  const triggerFinger = makeArmSegment(0.008, 0.075, skinMat, s * 0.045, -0.088, -0.405, 1.18, s * -0.4);
+
+  g.add(upper, forearm, wrist, palm, thumb, triggerFinger);
+  return g;
+}
+
+function createFpsHands() {
+  const group = new THREE.Group();
+  group.name = "fpsCharacterHands";
+  group.userData.skinColor = 0xc4956a;
+  group.userData.gloveColor = 0x111111;
+  const skinMat = matHand(group.userData.skinColor, 0.66);
+  const gloveMat = matHand(group.userData.gloveColor, 0.78);
+  group.userData.skinMat = skinMat;
+  group.userData.gloveMat = gloveMat;
+  group.add(makeFpsHand("left", skinMat, gloveMat), makeFpsHand("right", skinMat, gloveMat));
+  group.position.set(0, 0.02, 0.02);
+  return group;
+}
+
+function updateFpsHandsFromLoadout(view) {
+  const hands = view?.hands;
+  if (!hands) return;
+  const loadout = window.__playerLoadout || {};
+  const skin = loadout.skin || 0xc4956a;
+  const glove = loadout.gloves?.color || 0x111111;
+  if (skin !== hands.userData.skinColor) {
+    hands.userData.skinColor = skin;
+    hands.userData.skinMat.color.setHex(skin);
+  }
+  if (glove !== hands.userData.gloveColor) {
+    hands.userData.gloveColor = glove;
+    hands.userData.gloveMat.color.setHex(glove);
+  }
+}
+
 
 
 export function createWeaponView(camera) {
@@ -112,6 +178,9 @@ export function createWeaponView(camera) {
 
   );
 
+  const hands = createFpsHands();
+  root.add(hands);
+
 
 
   const muzzleFlash = new THREE.Mesh(
@@ -167,6 +236,7 @@ export function createWeaponView(camera) {
     muzzleFlash,
 
     flashLight,
+    hands,
 
     recoil: 0,
     reloadAnim: 0,
@@ -321,6 +391,7 @@ export function updateWeaponView(view, dt, moving = false) {
 
   const t = performance.now() * 0.001;
   animateSkinFx(view, t);
+  updateFpsHandsFromLoadout(view);
 
   const targetAds = view.adsWeapon ? 1 : 0;
 

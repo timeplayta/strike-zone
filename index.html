@@ -20,7 +20,7 @@
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
   <link rel="apple-touch-icon" href="icon-192.png" />
 
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css?v=72" />
 
   <script>
 
@@ -300,6 +300,7 @@
           <option value="warehouse">Cold Storage</option>
           <option value="horror">Por onde você não deveria passar</option>
           <option value="labyrinth">O Labirinto</option>
+          <option value="frontier">Ilha Frontier — 2000m</option>
         </select>
         <label>Modo de partida</label>
         <select id="adminGameMode">
@@ -374,6 +375,7 @@
           <option value="warehouse">Cold Storage</option>
           <option value="horror">Por onde você não deveria passar</option>
           <option value="labyrinth">O Labirinto</option>
+          <option value="frontier">Ilha Frontier — 2000m</option>
         </select>
         <div id="adminMapInfo" class="admin-map-info"></div>
         <button type="button" id="adminViewMapBtn" class="btn-primary">VER MAPA (ESPECTADOR)</button>
@@ -720,14 +722,14 @@
 
   <canvas id="gameCanvas"></canvas>
 
-  <script src="menu-init.js"></script>
+  <script src="menu-init.js?v=72"></script>
   <script type="module" src="admin-panel.js"></script>
   <script type="module" src="dev-chat.js"></script>
   <script type="module" src="arsenal-view.js"></script>
   <script type="module" src="account-hub.js"></script>
   <script type="module" src="character-customizer.js"></script>
   <script type="module" src="solo-view.js"></script>
-  <script type="module" src="map-view.js"></script>
+  <script type="module" src="map-view.js?v=72"></script>
 
   <!-- Modal de compra de moedas -->
   <div id="coinPackModal" class="coin-pack-modal hidden" role="dialog" aria-modal="true" aria-labelledby="coinPackModalTitle">
@@ -757,9 +759,9 @@
   }
   </script>
 
-  <script type="module" src="game-loader.js?v=16"></script>
+  <script type="module" src="game-loader.js?v=72"></script>
   <script type="module">
-    import { bindShopUI } from "./player-account.js";
+    import { bindShopUI } from "./player-account.js?v=72";
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", bindShopUI);
     else bindShopUI();
   </script>

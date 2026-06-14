@@ -297,7 +297,8 @@ export async function addKillReward(username, isSolo = false) {
 
 export async function buyShopItem(username, itemId) {
   const item = getShopItem(itemId);
-  if (!item || !getAccountId()) return { ok: false, msg: "Item inválido" };
+  if (!item) return { ok: false, msg: "Item inválido na loja — atualize a página." };
+  if (!getAccountId()) return { ok: false, msg: "Faça login para comprar." };
   if (!sessionToken) return { ok: false, msg: "Faça login para comprar" };
 
   try {
@@ -317,7 +318,8 @@ export async function buyShopItem(username, itemId) {
 
 export async function equipShopItem(itemId) {
   const item = getShopItem(itemId);
-  if (!item || !getAccountId()) return { ok: false, msg: "Item inválido" };
+  if (!item) return { ok: false, msg: "Item inválido na loja — atualize a página." };
+  if (!getAccountId()) return { ok: false, msg: "Faça login para equipar." };
 
   try {
     const { ok, data } = await apiPost("/api/account/equip", authBody({ itemId }));

@@ -1,12 +1,13 @@
 /** Tela cheia de mapas (estilo Free Fire / CS) — abre pelo botão acima de JOGAR */
 
-import { getMapCardArtUrl } from "./map-card-art.js";
+import { getMapCardArtUrl } from "./map-card-art.js?v=72";
 
 const MAPS = [
   { id: "dust", mode: "Jogo de tiro", name: "Dust Alley", desc: "Deserto aberto" },
   { id: "warehouse", mode: "Jogo de tiro", name: "Cold Storage", desc: "Armazém fechado" },
   { id: "horror", mode: "Terror", name: "Terror", desc: "Combate escuro", horror: true },
   { id: "labyrinth", mode: "Terror", name: "Fim das Trevas", desc: "Labirinto de escape", horror: true },
+  { id: "frontier", mode: "Mundo aberto", name: "Ilha Frontier", desc: "2km • casas, montanhas e 100 bots" },
 ];
 
 function $(id) {
@@ -19,23 +20,29 @@ function selectedMapId() {
 
 function buildMapCards() {
   const grid = $("ffMapCardGrid");
-  if (!grid || grid.dataset.built === "1") return;
-  grid.dataset.built = "1";
-  grid.innerHTML = MAPS.map((m) => {
-    const art = getMapCardArtUrl(m.id);
-    const sel = m.id === selectedMapId() ? " selected" : "";
-    const horror = m.horror ? " ff-map-card-horror" : "";
-    return (
-      `<button type="button" class="map-btn ff-map-card${horror}${sel}" data-map="${m.id}">` +
-      `<img class="ff-map-card-img" src="${art}" alt="${m.name}" loading="lazy" />` +
-      `<span class="ff-map-card-shade"></span>` +
-      `<span class="ff-map-card-body">` +
-      `<span class="ff-map-card-mode">${m.mode}</span>` +
-      `<span class="map-name">${m.name}</span>` +
-      `<span class="map-desc">${m.desc}</span>` +
-      `</span></button>`
-    );
-  }).join("");
+  if (!grid) return;
+  if (grid.dataset.built === "1" && grid.children.length) return;
+  try {
+    grid.innerHTML = MAPS.map((m) => {
+      const art = getMapCardArtUrl(m.id);
+      const sel = m.id === selectedMapId() ? " selected" : "";
+      const horror = m.horror ? " ff-map-card-horror" : "";
+      return (
+        `<button type="button" class="map-btn ff-map-card${horror}${sel}" data-map="${m.id}">` +
+        `<img class="ff-map-card-img" src="${art}" alt="${m.name}" loading="lazy" />` +
+        `<span class="ff-map-card-shade"></span>` +
+        `<span class="ff-map-card-body">` +
+        `<span class="ff-map-card-mode">${m.mode}</span>` +
+        `<span class="map-name">${m.name}</span>` +
+        `<span class="map-desc">${m.desc}</span>` +
+        `</span></button>`
+      );
+    }).join("");
+    grid.dataset.built = "1";
+  } catch (err) {
+    console.warn("[Strike Zone] Falha ao montar cards de mapa:", err);
+    grid.dataset.built = "0";
+  }
 }
 
 function syncCardSelection() {
@@ -78,13 +85,22 @@ function onMapCardClick(btn) {
 }
 
 export function initMapView() {
-  buildMapCards();
+  requestAnimationFrame(buildMapCards);
 
   $("ffMapPickerBtn")?.addEventListener("click", (e) => {
     e.preventDefault();
     e.stopPropagation();
     openMapFullscreen();
   });
+
+  const btn = $("ffMapPickerBtn");
+  if (btn) {
+    btn.onclick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      openMapFullscreen();
+    };
+  }
 
   $("closeMapFullscreenBtn")?.addEventListener("click", (e) => {
     e.preventDefault();

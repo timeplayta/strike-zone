@@ -3,9 +3,9 @@
 import * as THREE from "three";
 import { configureMonsterTexture, canvasTextureFrom, makeBumpFromCanvas, MONSTER_TEX_SIZE } from "./monster-texture-hd.js";
 
-const SKIN_BASE = "#7a6e66";
-const SKIN_DARK = "#4a4038";
-const SLEEVE_BASE = "#3d4540";
+const SKIN_BASE = "#5f574f";
+const SKIN_DARK = "#2d2925";
+const SLEEVE_BASE = "#1f2a25";
 
 let grimyThumbOverlay = null;
 
@@ -586,8 +586,8 @@ export function buildFatJanitorHand(side = 1, cutIndex = -1) {
 /** Par de mãos nas paredes — procedural grimy FPS */
 export function buildProceduralGiantWallHandsPair() {
   const root = new THREE.Group();
-  const left = buildRealisticGiantHand(-1, -1, { scale: 1.58, fatness: 1.12 });
-  const right = buildRealisticGiantHand(1, 1, { scale: 1.58, fatness: 1.12 });
+  const left = buildRealisticGiantHand(-1, -1, { scale: 1.72, fatness: 1.18 });
+  const right = buildRealisticGiantHand(1, 1, { scale: 1.72, fatness: 1.18 });
 
   left.group.position.set(-1.85, 2.85, 0);
   left.group.rotation.x = -0.38;
@@ -595,6 +595,12 @@ export function buildProceduralGiantWallHandsPair() {
   right.group.position.set(1.85, 2.85, 0);
   right.group.rotation.x = -0.38;
   right.group.rotation.z = -0.06;
+
+  const aura = new THREE.PointLight(0x44ff88, 0.55, 7);
+  aura.position.set(0, 3.1, 0.4);
+  const danger = new THREE.PointLight(0xff2200, 0.35, 5);
+  danger.position.set(0, 2.55, 0.2);
+  root.add(aura, danger);
 
   root.add(left.group, right.group);
   return { group: root, parts: { handL: left.group, handR: right.group }, source: "procedural" };
