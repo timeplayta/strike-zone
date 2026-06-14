@@ -164,42 +164,17 @@
     }
   }
 
-  function getBotDifficulty(count) {
-    const n = Math.min(20, Math.max(1, count));
-    const strength = (20 - n) / 19;
-    let tierLabel;
-    let tierClass;
-    if (n === 1) {
-      tierLabel = "Extremo — 1 super inimigo (500 HP, atira 3× mais rápido)";
-      tierClass = "diff-extreme";
-    } else if (n >= 20) {
-      tierLabel = "Fácil — 20 inimigos fracos (lentos, atiram 20% mais devagar, 100 HP)";
-      tierClass = "diff-easy";
-    } else if (n <= 6) {
-      tierLabel = `Difícil — ${n} inimigos mais fortes`;
-      tierClass = "diff-hard";
-    } else if (n >= 14) {
-      tierLabel = `Mais fácil — ${n} inimigos mais fracos`;
-      tierClass = "diff-easy";
-    } else {
-      tierLabel = `Equilibrado — ${n} inimigos`;
-      tierClass = "diff-normal";
-    }
-    return { tierLabel, tierClass };
-  }
-
   function updateBotDifficultyPreview() {
     const preview = $("difficultyPreview");
-    const checkbox = $("useBotDifficulty");
     const slider = $("botCount");
     if (!preview || !slider) return;
 
-    const n = parseInt(slider.value, 10) || 4;
-    const enabled = true;
-    const diff = getBotDifficulty(n);
-
-    preview.textContent = `Dificuldade: ${diff.tierLabel}`;
-    preview.className = `difficulty-preview ${diff.tierClass}`;
+    const n = parseInt(slider.value, 10) || 10;
+    import("./bot-difficulty.js").then(({ getBotDifficulty }) => {
+      const diff = getBotDifficulty(n);
+      preview.textContent = `Dificuldade: ${diff.tierLabel}`;
+      preview.className = `difficulty-preview ${diff.tierClass}`;
+    });
   }
 
   function applyDeviceFromURL() {

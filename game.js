@@ -1,4 +1,9 @@
 import * as THREE from "three";
+import {
+  getBotDifficulty as getBotDifficultyFromModule,
+  ENEMY_BASE_HP,
+  ENEMY_BASE_FIRE_MS,
+} from "./bot-difficulty.js";
 import { MAPS, isHorrorMap, isLabyrinthMap, isNoCombatMap, isDarkMap, getMapMeta } from "./maps.js";
 import {
   createBandit,
@@ -113,17 +118,17 @@ const MOVE_ACCEL = 24;
 const MOVE_FRICTION = 18;
 const MOUSE_SENS = 0.0018;
 const TOUCH_SENS = 0.0045;
-const ENEMY_HP = 100;
+const ENEMY_HP = ENEMY_BASE_HP;
 const BOSS_HP = 200;
 const INNER_BOMB_TIME = 90;
-const ENEMY_FIRE_MS = 540;
+const ENEMY_FIRE_MS = ENEMY_BASE_FIRE_MS;
 const BOSS_FIRE_MS = 353;
 const BASE_FOV = 75;
 const ADS_WEAPONS = ["ak47", "scar", "awm", "bazooka"];
 const ENEMY_SPAWN_DELAY_MS = 3000;
 const MIN_SPAWN_DIST_FROM_PLAYER = 18;
 
-let botCount = 4;
+let botCount = 10;
 let useBotDifficulty = true;
 let botDifficulty = null;
 let primaryWeaponId = "ak47";
@@ -202,52 +207,9 @@ const overlay = document.getElementById("overlay");
 const overlayMsg = document.getElementById("overlayMsg");
 const cinematicEl = document.getElementById("cinematic");
 
-/** Escala dificuldade: 1 bot = super forte; 20 bots = horda fraca */
+/** Dificuldade: 1 super / 2 muito fortes / 10 normais / 20 fracos */
 function getBotDifficulty(count) {
-  const n = Math.min(20, Math.max(1, count));
-  const strength = (20 - n) / 19;
-  const hp = Math.round(100 + 400 * strength);
-  const fireMs = Math.round((1 - strength) * ENEMY_FIRE_MS * 1.2 + strength * (ENEMY_FIRE_MS / 3));
-  const speedMin = 1.65 + 2.55 * strength;
-  const speedMax = 2.25 + 3.05 * strength;
-  const dmgMin = Math.round(5 + 10 * strength);
-  const dmgMax = Math.round(11 + 13 * strength);
-  const coverAcc = 0.2 + 0.24 * strength;
-  const chaseAcc = 0.22 + 0.26 * strength;
-
-  let tierLabel;
-  let tierClass;
-  if (n === 1) {
-    tierLabel = "Extremo — 1 super bandido (500 HP, teleporta a cada 100 de dano, IA agressiva)";
-    tierClass = "diff-extreme";
-  } else if (n >= 20) {
-    tierLabel = "Fácil — 20 inimigos fracos (lentos, atiram 20% mais devagar, 100 HP)";
-    tierClass = "diff-easy";
-  } else if (n <= 6) {
-    tierLabel = `Difícil — ${n} inimigos mais fortes`;
-    tierClass = "diff-hard";
-  } else if (n >= 14) {
-    tierLabel = `Mais fácil — ${n} inimigos mais fracos`;
-    tierClass = "diff-easy";
-  } else {
-    tierLabel = `Equilibrado — ${n} inimigos`;
-    tierClass = "diff-normal";
-  }
-
-  return {
-    n,
-    hp,
-    fireMs,
-    speedMin,
-    speedMax,
-    dmgMin,
-    dmgMax,
-    coverAcc,
-    chaseAcc,
-    tierLabel,
-    tierClass,
-    isSolo: n === 1,
-  };
+  return getBotDifficultyFromModule(count);
 }
 
 function getDefaultDifficulty() {

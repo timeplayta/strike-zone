@@ -204,8 +204,9 @@ export function getEnemyMoveTarget(e, px, pz, dt, others = []) {
 export function shouldEnemyShoot(e, now, baseFireMs) {
   if (e.reloading) return false;
   if (now < (e.burstPauseUntil || 0)) return false;
-  const roleDelay = e.role === "sniper" ? baseFireMs * 0.65 : baseFireMs * 0.48;
-  return now - (e.lastShot || 0) >= roleDelay;
+  const roleMul = e.role === "sniper" ? 1.1 : e.role === "rusher" ? 0.92 : 1;
+  const interval = baseFireMs * roleMul;
+  return now - (e.lastShot || 0) >= interval;
 }
 
 export function registerEnemyShot(e) {
