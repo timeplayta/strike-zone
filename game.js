@@ -45,7 +45,7 @@ import { createWall, getPropCollider, buildMapProps } from "./map-props.js";
 import { createMapMaterials, addWallBaseboard } from "./environment-textures.js";
 import { buildWorldDecor, buildDoorAndInnerRoom } from "./world-decor.js";
 import { getDoorHitMeshes, buildConnectedCeiling } from "./furniture.js";
-import { createWeaponView, setWeaponView, setWeaponADS, triggerMuzzleFlash, triggerMeleeSwing, updateWeaponView, hideAllWeapons, applyWeaponSkinToView } from "./weapon-view.js";
+import { createWeaponView, setWeaponView, setWeaponADS, triggerMuzzleFlash, triggerMeleeSwing, triggerReloadAnimation, updateWeaponView, hideAllWeapons, applyWeaponSkinToView } from "./weapon-view.js";
 import { spawnMeleePickups, updateMeleePickups, tryPickupMelee, collectMeleePickup } from "./melee-pickups.js";
 import { createExitZone, updateExitZone, checkExitReached } from "./exit-zone.js";
 import { playGunshot, playEmptyClip } from "./audio.js";
@@ -1906,6 +1906,7 @@ function reload() {
   if (w.mag >= baseMag) return;
   const toLoad = Math.min(baseMag - w.mag, w.reserve);
   if (toLoad <= 0) return;
+  if (weaponView) triggerReloadAnimation(weaponView);
   w.mag += toLoad;
   w.reserve -= toLoad;
   updateAmmoHUD();

@@ -77,21 +77,21 @@ function applyGltfArmPose(entity, pose, dt, sway = 0, speed = 22) {
 function applyJumpPose(entity, dt, jumpH, jumpVel, aiming) {
   const b = entity.bones;
   if (!b || jumpH < 0.02) return;
-  const sp = Math.min(1, dt * 18);
+  const sp = Math.min(1, dt * 12);
   const rise = jumpVel > 0.5;
-  const tuck = rise ? 0.55 : 0.25;
-  const legBend = rise ? -0.9 : -0.5;
+  const tuck = rise ? 0.16 : 0.08;
+  const legBend = rise ? -0.24 : -0.14;
 
   if (b.upLegL) b.upLegL.rotation.x = lerp(b.upLegL.rotation.x, tuck, sp);
   if (b.upLegR) b.upLegR.rotation.x = lerp(b.upLegR.rotation.x, tuck, sp);
   if (b.legL) b.legL.rotation.x = lerp(b.legL.rotation.x, legBend, sp);
   if (b.legR) b.legR.rotation.x = lerp(b.legR.rotation.x, legBend, sp);
-  if (b.hips) b.hips.rotation.x = lerp(b.hips.rotation.x, rise ? -0.15 : 0.1, sp);
-  if (b.spine) b.spine.rotation.x = lerp(b.spine.rotation.x, rise ? -0.12 : 0.08, sp);
+  if (b.hips) b.hips.rotation.x = lerp(b.hips.rotation.x, rise ? -0.035 : 0.02, sp);
+  if (b.spine) b.spine.rotation.x = lerp(b.spine.rotation.x, 0, sp);
 
   if (!aiming && b.armR) {
-    b.armR.rotation.x = lerp(b.armR.rotation.x, rise ? -0.4 : 0.2, sp);
-    b.foreR.rotation.x = lerp(b.foreR.rotation.x, rise ? -0.3 : 0.15, sp);
+    b.armR.rotation.x = lerp(b.armR.rotation.x, rise ? -0.08 : 0.04, sp);
+    if (b.foreR) b.foreR.rotation.x = lerp(b.foreR.rotation.x, rise ? -0.05 : 0.03, sp);
   }
 }
 
@@ -204,32 +204,27 @@ function updateGltfAnimation(entity, dt, opts) {
   const inAir = !horrorMode && (jumping || jumpHeight > 0.05);
   const actions = entity.animActions;
 
-  if (actions && !inAir) {
+  if (actions) {
     let target = "idle";
-    if (isMoving) target = isRunning && actions.run ? "run" : actions.walk ? "walk" : "run";
-    if (crouching && isMoving && actions.walk) target = "walk";
+    if (!inAir && isMoving) target = isRunning && actions.run ? "run" : actions.walk ? "walk" : "run";
+    if (!inAir && crouching && isMoving && actions.walk) target = "walk";
 
     if (entity._gltfAnim !== target) {
       const prev = entity._gltfAnim && actions[entity._gltfAnim];
-      if (prev) prev.fadeOut(0.15);
+      if (prev) prev.fadeOut(inAir ? 0.08 : 0.15);
       const next = actions[target];
       if (next) {
-        next.reset().setEffectiveWeight(1).fadeIn(0.15).play();
+        next.reset().setEffectiveWeight(1).fadeIn(inAir ? 0.08 : 0.15).play();
         entity._gltfAnim = target;
       }
     }
 
-    const baseScale = isRunning ? 1.05 + speed * 0.12 : isMoving ? 0.92 + speed * 0.16 : 1;
+    const baseScale = inAir ? 0.55 : isRunning ? 1.05 + speed * 0.12 : isMoving ? 0.92 + speed * 0.16 : 1;
     const aimSlow = (aiming || shooting) && isMoving ? 0.92 : 1;
     const timeScale = baseScale * aimSlow;
     if (actions.walk) actions.walk.setEffectiveTimeScale(timeScale);
     if (actions.run) actions.run.setEffectiveTimeScale(timeScale * 1.08);
-    if (actions.idle) actions.idle.setEffectiveTimeScale(1);
-  } else if (actions && inAir) {
-    if (entity._gltfAnim && actions[entity._gltfAnim]) {
-      actions[entity._gltfAnim].fadeOut(0.1);
-      entity._gltfAnim = null;
-    }
+    if (actions.idle) actions.idle.setEffectiveTimeScale(inAir ? 0.45 : 1);
   }
 
   if (horrorMode) {
@@ -316,9 +311,11 @@ export function updateHumanAnimation(entity, dt, opts = {}) {
   }
 
   if (jumping || jumpHeight > 0.05) {
-    st.kneeL = smooth(st.kneeL, 0.55, dt, 14);
-    st.kneeR = smooth(st.kneeR, 0.55, dt, 14);
-    st.bob = smooth(st.bob, jumpHeight * 0.08, dt, 14);
+    st.hipL = smooth(st.hipL, 0.12, dt, 10);
+    st.hipR = smooth(st.hipR, 0.12, dt, 10);
+    st.kneeL = smooth(st.kneeL, 0.24, dt, 10);
+    st.kneeR = smooth(st.kneeR, 0.24, dt, 10);
+    st.bob = smooth(st.bob, jumpHeight * 0.04, dt, 10);
   } else if (crouching) {
     st.kneeL = smooth(st.kneeL, 0.65, dt, 10);
     st.kneeR = smooth(st.kneeR, 0.65, dt, 10);

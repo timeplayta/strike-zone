@@ -3903,7 +3903,7 @@ body.round-weapon-pick-active #mobileControls {
 }
 
 .hub-panel-arsenal {
-  width: min(92vw, 520px);
+  width: min(92vw, 720px);
 }
 
 .arsenal-canvas {
@@ -3964,23 +3964,26 @@ body.round-weapon-pick-active #mobileControls {
 }
 
 .arsenal-skin-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  max-height: 12rem;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.45rem;
+  max-height: 18rem;
   overflow-y: auto;
 }
 
 .arsenal-skin-row {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.45rem 0.5rem;
+  justify-content: flex-start;
+  gap: 0.25rem;
+  min-height: 132px;
+  padding: 0.5rem 0.4rem;
   border: 1px solid #2a3848;
   border-radius: 8px;
   background: #121820;
   cursor: pointer;
-  text-align: left;
+  text-align: center;
   color: #e8ecf4;
 }
 
@@ -4002,9 +4005,9 @@ body.round-weapon-pick-active #mobileControls {
 }
 
 .arsenal-skin-name {
-  flex: 1;
-  font-size: 0.8rem;
+  font-size: 0.72rem;
   font-weight: 600;
+  line-height: 1.15;
 }
 
 .arsenal-skin-tier {
@@ -4013,8 +4016,19 @@ body.round-weapon-pick-active #mobileControls {
 }
 
 .arsenal-skin-status {
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   color: #88cc88;
+}
+
+.arsenal-empty {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 0.75rem;
+  border: 1px dashed #3a4860;
+  border-radius: 8px;
+  color: #9fb0c3;
+  font-size: 0.78rem;
+  text-align: center;
 }
 
 body.mode-mobile #menu.screen.active {

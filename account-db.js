@@ -39,7 +39,70 @@ const SHOP = {
   char_among_cyan: { type: "character", skinId: "among_cyan", color: 0x22dddd, price: 110 },
   char_neon_runner: { type: "character", skinId: "neon_runner", color: 0x00ffaa, price: 180 },
   char_shadow: { type: "character", skinId: "shadow", color: 0x1a1028, price: 140 },
+  outfit_ct_elite: {
+    type: "outfit",
+    color: 0x2266aa,
+    price: 85,
+    loadout: { helmet: "ff_helmet_blue", shirt: "ff_ct_blue", pants: "ff_navy", gloves: "ff_black", shoes: "ff_combat" },
+  },
+  outfit_black_ops: {
+    type: "outfit",
+    color: 0x1a1a22,
+    price: 120,
+    loadout: { helmet: "ff_helmet_black", shirt: "ff_urban_gray", pants: "ff_black_ops", gloves: "ff_black", shoes: "ff_boot_black" },
+  },
+  outfit_desert_raider: {
+    type: "outfit",
+    color: 0xc9a227,
+    price: 95,
+    loadout: { helmet: "ff_cap_olive", shirt: "ff_desert", pants: "ff_khaki", gloves: "ff_tan", shoes: "ff_boot_brown" },
+  },
+  outfit_neon_cyan: {
+    type: "outfit",
+    color: 0x00eeff,
+    price: 150,
+    loadout: { helmet: "a8_helmet_neon", shirt: "a8_neon_blue", pants: "a8_neon_purple", gloves: "a8_neon_white", shoes: "a8_sneaker_cyan" },
+  },
 };
+
+const LOADOUT_PRESETS = {
+  ff_helmet_blue: { color: 0x2a4a7a, style: "helmet", neon: false },
+  ff_helmet_black: { color: 0x1a1a22, style: "helmet", neon: false },
+  a8_helmet_neon: { color: 0x00eeff, style: "helmet", neon: true },
+  ff_cap_olive: { color: 0x3a4a28, style: "cap", neon: false },
+  ff_ct_blue: { color: 0x2266aa, style: "combat", neon: false },
+  ff_urban_gray: { color: 0x4a4a52, style: "combat", neon: false },
+  ff_desert: { color: 0xc9a227, style: "combat", neon: false },
+  a8_neon_blue: { color: 0x0088ff, style: "racing", neon: true },
+  ff_navy: { color: 0x1c2233, style: "cargo", neon: false },
+  ff_black_ops: { color: 0x1a1a22, style: "cargo", neon: false },
+  ff_khaki: { color: 0x3d2817, style: "cargo", neon: false },
+  a8_neon_purple: { color: 0xaa44ff, style: "racing", neon: true },
+  ff_black: { color: 0x111111, style: "tactical", neon: false },
+  ff_tan: { color: 0x6b5030, style: "tactical", neon: false },
+  a8_neon_white: { color: 0xeeffff, style: "racing", neon: true },
+  ff_combat: { color: 0x222228, style: "boot", neon: false },
+  ff_boot_black: { color: 0x141418, style: "boot", neon: false },
+  ff_boot_brown: { color: 0x3d2810, style: "boot", neon: false },
+  a8_sneaker_cyan: { color: 0x00ccff, style: "sneaker", neon: true },
+};
+
+function materializeOutfitLoadout(outfit = {}) {
+  const loadout = {};
+  for (const [slot, presetId] of Object.entries(outfit)) {
+    const preset = LOADOUT_PRESETS[presetId];
+    if (!preset) continue;
+    loadout[slot] = { presetId, ...preset };
+  }
+  return loadout;
+}
+
+function equipOutfitOnPlayer(p, item, itemId) {
+  p.loadout = materializeOutfitLoadout(item.loadout);
+  p.loadout.outfitId = itemId;
+  p.characterSkin = item.skinId || "soldier";
+  p.outfitId = itemId;
+}
 
 function generatePlayerId() {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -188,6 +251,7 @@ function defaultPlayer(name, age = null) {
     kills: 0,
     avatar: "soldier",
     characterSkin: "soldier",
+    outfitId: null,
     loadout: null,
     passwordSalt: null,
     passwordHash: null,
@@ -212,6 +276,7 @@ function exportAccount(p) {
     isAdmin: !!p.isAdmin,
     avatar: p.avatar || "soldier",
     characterSkin: p.characterSkin || "soldier",
+    outfitId: p.outfitId || null,
     loadout: p.loadout || null,
   };
 }
@@ -353,6 +418,9 @@ function purchase(accountId, token, itemId) {
     p.skins[item.weapon] = item.color;
   } else if (item.type === "character") {
     p.characterSkin = item.skinId;
+    p.outfitId = itemId;
+  } else if (item.type === "outfit") {
+    equipOutfitOnPlayer(p, item, itemId);
   }
   savePlayer(p);
   return { ok: true, account: exportAccount(p) };
@@ -363,7 +431,7 @@ function equipSkin(accountId, token, itemId) {
   if (!p) return { ok: false, error: "Não autorizado" };
   const item = SHOP[itemId];
   if (!item) return { ok: false, error: "Item inválido" };
-  if (!itemId.startsWith("char_") && !(p.purchases || []).includes(itemId)) {
+  if ((item.price || 0) > 0 && !(p.purchases || []).includes(itemId)) {
     return { ok: false, error: "Compre este item na loja primeiro" };
   }
   if (item.type === "weapon") {
@@ -371,6 +439,9 @@ function equipSkin(accountId, token, itemId) {
     p.skins[item.weapon] = item.color;
   } else if (item.type === "character") {
     p.characterSkin = item.skinId;
+    p.outfitId = itemId;
+  } else if (item.type === "outfit") {
+    equipOutfitOnPlayer(p, item, itemId);
   }
   savePlayer(p);
   return { ok: true, account: exportAccount(p) };
@@ -388,6 +459,7 @@ function saveProfile(accountId, token, data) {
   }
   if (data.loadout && typeof data.loadout === "object") {
     p.loadout = data.loadout;
+    p.outfitId = data.loadout.outfitId || null;
   }
   savePlayer(p);
   return { ok: true, account: exportAccount(p) };

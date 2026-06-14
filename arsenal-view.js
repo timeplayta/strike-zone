@@ -52,31 +52,31 @@ function renderSkinList(acc) {
   const list = $("arsenalSkinList");
   if (!list) return;
   list.innerHTML = "";
-  const items = WEAPON_SKINS.filter((i) => i.weapon === activeWeapon);
+  const ownedIds = new Set(acc.purchases || []);
+  const items = WEAPON_SKINS.filter((i) => i.weapon === activeWeapon && ownedIds.has(i.id));
   const activeColor = acc.skins?.[activeWeapon];
 
+  if (!items.length) {
+    list.innerHTML = `<p class="arsenal-empty">Você ainda não comprou skin para ${getWeaponLabel(activeWeapon)}. Compre na loja.</p>`;
+  }
+
   for (const item of items) {
-    const owned = (acc.purchases || []).includes(item.id);
     const active = activeColor === item.color;
     const row = document.createElement("button");
     row.type = "button";
-    row.className = "arsenal-skin-row" + (owned ? " owned" : "") + (active ? " active" : "");
+    row.className = "arsenal-skin-row owned" + (active ? " active" : "");
     row.innerHTML =
       `<img class="arsenal-skin-thumb" alt="" width="48" height="48" />` +
       `<span class="arsenal-swatch" style="background:${hex(item.color)}"></span>` +
       `<span class="arsenal-skin-name">${item.label}</span>` +
       `<span class="arsenal-skin-tier">${item.tier || ""}</span>` +
-      `<span class="arsenal-skin-status">${active ? "✓ Em uso" : owned ? "Equipar" : "Loja"}</span>`;
+      `<span class="arsenal-skin-status">${active ? "✓ Em uso" : "Equipar"}</span>`;
     const thumb = row.querySelector(".arsenal-skin-thumb");
     if (thumb) {
       const url = getShopItemThumbDataUrl(item);
       if (url) thumb.src = url;
     }
     row.addEventListener("click", async () => {
-      if (!owned) {
-        alert("Compre esta skin na loja primeiro.");
-        return;
-      }
       if (active) return;
       const res = await equipShopItem(item.id);
       if (res.ok) {

@@ -4,6 +4,7 @@ import {
   ALL_SHOP_ITEMS,
   WEAPON_SKINS,
   CHARACTER_SKINS,
+  SHOP_OUTFITS,
   getShopItem,
 } from "./shop-catalog.js";
 import { getShopItemThumbDataUrl } from "./shop-item-preview.js";
@@ -314,6 +315,7 @@ export async function buyShopItem(username, itemId) {
     if (ok && data.ok && data.account) {
       saveSession(cachedName, sessionToken, data.account);
       window.__characterSkin = data.account.characterSkin;
+      window.__playerLoadout = data.account.loadout || window.__playerLoadout;
       return { ok: true, msg: `${item.label} comprado!`, coins: data.account.coins };
     }
     if (data.error) return { ok: false, msg: data.error };
@@ -332,6 +334,7 @@ export async function equipShopItem(itemId) {
     if (ok && data.ok && data.account) {
       saveSession(cachedName, sessionToken, data.account);
       window.__characterSkin = data.account.characterSkin;
+      window.__playerLoadout = data.account.loadout || window.__playerLoadout;
       return { ok: true, account: data.account };
     }
     return { ok: false, msg: data.error || "Não foi possível equipar" };
@@ -354,9 +357,12 @@ function renderShopGrid(grid, items, acc, onBuy) {
   for (const item of items) {
     const owned = (acc.purchases || []).includes(item.id);
     const isWeapon = item.type === "weapon";
+    const isOutfit = item.type === "outfit";
     const active = isWeapon
       ? acc.skins?.[item.weapon] === item.color
-      : acc.characterSkin === item.skinId;
+      : isOutfit
+        ? (acc.outfitId === item.id || acc.loadout?.outfitId === item.id)
+        : acc.characterSkin === item.skinId;
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className =
@@ -414,13 +420,14 @@ export async function refreshShopUI(username) {
     if (res.ok) {
       await refreshShopUI(username);
       import("./solo-view.js").then((m) => m.refreshSoloCharacterSkin?.());
+      import("./character-customizer.js").then((m) => m.preloadPlayerLoadout?.(username));
       import("./arsenal-view.js").then((m) => m.refreshArsenal?.());
       import("./account-hub.js").then((m) => m.refreshAccountHub?.());
     } else alert(res.msg);
   };
 
   renderShopGrid(weaponGrid, WEAPON_SKINS, acc, handleBuy);
-  renderShopGrid(charGrid, CHARACTER_SKINS.filter((c) => c.price > 0), acc, handleBuy);
+  renderShopGrid(charGrid, [...CHARACTER_SKINS.filter((c) => c.price > 0), ...SHOP_OUTFITS], acc, handleBuy);
 
   const legacyGrid = document.getElementById("shopGrid");
   if (legacyGrid && !weaponGrid) {

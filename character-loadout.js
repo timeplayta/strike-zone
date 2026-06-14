@@ -10,6 +10,8 @@ export const SLOT_META = {
   shoes: { label: "Tênis / Botas", icon: "👟", step: 5 },
 };
 
+export const OUTFIT_META = { label: "Conjuntos", icon: "🎽", step: 0 };
+
 export const AVATAR_ICONS = [
   { id: "dog", label: "Cachorro", emoji: "🐕" },
   { id: "cat", label: "Gato", emoji: "🐈" },
@@ -82,6 +84,65 @@ export const DEFAULT_LOADOUT = {
   shoes: { presetId: "ff_boot_black", color: 0x141418, style: "boot", neon: false },
 };
 
+export const OUTFIT_SETS = [
+  {
+    id: "outfit_ct_elite",
+    name: "Conjunto CT Elite",
+    price: 85,
+    tier: "rara",
+    color: 0x2266aa,
+    loadout: {
+      helmet: "ff_helmet_blue",
+      shirt: "ff_ct_blue",
+      pants: "ff_navy",
+      gloves: "ff_black",
+      shoes: "ff_combat",
+    },
+  },
+  {
+    id: "outfit_black_ops",
+    name: "Conjunto Black Ops",
+    price: 120,
+    tier: "épica",
+    color: 0x1a1a22,
+    loadout: {
+      helmet: "ff_helmet_black",
+      shirt: "ff_urban_gray",
+      pants: "ff_black_ops",
+      gloves: "ff_black",
+      shoes: "ff_boot_black",
+    },
+  },
+  {
+    id: "outfit_desert_raider",
+    name: "Conjunto Deserto",
+    price: 95,
+    tier: "rara",
+    color: 0xc9a227,
+    loadout: {
+      helmet: "ff_cap_olive",
+      shirt: "ff_desert",
+      pants: "ff_khaki",
+      gloves: "ff_tan",
+      shoes: "ff_boot_brown",
+    },
+  },
+  {
+    id: "outfit_neon_cyan",
+    name: "Conjunto Neon Cyan",
+    price: 150,
+    tier: "lendária",
+    color: 0x00eeff,
+    loadout: {
+      helmet: "a8_helmet_neon",
+      shirt: "a8_neon_blue",
+      pants: "a8_neon_purple",
+      gloves: "a8_neon_white",
+      shoes: "a8_sneaker_cyan",
+    },
+  },
+];
+
 export function findPreset(slot, presetId) {
   return SLOT_PRESETS[slot]?.find((p) => p.id === presetId) || null;
 }
@@ -147,5 +208,16 @@ export function applyPresetToLoadout(loadout, slot, presetId) {
     style: preset.style,
     neon: !!preset.neon,
   };
+  return next;
+}
+
+export function applyOutfitToLoadout(loadout, outfitId) {
+  const outfit = OUTFIT_SETS.find((o) => o.id === outfitId);
+  if (!outfit) return normalizeLoadout(loadout);
+  let next = normalizeLoadout(loadout);
+  for (const [slot, presetId] of Object.entries(outfit.loadout || {})) {
+    next = applyPresetToLoadout(next, slot, presetId);
+  }
+  next.outfitId = outfit.id;
   return next;
 }

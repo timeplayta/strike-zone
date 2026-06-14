@@ -161,6 +161,7 @@ export function createWeaponView(camera) {
     flashLight,
 
     recoil: 0,
+    reloadAnim: 0,
 
     currentPrimary: "ak47",
 
@@ -298,6 +299,11 @@ export function triggerMeleeSwing(view) {
 
 }
 
+export function triggerReloadAnimation(view) {
+  if (!view) return;
+  view.reloadAnim = 1;
+}
+
 
 
 export function updateWeaponView(view, dt, moving = false) {
@@ -309,6 +315,8 @@ export function updateWeaponView(view, dt, moving = false) {
   view.adsBlend += (targetAds - view.adsBlend) * Math.min(1, dt * 14);
 
   const b = view.adsBlend;
+  view.reloadAnim = Math.max(0, (view.reloadAnim || 0) - dt * 2.8);
+  const reload = view.reloadAnim || 0;
 
 
 
@@ -339,6 +347,17 @@ export function updateWeaponView(view, dt, moving = false) {
   view.root.position.y = hip.y + off.y * b;
 
   view.root.position.z = hip.z + off.z * b;
+
+  if (reload > 0) {
+    const pull = Math.sin(reload * Math.PI);
+    view.root.position.x += 0.1 * pull;
+    view.root.position.y -= 0.11 * pull;
+    view.root.position.z += 0.08 * pull;
+    view.root.rotation.x = -0.28 * pull;
+    view.root.rotation.y = 0.22 * pull;
+    view.root.rotation.z = -0.18 * pull;
+    return;
+  }
 
 
 

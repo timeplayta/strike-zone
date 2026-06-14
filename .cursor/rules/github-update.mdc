@@ -1,10 +1,12 @@
 ---
-description: Sempre publicar implementações no GitHub
+description: Sempre publicar implementações no GitHub e Render
 alwaysApply: true
 ---
 
-# Publicação No GitHub
+# Publicação No GitHub E Render
 
 - Sempre que fizer uma nova implementação no projeto, crie um commit e envie para o GitHub ao finalizar.
+- O Render usa `autoDeploy: true`, então o `git push origin main` deve atualizar o site público.
+- O alvo para teste público é o Render (`https://strike-zone.onrender.com`), não o IP local do Wi-Fi.
 - Antes de commitar, rode uma checagem básica das mudanças e não inclua arquivos temporários, segredos ou lixo local.
 - Se o push falhar por autenticação, conflito remoto ou arquivo grande, avise o usuário de forma direta e diga exatamente o que falta resolver.

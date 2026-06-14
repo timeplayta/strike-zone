@@ -1,5 +1,7 @@
 /** Catálogo da loja — skins de arma e personagem */
 
+import { OUTFIT_SETS } from "./character-loadout.js";
+
 export const WEAPON_SKINS = [
   { id: "ak_blue", type: "weapon", weapon: "ak47", color: 0x2266cc, price: 45, label: "AK-47 Azul", tier: "comum" },
   { id: "ak_red", type: "weapon", weapon: "ak47", color: 0xcc3322, price: 45, label: "AK-47 Vermelha", tier: "comum" },
@@ -32,12 +34,28 @@ export const CHARACTER_SKINS = [
   { id: "char_soldier_pro", type: "character", skinId: "soldier", color: 0x8899aa, price: 0, label: "Soldado (padrão)", tier: "grátis" },
 ];
 
-export const ALL_SHOP_ITEMS = [...WEAPON_SKINS, ...CHARACTER_SKINS.filter((i) => i.price > 0)];
+export const SHOP_OUTFITS = OUTFIT_SETS.map((o) => ({
+  id: o.id,
+  type: "outfit",
+  color: o.color,
+  price: o.price,
+  label: o.name,
+  tier: o.tier,
+  loadout: o.loadout,
+}));
+
+export const ALL_SHOP_ITEMS = [
+  ...WEAPON_SKINS,
+  ...CHARACTER_SKINS.filter((i) => i.price > 0),
+  ...SHOP_OUTFITS,
+];
 
 export const WEAPON_IDS = ["ak47", "scar", "m4", "ump45", "awm", "doze", "glock"];
 
 export function getShopItem(id) {
-  return WEAPON_SKINS.find((i) => i.id === id) || CHARACTER_SKINS.find((i) => i.id === id);
+  return WEAPON_SKINS.find((i) => i.id === id) ||
+    CHARACTER_SKINS.find((i) => i.id === id) ||
+    SHOP_OUTFITS.find((i) => i.id === id);
 }
 
 export function getWeaponLabel(id) {
@@ -55,5 +73,8 @@ export function getWeaponLabel(id) {
 
 /** Node-friendly export for account-db */
 export const SHOP_SERVER = Object.fromEntries(
-  ALL_SHOP_ITEMS.map((i) => [i.id, { price: i.price, weapon: i.weapon, color: i.color, skinId: i.skinId, type: i.type }])
+  ALL_SHOP_ITEMS.map((i) => [
+    i.id,
+    { price: i.price, weapon: i.weapon, color: i.color, skinId: i.skinId, loadout: i.loadout, type: i.type },
+  ])
 );

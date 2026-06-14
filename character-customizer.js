@@ -3,9 +3,12 @@
 import {
   SLOT_ORDER,
   SLOT_META,
+  OUTFIT_META,
   SLOT_PRESETS,
+  OUTFIT_SETS,
   normalizeLoadout,
   applyPresetToLoadout,
+  applyOutfitToLoadout,
   DEFAULT_LOADOUT,
 } from "./character-loadout.js";
 import { getCharacterSkin, getLoggedInName, getPlayerLoadout, savePlayerLoadout } from "./player-account.js";
@@ -36,6 +39,17 @@ function renderSlotTabs() {
   const tabs = $("customSlotTabs");
   if (!tabs) return;
   tabs.innerHTML = "";
+  const outfitBtn = document.createElement("button");
+  outfitBtn.type = "button";
+  outfitBtn.className = "custom-slot-tab" + (activeSlot === "outfits" ? " selected" : "");
+  outfitBtn.dataset.slot = "outfits";
+  outfitBtn.innerHTML =
+    `<span class="custom-slot-step">${OUTFIT_META.step}</span>` +
+    `<span class="custom-slot-icon">${OUTFIT_META.icon}</span>` +
+    `<span class="custom-slot-label">${OUTFIT_META.label}</span>`;
+  outfitBtn.addEventListener("click", () => selectSlot("outfits"));
+  tabs.appendChild(outfitBtn);
+
   for (const slot of SLOT_ORDER) {
     const meta = SLOT_META[slot];
     const btn = document.createElement("button");
@@ -55,13 +69,37 @@ function selectSlot(slot) {
   activeSlot = slot;
   renderSlotTabs();
   renderPresets();
-  if ($("customActiveSlotLabel")) $("customActiveSlotLabel").textContent = SLOT_META[slot].label;
+  if ($("customActiveSlotLabel")) {
+    $("customActiveSlotLabel").textContent = slot === "outfits" ? OUTFIT_META.label : SLOT_META[slot].label;
+  }
 }
 
 function renderPresets() {
   const grid = $("customPresetGrid");
   if (!grid) return;
   grid.innerHTML = "";
+  if (activeSlot === "outfits") {
+    for (const outfit of OUTFIT_SETS) {
+      const card = document.createElement("button");
+      card.type = "button";
+      card.className = "custom-preset-card custom-outfit-card" + (currentLoadout.outfitId === outfit.id ? " selected" : "");
+      card.innerHTML =
+        `<span class="custom-swatch" style="background:${hexStr(outfit.color)}"></span>` +
+        `<span class="custom-preset-name">${outfit.name}</span>` +
+        `<span class="custom-preset-theme">${outfit.tier || "conjunto"}</span>`;
+      card.addEventListener("click", () => {
+        currentLoadout = applyOutfitToLoadout(currentLoadout, outfit.id);
+        window.__playerLoadout = currentLoadout;
+        renderPresets();
+        if (viewerMounted) updateViewerLoadout("customizerCanvas", currentLoadout);
+        import("./solo-view.js").then((m) => m.refreshSoloViewer?.());
+        refreshAccountHub();
+        import("./account-hub.js").then((m) => m.mountAccountFab?.());
+      });
+      grid.appendChild(card);
+    }
+    return;
+  }
   const presets = SLOT_PRESETS[activeSlot] || [];
   const current = currentLoadout[activeSlot];
   for (const p of presets) {
