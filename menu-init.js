@@ -507,6 +507,7 @@
     applyMenuDeviceLayout();
     initWelcome();
     initShopModal();
+    import("./menu-hub.js").then((m) => m.showPlayHub?.()).catch(() => {});
     applyDeviceFromURL();
     applyMenuDeviceLayout();
 

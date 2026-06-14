@@ -2968,6 +2968,11 @@ body.mode-mobile .flashlight-hud {
   width: 100vw;
   max-width: none;
   padding: clamp(0.65rem, 2vw, 1.15rem);
+  background: transparent;
+  backdrop-filter: none;
+}
+
+.ff-hub-overlay.hub-open {
   background: rgba(4, 6, 12, 0.58);
   backdrop-filter: blur(7px);
 }
