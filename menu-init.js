@@ -123,23 +123,13 @@
     if (el) el.textContent = MAP_LABELS[map] || map;
   }
 
-  function toggleMapPicker(open) {
-    const panel = $("ffMapPickerPanel");
-    const btn = $("ffMapPickerBtn");
-    if (!panel) return;
-    const show = open ?? panel.classList.contains("hidden");
-    panel.classList.toggle("hidden", !show);
-    panel.setAttribute("aria-hidden", show ? "false" : "true");
-    if (btn) btn.setAttribute("aria-expanded", show ? "true" : "false");
-  }
-
   function selectMapBtn(btn) {
     if (!btn?.dataset?.map) return;
     document.querySelectorAll(".map-btn").forEach((b) => b.classList.remove("selected"));
     btn.classList.add("selected");
     updateMapModeUI();
     updateSelectedMapLabel();
-    toggleMapPicker(false);
+    if (typeof window.closeMapFullscreen === "function") window.closeMapFullscreen();
   }
 
   function updateMapModeUI() {
@@ -509,24 +499,8 @@
     applyDeviceFromURL();
     applyMenuDeviceLayout();
 
-    bindDelegatedClick(".ff-map-picker-panel", selectMapBtn);
-    bindDelegatedClick(".ff-map-cat-grid", selectMapBtn);
     updateSelectedMapLabel();
     updateMapModeUI();
-
-    $("ffMapPickerBtn")?.addEventListener("click", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      toggleMapPicker();
-    });
-
-    document.addEventListener("click", (e) => {
-      const mapPanel = $("ffMapPickerPanel");
-      const mapBtn = $("ffMapPickerBtn");
-      if (!mapPanel || mapPanel.classList.contains("hidden")) return;
-      if (mapPanel.contains(e.target) || mapBtn?.contains(e.target)) return;
-      toggleMapPicker(false);
-    });
 
     document.addEventListener("click", (e) => {
       const optPanel = $("ffGameOptionsPanel");
@@ -623,4 +597,7 @@
 
   window.resetStrikeZoneMenu = resetMenuShell;
   window.applyMenuDeviceLayout = applyMenuDeviceLayout;
+  window.strikeZoneSelectMap = selectMapBtn;
+  window.updateMapModeUI = updateMapModeUI;
+  window.updateSelectedMapLabel = updateSelectedMapLabel;
 })();

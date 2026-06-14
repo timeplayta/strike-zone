@@ -208,10 +208,6 @@
           <span class="ff-side-icon">🛒</span>
           <span class="ff-side-label">Loja</span>
         </button>
-        <button type="button" id="openMapHubBtn" class="ff-side-nav-btn" data-hub="map" title="Mapa">
-          <span class="ff-side-icon">⌖</span>
-          <span class="ff-side-label">Mapa</span>
-        </button>
       </nav>
 
       <div class="ff-hub-overlay" id="ffHubStage">
@@ -284,49 +280,6 @@
             </div>
             <div id="shopPanelChars" class="shop-panel-tab shop-catalog hidden">
               <div id="shopGridChars" class="shop-grid"></div>
-            </div>
-          </div>
-        </div>
-
-        <div id="ffHubPanelMap" class="ff-hub-panel hub-panel-map hidden" aria-hidden="true">
-          <div class="hub-header hub-header-inline">
-            <span class="hub-badge">⌖</span>
-            <span>Mapa</span>
-            <button type="button" id="closeMapHubBtn" class="shop-close hub-back-btn" aria-label="Voltar">✕</button>
-          </div>
-          <p class="hub-sub">Escolha o mapa na esquerda. O jogo vai usar o mapa selecionado quando iniciar.</p>
-          <div class="map-hub-layout">
-            <div class="map-hub-list">
-              <div class="ff-map-category">
-                <p class="ff-map-cat-title">Jogo de tiro</p>
-                <div class="ff-map-cat-grid">
-                  <button type="button" class="map-btn" data-map="dust">
-                    <span class="map-name">Dust Alley</span>
-                    <span class="map-desc">Deserto</span>
-                  </button>
-                  <button type="button" class="map-btn" data-map="warehouse">
-                    <span class="map-name">Cold Storage</span>
-                    <span class="map-desc">Armazém</span>
-                  </button>
-                </div>
-              </div>
-              <div class="ff-map-category ff-map-cat-terror">
-                <p class="ff-map-cat-title">Terror</p>
-                <div class="ff-map-cat-grid">
-                  <button type="button" class="map-btn map-btn-horror" data-map="horror">
-                    <span class="map-name">Terror</span>
-                    <span class="map-desc">Combate escuro</span>
-                  </button>
-                  <button type="button" class="map-btn map-btn-horror" data-map="labyrinth">
-                    <span class="map-name">Fim das Trevas</span>
-                    <span class="map-desc">Labirinto</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-            <div class="map-hub-preview">
-              <h3 id="mapHubTitle" class="map-hub-preview-title">Dust Alley</h3>
-              <p id="mapHubDesc" class="map-hub-preview-desc">Mapa aberto de tiro, bom para testar armas e movimentação.</p>
             </div>
           </div>
         </div>
@@ -435,36 +388,7 @@
 
     <footer class="ff-bottom-zone" aria-label="Mapas e jogar">
       <div class="ff-play-dock ff-play-dock-corner">
-        <div id="ffMapPickerPanel" class="ff-map-picker-panel hidden" aria-hidden="true">
-          <div class="ff-map-category">
-            <p class="ff-map-cat-title">Jogo de tiro</p>
-            <div class="ff-map-cat-grid">
-              <button type="button" class="map-btn selected" data-map="dust">
-                <span class="map-name">Dust Alley</span>
-                <span class="map-desc">Deserto</span>
-              </button>
-              <button type="button" class="map-btn" data-map="warehouse">
-                <span class="map-name">Cold Storage</span>
-                <span class="map-desc">Armazém</span>
-              </button>
-            </div>
-          </div>
-          <div class="ff-map-category ff-map-cat-terror">
-            <p class="ff-map-cat-title">Terror</p>
-            <div class="ff-map-cat-grid">
-              <button type="button" class="map-btn map-btn-horror" data-map="horror">
-                <span class="map-name">Terror</span>
-                <span class="map-desc">Combate escuro</span>
-              </button>
-              <button type="button" class="map-btn map-btn-horror" data-map="labyrinth">
-                <span class="map-name">Fim das Trevas</span>
-                <span class="map-desc">Labirinto</span>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <button type="button" id="ffMapPickerBtn" class="ff-map-picker-btn" aria-expanded="false" aria-controls="ffMapPickerPanel">
+        <button type="button" id="ffMapPickerBtn" class="ff-map-picker-btn" aria-expanded="false" aria-controls="ffMapFullscreen">
           <span class="ff-map-picker-label">Mapa</span>
           <span id="ffSelectedMapName" class="ff-map-picker-value">Dust Alley</span>
           <span class="ff-map-picker-chevron">▾</span>
@@ -473,6 +397,17 @@
         <button type="button" id="startBtn" class="ff-play-btn btn-start-main">JOGAR</button>
       </div>
     </footer>
+
+    <div id="ffMapFullscreen" class="ff-map-fullscreen hidden" aria-hidden="true" role="dialog" aria-label="Escolher mapa">
+      <div class="ff-map-fullscreen-inner">
+        <header class="ff-map-fullscreen-head">
+          <h2 class="ff-map-fullscreen-title">Mapas</h2>
+          <p class="ff-map-fullscreen-sub">Escolha onde jogar — clique no card para confirmar</p>
+          <button type="button" id="closeMapFullscreenBtn" class="shop-close ff-map-fullscreen-close" aria-label="Fechar">✕</button>
+        </header>
+        <div id="ffMapCardGrid" class="ff-map-fullscreen-grid"></div>
+      </div>
+    </div>
 
   </div>
 

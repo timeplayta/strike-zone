@@ -1,65 +1,117 @@
-/** Tela de mapas no hub lateral */
+/** Tela cheia de mapas (estilo Free Fire / CS) — abre pelo botão acima de JOGAR */
 
-import { switchHubPanel, showPlayHub } from "./menu-hub.js";
+import { getMapCardArtUrl } from "./map-card-art.js";
 
-const MAP_INFO = {
-  dust: {
-    title: "Dust Alley",
-    desc: "Mapa aberto de tiro, bom para testar mira, recoil e skins de arma.",
-  },
-  warehouse: {
-    title: "Cold Storage",
-    desc: "Armazém com linhas de visão médias, cobertura e combate mais fechado.",
-  },
-  horror: {
-    title: "Terror",
-    desc: "Mapa escuro com clima de susto. Use lanterna e jogue com mais cuidado.",
-  },
-  labyrinth: {
-    title: "Fim das Trevas",
-    desc: "Labirinto de escape com monstros: Gosmento, Gigante das Mãos e Bam-Bam.",
-  },
-};
+const MAPS = [
+  { id: "dust", mode: "Jogo de tiro", name: "Dust Alley", desc: "Deserto aberto" },
+  { id: "warehouse", mode: "Jogo de tiro", name: "Cold Storage", desc: "Armazém fechado" },
+  { id: "horror", mode: "Terror", name: "Terror", desc: "Combate escuro", horror: true },
+  { id: "labyrinth", mode: "Terror", name: "Fim das Trevas", desc: "Labirinto de escape", horror: true },
+];
 
 function $(id) {
   return document.getElementById(id);
 }
 
-function selectedMap() {
+function selectedMapId() {
   return document.querySelector(".map-btn.selected")?.dataset?.map || "dust";
 }
 
-function refreshMapPreview() {
-  const info = MAP_INFO[selectedMap()] || MAP_INFO.dust;
-  const title = $("mapHubTitle");
-  const desc = $("mapHubDesc");
-  if (title) title.textContent = info.title;
-  if (desc) desc.textContent = info.desc;
+function buildMapCards() {
+  const grid = $("ffMapCardGrid");
+  if (!grid || grid.dataset.built === "1") return;
+  grid.dataset.built = "1";
+  grid.innerHTML = MAPS.map((m) => {
+    const art = getMapCardArtUrl(m.id);
+    const sel = m.id === selectedMapId() ? " selected" : "";
+    const horror = m.horror ? " ff-map-card-horror" : "";
+    return (
+      `<button type="button" class="map-btn ff-map-card${horror}${sel}" data-map="${m.id}">` +
+      `<img class="ff-map-card-img" src="${art}" alt="${m.name}" loading="lazy" />` +
+      `<span class="ff-map-card-shade"></span>` +
+      `<span class="ff-map-card-body">` +
+      `<span class="ff-map-card-mode">${m.mode}</span>` +
+      `<span class="map-name">${m.name}</span>` +
+      `<span class="map-desc">${m.desc}</span>` +
+      `</span></button>`
+    );
+  }).join("");
 }
 
-function openMapHub() {
-  switchHubPanel("map");
-  const panel = $("ffHubPanelMap");
-  if (panel) {
-    panel.classList.remove("hidden");
-    panel.setAttribute("aria-hidden", "false");
+function syncCardSelection() {
+  const id = selectedMapId();
+  document.querySelectorAll("#ffMapCardGrid .map-btn").forEach((btn) => {
+    btn.classList.toggle("selected", btn.dataset.map === id);
+  });
+}
+
+export function openMapFullscreen() {
+  buildMapCards();
+  syncCardSelection();
+  const el = $("ffMapFullscreen");
+  if (!el) return;
+  el.classList.remove("hidden");
+  el.setAttribute("aria-hidden", "false");
+  $("ffMapPickerBtn")?.setAttribute("aria-expanded", "true");
+  document.body.classList.add("ff-map-screen-open");
+}
+
+export function closeMapFullscreen() {
+  const el = $("ffMapFullscreen");
+  if (!el) return;
+  el.classList.add("hidden");
+  el.setAttribute("aria-hidden", "true");
+  $("ffMapPickerBtn")?.setAttribute("aria-expanded", "false");
+  document.body.classList.remove("ff-map-screen-open");
+}
+
+function onMapCardClick(btn) {
+  if (!btn?.dataset?.map) return;
+  if (typeof window.strikeZoneSelectMap === "function") {
+    window.strikeZoneSelectMap(btn);
+  } else {
+    document.querySelectorAll(".map-btn").forEach((b) => b.classList.remove("selected"));
+    btn.classList.add("selected");
   }
-  refreshMapPreview();
-}
-
-function closeMapHub() {
-  showPlayHub();
-  $("ffHubPanelMap")?.setAttribute("aria-hidden", "true");
+  syncCardSelection();
+  closeMapFullscreen();
 }
 
 export function initMapView() {
-  $("openMapHubBtn")?.addEventListener("click", openMapHub);
-  $("closeMapHubBtn")?.addEventListener("click", closeMapHub);
-  document.querySelectorAll(".map-btn").forEach((btn) => {
-    btn.addEventListener("click", () => requestAnimationFrame(refreshMapPreview));
+  buildMapCards();
+
+  $("ffMapPickerBtn")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    openMapFullscreen();
   });
-  refreshMapPreview();
+
+  $("closeMapFullscreenBtn")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    closeMapFullscreen();
+  });
+
+  $("ffMapFullscreen")?.addEventListener("click", (e) => {
+    if (e.target.id === "ffMapFullscreen") closeMapFullscreen();
+  });
+
+  $("ffMapCardGrid")?.addEventListener("click", (e) => {
+    const btn = e.target.closest(".map-btn");
+    if (!btn) return;
+    e.preventDefault();
+    e.stopPropagation();
+    onMapCardClick(btn);
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !$("ffMapFullscreen")?.classList.contains("hidden")) {
+      closeMapFullscreen();
+    }
+  });
 }
+
+window.openMapFullscreen = openMapFullscreen;
+window.closeMapFullscreen = closeMapFullscreen;
 
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", initMapView);

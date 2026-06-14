@@ -3670,6 +3670,173 @@ body.mode-mobile .ff-bottom-zone {
   color: #f0a030;
 }
 
+/* Tela cheia de mapas (Free Fire / CS) */
+body.ff-map-screen-open {
+  overflow: hidden;
+}
+
+.ff-map-fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 9200;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  padding: 0;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 100%, rgba(240, 160, 48, 0.12), transparent 55%),
+    rgba(4, 6, 12, 0.94);
+  backdrop-filter: blur(8px);
+}
+
+.ff-map-fullscreen.hidden {
+  display: none;
+}
+
+.ff-map-fullscreen-inner {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: clamp(0.75rem, 2.5vw, 1.5rem);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.ff-map-fullscreen-head {
+  position: relative;
+  flex-shrink: 0;
+  padding: 0.25rem 2.5rem 0.85rem 0.15rem;
+}
+
+.ff-map-fullscreen-title {
+  margin: 0;
+  font-size: clamp(1.25rem, 3vw, 1.65rem);
+  color: #f0a030;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.ff-map-fullscreen-sub {
+  margin: 0.25rem 0 0;
+  color: #8a9ab0;
+  font-size: 0.82rem;
+}
+
+.ff-map-fullscreen-close {
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+
+.ff-map-fullscreen-grid {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
+  gap: clamp(0.65rem, 2vw, 1rem);
+  padding: 0.15rem 0.25rem 1rem;
+  align-content: start;
+  scrollbar-width: thin;
+  scrollbar-color: #f0a030 #101722;
+}
+
+.ff-map-card {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  min-height: 148px;
+  padding: 0;
+  border: 2px solid rgba(80, 100, 130, 0.45);
+  border-radius: 14px;
+  overflow: hidden;
+  cursor: pointer;
+  background: #0a0e16;
+  text-align: left;
+  font: inherit;
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.ff-map-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(240, 160, 48, 0.55);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+}
+
+.ff-map-card.selected {
+  border-color: #f0a030;
+  box-shadow: 0 0 0 2px rgba(240, 160, 48, 0.35), 0 14px 36px rgba(0, 0, 0, 0.5);
+}
+
+.ff-map-card-horror.selected {
+  border-color: #c06090;
+  box-shadow: 0 0 0 2px rgba(192, 96, 144, 0.35), 0 14px 36px rgba(0, 0, 0, 0.5);
+}
+
+.ff-map-card-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.ff-map-card-shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.88) 0%, rgba(0, 0, 0, 0.35) 45%, rgba(0, 0, 0, 0.08) 100%);
+  pointer-events: none;
+}
+
+.ff-map-card-body {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 0.65rem 0.75rem 0.7rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.ff-map-card-mode {
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.65);
+  font-weight: 700;
+}
+
+.ff-map-card .map-name {
+  font-size: clamp(1rem, 2.5vw, 1.2rem);
+  font-weight: 800;
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  line-height: 1.15;
+}
+
+.ff-map-card .map-desc {
+  font-size: 0.78rem;
+  color: rgba(220, 228, 240, 0.82);
+}
+
+.ff-map-card-horror .ff-map-card-mode {
+  color: #d898b8;
+}
+
+@media (min-width: 900px) {
+  .ff-map-fullscreen-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 .ff-map-picker-panel {
   position: absolute;
   bottom: calc(100% + 0.35rem);
