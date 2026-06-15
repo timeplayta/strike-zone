@@ -10,6 +10,7 @@ const IS_CLOUD = process.env.NODE_ENV === "production" || process.env.RENDER ===
 const ROOT = __dirname;
 const { handleAccountApi, ensureBootstrapAdmin } = require("./account-db.js");
 const { handleStripeApi } = require("./stripe-handlers.js");
+const { handleOAuthApi } = require("./oauth-auth.js");
 ensureBootstrapAdmin();
 const VENDOR_DIR = path.join(ROOT, "vendor");
 const THREE_FILE = path.join(VENDOR_DIR, "three.module.js");
@@ -124,6 +125,14 @@ const server = http.createServer(async (req, res) => {
     } catch (err) {
       res.writeHead(500, { "Content-Type": "application/json" });
       return res.end(JSON.stringify({ error: err.message || "Erro no servidor" }));
+    }
+  }
+  if (pathname.startsWith("/api/oauth")) {
+    try {
+      return await handleOAuthApi(req, res, pathname);
+    } catch (err) {
+      res.writeHead(500, { "Content-Type": "application/json" });
+      return res.end(JSON.stringify({ error: err.message || "Erro no OAuth" }));
     }
   }
   if (pathname.startsWith("/api/stripe")) {

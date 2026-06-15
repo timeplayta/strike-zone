@@ -2455,6 +2455,55 @@ body.mode-mobile .flashlight-hud {
   display: none;
 }
 
+.social-login-box {
+  margin-top: 0.85rem;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.social-login-title {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 0.72rem;
+}
+
+.social-login-btn {
+  width: 100%;
+  min-height: 38px;
+  border: 0;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  color: #fff;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.22);
+}
+
+.social-login-btn span {
+  min-width: 22px;
+  font-weight: 900;
+}
+
+.social-login-btn-disabled {
+  opacity: 0.45;
+}
+
+.social-vk {
+  background: #4d76a1;
+}
+
+.social-google {
+  background: #f7f7f7;
+  color: #222;
+}
+
+.social-twitter {
+  background: #1da1f2;
+}
+
 .btn-link {
   margin-top: 0.75rem;
   background: none;

@@ -311,12 +311,36 @@
     loginEmail?.addEventListener("input", () => setLoginStatus(""));
     loginPassword?.addEventListener("input", () => setLoginStatus(""));
 
+    document.querySelectorAll("[data-oauth-provider]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const provider = btn.dataset.oauthProvider;
+        if (!provider || btn.dataset.oauthReady !== "true") {
+          setLoginStatus("Esse login ainda precisa das chaves oficiais no Render.", "error");
+          return;
+        }
+        window.location.href = `/api/oauth/start/${provider}`;
+      });
+    });
+
+    fetch("/api/oauth/providers", { cache: "no-store" })
+      .then((res) => res.json())
+      .then((data) => {
+        document.querySelectorAll("[data-oauth-provider]").forEach((btn) => {
+          const provider = btn.dataset.oauthProvider;
+          const enabled = !!data.providers?.[provider];
+          btn.dataset.oauthReady = enabled ? "true" : "false";
+          btn.classList.toggle("social-login-btn-disabled", !enabled);
+          btn.title = enabled ? "Entrar com conta social" : "Configure as credenciais OAuth no Render";
+        });
+      })
+      .catch(() => { /* login com email continua normal */ });
+
     loginEmail?.addEventListener("blur", async () => {
       const email = loginEmail.value.trim();
       if (!email) return setLoginStatus("");
       if (!isValidEmail(email)) return setLoginStatus("Digite um email válido.", "error");
       try {
-        const mod = await import("./player-account.js?v=74");
+        const mod = await import("./player-account.js?v=76");
         const res = await mod.checkEmailExists(email);
         if (!res.ok) return;
         const msg = res.exists ? "Email encontrado. Agora digite sua senha." : "Email não existe.";
@@ -340,7 +364,7 @@
       }
       loginBtn.disabled = true;
       try {
-        const mod = await import("./player-account.js?v=74");
+        const mod = await import("./player-account.js?v=76");
         const res = await mod.loginAccount(email, password);
         if (res.ok) {
           await enterMenuWithAccount(res.account?.name || email, mod, res.account);
@@ -379,7 +403,7 @@
       const btn = $("welcomeLoginWithIdBtn");
       btn.disabled = true;
       try {
-        const mod = await import("./player-account.js?v=74");
+        const mod = await import("./player-account.js?v=76");
         const res = await mod.loginAccount(email, password, playerId);
         if (res.ok) await enterMenuWithAccount(res.account?.name || email, mod, res.account);
         else setLoginStatus(res.msg || "Login falhou.", "error");
@@ -431,7 +455,7 @@
       }
       registerBtn.disabled = true;
       try {
-        const mod = await import("./player-account.js?v=74");
+        const mod = await import("./player-account.js?v=76");
         const res = await mod.registerAccount(name, age, email, birthDate, password);
         if (res.ok) {
           const pid = res.account?.playerId || res.playerId;
@@ -462,7 +486,7 @@
       }
       migrateBtn.disabled = true;
       try {
-        const mod = await import("./player-account.js?v=74");
+        const mod = await import("./player-account.js?v=76");
         const res = await mod.migrateLegacyAccount(name, age, email, birthDate, password);
         if (res.ok) await enterMenuWithAccount(res.account?.name || name, mod, res.account);
         else alert(res.msg || "Não foi possível definir a senha.");
@@ -481,7 +505,7 @@
     // Ao abrir: tentar sessão salva ou preencher último nome
     (async () => {
       try {
-        const mod = await import("./player-account.js?v=74");
+        const mod = await import("./player-account.js?v=76");
         const saved = mod.getSavedSession();
         if (saved?.account?.email) {
           $("loginEmail").value = saved.account.email;
@@ -498,7 +522,7 @@
   }
 
   function initShopModal() {
-    import("./player-account.js?v=74").then((m) => {
+    import("./player-account.js?v=76").then((m) => {
       m.bindShopUI?.();
     });
   }

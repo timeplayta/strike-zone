@@ -496,6 +496,13 @@ function getPlayerByEmail(email) {
   return Object.values(db.players).find((p) => normalizeEmail(p.email) === mail) || null;
 }
 
+function getPlayerByOAuth(provider, providerId, db = readDb()) {
+  const prov = String(provider || "").trim().toLowerCase();
+  const pid = String(providerId || "").trim();
+  if (!prov || !pid) return null;
+  return Object.values(db.players).find((p) => String(p.oauthProviders?.[prov]?.id || "") === pid) || null;
+}
+
 function findPlayersByName(name) {
   const n = normalizeName(name).toLowerCase();
   const db = readDb();
@@ -527,6 +534,7 @@ function defaultPlayer(name, age = null, email = "", birthDate = "") {
     birthdayRewards: {},
     passwordSalt: null,
     passwordHash: null,
+    oauthProviders: {},
     sessionToken: null,
     sessionExpires: null,
     createdAt: new Date().toISOString(),
@@ -610,6 +618,41 @@ function registerAccount(name, age, email, birthDate, password) {
   const p = defaultPlayer(n, ageByDate, mail, born);
   setPasswordOnPlayer(p, password);
   applyAdminFlag(p, password);
+  const token = createSessionToken(p);
+  p.lastLogin = new Date().toISOString();
+  db.players[p.id] = p;
+  writeDb(db);
+
+  return { ok: true, account: exportAccount(p), token };
+}
+
+function loginWithOAuthProvider(provider, profile) {
+  const prov = String(provider || "").trim().toLowerCase();
+  const providerId = String(profile?.id || profile?.sub || "").trim();
+  if (!prov || !providerId) return { ok: false, error: "Login social inválido" };
+
+  const email = normalizeEmail(profile?.email || `${prov}_${providerId}@oauth.local`);
+  const displayName = normalizeName(profile?.name || profile?.username || `${prov}_${providerId}`).slice(0, 16);
+  const db = readDb();
+
+  let p = getPlayerByOAuth(prov, providerId, db);
+  if (!p && emailValid(email)) {
+    p = Object.values(db.players).find((player) => normalizeEmail(player.email) === email) || null;
+  }
+  if (!p) {
+    p = defaultPlayer(displayName || "Jogador", null, email, "");
+    db.players[p.id] = p;
+  }
+
+  p.name = p.name || displayName || "Jogador";
+  if (!emailValid(p.email) && emailValid(email)) p.email = email;
+  p.oauthProviders = p.oauthProviders || {};
+  p.oauthProviders[prov] = {
+    id: providerId,
+    email,
+    name: displayName,
+    linkedAt: new Date().toISOString(),
+  };
   const token = createSessionToken(p);
   p.lastLogin = new Date().toISOString();
   db.players[p.id] = p;
@@ -919,6 +962,7 @@ module.exports = {
   handleAccountApi,
   registerAccount,
   loginAccount,
+  loginWithOAuthProvider,
   getPlayerById,
   creditCoins,
   SHOP,
