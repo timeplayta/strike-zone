@@ -4,7 +4,15 @@ import * as THREE from "three";
 import { GLTFLoader } from "./vendor/GLTFLoader.js";
 import { buildHdWeapon } from "./weapon-models-hd.js";
 
-const WEAPON_SOURCES = {};
+const WEAPON_SOURCES = {
+  ak47:  ['./assets/models/weapons/ak47.glb'],
+  awm:   ['./assets/models/weapons/awm.glb'],
+  glock: ['./assets/models/weapons/glock.glb'],
+  scar:  ['./assets/models/weapons/scar.glb'],
+  m4:    ['./assets/models/weapons/m4.glb'],
+  ump45: ['./assets/models/weapons/ump45.glb'],
+  doze:  ['./assets/models/weapons/doze.glb'],
+};
 
 const templates = new Map();
 let loadPromise = null;

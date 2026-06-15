@@ -27,35 +27,170 @@ function matHand(color, roughness = 0.72) {
   return new THREE.MeshStandardMaterial({ color, roughness, metalness: 0.02 });
 }
 
-function makeArmSegment(radius, length, material, x, y, z, rx = Math.PI / 2, rz = 0) {
-  const mesh = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius * 0.92, length, 14), material);
-  mesh.position.set(x, y, z);
-  mesh.rotation.set(rx, 0, rz);
-  return mesh;
+/** Cria um dedo articulado com 3 falanges + esferas de juntas */
+function makeFinger(baseX, baseY, baseZ, baseCurl, lenMult, mat) {
+  const root = new THREE.Group();
+  root.position.set(baseX, baseY, baseZ);
+  root.rotation.x = baseCurl;
+
+  const lm = lenMult;
+
+  // Falange proximal
+  const prox = new THREE.Mesh(new THREE.CylinderGeometry(0.0082, 0.0095, 0.036 * lm, 10), mat);
+  prox.position.y = -0.018 * lm;
+  root.add(prox);
+
+  // Junta 1
+  const j1 = new THREE.Mesh(new THREE.SphereGeometry(0.0095, 8, 6), mat);
+  j1.position.y = -0.036 * lm;
+  root.add(j1);
+
+  // Pivot da falange média
+  const midPivot = new THREE.Group();
+  midPivot.position.y = -0.036 * lm;
+  midPivot.rotation.x = 0.38;
+  root.add(midPivot);
+
+  const mid = new THREE.Mesh(new THREE.CylinderGeometry(0.0072, 0.0082, 0.03 * lm, 10), mat);
+  mid.position.y = -0.015 * lm;
+  midPivot.add(mid);
+
+  // Junta 2
+  const j2 = new THREE.Mesh(new THREE.SphereGeometry(0.0078, 8, 6), mat);
+  j2.position.y = -0.03 * lm;
+  midPivot.add(j2);
+
+  // Pivot da falange distal
+  const distPivot = new THREE.Group();
+  distPivot.position.y = -0.03 * lm;
+  distPivot.rotation.x = 0.32;
+  midPivot.add(distPivot);
+
+  const dist = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.0072, 0.024 * lm, 8), mat);
+  dist.position.y = -0.012 * lm;
+  distPivot.add(dist);
+
+  // Ponta do dedo
+  const tip = new THREE.Mesh(new THREE.SphereGeometry(0.0065, 8, 6), mat);
+  tip.position.y = -0.024 * lm;
+  distPivot.add(tip);
+
+  return root;
+}
+
+/** Cria o polegar com 2 falanges + metacarpo */
+function makeThumb(posX, posY, posZ, s, mat) {
+  const root = new THREE.Group();
+  root.position.set(posX, posY, posZ);
+  root.rotation.set(0.82, 0, s * -0.88);
+
+  // Metacarpo
+  const meta = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.014, 0.038, 10), mat);
+  meta.position.y = -0.019;
+  root.add(meta);
+
+  // Junta base
+  const jb = new THREE.Mesh(new THREE.SphereGeometry(0.013, 8, 6), mat);
+  jb.position.y = -0.038;
+  root.add(jb);
+
+  // Falange proximal
+  const p1 = new THREE.Group();
+  p1.position.y = -0.038;
+  p1.rotation.x = 0.28;
+  root.add(p1);
+
+  const p1m = new THREE.Mesh(new THREE.CylinderGeometry(0.0095, 0.012, 0.038, 10), mat);
+  p1m.position.y = -0.019;
+  p1.add(p1m);
+
+  const tj = new THREE.Mesh(new THREE.SphereGeometry(0.0105, 8, 6), mat);
+  tj.position.y = -0.038;
+  p1.add(tj);
+
+  // Falange distal
+  const p2 = new THREE.Group();
+  p2.position.y = -0.038;
+  p2.rotation.x = 0.25;
+  p1.add(p2);
+
+  const p2m = new THREE.Mesh(new THREE.CylinderGeometry(0.0078, 0.0095, 0.032, 8), mat);
+  p2m.position.y = -0.016;
+  p2.add(p2m);
+
+  const ttip = new THREE.Mesh(new THREE.SphereGeometry(0.0085, 8, 6), mat);
+  ttip.position.y = -0.032;
+  p2.add(ttip);
+
+  return root;
 }
 
 function makeFpsHand(side, skinMat, gloveMat) {
   const s = side === "left" ? -1 : 1;
+  const isRight = side === "right";
   const g = new THREE.Group();
-  const sleeveMat = new THREE.MeshStandardMaterial({ color: 0x1b2534, roughness: 0.88, metalness: 0.05 });
 
-  const upper = makeArmSegment(0.038, 0.34, sleeveMat, s * 0.21, -0.24, 0.06, Math.PI / 2, s * 0.1);
+  const sleeveMat = new THREE.MeshStandardMaterial({ color: 0x1b2534, roughness: 0.9, metalness: 0.05 });
+
+  // Braço superior
+  const upper = new THREE.Mesh(new THREE.CylinderGeometry(0.037, 0.035, 0.33, 14), sleeveMat);
+  upper.position.set(s * 0.21, -0.23, 0.05);
+  upper.rotation.set(Math.PI / 2, 0, s * 0.1);
   upper.scale.x = 0.86;
-  const forearm = makeArmSegment(0.034, 0.36, sleeveMat, s * 0.15, -0.18, -0.16, Math.PI / 2, s * 0.18);
+  g.add(upper);
+
+  // Antebraço
+  const forearm = new THREE.Mesh(new THREE.CylinderGeometry(0.033, 0.031, 0.35, 14), sleeveMat);
+  forearm.position.set(s * 0.15, -0.19, -0.15);
+  forearm.rotation.set(Math.PI / 2, 0, s * 0.17);
   forearm.scale.x = 0.82;
+  g.add(forearm);
 
-  const wrist = new THREE.Mesh(new THREE.SphereGeometry(0.041, 14, 10), gloveMat);
-  wrist.position.set(s * 0.105, -0.13, -0.31);
-  wrist.scale.set(1.2, 0.7, 0.9);
+  // Pulso
+  const wrist = new THREE.Mesh(new THREE.CylinderGeometry(0.029, 0.032, 0.065, 14), gloveMat);
+  wrist.position.set(s * 0.09, -0.118, -0.304);
+  wrist.rotation.set(Math.PI / 2, 0, 0);
+  g.add(wrist);
 
-  const palm = new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.052, 0.085), gloveMat);
-  palm.position.set(s * 0.075, -0.11, -0.36);
-  palm.rotation.set(0.18, 0, s * 0.12);
+  // Palma
+  const palmPivot = new THREE.Group();
+  palmPivot.position.set(s * 0.075, -0.108, -0.356);
+  palmPivot.rotation.set(0.14, 0, s * 0.1);
+  g.add(palmPivot);
 
-  const thumb = makeArmSegment(0.011, 0.07, skinMat, s * 0.12, -0.09, -0.36, 1.05, s * 0.9);
-  const triggerFinger = makeArmSegment(0.008, 0.075, skinMat, s * 0.045, -0.088, -0.405, 1.18, s * -0.4);
+  palmPivot.add(new THREE.Mesh(new THREE.BoxGeometry(0.078, 0.044, 0.09), gloveMat));
 
-  g.add(upper, forearm, wrist, palm, thumb, triggerFinger);
+  // Nós dos dedos (detalhe visual da palma)
+  for (let i = 0; i < 4; i++) {
+    const km = new THREE.Mesh(new THREE.SphereGeometry(0.012, 8, 6), gloveMat);
+    km.position.set(s * (-0.026 + i * 0.018), 0.022, -0.044);
+    palmPivot.add(km);
+  }
+
+  // 4 dedos: indicador, médio, anelar, mínimo
+  // Mão direita: indicador menos curvado (posição de gatilho)
+  // Mão esquerda: todos moderadamente curvados (suporte)
+  const fingerDefs = isRight
+    ? [
+        { dx: s * -0.024, curl: 0.72, len: 1.0  },
+        { dx: s * -0.007, curl: 1.26, len: 1.08 },
+        { dx: s *  0.009, curl: 1.24, len: 1.0  },
+        { dx: s *  0.024, curl: 1.28, len: 0.82 },
+      ]
+    : [
+        { dx: s * -0.024, curl: 1.22, len: 1.0  },
+        { dx: s * -0.007, curl: 1.25, len: 1.08 },
+        { dx: s *  0.009, curl: 1.23, len: 1.0  },
+        { dx: s *  0.024, curl: 1.27, len: 0.82 },
+      ];
+
+  for (const fd of fingerDefs) {
+    g.add(makeFinger(s * 0.075 + fd.dx, -0.094, -0.402, fd.curl, fd.len, gloveMat));
+  }
+
+  // Polegar
+  g.add(makeThumb(s * 0.109, -0.097, -0.346, s, gloveMat));
+
   return g;
 }
 
@@ -68,7 +203,12 @@ function createFpsHands() {
   const gloveMat = matHand(group.userData.gloveColor, 0.78);
   group.userData.skinMat = skinMat;
   group.userData.gloveMat = gloveMat;
-  group.add(makeFpsHand("left", skinMat, gloveMat), makeFpsHand("right", skinMat, gloveMat));
+
+  const rightHand = makeFpsHand("right", skinMat, gloveMat);
+  const leftHand = makeFpsHand("left", skinMat, gloveMat);
+  // Mão esquerda mais avançada (apoio no guardamão)
+  leftHand.position.z = -0.07;
+  group.add(leftHand, rightHand);
   group.position.set(0, 0.02, 0.02);
   return group;
 }

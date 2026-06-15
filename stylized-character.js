@@ -98,6 +98,12 @@ function buildLeg(side, sm, mPants, mBoot) {
 
   const foot = part(new THREE.BoxGeometry(0.09, 0.07, 0.22), mBoot, 0, -0.34, 0.04);
   knee.add(foot);
+  // Solado
+  knee.add(part(new THREE.BoxGeometry(0.094, 0.014, 0.225), mat(0x111111, 0.95), 0, -0.378, 0.04));
+  // Cadarços (linhas horizontais)
+  for (let c = 0; c < 3; c++) {
+    knee.add(part(new THREE.BoxGeometry(0.086, 0.006, 0.007), mat(0xddddcc, 0.9), 0, -0.308 + c * 0.012, 0.125));
+  }
 
   return { hip, knee, thigh, shin, foot };
 }
@@ -121,18 +127,54 @@ function buildArm(side, sm, mSleeve, mSkin, mGlove) {
   hand.position.y = -0.22;
   elbow.add(hand);
 
-  hand.add(part(new THREE.BoxGeometry(0.052, 0.04, 0.058), mGlove, 0, 0, 0.018));
-  for (let i = 0; i < 4; i++) {
-    hand.add(part(
-      new THREE.CapsuleGeometry(0.0065 * sm, 0.028, 2, 6),
-      mGlove,
-      -0.02 + i * 0.013,
-      -0.014,
-      0.055,
-      Math.PI / 2
-    ));
+  // Relógio no pulso esquerdo
+  if (side === "L") {
+    const watchBand = part(new THREE.CylinderGeometry(0.043, 0.043, 0.018, 16), mat(0x111111, 0.7), 0, -0.008, 0);
+    watchBand.rotation.x = Math.PI / 2;
+    elbow.add(watchBand);
+    const watchFace = part(new THREE.BoxGeometry(0.032, 0.024, 0.01), mat(0x1a2a3a, 0.55, 0x0044aa), 0, -0.008, 0.044);
+    watchFace.rotation.x = 0.08;
+    elbow.add(watchFace);
   }
-  hand.add(part(new THREE.CapsuleGeometry(0.007 * sm, 0.026, 2, 6), mGlove, side === "L" ? -0.032 : 0.032, -0.004, 0.038, 0.35, 0, side === "L" ? -0.8 : 0.8));
+
+  // Palma
+  hand.add(part(new THREE.BoxGeometry(0.054, 0.04, 0.062), mGlove, 0, 0, 0.022));
+  // Nós dos dedos
+  for (let i = 0; i < 4; i++) {
+    hand.add(part(new THREE.SphereGeometry(0.008 * sm, 7, 5), mGlove, -0.018 + i * 0.012, 0.022, 0.05));
+  }
+  // 4 dedos com 2 falanges cada
+  const fingerBaseZ = 0.055;
+  const curlAngles = [1.15, 1.12, 1.14, 1.18];
+  const fingerLens = [1.0, 1.06, 0.98, 0.8];
+  for (let i = 0; i < 4; i++) {
+    const fx = -0.018 + i * 0.012;
+    const fc = curlAngles[i];
+    const fl = fingerLens[i] * sm;
+    // Falange proximal
+    const fp = new THREE.Group();
+    fp.position.set(fx, 0, fingerBaseZ);
+    fp.rotation.x = fc;
+    hand.add(fp);
+    fp.add(part(new THREE.CapsuleGeometry(0.006 * fl, 0.022, 2, 6), mGlove, 0, -0.011, 0));
+    // Falange distal (dobrada extra)
+    const fd = new THREE.Group();
+    fd.position.set(0, -0.022, 0);
+    fd.rotation.x = 0.3;
+    fp.add(fd);
+    fd.add(part(new THREE.CapsuleGeometry(0.005 * fl, 0.018, 2, 6), mGlove, 0, -0.009, 0));
+  }
+  // Polegar
+  const thumbPivot = new THREE.Group();
+  thumbPivot.position.set(side === "L" ? -0.034 : 0.034, 0, 0.036);
+  thumbPivot.rotation.set(0.32, 0, side === "L" ? -0.78 : 0.78);
+  hand.add(thumbPivot);
+  thumbPivot.add(part(new THREE.CapsuleGeometry(0.007 * sm, 0.026, 2, 6), mGlove, 0, -0.013, 0));
+  const thumbDist = new THREE.Group();
+  thumbDist.position.y = -0.026;
+  thumbDist.rotation.x = 0.22;
+  thumbPivot.add(thumbDist);
+  thumbDist.add(part(new THREE.CapsuleGeometry(0.006 * sm, 0.02, 2, 6), mGlove, 0, -0.01, 0));
 
   return { shoulder, elbow, hand, upper, fore };
 }
