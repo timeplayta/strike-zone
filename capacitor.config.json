@@ -1,0 +1,13 @@
+{
+  "appId": "com.timeplayta.strikezone",
+  "appName": "Strike Zone",
+  "webDir": "apk-www",
+  "server": {
+    "url": "https://strike-zone.onrender.com",
+    "cleartext": false
+  },
+  "android": {
+    "allowMixedContent": false,
+    "captureInput": true
+  }
+}

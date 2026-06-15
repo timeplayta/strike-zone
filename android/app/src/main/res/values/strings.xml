@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Strike Zone</string>
+    <string name="title_activity_main">Strike Zone</string>
+    <string name="package_name">com.timeplayta.strikezone</string>
+    <string name="custom_url_scheme">com.timeplayta.strikezone</string>
+</resources>
