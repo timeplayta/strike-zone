@@ -1,4 +1,4 @@
-const CACHE = "strike-zone-v76";
+const CACHE = "strike-zone-v77";
 const ASSETS = [
   "/",
   "/index.html",
@@ -19,7 +19,6 @@ const ASSETS = [
   "/weapon-skin-apply.js",
   "/weapon-models-hd.js",
   "/weapon-gltf-loader.js",
-  "/assets/models/weapons/ak47.glb",
   "/horror-jumpscare.js",
   "/horror-monsters.js",
   "/horror-monster-sounds.js",

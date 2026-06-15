@@ -112,6 +112,70 @@ function addTriggerGuard(g, dark, z = 0.055) {
   g.add(box(0.006, 0.04, 0.006, dark, 0.028, -0.03, z));
 }
 
+function addScrews(g, metal, points, r = 0.006) {
+  for (const [x, y, z] of points) {
+    const s = cyl(r, r, 0.004, 10, cloneMat(metal), x, y, z, Math.PI / 2, 0, 0);
+    s.scale.y = 0.45;
+    g.add(s);
+  }
+}
+
+function addVentedShroud(g, dark, zStart, zEnd, y = 0.052, x = 0.032) {
+  const len = zEnd - zStart;
+  g.add(box(0.012, 0.018, len, dark, x, y, (zStart + zEnd) / 2));
+  g.add(box(0.012, 0.018, len, dark, -x, y, (zStart + zEnd) / 2));
+  const count = Math.max(4, Math.floor(len / 0.045));
+  for (let i = 0; i < count; i++) {
+    const z = zStart + (i + 0.5) * (len / count);
+    g.add(box(0.072, 0.006, 0.016, cloneMat(dark), 0, y + 0.012, z));
+  }
+}
+
+function addMagazineLines(g, metal, z, y = -0.055, h = 0.12) {
+  for (let i = 0; i < 4; i++) {
+    const yy = y - h * 0.34 + i * (h / 4.5);
+    g.add(box(0.004, 0.006, 0.062, cloneMat(metal), 0.036, yy, z, 0.08));
+    g.add(box(0.004, 0.006, 0.062, cloneMat(metal), -0.036, yy, z, 0.08));
+  }
+}
+
+function addSelectorSwitch(g, metal, x = 0.039, y = 0.024, z = 0.055) {
+  g.add(cyl(0.008, 0.008, 0.006, 10, metal, x, y, z, 0, 0, Math.PI / 2));
+  g.add(box(0.006, 0.004, 0.038, cloneMat(metal), x + 0.002, y - 0.012, z - 0.012, 0, 0, -0.5));
+}
+
+function addUnderbarrelModule(g, metal, dark, z = -0.21, long = false) {
+  g.add(box(0.036, 0.024, long ? 0.18 : 0.12, dark, 0, -0.004, z));
+  g.add(tube(0.012, long ? 0.16 : 0.1, 12, metal, 0, -0.005, z - 0.006, Math.PI / 2));
+}
+
+function addShells(g, zStart, count = 4) {
+  const brass = matMetal(0xd6a44e);
+  const red = matBody(0x8f1f1f);
+  for (let i = 0; i < count; i++) {
+    const z = zStart + i * 0.047;
+    const shell = new THREE.Group();
+    shell.add(tube(0.011, 0.038, 10, red, 0, 0, 0, Math.PI / 2));
+    shell.add(tube(0.0115, 0.006, 10, brass, 0, 0, 0.022, Math.PI / 2));
+    shell.position.set(0.047, 0.063, z);
+    shell.rotation.z = 0.08;
+    g.add(shell);
+  }
+}
+
+function addGlowStrip(g, color, x, y, z, len = 0.16) {
+  const mat = new THREE.MeshStandardMaterial({
+    color,
+    emissive: new THREE.Color(color),
+    emissiveIntensity: 0.55,
+    roughness: 0.36,
+    metalness: 0.1,
+  });
+  tagMat(mat, "body");
+  g.add(box(0.006, 0.006, len, mat, x, y, z));
+  g.add(box(0.006, 0.006, len, mat.clone(), -x, y, z));
+}
+
 function addScope(g, metal, dark, z = -0.18, long = false) {
   const len = long ? 0.18 : 0.12;
   g.add(box(0.014, 0.035, 0.08, dark, 0, 0.072, z + len * 0.1));
@@ -185,6 +249,10 @@ export function buildHdAk47(tint = 0x6b4423) {
   g.add(box(0.075, 0.028, 0.11, body, 0, 0.026, -0.19));
   addIronSights(g, dark, -0.32, 0.11);
   addMuzzleBrake(g, metal, -0.61);
+  addScrews(g, metal, [[0.037, 0.028, 0.045], [0.037, -0.002, 0.105], [-0.037, 0.028, 0.045], [-0.037, -0.002, 0.105]]);
+  addMagazineLines(g, metal, -0.055, -0.045, 0.16);
+  addSelectorSwitch(g, metal, 0.041, 0.024, 0.055);
+  g.add(box(0.045, 0.012, 0.17, body, 0, 0.054, -0.19));
 
   return markWeapon(g, "ak47");
 }
@@ -207,6 +275,10 @@ export function buildHdScar(tint = 0x3a4550) {
   addScope(g, metal, dark, -0.08, false);
   addIronSights(g, dark, -0.34, 0.12);
   addMuzzleBrake(g, metal, -0.56);
+  addVentedShroud(g, dark, -0.25, -0.02, 0.047, 0.038);
+  addUnderbarrelModule(g, metal, dark, -0.18);
+  addScrews(g, metal, [[0.04, 0.029, -0.03], [0.04, 0.029, 0.07], [-0.04, 0.029, -0.03], [-0.04, 0.029, 0.07]]);
+  addMagazineLines(g, metal, 0.095, -0.012, 0.08);
 
   return markWeapon(g, "scar");
 }
@@ -232,6 +304,10 @@ export function buildHdM4(tint = 0x3d4a38) {
   addScope(g, metal, dark, -0.09, false);
   addIronSights(g, dark, -0.31, 0.1);
   addMuzzleBrake(g, metal, -0.52);
+  addVentedShroud(g, dark, -0.26, -0.05, 0.042, 0.033);
+  addUnderbarrelModule(g, metal, dark, -0.19);
+  addScrews(g, metal, [[0.038, 0.025, -0.035], [0.038, 0.025, 0.055], [-0.038, 0.025, -0.035], [-0.038, 0.025, 0.055]]);
+  g.add(box(0.025, 0.052, 0.035, dark, 0.034, -0.022, 0.06, 0.1));
 
   return markWeapon(g, "m4");
 }
@@ -252,6 +328,10 @@ export function buildHdUmp45(tint = 0x2a2a32) {
   addRail(g, dark, -0.09, 0.09, 0.058);
   addSidePanels(g, grip, -0.13, 0.08, 0.018, 0.038);
   addIronSights(g, dark, -0.25, 0.08);
+  addVentedShroud(g, dark, -0.22, -0.04, 0.04, 0.034);
+  addScrews(g, metal, [[0.036, 0.022, -0.06], [0.036, 0.022, 0.055], [-0.036, 0.022, -0.06], [-0.036, 0.022, 0.055]], 0.005);
+  addMagazineLines(g, metal, -0.018, -0.064, 0.095);
+  g.add(box(0.018, 0.02, 0.07, metal, 0.035, 0.025, 0.045));
 
   return markWeapon(g, "ump45");
 }
@@ -273,6 +353,11 @@ export function buildHdAwm(tint = 0x5c4030) {
   g.add(box(0.012, 0.052, 0.03, dark, -0.025, -0.045, 0.13, 0.35));
   g.add(box(0.012, 0.052, 0.03, dark, 0.025, -0.045, 0.13, 0.35));
   g.add(box(0.026, 0.06, 0.035, dark, 0.032, -0.03, -0.02, 0.08));
+  g.add(tube(0.009, 0.18, 12, dark, 0.038, 0.032, -0.27, Math.PI / 2));
+  g.add(tube(0.009, 0.18, 12, dark, -0.038, 0.032, -0.27, Math.PI / 2));
+  addScrews(g, metal, [[0.03, 0.026, -0.05], [0.03, 0.026, 0.09], [-0.03, 0.026, -0.05], [-0.03, 0.026, 0.09]], 0.005);
+  g.add(box(0.056, 0.014, 0.12, dark, 0, -0.052, 0.23, -0.08));
+  g.add(box(0.036, 0.024, 0.08, metal, 0, 0.055, 0.04));
 
   return markWeapon(g, "awm");
 }
@@ -294,6 +379,9 @@ export function buildHdShotgun(tint = 0x6b4423) {
   addSidePanels(g, body, -0.44, -0.05, 0.025, 0.05);
   g.add(box(0.018, 0.04, 0.06, dark, 0, 0.041, 0.105));
   addIronSights(g, dark, -0.48, 0.095);
+  addShells(g, -0.09, 5);
+  addScrews(g, metal, [[0.037, 0.026, 0.04], [-0.037, 0.026, 0.04], [0.05, 0.035, -0.29], [-0.05, 0.035, -0.29]], 0.005);
+  g.add(box(0.04, 0.014, 0.23, dark, 0, 0.068, -0.22));
 
   return markWeapon(g, "doze");
 }
@@ -322,6 +410,10 @@ export function buildHdGlock(tint = 0x2a2a30) {
   addTriggerGuard(g, dark, 0.005);
   g.add(box(0.006, 0.034, 0.01, metal, 0, 0.105, 0.028));
   g.add(box(0.008, 0.03, 0.012, metal, 0, 0.106, -0.236));
+  addScrews(g, metal, [[0.033, 0.062, -0.02], [-0.033, 0.062, -0.02]], 0.004);
+  addMagazineLines(g, metal, 0.085, -0.09, 0.075);
+  g.add(box(0.045, 0.005, 0.052, dark, 0, 0.101, -0.265));
+  g.add(box(0.052, 0.006, 0.04, dark, 0, 0.102, 0.025));
 
   return markWeapon(g, "glock");
 }
@@ -345,6 +437,12 @@ export function buildHdBazooka(tint = 0x45305f) {
   g.add(box(0.18, 0.018, 0.06, metal, 0, 0.035, -0.6));
   g.add(box(0.16, 0.018, 0.06, metal, 0, 0.035, 0.27));
   addSidePanels(g, metal, -0.44, 0.12, 0.03, 0.08);
+  for (const z of [-0.42, -0.22, -0.02, 0.18]) {
+    g.add(tube(0.074, 0.018, 28, dark, 0, 0.03, z, Math.PI / 2));
+  }
+  addScrews(g, metal, [[0.085, 0.044, -0.16], [-0.085, 0.044, -0.16], [0.085, 0.044, 0.08], [-0.085, 0.044, 0.08]], 0.006);
+  addGlowStrip(g, 0x8b45ff, 0.082, 0.074, -0.16, 0.34);
+  g.add(box(0.12, 0.016, 0.18, dark, 0, -0.035, -0.28));
 
   return markWeapon(g, "bazooka");
 }

@@ -4,12 +4,7 @@ import * as THREE from "three";
 import { GLTFLoader } from "./vendor/GLTFLoader.js";
 import { buildHdWeapon } from "./weapon-models-hd.js";
 
-const WEAPON_SOURCES = {
-  ak47: [
-    "./assets/models/weapons/ak47.glb",
-    "https://static.poly.pizza/cf6f2c6d-87a2-47d5-883f-1efd73900f41.glb",
-  ],
-};
+const WEAPON_SOURCES = {};
 
 const templates = new Map();
 let loadPromise = null;
