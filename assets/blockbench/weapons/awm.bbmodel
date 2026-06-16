@@ -1,0 +1,949 @@
+{
+  "meta": {
+    "format_version": "4.10",
+    "model_format": "free",
+    "box_uv": true
+  },
+  "name": "AWM Blockbench",
+  "model_identifier": "awm",
+  "visible_box": [
+    3,
+    3,
+    3
+  ],
+  "variable_placeholders": "",
+  "resolution": {
+    "width": 64,
+    "height": 64
+  },
+  "elements": [
+    {
+      "uuid": "sz-0000",
+      "name": "receiver",
+      "from": [
+        -1.12,
+        1.6,
+        -3.36
+      ],
+      "to": [
+        1.12,
+        4.16,
+        3.36
+      ],
+      "color": 0,
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        }
+      }
+    },
+    {
+      "uuid": "sz-0001",
+      "name": "barrel",
+      "from": [
+        -0.44,
+        2.76,
+        -10.88
+      ],
+      "to": [
+        0.44,
+        3.64,
+        -2.56
+      ],
+      "color": 1,
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        }
+      }
+    },
+    {
+      "uuid": "sz-0002",
+      "name": "muzzle",
+      "from": [
+        -0.6,
+        2.6,
+        -12.16
+      ],
+      "to": [
+        0.6,
+        3.8,
+        -10.88
+      ],
+      "color": 1,
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        }
+      }
+    },
+    {
+      "uuid": "sz-0003",
+      "name": "stock",
+      "from": [
+        -0.96,
+        1.92,
+        3.2
+      ],
+      "to": [
+        0.96,
+        3.84,
+        7.68
+      ],
+      "color": 2,
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#2"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#2"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#2"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#2"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#2"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#2"
+        }
+      }
+    },
+    {
+      "uuid": "sz-0004",
+      "name": "grip",
+      "from": [
+        -0.72,
+        -2.32,
+        0.56
+      ],
+      "to": [
+        0.72,
+        1.68,
+        2
+      ],
+      "color": 0,
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        }
+      },
+      "rotation": {
+        "angle": -10.31,
+        "axis": "y",
+        "origin": [
+          0,
+          -0.32,
+          1.28
+        ]
+      }
+    },
+    {
+      "uuid": "sz-0005",
+      "name": "magazine",
+      "from": [
+        -0.72,
+        -3.2,
+        -2.24
+      ],
+      "to": [
+        0.72,
+        1.28,
+        -0.32
+      ],
+      "color": 2,
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#2"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#2"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#2"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#2"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#2"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#2"
+        }
+      },
+      "rotation": {
+        "angle": 10.31,
+        "axis": "y",
+        "origin": [
+          0,
+          -0.96,
+          -1.28
+        ]
+      }
+    },
+    {
+      "uuid": "sz-0006",
+      "name": "top_rail",
+      "from": [
+        -1.28,
+        4.36,
+        -4.56
+      ],
+      "to": [
+        1.28,
+        4.92,
+        2.64
+      ],
+      "color": 1,
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        }
+      }
+    },
+    {
+      "uuid": "sz-0007",
+      "name": "side_panel_l",
+      "from": [
+        -1.48,
+        2.16,
+        -4
+      ],
+      "to": [
+        -1.08,
+        3.6,
+        1.44
+      ],
+      "color": 1,
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        }
+      }
+    },
+    {
+      "uuid": "sz-0008",
+      "name": "side_panel_r",
+      "from": [
+        1.08,
+        2.16,
+        -4
+      ],
+      "to": [
+        1.48,
+        3.6,
+        1.44
+      ],
+      "color": 1,
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        }
+      }
+    },
+    {
+      "uuid": "sz-0009",
+      "name": "trigger_guard",
+      "from": [
+        -1.12,
+        -1.4,
+        -0.32
+      ],
+      "to": [
+        1.12,
+        -0.84,
+        1.6
+      ],
+      "color": 1,
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        }
+      }
+    },
+    {
+      "uuid": "sz-0010",
+      "name": "scope",
+      "from": [
+        -1.04,
+        6,
+        -4
+      ],
+      "to": [
+        1.04,
+        8.08,
+        1.44
+      ],
+      "color": 1,
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        }
+      }
+    },
+    {
+      "uuid": "sz-0011",
+      "name": "long_barrel",
+      "from": [
+        -0.36,
+        2.84,
+        -15.12
+      ],
+      "to": [
+        0.36,
+        3.56,
+        -7.92
+      ],
+      "color": 1,
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        }
+      }
+    }
+  ],
+  "outliner": [
+    "sz-0000",
+    "sz-0001",
+    "sz-0002",
+    "sz-0003",
+    "sz-0004",
+    "sz-0005",
+    "sz-0006",
+    "sz-0007",
+    "sz-0008",
+    "sz-0009",
+    "sz-0010",
+    "sz-0011"
+  ],
+  "textures": [
+    {
+      "path": "dark.svg",
+      "name": "dark",
+      "folder": "Strike Zone",
+      "namespace": "",
+      "id": "0",
+      "particle": false,
+      "render_mode": "default",
+      "visible": true,
+      "mode": "bitmap",
+      "saved": true,
+      "uuid": "tex-0",
+      "source": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiI+PHJlY3Qgd2lkdGg9IjE2IiBoZWlnaHQ9IjE2IiBmaWxsPSJyZ2IoMTcsMjEsMjgpIi8+PC9zdmc+"
+    },
+    {
+      "path": "metal.svg",
+      "name": "metal",
+      "folder": "Strike Zone",
+      "namespace": "",
+      "id": "1",
+      "particle": false,
+      "render_mode": "default",
+      "visible": true,
+      "mode": "bitmap",
+      "saved": true,
+      "uuid": "tex-1",
+      "source": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiI+PHJlY3Qgd2lkdGg9IjE2IiBoZWlnaHQ9IjE2IiBmaWxsPSJyZ2IoMTIyLDEyNywxMzYpIi8+PC9zdmc+"
+    },
+    {
+      "path": "tan.svg",
+      "name": "tan",
+      "folder": "Strike Zone",
+      "namespace": "",
+      "id": "2",
+      "particle": false,
+      "render_mode": "default",
+      "visible": true,
+      "mode": "bitmap",
+      "saved": true,
+      "uuid": "tex-2",
+      "source": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiI+PHJlY3Qgd2lkdGg9IjE2IiBoZWlnaHQ9IjE2IiBmaWxsPSJyZ2IoMTg0LDEzOCw4NikiLz48L3N2Zz4="
+    }
+  ]
+}

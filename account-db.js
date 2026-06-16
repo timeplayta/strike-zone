@@ -38,6 +38,8 @@ const SHOP = {
   doze_galaxy: { type: "weapon", weapon: "doze", color: 0x12091e, price: 1250 },
   glock_pink: { type: "weapon", weapon: "glock", color: 0xcc4488, price: 55 },
   glock_galaxy: { type: "weapon", weapon: "glock", color: 0x0b0b20, price: 1050 },
+  revolver_gold: { type: "weapon", weapon: "revolver", color: 0xd6a44e, price: 180 },
+  revolver_outlaw: { type: "weapon", weapon: "revolver", color: 0x6b2a1d, price: 260 },
   bazooka_mythic: { type: "weapon", weapon: "bazooka", color: 0x8b45ff, price: 1000 },
   bazooka_galaxy: { type: "weapon", weapon: "bazooka", color: 0x120727, price: 2200 },
   char_among_red: { type: "character", skinId: "among_red", color: 0xff3355, price: 150 },
@@ -51,6 +53,9 @@ const SHOP = {
   char_neon_runner: { type: "character", skinId: "neon_runner", color: 0x00ffaa, price: 180 },
   char_shadow: { type: "character", skinId: "shadow", color: 0x1a1028, price: 140 },
   char_trevas_horror: { type: "character", skinId: "trevas_horror", color: 0x14091f, price: 1200 },
+  char_cowboy_sheriff: { type: "character", skinId: "cowboy_sheriff", color: 0xb87834, price: 240 },
+  char_cowboy_outlaw: { type: "character", skinId: "cowboy_outlaw", color: 0x6b2a1d, price: 260 },
+  char_cowboy_vaqueiro: { type: "character", skinId: "cowboy_vaqueiro", color: 0x2c5f78, price: 220 },
   char_birthday: { type: "character", skinId: "birthday_hero", color: 0xffcc44, price: 0 },
   outfit_ct_elite: {
     type: "outfit",

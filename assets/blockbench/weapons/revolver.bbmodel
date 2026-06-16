@@ -1,0 +1,1260 @@
+{
+  "meta": {
+    "format_version": "4.10",
+    "model_format": "free",
+    "box_uv": true
+  },
+  "name": "Revólver Frontier",
+  "model_identifier": "revolver",
+  "visible_box": [
+    3,
+    3,
+    3
+  ],
+  "variable_placeholders": "",
+  "resolution": {
+    "width": 64,
+    "height": 64
+  },
+  "elements": [
+    {
+      "uuid": "sz-0000",
+      "name": "frame",
+      "from": [
+        -1.44,
+        1.92,
+        -2.24
+      ],
+      "to": [
+        1.44,
+        4.48,
+        1.6
+      ],
+      "color": 0,
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        }
+      }
+    },
+    {
+      "uuid": "sz-0001",
+      "name": "barrel",
+      "from": [
+        -0.6,
+        2.92,
+        -8
+      ],
+      "to": [
+        0.6,
+        4.12,
+        -2.24
+      ],
+      "color": 0,
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        }
+      }
+    },
+    {
+      "uuid": "sz-0002",
+      "name": "barrel_top",
+      "from": [
+        -0.72,
+        4.04,
+        -7.84
+      ],
+      "to": [
+        0.72,
+        4.6,
+        -2.4
+      ],
+      "color": 1,
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        }
+      }
+    },
+    {
+      "uuid": "sz-0003",
+      "name": "cylinder",
+      "from": [
+        -1.76,
+        1.44,
+        -3.2
+      ],
+      "to": [
+        1.76,
+        4.96,
+        -0.64
+      ],
+      "color": 0,
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        }
+      }
+    },
+    {
+      "uuid": "sz-0004",
+      "name": "cylinder_band",
+      "from": [
+        -1.92,
+        2.88,
+        -3.36
+      ],
+      "to": [
+        1.92,
+        3.52,
+        -0.48
+      ],
+      "color": 1,
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        }
+      }
+    },
+    {
+      "uuid": "sz-0005",
+      "name": "hammer",
+      "from": [
+        -0.56,
+        4.64,
+        0.72
+      ],
+      "to": [
+        0.56,
+        6.24,
+        1.84
+      ],
+      "color": 1,
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        }
+      },
+      "rotation": {
+        "angle": -14.32,
+        "axis": "y",
+        "origin": [
+          0,
+          5.44,
+          1.28
+        ]
+      }
+    },
+    {
+      "uuid": "sz-0006",
+      "name": "grip",
+      "from": [
+        -1.04,
+        -3.04,
+        0.48
+      ],
+      "to": [
+        1.04,
+        2.08,
+        2.72
+      ],
+      "color": 2,
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#2"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#2"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#2"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#2"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#2"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#2"
+        }
+      },
+      "rotation": {
+        "angle": -10.31,
+        "axis": "y",
+        "origin": [
+          0,
+          -0.48,
+          1.6
+        ]
+      }
+    },
+    {
+      "uuid": "sz-0007",
+      "name": "grip_cap",
+      "from": [
+        -1.12,
+        -3.6,
+        0.8
+      ],
+      "to": [
+        1.12,
+        -2.8,
+        3.36
+      ],
+      "color": 3,
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#3"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#3"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#3"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#3"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#3"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#3"
+        }
+      },
+      "rotation": {
+        "angle": -10.31,
+        "axis": "y",
+        "origin": [
+          0,
+          -3.2,
+          2.08
+        ]
+      }
+    },
+    {
+      "uuid": "sz-0008",
+      "name": "trigger_guard",
+      "from": [
+        -1.28,
+        -0.08,
+        -1.12
+      ],
+      "to": [
+        1.28,
+        0.72,
+        0.8
+      ],
+      "color": 3,
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#3"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#3"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#3"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#3"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#3"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#3"
+        }
+      }
+    },
+    {
+      "uuid": "sz-0009",
+      "name": "front_sight",
+      "from": [
+        -0.28,
+        4.16,
+        -8.28
+      ],
+      "to": [
+        0.28,
+        5.12,
+        -7.72
+      ],
+      "color": 3,
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#3"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#3"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#3"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#3"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#3"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#3"
+        }
+      }
+    },
+    {
+      "uuid": "sz-0010",
+      "name": "cylinder_chamber",
+      "from": [
+        -1.576,
+        2.384,
+        -3.64
+      ],
+      "to": [
+        -1.224,
+        2.736,
+        -3.08
+      ],
+      "color": 1,
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        }
+      }
+    },
+    {
+      "uuid": "sz-0011",
+      "name": "cylinder_chamber",
+      "from": [
+        -1.016,
+        3.664,
+        -3.64
+      ],
+      "to": [
+        -0.664,
+        4.016,
+        -3.08
+      ],
+      "color": 1,
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        }
+      }
+    },
+    {
+      "uuid": "sz-0012",
+      "name": "cylinder_chamber",
+      "from": [
+        -0.456,
+        2.384,
+        -3.64
+      ],
+      "to": [
+        -0.104,
+        2.736,
+        -3.08
+      ],
+      "color": 1,
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        }
+      }
+    },
+    {
+      "uuid": "sz-0013",
+      "name": "cylinder_chamber",
+      "from": [
+        0.104,
+        3.664,
+        -3.64
+      ],
+      "to": [
+        0.456,
+        4.016,
+        -3.08
+      ],
+      "color": 1,
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        }
+      }
+    },
+    {
+      "uuid": "sz-0014",
+      "name": "cylinder_chamber",
+      "from": [
+        0.664,
+        2.384,
+        -3.64
+      ],
+      "to": [
+        1.016,
+        2.736,
+        -3.08
+      ],
+      "color": 1,
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        }
+      }
+    },
+    {
+      "uuid": "sz-0015",
+      "name": "cylinder_chamber",
+      "from": [
+        1.224,
+        3.664,
+        -3.64
+      ],
+      "to": [
+        1.576,
+        4.016,
+        -3.08
+      ],
+      "color": 1,
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        }
+      }
+    }
+  ],
+  "outliner": [
+    "sz-0000",
+    "sz-0001",
+    "sz-0002",
+    "sz-0003",
+    "sz-0004",
+    "sz-0005",
+    "sz-0006",
+    "sz-0007",
+    "sz-0008",
+    "sz-0009",
+    "sz-0010",
+    "sz-0011",
+    "sz-0012",
+    "sz-0013",
+    "sz-0014",
+    "sz-0015"
+  ],
+  "textures": [
+    {
+      "path": "metal.svg",
+      "name": "metal",
+      "folder": "Strike Zone",
+      "namespace": "",
+      "id": "0",
+      "particle": false,
+      "render_mode": "default",
+      "visible": true,
+      "mode": "bitmap",
+      "saved": true,
+      "uuid": "tex-0",
+      "source": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiI+PHJlY3Qgd2lkdGg9IjE2IiBoZWlnaHQ9IjE2IiBmaWxsPSJyZ2IoMTIyLDEyNywxMzYpIi8+PC9zdmc+"
+    },
+    {
+      "path": "dark.svg",
+      "name": "dark",
+      "folder": "Strike Zone",
+      "namespace": "",
+      "id": "1",
+      "particle": false,
+      "render_mode": "default",
+      "visible": true,
+      "mode": "bitmap",
+      "saved": true,
+      "uuid": "tex-1",
+      "source": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiI+PHJlY3Qgd2lkdGg9IjE2IiBoZWlnaHQ9IjE2IiBmaWxsPSJyZ2IoMTcsMjEsMjgpIi8+PC9zdmc+"
+    },
+    {
+      "path": "leather.svg",
+      "name": "leather",
+      "folder": "Strike Zone",
+      "namespace": "",
+      "id": "2",
+      "particle": false,
+      "render_mode": "default",
+      "visible": true,
+      "mode": "bitmap",
+      "saved": true,
+      "uuid": "tex-2",
+      "source": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiI+PHJlY3Qgd2lkdGg9IjE2IiBoZWlnaHQ9IjE2IiBmaWxsPSJyZ2IoMTA3LDYzLDMxKSIvPjwvc3ZnPg=="
+    },
+    {
+      "path": "gold.svg",
+      "name": "gold",
+      "folder": "Strike Zone",
+      "namespace": "",
+      "id": "3",
+      "particle": false,
+      "render_mode": "default",
+      "visible": true,
+      "mode": "bitmap",
+      "saved": true,
+      "uuid": "tex-3",
+      "source": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiI+PHJlY3Qgd2lkdGg9IjE2IiBoZWlnaHQ9IjE2IiBmaWxsPSJyZ2IoMjE0LDE2NCw3OCkiLz48L3N2Zz4="
+    }
+  ]
+}

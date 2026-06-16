@@ -56,6 +56,7 @@ export function buildPreviewCharacter(loadout, team = "ct", portrait = false, ch
     skinId !== "soldier" &&
     (
       skinId.startsWith("among") ||
+      skinId.startsWith("cowboy") ||
       skinId === "neon_runner" ||
       skinId === "shadow" ||
       skinId === "trevas_horror" ||

@@ -11,8 +11,9 @@ export function playGunshot(weaponName = "rifle") {
   try {
     const ctx = getCtx();
     const t = ctx.currentTime;
-    const isPistol = weaponName.toLowerCase().includes("glock");
-    const isKnife = weaponName.toLowerCase().includes("faca");
+    const lower = weaponName.toLowerCase();
+    const isPistol = lower.includes("glock") || lower.includes("revólver") || lower.includes("revolver");
+    const isKnife = lower.includes("faca");
 
     if (isKnife) return;
 

@@ -1,0 +1,359 @@
+{
+  "meta": {
+    "format_version": "4.10",
+    "model_format": "free",
+    "box_uv": true
+  },
+  "name": "Cacto Cowboy",
+  "model_identifier": "cactus_prop",
+  "visible_box": [
+    3,
+    3,
+    3
+  ],
+  "variable_placeholders": "",
+  "resolution": {
+    "width": 64,
+    "height": 64
+  },
+  "elements": [
+    {
+      "uuid": "sz-0000",
+      "name": "trunk",
+      "from": [
+        -2.24,
+        0,
+        -2.24
+      ],
+      "to": [
+        2.24,
+        28.8,
+        2.24
+      ],
+      "color": 0,
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        }
+      }
+    },
+    {
+      "uuid": "sz-0001",
+      "name": "arm_l",
+      "from": [
+        -6.4,
+        11.36,
+        -1.6
+      ],
+      "to": [
+        -3.2,
+        23.84,
+        1.6
+      ],
+      "color": 0,
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        }
+      },
+      "rotation": {
+        "angle": -16.04,
+        "axis": "y",
+        "origin": [
+          -4.8,
+          17.6,
+          0
+        ]
+      }
+    },
+    {
+      "uuid": "sz-0002",
+      "name": "arm_r",
+      "from": [
+        4,
+        16.16,
+        -1.44
+      ],
+      "to": [
+        6.88,
+        26.08,
+        1.44
+      ],
+      "color": 0,
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        }
+      },
+      "rotation": {
+        "angle": 18.33,
+        "axis": "y",
+        "origin": [
+          5.44,
+          21.12,
+          0
+        ]
+      }
+    },
+    {
+      "uuid": "sz-0003",
+      "name": "flower",
+      "from": [
+        -0.16,
+        29.12,
+        -1.76
+      ],
+      "to": [
+        2.08,
+        30.4,
+        0.48
+      ],
+      "color": 1,
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        }
+      }
+    }
+  ],
+  "outliner": [
+    "sz-0000",
+    "sz-0001",
+    "sz-0002",
+    "sz-0003"
+  ],
+  "textures": [
+    {
+      "path": "cactus.svg",
+      "name": "cactus",
+      "folder": "Strike Zone",
+      "namespace": "",
+      "id": "0",
+      "particle": false,
+      "render_mode": "default",
+      "visible": true,
+      "mode": "bitmap",
+      "saved": true,
+      "uuid": "tex-0",
+      "source": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiI+PHJlY3Qgd2lkdGg9IjE2IiBoZWlnaHQ9IjE2IiBmaWxsPSJyZ2IoNDcsMTExLDY5KSIvPjwvc3ZnPg=="
+    },
+    {
+      "path": "clothRed.svg",
+      "name": "clothRed",
+      "folder": "Strike Zone",
+      "namespace": "",
+      "id": "1",
+      "particle": false,
+      "render_mode": "default",
+      "visible": true,
+      "mode": "bitmap",
+      "saved": true,
+      "uuid": "tex-1",
+      "source": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiI+PHJlY3Qgd2lkdGg9IjE2IiBoZWlnaHQ9IjE2IiBmaWxsPSJyZ2IoMTQzLDM5LDMyKSIvPjwvc3ZnPg=="
+    }
+  ]
+}

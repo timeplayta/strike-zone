@@ -5,13 +5,14 @@ import { GLTFLoader } from "./vendor/GLTFLoader.js";
 import { buildHdWeapon } from "./weapon-models-hd.js";
 
 const WEAPON_SOURCES = {
-  ak47:  ['./assets/models/weapons/ak47.glb'],
-  awm:   ['./assets/models/weapons/awm.glb'],
-  glock: ['./assets/models/weapons/glock.glb'],
-  scar:  ['./assets/models/weapons/scar.glb'],
-  m4:    ['./assets/models/weapons/m4.glb'],
-  ump45: ['./assets/models/weapons/ump45.glb'],
-  doze:  ['./assets/models/weapons/doze.glb'],
+  ak47:  ['./assets/models/blockbench/weapons/ak47.glb', './assets/models/weapons/ak47.glb'],
+  awm:   ['./assets/models/blockbench/weapons/awm.glb', './assets/models/weapons/awm.glb'],
+  glock: ['./assets/models/blockbench/weapons/glock.glb', './assets/models/weapons/glock.glb'],
+  scar:  ['./assets/models/blockbench/weapons/scar.glb', './assets/models/weapons/scar.glb'],
+  m4:    ['./assets/models/blockbench/weapons/m4.glb', './assets/models/weapons/m4.glb'],
+  ump45: ['./assets/models/blockbench/weapons/ump45.glb', './assets/models/weapons/ump45.glb'],
+  doze:  ['./assets/models/blockbench/weapons/doze.glb', './assets/models/weapons/doze.glb'],
+  revolver: ['./assets/models/blockbench/weapons/revolver.glb'],
 };
 
 const templates = new Map();
@@ -74,7 +75,7 @@ export function buildGltfWeapon(type, tint = 0x5c3a1e) {
   g.position.sub(center);
 
   const maxDim = Math.max(size.x, size.y, size.z, 0.01);
-  const target = type === "glock" ? 0.38 : 0.52;
+  const target = type === "glock" || type === "revolver" ? 0.38 : 0.52;
   g.scale.setScalar(target / maxDim);
 
   g.userData.weaponType = type;

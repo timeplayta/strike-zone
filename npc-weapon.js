@@ -15,6 +15,7 @@ const HAND_GRIP = {
   doze: { pos: [0.02, 0.04, 0.02], rot: [1.57, 0, 1.55], scale: 0.85 },
   bazooka: { pos: [0.03, 0.055, 0.02], rot: [1.57, 0, 1.57], scale: 0.9 },
   glock: { pos: [0.01, 0.03, 0.01], rot: [1.57, 0, 1.57], scale: 0.7 },
+  revolver: { pos: [0.012, 0.032, 0.012], rot: [1.57, 0, 1.57], scale: 0.74 },
 };
 
 export function pickNpcWeaponType(index, total = 4, role = null) {

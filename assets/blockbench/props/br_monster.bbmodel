@@ -1,0 +1,621 @@
+{
+  "meta": {
+    "format_version": "4.10",
+    "model_format": "free",
+    "box_uv": true
+  },
+  "name": "Titan Frontier",
+  "model_identifier": "br_monster",
+  "visible_box": [
+    3,
+    3,
+    3
+  ],
+  "variable_placeholders": "",
+  "resolution": {
+    "width": 64,
+    "height": 64
+  },
+  "elements": [
+    {
+      "uuid": "sz-0000",
+      "name": "body",
+      "from": [
+        -6.4,
+        5.2,
+        -4.96
+      ],
+      "to": [
+        6.4,
+        31.6,
+        4.96
+      ],
+      "color": 0,
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        }
+      }
+    },
+    {
+      "uuid": "sz-0001",
+      "name": "head",
+      "from": [
+        -5.44,
+        29.76,
+        -4.96
+      ],
+      "to": [
+        5.44,
+        39.04,
+        4.32
+      ],
+      "color": 1,
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        }
+      }
+    },
+    {
+      "uuid": "sz-0002",
+      "name": "mouth_plate",
+      "from": [
+        -4.32,
+        30.24,
+        -5.84
+      ],
+      "to": [
+        4.32,
+        32.16,
+        -5.04
+      ],
+      "color": 2,
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#2"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#2"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#2"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#2"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#2"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#2"
+        }
+      }
+    },
+    {
+      "uuid": "sz-0003",
+      "name": "horn",
+      "from": [
+        -4.96,
+        36.4,
+        -1.44
+      ],
+      "to": [
+        -2.72,
+        45.2,
+        0.8
+      ],
+      "color": 3,
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#3"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#3"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#3"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#3"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#3"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#3"
+        }
+      },
+      "rotation": {
+        "angle": 16.04,
+        "axis": "y",
+        "origin": [
+          -3.84,
+          40.8,
+          -0.32
+        ]
+      }
+    },
+    {
+      "uuid": "sz-0004",
+      "name": "arm",
+      "from": [
+        -11.04,
+        10.72,
+        -1.76
+      ],
+      "to": [
+        -7.52,
+        28.32,
+        1.76
+      ],
+      "color": 0,
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        }
+      },
+      "rotation": {
+        "angle": -27.5,
+        "axis": "y",
+        "origin": [
+          -9.28,
+          19.52,
+          0
+        ]
+      }
+    },
+    {
+      "uuid": "sz-0005",
+      "name": "horn",
+      "from": [
+        2.72,
+        36.4,
+        -1.44
+      ],
+      "to": [
+        4.96,
+        45.2,
+        0.8
+      ],
+      "color": 3,
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#3"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#3"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#3"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#3"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#3"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#3"
+        }
+      },
+      "rotation": {
+        "angle": -16.04,
+        "axis": "y",
+        "origin": [
+          3.84,
+          40.8,
+          -0.32
+        ]
+      }
+    },
+    {
+      "uuid": "sz-0006",
+      "name": "arm",
+      "from": [
+        7.52,
+        10.72,
+        -1.76
+      ],
+      "to": [
+        11.04,
+        28.32,
+        1.76
+      ],
+      "color": 0,
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        }
+      },
+      "rotation": {
+        "angle": 27.5,
+        "axis": "y",
+        "origin": [
+          9.28,
+          19.52,
+          0
+        ]
+      }
+    }
+  ],
+  "outliner": [
+    "sz-0000",
+    "sz-0001",
+    "sz-0002",
+    "sz-0003",
+    "sz-0004",
+    "sz-0005",
+    "sz-0006"
+  ],
+  "textures": [
+    {
+      "path": "rockDark.svg",
+      "name": "rockDark",
+      "folder": "Strike Zone",
+      "namespace": "",
+      "id": "0",
+      "particle": false,
+      "render_mode": "default",
+      "visible": true,
+      "mode": "bitmap",
+      "saved": true,
+      "uuid": "tex-0",
+      "source": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiI+PHJlY3Qgd2lkdGg9IjE2IiBoZWlnaHQ9IjE2IiBmaWxsPSJyZ2IoNjksNzIsNjYpIi8+PC9zdmc+"
+    },
+    {
+      "path": "rockMid.svg",
+      "name": "rockMid",
+      "folder": "Strike Zone",
+      "namespace": "",
+      "id": "1",
+      "particle": false,
+      "render_mode": "default",
+      "visible": true,
+      "mode": "bitmap",
+      "saved": true,
+      "uuid": "tex-1",
+      "source": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiI+PHJlY3Qgd2lkdGg9IjE2IiBoZWlnaHQ9IjE2IiBmaWxsPSJyZ2IoMTA1LDEwOSwxMDEpIi8+PC9zdmc+"
+    },
+    {
+      "path": "purple.svg",
+      "name": "purple",
+      "folder": "Strike Zone",
+      "namespace": "",
+      "id": "2",
+      "particle": false,
+      "render_mode": "default",
+      "visible": true,
+      "mode": "bitmap",
+      "saved": true,
+      "uuid": "tex-2",
+      "source": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiI+PHJlY3Qgd2lkdGg9IjE2IiBoZWlnaHQ9IjE2IiBmaWxsPSJyZ2IoMTAwLDc0LDEzNikiLz48L3N2Zz4="
+    },
+    {
+      "path": "bone.svg",
+      "name": "bone",
+      "folder": "Strike Zone",
+      "namespace": "",
+      "id": "3",
+      "particle": false,
+      "render_mode": "default",
+      "visible": true,
+      "mode": "bitmap",
+      "saved": true,
+      "uuid": "tex-3",
+      "source": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiI+PHJlY3Qgd2lkdGg9IjE2IiBoZWlnaHQ9IjE2IiBmaWxsPSJyZ2IoMjE0LDIwOCwxOTYpIi8+PC9zdmc+"
+    }
+  ]
+}

@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { upgradeWithBlockbenchModel } from "./blockbench-model-loader.js";
 
 const matCache = new Map();
 
@@ -255,12 +256,254 @@ function pineTree(x, z, scale = 1) {
 
 function borderMountain(x, z, scale = 1, rot = 0) {
   const g = new THREE.Group();
-  const m = mat(0x5b5f58);
+  const rockDark = mat(0x44483f);
+  const rockMid = mat(0x666a60);
+  const rockLight = mat(0x7d8074);
   const snow = mat(0xd8dde6);
-  const base = mesh(new THREE.ConeGeometry(18 * scale, 36 * scale, 7), m, [0, 18 * scale, 0]);
-  base.rotation.y = rot;
+  const pine = mat(0x203b1f);
+
+  // Cordilheira baixa e comprida: vários volumes sobrepostos, não um triângulo isolado.
+  const base = mesh(new THREE.DodecahedronGeometry(22 * scale, 1), rockDark, [0, 12 * scale, 0]);
+  base.scale.set(2.45, 0.62, 0.9);
+  base.rotation.set(0.08, rot, -0.03);
   g.add(base);
-  g.add(mesh(new THREE.ConeGeometry(6 * scale, 7 * scale, 7), snow, [0, 34 * scale, 0]));
+
+  const offsets = [-42, -24, -7, 14, 33, 51];
+  for (let i = 0; i < offsets.length; i++) {
+    const off = offsets[i] * scale;
+    const h = (24 + (i % 3) * 7 + (i === 3 ? 8 : 0)) * scale;
+    const r = (11 + (i % 4) * 2.2) * scale;
+    const body = mesh(new THREE.IcosahedronGeometry(r, 1), i % 2 ? rockMid : rockLight, [off, h * 0.48, (i % 2 ? -2.5 : 2.5) * scale]);
+    body.scale.set(1.05 + (i % 2) * 0.35, 1.35 + (i % 3) * 0.18, 0.82);
+    body.rotation.set(0.16 * i, rot + i * 0.37, -0.08 + i * 0.03);
+    g.add(body);
+
+    const cap = mesh(new THREE.ConeGeometry(r * 0.42, h * 0.28, 6), snow, [off, h * 0.94, (i % 2 ? -2.8 : 2.8) * scale]);
+    cap.rotation.y = rot + Math.PI * 0.16 * i;
+    g.add(cap);
+  }
+
+  // Faixas horizontais e talus no pé dão leitura de rocha, não de cone.
+  for (let i = 0; i < 5; i++) {
+    const stripe = mesh(new THREE.BoxGeometry((78 - i * 7) * scale, 1.3 * scale, 2.2 * scale), i % 2 ? rockDark : rockMid, [0, (5 + i * 3.6) * scale, (9 + i * 0.8) * scale]);
+    stripe.rotation.y = rot + 0.04 * (i - 2);
+    stripe.rotation.z = -0.08 + i * 0.025;
+    g.add(stripe);
+  }
+
+  for (let i = 0; i < 7; i++) {
+    const sx = (-39 + i * 13) * scale;
+    const tree = mesh(new THREE.ConeGeometry(2.2 * scale, 6.2 * scale, 6), pine, [sx, 3.1 * scale, -12 * scale]);
+    tree.rotation.y = i * 0.7;
+    g.add(tree);
+  }
+
+  g.position.set(x, 0, z);
+  g.rotation.y = rot;
+  return g;
+}
+
+function brCompoundPad(x, z, tint = 0x6f8a3f) {
+  const g = new THREE.Group();
+  const dirt = new THREE.Mesh(
+    new THREE.CircleGeometry(150, 32),
+    new THREE.MeshLambertMaterial({ color: 0x6b684c, transparent: true, opacity: 0.82 })
+  );
+  dirt.rotation.x = -Math.PI / 2;
+  dirt.position.y = 0.021;
+  g.add(dirt);
+  const plaza = new THREE.Mesh(
+    new THREE.PlaneGeometry(86, 62),
+    new THREE.MeshLambertMaterial({ color: tint })
+  );
+  plaza.rotation.x = -Math.PI / 2;
+  plaza.position.y = 0.026;
+  g.add(plaza);
+  for (let i = 0; i < 14; i++) {
+    const stripe = mesh(new THREE.BoxGeometry(8 + (i % 3) * 4, 0.035, 0.65), mat(0x3d3a32), [(-6.5 + i) * 11, 0.045, -34 + (i % 5) * 15]);
+    stripe.rotation.y = (i % 2 ? 0.28 : -0.18);
+    g.add(stripe);
+  }
+  g.position.set(x, 0, z);
+  return g;
+}
+
+function brHouse(x, z, w = 32, d = 24, floors = 2, tint = 0x9d6b42) {
+  const g = new THREE.Group();
+  const h = floors === 2 ? 5.2 : 3.2;
+  const wall = mat(0xc4a17a);
+  const trim = mat(0x2b2f38);
+  const roof = mat(0x7a2e1f);
+  const glass = new THREE.MeshStandardMaterial({ color: 0x88c7ff, roughness: 0.18, metalness: 0.05, transparent: true, opacity: 0.52 });
+
+  // Parede em 4 partes, frente com vão aberto para porta física do gameplay.
+  g.add(
+    mesh(new THREE.BoxGeometry(w, h, 0.7), wall, [0, h / 2, d / 2]),
+    mesh(new THREE.BoxGeometry(0.7, h, d), wall, [-w / 2, h / 2, 0]),
+    mesh(new THREE.BoxGeometry(0.7, h, d), wall, [w / 2, h / 2, 0]),
+    mesh(new THREE.BoxGeometry((w - 4.8) / 2, h, 0.7), wall, [-(w + 4.8) / 4, h / 2, -d / 2]),
+    mesh(new THREE.BoxGeometry((w - 4.8) / 2, h, 0.7), wall, [(w + 4.8) / 4, h / 2, -d / 2])
+  );
+  g.add(mesh(new THREE.BoxGeometry(w + 2.5, 1.35, d + 2.4), roof, [0, h + 0.68, 0]));
+  g.add(mesh(new THREE.BoxGeometry(w * 0.6, 0.32, 0.36), mat(tint), [0, h + 1.42, -d / 2 - 0.15]));
+
+  const winRows = floors === 2 ? [1.9, 3.75] : [1.75];
+  for (const wy of winRows) {
+    for (const sx of [-1, 1]) {
+      g.add(mesh(new THREE.BoxGeometry(3.2, 1.35, 0.14), glass, [sx * w * 0.24, wy, -d / 2 - 0.38]));
+      g.add(mesh(new THREE.BoxGeometry(0.16, 1.55, 0.18), trim, [sx * w * 0.24, wy, -d / 2 - 0.48]));
+      g.add(mesh(new THREE.BoxGeometry(3.45, 0.16, 0.18), trim, [sx * w * 0.24, wy, -d / 2 - 0.49]));
+    }
+  }
+
+  // Piso interno visível pelo vão.
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(w - 2, d - 2), new THREE.MeshLambertMaterial({ color: 0x5b4b36 }));
+  floor.rotation.x = -Math.PI / 2;
+  floor.position.y = 0.045;
+  g.add(floor);
+  g.position.set(x, 0, z);
+  return g;
+}
+
+function brWarehouse(x, z, w = 44, d = 26, tint = 0x5f7688) {
+  const g = brHouse(0, 0, w, d, 1, tint);
+  g.children.forEach((c) => {
+    if (c.material?.color) c.material.color.offsetHSL(0, -0.1, -0.08);
+  });
+  g.add(mesh(new THREE.BoxGeometry(w + 4, 0.45, d + 4), mat(0x28313a), [0, 4.15, 0]));
+  for (let i = 0; i < 4; i++) {
+    const vent = mesh(new THREE.BoxGeometry(3.5, 0.38, 0.3), mat(0x11151c), [-15 + i * 10, 3.35, -d / 2 - 0.55]);
+    g.add(vent);
+  }
+  g.position.set(x, 0, z);
+  return g;
+}
+
+function brTower(x, z, tint = 0x9d6b42) {
+  const g = new THREE.Group();
+  const metal = metalMat(0x333840);
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
+    const leg = mesh(new THREE.CylinderGeometry(0.18, 0.24, 10, 6), metal, [sx * 2.2, 5, sz * 2.2]);
+    leg.rotation.z = sx * 0.05;
+    g.add(leg);
+  }
+  g.add(mesh(new THREE.BoxGeometry(6.2, 0.5, 6.2), mat(tint), [0, 9.4, 0]));
+  g.add(mesh(new THREE.BoxGeometry(5.4, 2.2, 5.4), mat(0x2c333b), [0, 10.65, 0]));
+  g.add(mesh(new THREE.ConeGeometry(4.4, 1.2, 4), mat(0x20242c), [0, 12.25, 0]));
+  g.children[g.children.length - 1].rotation.y = Math.PI / 4;
+  g.position.set(x, 0, z);
+  return g;
+}
+
+function brMonster(x, z, scale = 1.2, tint = 0x765a8c) {
+  const g = new THREE.Group();
+  const body = mat(0x3d3a32);
+  const accent = mat(tint);
+  const bone = mat(0xd6d0c4);
+  g.add(mesh(new THREE.CylinderGeometry(3.6 * scale, 5.4 * scale, 10 * scale, 9), body, [0, 5 * scale, 0]));
+  g.add(mesh(new THREE.SphereGeometry(3.8 * scale, 14, 10), body, [0, 11.5 * scale, 0]));
+  for (const sx of [-1, 1]) {
+    const arm = mesh(new THREE.CylinderGeometry(0.8 * scale, 1.05 * scale, 8.5 * scale, 8), body, [sx * 4.8 * scale, 7.3 * scale, 0]);
+    arm.rotation.z = sx * 0.62;
+    g.add(arm);
+    const horn = mesh(new THREE.ConeGeometry(0.8 * scale, 2.6 * scale, 8), bone, [sx * 2.2 * scale, 14.2 * scale, 0]);
+    horn.rotation.z = sx * -0.38;
+    g.add(horn);
+  }
+  g.add(mesh(new THREE.BoxGeometry(4.2 * scale, 0.55 * scale, 0.45 * scale), accent, [0, 10.6 * scale, -3.65 * scale]));
+  g.position.set(x, 0, z);
+  g.rotation.y = (x + z) * 0.002;
+  return g;
+}
+
+function cactus(x, z, scale = 1) {
+  const g = new THREE.Group();
+  const green = mat(0x2f6f45);
+  g.add(mesh(new THREE.CylinderGeometry(0.22 * scale, 0.25 * scale, 2.3 * scale, 7), green, [0, 1.15 * scale, 0]));
+  for (const sx of [-1, 1]) {
+    const arm = mesh(new THREE.CylinderGeometry(0.12 * scale, 0.13 * scale, 0.92 * scale, 7), green, [sx * 0.38 * scale, 1.25 * scale, 0]);
+    arm.rotation.z = sx * 0.45;
+    g.add(arm);
+  }
+  g.position.set(x, 0, z);
+  return withBlockbenchModel(g, "cactus_prop", { targetWidth: 1.6 * scale, targetHeight: 2.5 * scale });
+}
+
+function brRoad(x, z, w = 120, d = 12, rot = 0, color = 0x5b5642) {
+  const g = new THREE.Group();
+  const road = new THREE.Mesh(
+    new THREE.PlaneGeometry(w, d),
+    new THREE.MeshLambertMaterial({ color, transparent: true, opacity: 0.82 })
+  );
+  road.rotation.x = -Math.PI / 2;
+  road.position.y = 0.028;
+  g.add(road);
+  for (let i = 0; i < Math.floor(w / 20); i++) {
+    const stripe = mesh(new THREE.BoxGeometry(7, 0.025, 0.38), mat(0xd5c66a), [-w / 2 + 12 + i * 20, 0.05, 0]);
+    g.add(stripe);
+  }
+  g.position.set(x, 0, z);
+  g.rotation.y = rot;
+  return g;
+}
+
+function brBillboard(x, z, rot = 0, tint = 0x9d6b42) {
+  const g = new THREE.Group();
+  const wood = woodMat(0x5c3a1e);
+  const sign = mat(tint);
+  g.add(mesh(new THREE.CylinderGeometry(0.16, 0.18, 5.6, 6), wood, [-2.4, 2.8, 0]));
+  g.add(mesh(new THREE.CylinderGeometry(0.16, 0.18, 5.6, 6), wood, [2.4, 2.8, 0]));
+  g.add(mesh(new THREE.BoxGeometry(6.2, 2.6, 0.32), sign, [0, 4.3, 0]));
+  g.add(mesh(new THREE.BoxGeometry(5.4, 0.28, 0.38), mat(0x11151c), [0, 4.9, -0.08]));
+  g.add(mesh(new THREE.BoxGeometry(4.2, 0.2, 0.4), mat(0xffd36b), [0, 4.1, -0.1]));
+  g.position.set(x, 0, z);
+  g.rotation.y = rot;
+  return g;
+}
+
+function brRamp(x, z, rot = 0, tint = 0x7a4f2a) {
+  const g = new THREE.Group();
+  const matRamp = woodMat(tint);
+  const deck = mesh(new THREE.BoxGeometry(7.2, 0.36, 5.6), matRamp, [0, 1.35, 0]);
+  deck.rotation.x = -0.34;
+  g.add(deck);
+  for (const sx of [-1, 1]) {
+    g.add(mesh(new THREE.BoxGeometry(0.28, 1.6, 5.8), matRamp, [sx * 3.45, 0.8, 0]));
+  }
+  g.position.set(x, 0, z);
+  g.rotation.y = rot;
+  return g;
+}
+
+function brBridge(x, z, rot = 0) {
+  const g = new THREE.Group();
+  const wood = woodMat(0x6b4423);
+  g.add(mesh(new THREE.BoxGeometry(22, 0.45, 5.2), wood, [0, 0.55, 0]));
+  for (let i = 0; i < 9; i++) {
+    g.add(mesh(new THREE.BoxGeometry(0.35, 0.28, 5.8), wood, [-9.2 + i * 2.3, 0.86, 0]));
+  }
+  for (const sz of [-1, 1]) {
+    g.add(mesh(new THREE.BoxGeometry(22.4, 0.22, 0.24), mat(0x2a1810), [0, 1.25, sz * 2.85]));
+  }
+  g.position.set(x, 0, z);
+  g.rotation.y = rot;
+  return g;
+}
+
+function brBalloon(x, z, tint = 0xff5533) {
+  const g = new THREE.Group();
+  const crate = supplyBox(0, 0, 0x445533);
+  crate.scale.set(1.8, 1.8, 1.8);
+  crate.position.y = 0.08;
+  g.add(crate);
+  const balloon = mesh(new THREE.SphereGeometry(2.4, 18, 12), mat(tint), [0, 8.4, 0]);
+  balloon.scale.y = 1.25;
+  g.add(balloon);
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
+    const rope = mesh(new THREE.CylinderGeometry(0.035, 0.035, 6.4, 5), mat(0x111111), [sx * 1.3, 4.5, sz * 1.0]);
+    rope.rotation.z = sx * 0.12;
+    g.add(rope);
+  }
   g.position.set(x, 0, z);
   return g;
 }
@@ -322,9 +565,20 @@ export function getPropCollider(prop) {
     chain: [0.2, 2.5],
     house: [3.8, 2.8],
     house2: [4.2, 4.8],
+    br_pad: [0, 0],
+    br_house: [0, 0],
+    br_warehouse: [0, 0],
+    br_tower: [3.2, 12.5],
+    br_monster: [6.5 * (prop.scale || 1), 16 * (prop.scale || 1)],
+    br_road: [0, 0],
+    br_billboard: [6.4, 5.8],
+    br_ramp: [7.2, 2.2],
+    br_bridge: [22, 1.4],
+    br_balloon: [5.8, 12],
+    cactus: [1.2 * (prop.scale || 1), 2.8 * (prop.scale || 1)],
     rock: [1.6 * (prop.scale || 1), 1.2 * (prop.scale || 1)],
     tree: [0.75 * (prop.scale || 1), 4.2 * (prop.scale || 1)],
-    mountain: [12 * (prop.scale || 1), 32 * (prop.scale || 1)],
+    mountain: [42 * (prop.scale || 1), 34 * (prop.scale || 1)],
   }[prop.type] || [0.5, 0.8];
   return { x: prop.x, z: prop.z, w: r[0], h: r[1] };
 }
@@ -333,6 +587,10 @@ function mesh(geo, material, pos) {
   const m = new THREE.Mesh(geo, material);
   m.position.set(pos[0], pos[1], pos[2]);
   return m;
+}
+
+function withBlockbenchModel(group, key, opts) {
+  return upgradeWithBlockbenchModel(group, key, opts);
 }
 
 const BUILDERS = {
@@ -353,9 +611,32 @@ const BUILDERS = {
   chain: (p) => chainHang(p.x, p.z, p.rot || 0),
   house: (p) => house(p.x, p.z, p.rot || 0, 1),
   house2: (p) => house(p.x, p.z, p.rot || 0, 2),
-  rock: (p) => rock(p.x, p.z, p.scale || 1),
+  br_pad: (p) => brCompoundPad(p.x, p.z, p.tint || 0x6f8a3f),
+  br_house: (p) => brHouse(p.x, p.z, p.w || 32, p.d || 24, p.floors || 2, p.tint || 0x9d6b42),
+  br_warehouse: (p) => brWarehouse(p.x, p.z, p.w || 44, p.d || 26, p.tint || 0x5f7688),
+  br_tower: (p) => brTower(p.x, p.z, p.tint || 0x9d6b42),
+  br_road: (p) => brRoad(p.x, p.z, p.w || 120, p.d || 12, p.rot || 0, p.tint || 0x5b5642),
+  br_billboard: (p) => brBillboard(p.x, p.z, p.rot || 0, p.tint || 0x9d6b42),
+  br_ramp: (p) => brRamp(p.x, p.z, p.rot || 0, p.tint || 0x7a4f2a),
+  br_bridge: (p) => brBridge(p.x, p.z, p.rot || 0),
+  br_balloon: (p) => brBalloon(p.x, p.z, p.tint || 0xff5533),
+  cactus: (p) => cactus(p.x, p.z, p.scale || 1),
+  br_monster: (p) => withBlockbenchModel(
+    brMonster(p.x, p.z, p.scale || 1.2, p.tint || 0x765a8c),
+    "br_monster",
+    { targetWidth: 11 * (p.scale || 1.2), targetHeight: 17 * (p.scale || 1.2) }
+  ),
+  rock: (p) => withBlockbenchModel(
+    rock(p.x, p.z, p.scale || 1),
+    "rock_cluster",
+    { targetWidth: 4.8 * (p.scale || 1), targetHeight: 2.8 * (p.scale || 1) }
+  ),
   tree: (p) => pineTree(p.x, p.z, p.scale || 1),
-  mountain: (p) => borderMountain(p.x, p.z, p.scale || 1, p.rot || 0),
+  mountain: (p) => withBlockbenchModel(
+    borderMountain(p.x, p.z, p.scale || 1, p.rot || 0),
+    "border_mountain",
+    { targetWidth: 84 * (p.scale || 1), targetHeight: 34 * (p.scale || 1) }
+  ),
 };
 
 export function buildMapProps(scene, propList, propTint = {}) {

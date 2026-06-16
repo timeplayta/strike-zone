@@ -15,6 +15,9 @@ const SKIN_COLORS = {
   shadow: 0x1a1028,
   trevas_horror: 0x14091f,
   birthday_hero: 0xffcc44,
+  cowboy_sheriff: 0xb87834,
+  cowboy_outlaw: 0x6b2a1d,
+  cowboy_vaqueiro: 0x2c5f78,
   soldier: 0x8899aa,
 };
 
@@ -171,6 +174,25 @@ export function buildAmongUsCharacter(skinId = "among_red", scale = 1, loadout =
     stripe.position.set(0, 1.52, 0.02);
     stripe.rotation.x = Math.PI / 2;
     group.add(hat, pom, stripe);
+  }
+  if (skinId.startsWith("cowboy")) {
+    const leather = new THREE.MeshStandardMaterial({ color: skinId === "cowboy_outlaw" ? 0x3a2416 : 0x6b3f1f, roughness: 0.78, metalness: 0.04 });
+    const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.44, 0.42, 0.055, 18), leather);
+    brim.position.set(0, 1.48, 0.02);
+    const crown = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.26, 0.24, 16), leather);
+    crown.position.set(0, 1.62, 0.02);
+    const band = new THREE.Mesh(
+      new THREE.BoxGeometry(0.46, 0.11, 0.045),
+      new THREE.MeshStandardMaterial({ color: skinId === "cowboy_vaqueiro" ? 0x644a88 : 0x8f2720, roughness: 0.65 })
+    );
+    band.position.set(0, 1.16, 0.48);
+    const badge = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.055, 0.055, 0.018, 5),
+      new THREE.MeshStandardMaterial({ color: 0xd6a44e, roughness: 0.3, metalness: 0.8 })
+    );
+    badge.position.set(0.18, 1.05, 0.39);
+    badge.rotation.x = Math.PI / 2;
+    group.add(brim, crown, band, badge);
   }
 
   addAmongLoadout(group, loadout, bodyMat);

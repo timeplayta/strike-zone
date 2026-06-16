@@ -88,7 +88,7 @@ export function getShopItemThumbDataUrl(item) {
     gun.rotation.set(-0.08, Math.PI / 2, 0);
     gun.scale.setScalar(item.weapon === "bazooka" ? 1.9 : item.weapon === "glock" ? 3.5 : 2.45);
     pivot.add(gun);
-    frameObject(gun, item.weapon === "glock" ? 1.42 : item.weapon === "doze" ? 1.32 : 1.16);
+    frameObject(gun, item.weapon === "glock" || item.weapon === "revolver" ? 1.42 : item.weapon === "doze" ? 1.32 : 1.16);
   } else if (item.type === "loadout") {
     const loadout = applyPresetToLoadout(DEFAULT_LOADOUT, item.slot, item.presetId);
     const opts = loadoutToBuildOpts(loadout);

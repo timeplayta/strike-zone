@@ -418,6 +418,35 @@ export function buildHdGlock(tint = 0x2a2a30) {
   return markWeapon(g, "glock");
 }
 
+export function buildHdRevolver(tint = 0x6b3f1f) {
+  const g = new THREE.Group();
+  const metal = matMetal(0xb7a27a);
+  const dark = matDark(0x17120f);
+  const grip = matGrip(tint);
+  const gold = matMetal(0xd6a44e);
+
+  g.add(box(0.09, 0.09, 0.21, metal, 0, 0.055, -0.035));
+  g.add(tube(0.048, 0.14, 18, metal, 0, 0.055, -0.105, Math.PI / 2));
+  g.add(tube(0.018, 0.36, 18, metal, 0, 0.072, -0.34, Math.PI / 2));
+  g.add(tube(0.026, 0.08, 18, dark, 0, 0.072, -0.56, Math.PI / 2));
+  g.add(box(0.062, 0.014, 0.34, dark, 0, 0.105, -0.34));
+  g.add(box(0.052, 0.07, 0.07, dark, 0, 0.13, 0.09, -0.28));
+  g.add(box(0.052, 0.122, 0.11, grip, 0, -0.07, 0.09, -0.2));
+  g.add(box(0.06, 0.012, 0.105, gold, 0, -0.14, 0.12, -0.2));
+  addTriggerGuard(g, gold, -0.005);
+  g.add(box(0.008, 0.028, 0.012, gold, 0, 0.128, -0.51));
+
+  for (let i = 0; i < 6; i++) {
+    const angle = (i / 6) * Math.PI * 2;
+    const x = Math.cos(angle) * 0.034;
+    const y = 0.055 + Math.sin(angle) * 0.034;
+    g.add(tube(0.006, 0.145, 8, cloneMat(dark), x, y, -0.105, Math.PI / 2));
+  }
+  addScrews(g, gold, [[0.046, 0.055, -0.01], [-0.046, 0.055, -0.01], [0.03, -0.05, 0.1], [-0.03, -0.05, 0.1]], 0.004);
+
+  return markWeapon(g, "revolver");
+}
+
 export function buildHdBazooka(tint = 0x45305f) {
   const g = new THREE.Group();
   const metal = matMetal(0x8a8a96);
@@ -456,6 +485,7 @@ export function buildHdWeapon(type = "ak47", tint = 0x5c3a1e) {
     case "doze": return buildHdShotgun(tint);
     case "bazooka": return buildHdBazooka(tint);
     case "glock": return buildHdGlock(tint);
+    case "revolver": return buildHdRevolver(tint);
     default: return buildHdAk47(tint);
   }
 }

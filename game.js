@@ -53,6 +53,7 @@ import { getDoorHitMeshes, buildConnectedCeiling } from "./furniture.js";
 import { createWeaponView, setWeaponView, setWeaponADS, triggerMuzzleFlash, triggerMeleeSwing, triggerReloadAnimation, updateWeaponView, hideAllWeapons, applyWeaponSkinToView } from "./weapon-view.js";
 import { findWeaponSkinItem } from "./weapon-skin-apply.js";
 import { spawnMeleePickups, updateMeleePickups, tryPickupMelee, collectMeleePickup } from "./melee-pickups.js";
+import { spawnBattleRoyaleLoot, updateBattleRoyaleLoot, tryPickupBattleRoyaleLoot, collectBattleRoyaleLoot } from "./battle-royale-loot.js";
 import { createExitZone, updateExitZone, checkExitReached } from "./exit-zone.js";
 import { playGunshot, playEmptyClip } from "./audio.js";
 import { showJumpscareOverlay, isJumpscareActive } from "./horror-jumpscare.js";
@@ -124,7 +125,7 @@ const INNER_BOMB_TIME = 90;
 const ENEMY_FIRE_MS = ENEMY_BASE_FIRE_MS;
 const BOSS_FIRE_MS = 353;
 const BASE_FOV = 75;
-const ADS_WEAPONS = ["ak47", "scar", "awm", "bazooka"];
+const ADS_WEAPONS = ["ak47", "scar", "awm", "bazooka", "revolver"];
 const ENEMY_SPAWN_DELAY_MS = 3000;
 const MIN_SPAWN_DIST_FROM_PLAYER = 18;
 
@@ -169,6 +170,8 @@ let lookDelta = { x: 0, y: 0 };
 let weaponView = null;
 let currentMapKey = "dust";
 let meleePickups = null;
+let battleRoyaleLoot = null;
+let battleRoyaleDoors = [];
 let exitZone = null;
 let currentMeleeId = null;
 let collectedMelee = { facao: false, porrete: false, katana: false };
@@ -315,7 +318,7 @@ function finishEnemyReload(e) {
 function refillAllPlayerAmmo() {
   if (!weapons) return;
   refillWeaponToMax(weapons[1], getPrimaryWeapon(primaryWeaponId));
-  refillWeaponToMax(weapons[2], WEAPONS.glock);
+  refillWeaponToMax(weapons[2], WEAPONS[weapons[2]?.id] || WEAPONS.glock);
   updateAmmoHUD();
 }
 
@@ -382,7 +385,111 @@ function equipMelee(id) {
   showOverlay(`Arma encontrada: ${def.name}`);
 }
 
+function equipBattleRoyaleWeapon(id) {
+  const def = WEAPONS[id];
+  if (!def) return false;
+  if (def.melee) {
+    equipMelee(id);
+    return true;
+  }
+  if (def.slot === 2) {
+    weapons[2] = { ...def, mag: def.mag, reserve: def.reserve, lastShot: 0 };
+    switchWeapon(2);
+    showOverlay(`Loot: ${def.name}`);
+    return true;
+  }
+  primaryWeaponId = id;
+  weapons[1] = { ...def, mag: def.mag, reserve: def.reserve, lastShot: 0 };
+  switchWeapon(1);
+  applyPlayerWeaponSkins();
+  showOverlay(`Loot: ${def.name}`);
+  return true;
+}
+
+function tryInteractBattleRoyaleLoot() {
+  if (!mapData?.openWorld || !battleRoyaleLoot || player.dead || inCinematic) return false;
+  let item = tryPickupBattleRoyaleLoot(camera, battleRoyaleLoot, 3.4);
+  if (!item && battleRoyaleLoot.hitMeshes?.length) {
+    const ray = new THREE.Raycaster(camera.position.clone(), getShootDirection(), 0, 5);
+    const hits = ray.intersectObjects(battleRoyaleLoot.hitMeshes, false);
+    if (hits.length) item = battleRoyaleLoot.items.find((i) => i.uid === hits[0].object.userData.brLootId && !i.collected);
+  }
+  if (!item) return false;
+  collectBattleRoyaleLoot(scene, battleRoyaleLoot, item);
+  if (item.kind === "ammo") {
+    if (item.ammo === "doze") {
+      if (primaryWeaponId === "doze") refillWeaponToMax(weapons[1], WEAPONS.doze);
+      else weapons[1].reserve = Math.min((weapons[1].reserve || 0) + 18, WEAPONS[primaryWeaponId]?.maxTotal || 120);
+      showOverlay("Loot: munição de doze");
+    } else {
+      refillAllPlayerAmmo();
+      showOverlay("Loot: munição AR");
+    }
+    updateAmmoHUD();
+    return true;
+  }
+  return equipBattleRoyaleWeapon(item.id);
+}
+
+function createBattleRoyaleDoor(def) {
+  const material = new THREE.MeshStandardMaterial({
+    color: def.tint || 0x6b4423,
+    roughness: 0.82,
+    metalness: 0.05,
+  });
+  const door = new THREE.Mesh(new THREE.BoxGeometry(def.w || 4.4, def.h || 3, 0.28), material);
+  door.position.set(def.x, (def.h || 3) / 2, def.z);
+  door.rotation.y = def.rot || 0;
+  door.userData.brDoorId = def.id;
+  door.userData.baseRot = door.rotation.y;
+  door.userData.w = def.w || 4.4;
+  door.userData.h = def.h || 3;
+  door.userData.d = 0.28;
+  return {
+    id: def.id,
+    mesh: door,
+    x: def.x,
+    z: def.z,
+    w: def.w || 4.4,
+    h: def.h || 3,
+    open: false,
+    angle: 0,
+  };
+}
+
+function spawnBattleRoyaleDoors() {
+  battleRoyaleDoors = [];
+  for (const def of mapData.brDoors || []) {
+    const door = createBattleRoyaleDoor(def);
+    scene.add(door.mesh);
+    battleRoyaleDoors.push(door);
+  }
+}
+
+function tryInteractBattleRoyaleDoor() {
+  if (!mapData?.openWorld || !battleRoyaleDoors.length || player.dead || inCinematic) return false;
+  const ray = new THREE.Raycaster(camera.position.clone(), getShootDirection(), 0, 6);
+  const hits = ray.intersectObjects(battleRoyaleDoors.map((d) => d.mesh), false);
+  if (!hits.length) return false;
+  const id = hits[0].object.userData.brDoorId;
+  const door = battleRoyaleDoors.find((d) => d.id === id);
+  if (!door) return false;
+  door.open = !door.open;
+  showOverlay(door.open ? "Porta aberta" : "Porta fechada");
+  return true;
+}
+
+function updateBattleRoyaleDoors(dt) {
+  for (const door of battleRoyaleDoors) {
+    const target = door.open ? -Math.PI * 0.62 : 0;
+    door.angle += (target - door.angle) * Math.min(1, dt * 9);
+    door.mesh.rotation.y = (door.mesh.userData.baseRot || 0) + door.angle;
+  }
+}
+
 function tryInteractWorld() {
+  if (tryInteractBattleRoyaleDoor()) return true;
+  if (tryInteractBattleRoyaleLoot()) return true;
   if (tryInteractMeleePickup()) return true;
   if (isLabyrinthMap(mapData)) return false;
   if (tryInteractAmmoChest()) return true;
@@ -1083,6 +1190,8 @@ function buildOpenWorldScenery(scene, mapData) {
 function buildMap() {
   walls = [];
   meleePickups = null;
+  battleRoyaleLoot = null;
+  battleRoyaleDoors = [];
   exitZone = null;
   applyMapAtmosphere();
 
@@ -1129,6 +1238,8 @@ function buildMap() {
 
   if (mapData.openWorld) {
     buildOpenWorldScenery(scene, mapData);
+    spawnBattleRoyaleDoors();
+    battleRoyaleLoot = spawnBattleRoyaleLoot(scene, mapData.brLoot || []);
   } else if (isLabyrinthMap(mapData)) {
     // Sem props no labirinto — corredores 100% livres
   } else {
@@ -1182,6 +1293,7 @@ function buildMap() {
   for (const p of mapData.props || []) {
     if (isLabyrinthMap(mapData)) continue;
     const col = getPropCollider(p);
+    if (!col.w || !col.h) continue;
     walls.push({
       mesh: null,
       box: new THREE.Box3().setFromCenterAndSize(
@@ -1381,7 +1493,7 @@ function initWeapons() {
 function applyPlayerWeaponSkins() {
   if (!weaponView || !playerName) return;
   const skins = {};
-  for (const id of ["ak47", "scar", "m4", "ump45", "awm", "doze", "bazooka", "glock"]) {
+  for (const id of ["ak47", "scar", "m4", "ump45", "awm", "doze", "bazooka", "glock", "revolver"]) {
     const color = getWeaponSkinColor(playerName, id);
     if (color) skins[id] = color;
   }
@@ -1869,14 +1981,14 @@ function onMouseMove(e) {
 
 function canPlayerADS() {
   if (currentWeapon?.melee) return false;
-  return ADS_WEAPONS.includes(primaryWeaponId);
+  return !!currentWeapon?.canADS || ADS_WEAPONS.includes(currentWeapon?.id || primaryWeaponId);
 }
 
 function updateADS(dt) {
   const want = rightMouseDown && canPlayerADS() && !player.dead && !inCinematic && roundActive;
   adsActive = want;
 
-  const def = getPrimaryWeapon(primaryWeaponId);
+  const def = currentWeapon || getPrimaryWeapon(primaryWeaponId);
   const targetFov = want ? (def.adsFov ?? 45) : BASE_FOV;
   if (camera) {
     camera.fov += (targetFov - camera.fov) * Math.min(1, dt * 14);
@@ -1889,10 +2001,10 @@ function updateADS(dt) {
   if (scope) {
     scope.classList.toggle("hidden", !want);
     scope.classList.toggle("active", want);
-    if (want) scope.dataset.active = primaryWeaponId;
+    if (want) scope.dataset.active = currentWeapon?.id || primaryWeaponId;
     else delete scope.dataset.active;
   }
-  if (weaponView) setWeaponADS(weaponView, want, primaryWeaponId);
+  if (weaponView) setWeaponADS(weaponView, want, currentWeapon?.id || primaryWeaponId);
 }
 
 function processLook() {
@@ -1920,6 +2032,7 @@ function switchWeapon(slot) {
   currentWeapon = weapons[slot];
   if (weaponView) {
     if (slot === 3 && currentMeleeId) setWeaponView(weaponView, slot, currentMeleeId);
+    else if (slot === 2) setWeaponView(weaponView, slot, currentWeapon.id || "glock");
     else setWeaponView(weaponView, slot, primaryWeaponId);
   }
   updateAmmoHUD();
@@ -1931,7 +2044,7 @@ function reload() {
   const slot = Object.keys(weapons).find((k) => weapons[k] === w) || "1";
   let baseMag;
   if (slot === "1") baseMag = getPrimaryWeapon(primaryWeaponId).mag;
-  else if (slot === "2") baseMag = WEAPONS.glock.mag;
+  else if (slot === "2") baseMag = WEAPONS[w.id]?.mag || WEAPONS.glock.mag;
   else baseMag = 1;
   if (w.mag >= baseMag) return;
   const toLoad = Math.min(baseMag - w.mag, w.reserve);
@@ -2235,7 +2348,7 @@ function spawnGhostSoul(pos) {
 
 function currentWeaponSkinItem() {
   if (!currentWeapon || currentWeapon.melee) return null;
-  const id = currentWeapon.id === "glock" ? "glock" : primaryWeaponId;
+  const id = currentWeapon.id || primaryWeaponId;
   const color = getWeaponSkinColor(playerName, id);
   return findWeaponSkinItem(id, color);
 }
@@ -2933,6 +3046,14 @@ function collides(x, z, r, who = "player") {
     if (_vClosest.distanceTo(_vCollide) < r) return true;
   }
 
+  if (who === "player" && battleRoyaleDoors.length) {
+    for (const door of battleRoyaleDoors) {
+      if (door.open) continue;
+      const halfW = door.w / 2;
+      if (Math.abs(x - door.x) < halfW + r && Math.abs(z - door.z) < 0.22 + r) return true;
+    }
+  }
+
   if (who === "boss") {
     if (!isInsideSecretRoom(x, z)) return true;
   } else if (who !== "player" && isInsideSecretRoom(x, z)) {
@@ -3041,6 +3162,18 @@ function updatePlayer(dt) {
       const hint = document.getElementById("objective");
       if (hint) hint.textContent = `Pressione E — ${WEAPONS[near.id]?.name || near.id}`;
     }
+  } else if (mapData.openWorld && roundActive && !player.dead) {
+    const obj = document.getElementById("objective");
+    const nearLoot = tryPickupBattleRoyaleLoot(camera, battleRoyaleLoot, 3.4);
+    if (obj && nearLoot) {
+      const label = nearLoot.kind === "ammo"
+        ? (nearLoot.ammo === "doze" ? "munição de doze" : "munição AR")
+        : (WEAPONS[nearLoot.id]?.name || nearLoot.id);
+      obj.textContent = `Pressione E — pegar ${label}`;
+    } else if (obj) {
+      const nearDoor = battleRoyaleDoors.find((d) => !d.open && Math.hypot(camera.position.x - d.x, camera.position.z - d.z) < 5);
+      if (nearDoor) obj.textContent = "Pressione E — abrir porta da casa";
+    }
   } else if (ammoStation?.ctPos && roundActive && !player.dead) {
     const d = Math.hypot(camera.position.x - ammoStation.ctPos.x, camera.position.z - ammoStation.ctPos.z);
     const obj = document.getElementById("objective");
@@ -3142,8 +3275,9 @@ function endRound(winner) {
         weapons[k].mag = def.mag;
         weapons[k].reserve = def.reserve;
       } else if (k === "2") {
-        weapons[k].mag = WEAPONS.glock.mag;
-        weapons[k].reserve = WEAPONS.glock.reserve;
+        const def = WEAPONS[weapons[k].id] || WEAPONS.glock;
+        weapons[k].mag = def.mag;
+        weapons[k].reserve = def.reserve;
       } else {
         weapons[k].mag = 1;
         weapons[k].reserve = 0;
@@ -4081,6 +4215,10 @@ function animate() {
       updateLabyrinthMonsters(dt, camera, scene, renderer, (name, dmg) => {
         if (!player.dead) damagePlayer(dmg, name);
       });
+    }
+    if (mapData?.openWorld) {
+      updateBattleRoyaleLoot(battleRoyaleLoot);
+      updateBattleRoyaleDoors(dt);
     }
     updateDoor(dt);
     updateInnerBomb(dt);

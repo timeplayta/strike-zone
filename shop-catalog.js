@@ -26,6 +26,8 @@ export const WEAPON_SKINS = [
   { id: "doze_galaxy", type: "weapon", weapon: "doze", color: 0x12091e, price: 1250, label: "Doze Galáxia", tier: "mítica", cosmic: "asteroid" },
   { id: "glock_pink", type: "weapon", weapon: "glock", color: 0xcc4488, price: 55, label: "Glock Rosa", tier: "comum" },
   { id: "glock_galaxy", type: "weapon", weapon: "glock", color: 0x0b0b20, price: 1050, label: "Glock Galáxia", tier: "mítica", cosmic: "moon" },
+  { id: "revolver_gold", type: "weapon", weapon: "revolver", color: 0xd6a44e, price: 180, label: "Revólver Dourado", tier: "rara" },
+  { id: "revolver_outlaw", type: "weapon", weapon: "revolver", color: 0x6b2a1d, price: 260, label: "Revólver Fora-da-lei", tier: "épica" },
   { id: "bazooka_mythic", type: "weapon", weapon: "bazooka", color: 0x8b45ff, price: 1000, label: "Bazuca Mítica", tier: "mítica" },
   { id: "bazooka_galaxy", type: "weapon", weapon: "bazooka", color: 0x120727, price: 2200, label: "Bazuca Galáxia", tier: "mítica", cosmic: "blackhole" },
 ];
@@ -42,6 +44,9 @@ export const CHARACTER_SKINS = [
   { id: "char_neon_runner", type: "character", skinId: "neon_runner", color: 0x00ffaa, price: 180, label: "Neon Runner", tier: "lendária" },
   { id: "char_shadow", type: "character", skinId: "shadow", color: 0x1a1028, price: 140, label: "Sombra", tier: "épica" },
   { id: "char_trevas_horror", type: "character", skinId: "trevas_horror", color: 0x14091f, price: 1200, label: "Caçador das Trevas", tier: "mítica" },
+  { id: "char_cowboy_sheriff", type: "character", skinId: "cowboy_sheriff", color: 0xb87834, price: 240, label: "Sheriff Frontier", tier: "épica" },
+  { id: "char_cowboy_outlaw", type: "character", skinId: "cowboy_outlaw", color: 0x6b2a1d, price: 260, label: "Fora-da-lei", tier: "épica" },
+  { id: "char_cowboy_vaqueiro", type: "character", skinId: "cowboy_vaqueiro", color: 0x2c5f78, price: 220, label: "Vaqueiro Nômade", tier: "rara" },
   { id: "char_birthday", type: "character", skinId: "birthday_hero", color: 0xffcc44, price: 0, label: "Aniversariante", tier: "presente" },
   { id: "char_soldier_pro", type: "character", skinId: "soldier", color: 0x8899aa, price: 0, label: "Soldado (padrão)", tier: "grátis" },
 ];
@@ -86,7 +91,7 @@ export const ALL_SHOP_ITEMS = [
   ...LOADOUT_ITEMS,
 ];
 
-export const WEAPON_IDS = ["ak47", "scar", "m4", "ump45", "awm", "doze", "bazooka", "glock"];
+export const WEAPON_IDS = ["ak47", "scar", "m4", "ump45", "awm", "doze", "bazooka", "glock", "revolver"];
 
 export function getShopItem(id) {
   return WEAPON_SKINS.find((i) => i.id === id) ||
@@ -105,6 +110,7 @@ export function getWeaponLabel(id) {
     doze: "Doze",
     bazooka: "Bazuca",
     glock: "Glock",
+    revolver: "Revólver",
   };
   return map[id] || id;
 }

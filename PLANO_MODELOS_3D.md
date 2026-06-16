@@ -1,13 +1,13 @@
-# Plano: Modelos 3D Sem Plataforma Externa
-
-> **Objetivo:** Criar/melhorar todos os modelos 3D do Strike Zone inteiramente dentro do projeto,
-> sem pagar nenhum serviço externo, sem Hyper3D, sem Rodin, sem nada além do que já temos.
+ramente dentro do projeto,
+> sem pagar nenhum serviço externo, sem Hyper3D, sem Rodin, sem nada além do que já temos.o 
 
 ---
 
 ## Por que deu trabalho antes?
 
-Modelos 3D orgânicos (mãos com dedos, rostos, corpos humanos) normalmente exigem
+Modelos 3D orgânicos (mãos com dedos, rostos, cor# Plano: Modelos 3D Sem Plataforma Externa
+
+> **Objetivo:** Criar/melhorar todos os modelos 3D do Strike Zone inteipos humanos) normalmente exigem
 um artista 3D ou uma IA geradora de mesh. O Hyper3D/Rodin tentado anteriormente
 bloqueou por falta de crédito. A solução: fazer tudo em código, dentro do próprio projeto.
 

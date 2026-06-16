@@ -9,6 +9,7 @@
   "scripts": {
     "start": "node server.js",
     "generate:models": "node generate-models.js",
+    "generate:blockbench": "node generate-blockbench-pack.js",
     "apk:sync": "cap sync android",
     "apk:debug": "cd android && gradlew.bat assembleDebug"
   },

@@ -12,6 +12,7 @@ const TINTS = {
   doze: 0x6b4423,
   bazooka: 0x45305f,
   glock: 0x2a2a30,
+  revolver: 0x6b3f1f,
 };
 
 const viewers = [];
@@ -57,9 +58,9 @@ function mountWeaponPreview(canvas, weaponId) {
 
   const gun = buildNpcWeapon(weaponId, TINTS[weaponId] || 0x5c3a1e);
   gun.rotation.set(-0.15, Math.PI / 2, 0);
-  gun.scale.setScalar(weaponId === "bazooka" ? 1.55 : weaponId === "glock" ? 3.0 : 1.9);
+  gun.scale.setScalar(weaponId === "bazooka" ? 1.55 : (weaponId === "glock" || weaponId === "revolver") ? 3.0 : 1.9);
   scene.add(gun);
-  frameWeapon(camera, gun, weaponId === "glock" ? 1.4 : 1.12);
+  frameWeapon(camera, gun, (weaponId === "glock" || weaponId === "revolver") ? 1.4 : 1.12);
 
   renderer.render(scene, camera);
   viewers.push({ renderer, scene, camera, gun, canvas, weaponId });

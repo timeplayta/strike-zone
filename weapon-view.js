@@ -273,6 +273,10 @@ export function createWeaponView(camera) {
 
   glockGroup.visible = false;
 
+  const revolverGroup = makeFpsWeapon("revolver", 1.95, 0x6b3f1f);
+
+  revolverGroup.visible = false;
+
 
 
   const knifeBlade = new THREE.Mesh(
@@ -312,7 +316,7 @@ export function createWeaponView(camera) {
 
   root.add(
 
-    akGroup, scarGroup, m4Group, umpGroup, awmGroup, shotgunGroup, bazookaGroup, glockGroup,
+    akGroup, scarGroup, m4Group, umpGroup, awmGroup, shotgunGroup, bazookaGroup, glockGroup, revolverGroup,
 
     knifeGroup, meleeModels.facao, meleeModels.porrete, meleeModels.katana
 
@@ -371,6 +375,8 @@ export function createWeaponView(camera) {
 
     meleeModels,
 
+    secondaryModels: { glock: glockGroup, revolver: revolverGroup },
+
     models: { 1: akGroup, 2: glockGroup, 3: knifeGroup },
 
     muzzleFlash,
@@ -382,6 +388,8 @@ export function createWeaponView(camera) {
     reloadAnim: 0,
 
     currentPrimary: "ak47",
+
+    currentSecondary: "glock",
 
     currentMelee: "faca",
 
@@ -411,6 +419,8 @@ const MUZZLE_Z = {
 
   bazooka: -0.72,
 
+  revolver: -0.36,
+
 };
 
 
@@ -427,11 +437,11 @@ export function setWeaponView(view, slot, weaponId = "ak47") {
 
     });
 
-    view.models[2].visible = false;
+    Object.values(view.secondaryModels || {}).forEach((g) => { g.visible = false; });
 
     Object.values(view.meleeModels || {}).forEach((g) => { g.visible = false; });
 
-    view.models[3].visible = false;
+    if (meleeId !== "faca") view.models[3].visible = false;
 
     const z = MUZZLE_Z[weaponId] ?? -0.55;
 
@@ -443,17 +453,23 @@ export function setWeaponView(view, slot, weaponId = "ak47") {
 
     Object.values(view.meleeModels || {}).forEach((g) => { g.visible = false; });
 
-    view.models[2].visible = true;
+    const secondaryId = view.secondaryModels?.[weaponId] ? weaponId : view.currentSecondary || "glock";
+
+    view.currentSecondary = secondaryId;
+
+    Object.entries(view.secondaryModels || {}).forEach(([k, g]) => { g.visible = k === secondaryId; });
+
+    view.models[2] = view.secondaryModels?.[secondaryId] || view.models[2];
 
     view.models[3].visible = false;
 
-    view.muzzleFlash.position.set(0, 0.04, -0.22);
+    view.muzzleFlash.position.set(0, 0.04, MUZZLE_Z[secondaryId] ?? -0.22);
 
   } else if (slot === 3) {
 
     Object.values(view.primaryModels).forEach((g) => { g.visible = false; });
 
-    view.models[2].visible = false;
+    Object.values(view.secondaryModels || {}).forEach((g) => { g.visible = false; });
 
     const meleeId = weaponId && view.meleeModels?.[weaponId] ? weaponId : view.currentMelee || "faca";
 
@@ -475,7 +491,7 @@ export function setWeaponView(view, slot, weaponId = "ak47") {
 
     Object.values(view.meleeModels || {}).forEach((g) => { g.visible = false; });
 
-    view.models[2].visible = false;
+    Object.values(view.secondaryModels || {}).forEach((g) => { g.visible = false; });
 
     view.models[3].visible = false;
 
@@ -522,7 +538,7 @@ export function triggerMeleeSwing(view) {
 export function triggerReloadAnimation(view) {
   if (!view) return;
   view.reloadAnim = 1;
-  view.reloadWeapon = view.models?.[2]?.visible ? "glock" : view.currentPrimary || "ak47";
+  view.reloadWeapon = view.models?.[2]?.visible ? (view.currentSecondary || "glock") : view.currentPrimary || "ak47";
 }
 
 
@@ -618,7 +634,7 @@ export function updateWeaponView(view, dt, moving = false) {
 function animateSkinFx(view, t) {
   const groups = [
     ...Object.values(view.primaryModels || {}),
-    view.models?.[2],
+    ...Object.values(view.secondaryModels || {}),
   ].filter((g) => g?.visible);
   for (const g of groups) {
     if (g.userData.galaxySkin) {
@@ -650,12 +666,12 @@ function animateSkinFx(view, t) {
 }
 
 function getReloadModel(view, weaponId) {
-  if (weaponId === "glock") return view.models?.[2];
+  if (view.secondaryModels?.[weaponId]) return view.secondaryModels[weaponId];
   return view.primaryModels?.[weaponId] || null;
 }
 
 function resetWeaponModelPose(view) {
-  const groups = [...Object.values(view.primaryModels || {}), view.models?.[2]].filter(Boolean);
+  const groups = [...Object.values(view.primaryModels || {}), ...Object.values(view.secondaryModels || {})].filter(Boolean);
   for (const g of groups) {
     const p = g.userData.basePos || { x: 0, y: 0, z: 0 };
     const r = g.userData.baseRot || { x: 0, y: Math.PI, z: 0 };
@@ -680,6 +696,7 @@ function applyReloadPose(view, reload) {
     doze: { x: 0.05, y: -0.08, z: 0.1, rx: -0.2, ry: 0.08, rz: -0.08, pump: 0.12 },
     bazooka: { x: 0.08, y: -0.12, z: 0.14, rx: -0.24, ry: 0.1, rz: -0.12, bolt: 0.12 },
     glock: { x: 0.07, y: -0.08, z: 0.05, rx: -0.26, ry: 0.12, rz: -0.1, slide: 0.07 },
+    revolver: { x: 0.06, y: -0.07, z: 0.05, rx: -0.22, ry: 0.14, rz: -0.12, slide: 0.04 },
   }[weaponId] || { x: 0.09, y: -0.1, z: 0.06, rx: -0.25, ry: 0.18, rz: -0.14, mag: 0.03 };
 
   view.root.position.x += profile.x * pull;
@@ -707,10 +724,12 @@ export function applyWeaponSkinToView(view, skins = {}) {
       applyWeaponSkin(group, id, color, item?.id);
     }
   }
-  const glockColor = skins.glock;
-  if (glockColor && view.models?.[2]) {
-    const item = findWeaponSkinItem("glock", glockColor);
-    applyWeaponSkin(view.models[2], "glock", glockColor, item?.id);
+  for (const [id, group] of Object.entries(view.secondaryModels || {})) {
+    const color = skins[id];
+    if (color && group) {
+      const item = findWeaponSkinItem(id, color);
+      applyWeaponSkin(group, id, color, item?.id);
+    }
   }
 }
 
@@ -721,7 +740,7 @@ export function hideAllWeapons(view) {
 
   Object.values(view.meleeModels || {}).forEach((g) => { g.visible = false; });
 
-  view.models[2].visible = false;
+  Object.values(view.secondaryModels || {}).forEach((g) => { g.visible = false; });
 
   view.models[3].visible = false;
 
