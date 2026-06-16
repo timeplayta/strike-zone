@@ -441,7 +441,7 @@ export function setWeaponView(view, slot, weaponId = "ak47") {
 
     Object.values(view.meleeModels || {}).forEach((g) => { g.visible = false; });
 
-    if (meleeId !== "faca") view.models[3].visible = false;
+    view.models[3].visible = false;
 
     const z = MUZZLE_Z[weaponId] ?? -0.55;
 
@@ -481,7 +481,7 @@ export function setWeaponView(view, slot, weaponId = "ak47") {
 
     });
 
-    view.models[3].visible = false;
+    if (meleeId !== "faca") view.models[3].visible = false;
 
     view.muzzleFlash.position.set(0, 0, -0.2);
 
