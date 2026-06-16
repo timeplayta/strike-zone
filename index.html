@@ -20,7 +20,27 @@
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
   <link rel="apple-touch-icon" href="icon-192.png" />
 
-  <link rel="stylesheet" href="style.css?v=77" />
+  <style>
+    /* CSS crítico — garante layout mesmo se style.css falhar (cache/SW) */
+    .hidden, .welcome-panel.hidden { display: none !important; }
+    body { margin: 0; background: #0a0c10; color: #e8eaef; font-family: "Segoe UI", system-ui, sans-serif; }
+    #welcomeScreen { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1rem; }
+    .welcome-card { max-width: 380px; width: 100%; padding: 2rem 1.5rem; text-align: center;
+      background: linear-gradient(160deg, #1a2332, #0d1218); border: 1px solid rgba(100,180,255,.25);
+      border-radius: 14px; box-shadow: 0 12px 40px rgba(0,0,0,.5); }
+    .welcome-logo { font-size: 2rem; letter-spacing: .12em; color: #e8c060; margin: 0 0 .25rem; }
+    .welcome-card input, .welcome-card button { width: 100%; margin-top: .35rem; padding: .55rem .65rem;
+      border-radius: 6px; border: 1px solid rgba(255,255,255,.15); box-sizing: border-box; }
+    .welcome-card input { background: rgba(0,0,0,.35); color: #fff; }
+    .welcome-card label { display: block; text-align: left; margin-top: .75rem; font-size: .85rem; }
+    .btn-primary { background: linear-gradient(180deg, #e8a030, #c07818); color: #111; font-weight: 700;
+      border: none; cursor: pointer; padding: .7rem; margin-top: .75rem; }
+    .welcome-tabs { display: flex; gap: 8px; margin-bottom: 1rem; }
+    .welcome-tab { flex: 1; padding: .5rem; border-radius: 8px; border: 1px solid rgba(255,255,255,.15);
+      background: rgba(0,0,0,.25); color: rgba(255,255,255,.75); cursor: pointer; }
+    .welcome-tab.active { background: rgba(232,192,96,.18); border-color: rgba(232,192,96,.45); color: #e8c060; }
+  </style>
+  <link rel="stylesheet" href="/style.css?v=78" />
 
   <script>
 
@@ -735,14 +755,22 @@
 
   <canvas id="gameCanvas"></canvas>
 
-  <script src="menu-init.js?v=77"></script>
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "/vendor/three.module.js"
+    }
+  }
+  </script>
+
+  <script src="menu-init.js?v=78"></script>
   <script type="module" src="admin-panel.js"></script>
   <script type="module" src="dev-chat.js"></script>
   <script type="module" src="arsenal-view.js"></script>
   <script type="module" src="account-hub.js"></script>
   <script type="module" src="character-customizer.js"></script>
   <script type="module" src="solo-view.js"></script>
-  <script type="module" src="map-view.js?v=77"></script>
+  <script type="module" src="map-view.js?v=78"></script>
 
   <!-- Modal de compra de moedas -->
   <div id="coinPackModal" class="coin-pack-modal hidden" role="dialog" aria-modal="true" aria-labelledby="coinPackModalTitle">
@@ -764,17 +792,9 @@
     </div>
   </div>
 
-  <script type="importmap">
-  {
-    "imports": {
-      "three": "/vendor/three.module.js"
-    }
-  }
-  </script>
-
-  <script type="module" src="game-loader.js?v=77"></script>
+  <script type="module" src="game-loader.js?v=78"></script>
   <script type="module">
-    import { bindShopUI } from "./player-account.js?v=77";
+    import { bindShopUI } from "./player-account.js?v=78";
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", bindShopUI);
     else bindShopUI();
   </script>

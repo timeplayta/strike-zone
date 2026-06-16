@@ -1,4 +1,4 @@
-const CACHE = "strike-zone-v78";
+const CACHE = "strike-zone-v79";
 const ASSETS = [
   "/",
   "/index.html",
@@ -131,6 +131,13 @@ self.addEventListener("fetch", (e) => {
         }
         return res;
       })
-      .catch(() => caches.match(e.request))
+      .catch(async () => {
+        const cached = await caches.match(e.request);
+        if (cached) return cached;
+        const pathOnly = new URL(e.request.url).pathname;
+        const byPath = await caches.match(pathOnly);
+        if (byPath) return byPath;
+        return new Response("Offline", { status: 503, statusText: "Offline" });
+      })
   );
 });

@@ -308,6 +308,7 @@
     $("welcomeTabLogin")?.addEventListener("click", () => setWelcomeTab("login"));
     $("welcomeTabRegister")?.addEventListener("click", () => setWelcomeTab("register"));
     $("welcomeMigrateBack")?.addEventListener("click", () => setWelcomeTab("login"));
+    setWelcomeTab("login");
     loginEmail?.addEventListener("input", () => setLoginStatus(""));
     loginPassword?.addEventListener("input", () => setLoginStatus(""));
 
