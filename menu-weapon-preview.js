@@ -1,4 +1,4 @@
-/** Mini preview 3D das armas no menu (estilo CS / Free Fire) */
+/** Mini preview 3D das armas no menu */
 
 import * as THREE from "three";
 import { buildNpcWeapon } from "./npc-weapon.js";

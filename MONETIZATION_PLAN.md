@@ -1,7 +1,7 @@
 # Plano de Monetização — Strike Zone
 
 > Modelo: **cosméticos + conveniência, zero pay-to-win**
-> Inspiração: Free Fire, Valorant — status visual, sem vantagem de dano.
+> Inspiração: cosméticos de status visual, sem vantagem de dano.
 
 ---
 

@@ -1,4 +1,4 @@
-# Login social estilo Free Fire
+# Login social
 
 O jogo agora tem botões para entrar com:
 

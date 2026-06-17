@@ -28,7 +28,7 @@ Se alguém publicou o jogo na web, abra o link que recebeu.
 
 ## 2. Controles no celular
 
-### Celular (Android) — estilo Free Fire
+### Celular (Android)
 
 | Ação | Como fazer |
 |------|------------|
@@ -37,11 +37,11 @@ Se alguém publicou o jogo na web, abra o link que recebeu.
 | **Atirar** | Botão vermelho **ATIRAR** (canto inferior direito) |
 | **Recarregar / armas / bomba** | Botões **R**, **1**, **2**, **3**, **B** |
 
-### Dicas estilo Free Fire
+### Dicas mobile
 
 - Use **dois dedos ao mesmo tempo**: um no joystick, outro arrastando a tela para mirar.
 - Jogue na **horizontal** (paisagem).
-- O joystick fica sempre visível — igual jogos como Free Fire.
+- O joystick fica sempre visível para facilitar o movimento.
 - Mire no **corpo ou na cabeça** dos bandidos; headshot elimina mais rápido.
 - Acima de cada bandido aparece a **barra de vida**; cada tiro mostra o **dano** (`-34`, etc.).
 - Você verá a **arma na mão** e ouvirá o **som do tiro** com um flash na boca do cano.

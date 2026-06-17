@@ -1,4 +1,4 @@
-/** Tela cheia de mapas (estilo Free Fire / CS) — abre pelo botão acima de JOGAR */
+/** Tela cheia de mapas — abre pelo botão acima de JOGAR */
 
 import { getMapCardArtUrl } from "./map-card-art.js?v=72";
 

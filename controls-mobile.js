@@ -1,5 +1,5 @@
 /**
- * Controles estilo Free Fire:
+ * Controles mobile:
  * - Joystick redondo FIXO (canto inferior esquerdo) para mover
  * - Arrastar com outro dedo em qualquer lugar da tela para mirar (simultâneo)
  */

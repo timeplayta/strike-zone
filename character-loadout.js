@@ -1,4 +1,4 @@
-/** Catálogo de peças — estilo Asphalt 8 (neon) + Free Fire (tático) */
+/** Catálogo de peças — estilos neon e tático */
 
 export const SLOT_ORDER = ["helmet", "shirt", "pants", "gloves", "shoes"];
 

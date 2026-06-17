@@ -130,10 +130,11 @@ const ADS_WEAPONS = ["ak47", "scar", "awm", "bazooka", "revolver"];
 const ENEMY_SPAWN_DELAY_MS = 3000;
 const MIN_SPAWN_DIST_FROM_PLAYER = 18;
 const BR_LOBBY_SECONDS = 75;
-const BR_STORM_START_RADIUS = 930;
+const BR_STORM_START_RADIUS = 1500;
 const BR_STORM_END_RADIUS = 145;
-const BR_STORM_WAIT_SECONDS = 45;
+const BR_STORM_WAIT_SECONDS = 75;
 const BR_STORM_CLOSE_SECONDS = 360;
+const BR_POST_LAND_GRACE_MS = 22000;
 
 let botCount = 10;
 let useBotDifficulty = true;
@@ -159,6 +160,7 @@ let sunLight = null;
 let hemiLight = null;
 let ambientLight = null;
 let fillLight = null;
+let openWorldSkyObjects = [];
 let enemyMoveAllowedAt = 0;
 let ammoStation = null;
 let sessionCoins = 0;
@@ -735,7 +737,7 @@ function updateBattleRoyaleStorm(dt) {
   }
   const dist = Math.hypot(camera.position.x - s.center.x, camera.position.z - s.center.z);
   const obj = document.getElementById("objective");
-  if (dist > s.radius && !isBattleRoyaleDropping()) {
+  if (s.elapsed > BR_STORM_WAIT_SECONDS && dist > s.radius && !isBattleRoyaleDropping()) {
     s.damageAcc += dt;
     if (s.damageAcc >= 1) {
       s.damageAcc = 0;
@@ -788,6 +790,31 @@ function makeDropVehicle() {
   g.add(stripe);
   g.scale.setScalar(1.25);
   return upgradeWithBlockbenchModel(g, "flying_drop_vehicle", { targetWidth: 42, targetHeight: 11 });
+}
+
+function applyBattleRoyaleThirdPersonCamera(pos, opts = {}) {
+  const dist = opts.dist ?? 7.2;
+  const lookY = opts.lookY ?? 1.25;
+  const baseY = opts.baseY ?? 0;
+  const p = Math.max(-0.85, Math.min(0.85, pitch));
+  const cp = Math.cos(p);
+  camera.position.set(
+    pos.x + Math.sin(yaw) * cp * dist,
+    pos.y + baseY + lookY + Math.sin(p) * dist,
+    pos.z + Math.cos(yaw) * cp * dist
+  );
+  camera.lookAt(pos.x, pos.y + lookY, pos.z);
+}
+
+function readBattleRoyaleMoveInput() {
+  _vForward.set(0, 0, -1).applyAxisAngle(_vUp, yaw);
+  _vRight.set(1, 0, 0).applyAxisAngle(_vUp, yaw);
+  let inputX = 0, inputZ = 0;
+  if (keys["KeyW"]) { inputX += _vForward.x; inputZ += _vForward.z; }
+  if (keys["KeyS"]) { inputX -= _vForward.x; inputZ -= _vForward.z; }
+  if (keys["KeyA"]) { inputX -= _vRight.x; inputZ -= _vRight.z; }
+  if (keys["KeyD"]) { inputX += _vRight.x; inputZ += _vRight.z; }
+  return { inputX, inputZ, len: Math.hypot(inputX, inputZ) };
 }
 
 function makeBattleRoyaleLobby() {
@@ -845,25 +872,33 @@ function startBattleRoyaleLobby() {
     return;
   }
   const lobby = makeBattleRoyaleLobby();
+  const lobbyAvatar = makeDropAvatar();
+  lobbyAvatar.position.set(0, 0, 42);
+  lobbyAvatar.rotation.y = Math.PI;
   scene.add(lobby);
+  scene.add(lobbyAvatar);
   battleRoyaleDrop = {
     phase: "lobby",
     lobby,
+    lobbyAvatar,
     lobbyLeft: BR_LOBBY_SECONDS,
     phaseStarted: performance.now(),
+    pos: new THREE.Vector3(0, 0, 42),
+    vel: new THREE.Vector3(),
   };
-  camera.position.set(0, PLAYER_EYE_HEIGHT, 42);
   yaw = Math.PI;
-  pitch = 0;
+  pitch = 0.28;
+  applyBattleRoyaleThirdPersonCamera(battleRoyaleDrop.pos, { dist: 8, lookY: 1.2 });
   moveVel.x = 0;
   moveVel.z = 0;
   enemyMoveAllowedAt = Number.POSITIVE_INFINITY;
   if (weaponView) hideAllWeapons(weaponView);
-  showOverlay("Lobby Battle Royale — aguarde a nave chegar");
+  showOverlay("A partida irá começar em breve");
 }
 
 function finishBattleRoyaleLobby() {
   if (battleRoyaleDrop?.lobby) scene.remove(battleRoyaleDrop.lobby);
+  if (battleRoyaleDrop?.lobbyAvatar) scene.remove(battleRoyaleDrop.lobbyAvatar);
   startBattleRoyaleDrop();
 }
 
@@ -971,7 +1006,7 @@ function finishBattleRoyaleDrop() {
   player.grounded = true;
   moveVel.x = 0;
   moveVel.z = 0;
-  enemyMoveAllowedAt = performance.now() + ENEMY_SPAWN_DELAY_MS;
+  enemyMoveAllowedAt = performance.now() + BR_POST_LAND_GRACE_MS;
   createBattleRoyaleStorm();
   if (currentWeapon && weaponView) restorePlayerWeaponView();
   document.getElementById("objective").textContent = "Procure armas e munição nas casas — E pega loot e abre portas";
@@ -982,20 +1017,36 @@ function updateBattleRoyaleDrop(dt) {
   if (!isBattleRoyaleDropping()) return false;
   const d = battleRoyaleDrop;
   if (d.phase === "lobby") {
+    processLook();
     d.lobbyLeft = Math.max(0, d.lobbyLeft - dt);
     const left = Math.ceil(d.lobbyLeft);
     const obj = document.getElementById("objective");
-    if (obj) obj.textContent = `Lobby Battle Royale — partida real em ${left}s`;
+    if (obj) obj.textContent = `A partida irá começar em ${left}s`;
     const timerEl = document.getElementById("timer");
-    if (timerEl) timerEl.textContent = formatTime(left);
+    if (timerEl) timerEl.textContent = `Começa ${left}s`;
+    const move = readBattleRoyaleMoveInput();
+    const speed = 8.2;
+    if (move.len > 0.05) {
+      d.pos.x += (move.inputX / move.len) * speed * dt;
+      d.pos.z += (move.inputZ / move.len) * speed * dt;
+      const r = Math.hypot(d.pos.x, d.pos.z);
+      if (r > 138) {
+        d.pos.x = (d.pos.x / r) * 138;
+        d.pos.z = (d.pos.z / r) * 138;
+      }
+    }
+    if (d.lobbyAvatar) {
+      d.lobbyAvatar.position.copy(d.pos);
+      d.lobbyAvatar.rotation.y = yaw;
+    }
+    applyBattleRoyaleThirdPersonCamera(d.pos, { dist: 8, lookY: 1.2 });
     if (d.lobby) {
-      d.lobby.rotation.y += dt * 0.015;
       d.lobby.children.forEach((c, i) => {
         if (i > 25 && c.isGroup) c.position.y = Math.sin(performance.now() * 0.002 + i) * 0.05;
       });
     }
     if (d.lobbyLeft <= 0) finishBattleRoyaleLobby();
-    return false;
+    return true;
   }
 
   processLook();
@@ -1005,25 +1056,18 @@ function updateBattleRoyaleDrop(dt) {
     d.vehicle.position.copy(pos);
     d.vehicle.rotation.y = -Math.PI * 0.27;
     d.vehicle.traverse((o) => { if (o.userData?.rotor) o.rotation.z += dt * 22; });
-    camera.position.set(pos.x - 20, pos.y + 9, pos.z + 24);
-    camera.lookAt(pos.x + 18, pos.y - 2, pos.z - 8);
+    applyBattleRoyaleThirdPersonCamera(pos, { dist: 48, lookY: 0, baseY: 10 });
     const obj = document.getElementById("objective");
     if (obj) obj.textContent = "Clique ou Espaço para saltar do veículo voador";
     if (d.t >= d.duration) jumpFromDropVehicle();
     return true;
   }
 
-  _vForward.set(0, 0, -1).applyAxisAngle(_vUp, yaw);
-  _vRight.set(1, 0, 0).applyAxisAngle(_vUp, yaw);
-  let inputX = 0, inputZ = 0;
-  if (keys["KeyW"]) { inputX += _vForward.x; inputZ += _vForward.z; }
-  if (keys["KeyS"]) { inputX -= _vForward.x; inputZ -= _vForward.z; }
-  if (keys["KeyA"]) { inputX -= _vRight.x; inputZ -= _vRight.z; }
-  if (keys["KeyD"]) { inputX += _vRight.x; inputZ += _vRight.z; }
-  const len = Math.hypot(inputX, inputZ) || 1;
+  const move = readBattleRoyaleMoveInput();
+  const len = move.len || 1;
   const glide = 32;
-  d.vel.x += ((inputX / len) * glide - d.vel.x) * Math.min(1, dt * 3.4);
-  d.vel.z += ((inputZ / len) * glide - d.vel.z) * Math.min(1, dt * 3.4);
+  d.vel.x += ((move.inputX / len) * glide - d.vel.x) * Math.min(1, dt * 3.4);
+  d.vel.z += ((move.inputZ / len) * glide - d.vel.z) * Math.min(1, dt * 3.4);
   d.vel.y += (-13 - d.vel.y) * Math.min(1, dt * 2.2);
   d.pos.x += d.vel.x * dt;
   d.pos.z += d.vel.z * dt;
@@ -1036,12 +1080,7 @@ function updateBattleRoyaleDrop(dt) {
   d.avatar.rotation.y = yaw;
   d.chute.position.copy(d.pos);
   d.chute.rotation.y = yaw;
-  camera.position.set(
-    d.pos.x + Math.sin(yaw) * 5,
-    d.pos.y + 2.3,
-    d.pos.z + Math.cos(yaw) * 5
-  );
-  camera.lookAt(d.pos.x, d.pos.y + 1.2, d.pos.z);
+  applyBattleRoyaleThirdPersonCamera(d.pos, { dist: 7.2, lookY: 1.15 });
   if (d.pos.y <= PLAYER_EYE_HEIGHT) finishBattleRoyaleDrop();
   return true;
 }
@@ -1605,6 +1644,7 @@ function buildLabyrinthHorrorAmbience(scene, mapData) {
 }
 
 function buildOpenWorldScenery(scene, mapData) {
+  openWorldSkyObjects = [];
   buildMapProps(scene, mapData.props || [], mapData.propTint || {});
 
   const water = new THREE.Mesh(
@@ -1639,6 +1679,14 @@ function buildOpenWorldScenery(scene, mapData) {
       cloud.add(puff);
     }
     cloud.position.set(-780 + (i % 8) * 220, 150 + (i % 3) * 28, -740 + Math.floor(i / 8) * 1280);
+    cloud.userData.skyDrift = {
+      baseX: cloud.position.x,
+      baseY: cloud.position.y,
+      baseZ: cloud.position.z,
+      speed: 3.5 + (i % 5) * 0.8,
+      phase: i * 0.73,
+    };
+    openWorldSkyObjects.push(cloud);
     scene.add(cloud);
   }
 
@@ -1647,7 +1695,32 @@ function buildOpenWorldScenery(scene, mapData) {
     new THREE.MeshBasicMaterial({ color: 0xffef9a })
   );
   sun.position.set(560, 420, -740);
+  sun.userData.skySun = true;
+  openWorldSkyObjects.push(sun);
   scene.add(sun);
+}
+
+function updateOpenWorldSky(dt) {
+  if (!mapData?.openWorld || !scene) return;
+  const t = performance.now() * 0.001;
+  if (frameCount % 4 === 0) {
+    const mix = 0.5 + Math.sin(t * 0.12) * 0.5;
+    scene.background = new THREE.Color(0x76c7ff).lerp(new THREE.Color(0xaadfff), mix * 0.38);
+    if (scene.fog) scene.fog.color.copy(scene.background).multiplyScalar(0.92);
+  }
+  for (const obj of openWorldSkyObjects) {
+    if (obj.userData.skyDrift) {
+      const s = obj.userData.skyDrift;
+      obj.position.x = s.baseX + ((t * s.speed + s.phase * 20) % 90) - 45;
+      obj.position.y = s.baseY + Math.sin(t * 0.45 + s.phase) * 3.5;
+      obj.position.z = s.baseZ + Math.sin(t * 0.16 + s.phase) * 16;
+      obj.rotation.y += dt * 0.01;
+    } else if (obj.userData.skySun) {
+      obj.position.y = 420 + Math.sin(t * 0.1) * 18;
+    }
+  }
+  if (sunLight) sunLight.position.x = 25 + Math.sin(t * 0.08) * 8;
+  if (hemiLight) hemiLight.intensity = 0.62 + Math.sin(t * 0.18) * 0.04;
 }
 
 function buildMap() {
@@ -3950,34 +4023,51 @@ function showEndScreen(won) {
 
   const grid = document.getElementById("endStatsGrid");
   if (grid) {
-    grid.innerHTML = `
-      <div class="end-stat-box"><span class="label">PLACAR CT</span><span class="value">${scoreCT}</span></div>
-      <div class="end-stat-box"><span class="label">PLACAR T</span><span class="value">${scoreT}</span></div>
-      <div class="end-stat-box"><span class="label">ABATES</span><span class="value">${kills}</span></div>
-      <div class="end-stat-box"><span class="label">MORTES</span><span class="value">${deaths}</span></div>
-    `;
+    if (mapData?.openWorld) {
+      const enemyAlive = enemies.filter((e) => e.alive && !e.isBoss).length;
+      grid.innerHTML = `
+        <div class="end-stat-box"><span class="label">INIMIGOS RESTANTES</span><span class="value">${enemyAlive}</span></div>
+        <div class="end-stat-box"><span class="label">ABATES</span><span class="value">${kills}</span></div>
+        <div class="end-stat-box"><span class="label">MORTES</span><span class="value">${deaths}</span></div>
+      `;
+    } else {
+      grid.innerHTML = `
+        <div class="end-stat-box"><span class="label">PLACAR CT</span><span class="value">${scoreCT}</span></div>
+        <div class="end-stat-box"><span class="label">PLACAR T</span><span class="value">${scoreT}</span></div>
+        <div class="end-stat-box"><span class="label">ABATES</span><span class="value">${kills}</span></div>
+        <div class="end-stat-box"><span class="label">MORTES</span><span class="value">${deaths}</span></div>
+      `;
+    }
   }
 
   document.getElementById("endStats").textContent =
-    `${playerName} • Round ${round} • Modo ${gameMode === "defuse" ? "Desarmar" : "Eliminação"}`;
+    `${playerName} • Round ${round} • Modo ${mapData?.openWorld ? "Battle Royale" : gameMode === "defuse" ? "Desarmar" : "Eliminação"}`;
 }
 
 function updateHUD() {
   const lab = isLabyrinthMap(mapData);
   document.body.classList.toggle("hud-labyrinth", lab);
+  document.body.classList.toggle("hud-br", !!mapData?.openWorld);
 
   if (mapData?.openWorld) {
-    const labels = document.querySelectorAll(".scoreboard .team-label");
-    if (labels[0]) labels[0].textContent = "VIVOS";
-    if (labels[1]) labels[1].textContent = "ABATES";
-    const alive = Math.max(1, enemies.filter((e) => e.alive && !e.isBoss).length + (player.dead ? 0 : 1));
-    document.getElementById("scoreCT").textContent = alive;
-    document.getElementById("scoreT").textContent = kills;
+    const ctBlock = document.querySelector(".score-block.ct");
+    const tBlock = document.querySelector(".score-block.t");
+    const tLabel = tBlock?.querySelector(".team-label");
+    if (ctBlock) ctBlock.style.display = "none";
+    if (tBlock) tBlock.style.display = "";
+    const enemyAlive = enemies.filter((e) => e.alive && !e.isBoss).length;
+    if (tLabel) tLabel.textContent = "INIMIGOS";
+    document.getElementById("scoreT").textContent = `${enemyAlive} | ${kills} abates`;
     document.getElementById("roundText").textContent = "BATTLE ROYALE";
   } else if (!lab) {
-    const labels = document.querySelectorAll(".scoreboard .team-label");
-    if (labels[0]) labels[0].textContent = "CT";
-    if (labels[1]) labels[1].textContent = "T";
+    const ctBlock = document.querySelector(".score-block.ct");
+    const tBlock = document.querySelector(".score-block.t");
+    if (ctBlock) ctBlock.style.display = "";
+    if (tBlock) tBlock.style.display = "";
+    const ctLabel = ctBlock?.querySelector(".team-label");
+    const tLabel = tBlock?.querySelector(".team-label");
+    if (ctLabel) ctLabel.textContent = "CT";
+    if (tLabel) tLabel.textContent = "T";
     document.getElementById("scoreCT").textContent = scoreCT;
     document.getElementById("scoreT").textContent = scoreT;
     document.getElementById("roundText").textContent = `ROUND ${round}`;
@@ -4750,6 +4840,7 @@ function animate() {
     }
 
     updateBattleRoyaleStorm(dt);
+    updateOpenWorldSky(dt);
 
     if (isDarkMap(mapData) && isSessionAdmin()) updateAdminGameplayHud();
 

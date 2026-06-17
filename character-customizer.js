@@ -192,7 +192,7 @@ function renderPresets() {
     card.innerHTML =
       `<span class="custom-swatch" style="background:${hexStr(p.color)}${p.neon ? ";box-shadow:0 0 12px " + hexStr(p.color) : ""}"></span>` +
       `<span class="custom-preset-name">${p.name}</span>` +
-      `<span class="custom-preset-theme">${p.theme === "a8" ? "Asphalt 8" : "Free Fire"}</span>`;
+      `<span class="custom-preset-theme">${p.theme === "a8" ? "Neon" : "Tático"}</span>`;
     card.addEventListener("click", () => {
       currentLoadout = applyPresetToLoadout(currentLoadout, activeSlot, p.id);
       if (!isAmongSkin() || !canCurrentSkinUseSlot(activeSlot)) {

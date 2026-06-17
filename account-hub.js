@@ -1,4 +1,4 @@
-/** Botão C (canto superior esquerdo) → modal de conta + retrato estilo Free Fire */
+/** Botão C (canto superior esquerdo) → modal de conta + retrato */
 
 import {
   getLoggedInName,

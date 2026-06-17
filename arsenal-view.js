@@ -1,4 +1,4 @@
-/** Arsenal — visualizar e equipar skins de arma (estilo Free Fire) */
+/** Arsenal — visualizar e equipar skins de arma */
 
 import {
   getLoggedInName,

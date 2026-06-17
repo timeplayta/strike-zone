@@ -1,4 +1,4 @@
-/** Navegação do hub no menu principal (estilo Free Fire) */
+/** Navegação do hub no menu principal */
 
 const HUB_PANELS = {
   character: "ffHubPanelCharacter",

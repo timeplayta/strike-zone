@@ -29,7 +29,7 @@ bloqueou por falta de crédito. A solução: fazer tudo em código, dentro do pr
 - **Você roda `npm install` 1 vez — eu escrevo tudo**
 
 ### C — Estilo Voxel/Blocky Intencional
-- Personagem em blocos pequenos (visual Minecraft/Fortnite estilizado)
+- Personagem em blocos pequenos (visual voxel estilizado)
 - Identidade visual forte, leve, fácil de animar
 - **Zero dependência — funciona agora**
 
