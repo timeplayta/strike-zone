@@ -379,6 +379,48 @@ function brWarehouse(x, z, w = 44, d = 26, tint = 0x5f7688) {
   return g;
 }
 
+function brMarket(x, z, w = 54, d = 34, tint = 0xd1a83f) {
+  const g = brHouse(0, 0, w, d, 1, tint);
+  const signMat = mat(tint);
+  const shelfMat = woodMat(0x6b4423);
+  g.add(mesh(new THREE.BoxGeometry(w * 0.72, 1.1, 0.46), signMat, [0, 4.35, -d / 2 - 0.48]));
+  g.add(mesh(new THREE.BoxGeometry(w * 0.5, 0.22, 0.5), mat(0x101820), [0, 4.35, -d / 2 - 0.75]));
+  for (let i = 0; i < 5; i++) {
+    g.add(mesh(new THREE.BoxGeometry(2.8, 1.2, 0.8), shelfMat, [-18 + i * 9, 0.65, -2]));
+    g.add(mesh(new THREE.BoxGeometry(2.4, 0.18, 0.82), mat(0xdd5533 + i * 2200), [-18 + i * 9, 1.35, -2]));
+  }
+  g.position.set(x, 0, z);
+  return g;
+}
+
+function coldBuilding(x, z, w = 45, d = 27, floors = 5) {
+  const g = new THREE.Group();
+  const wall = metalMat(0x5a6878);
+  const dark = metalMat(0x28313a);
+  const glass = mat(0x9ed8ff);
+  const floorH = 3.1;
+  const totalH = floors * floorH;
+  g.add(mesh(new THREE.BoxGeometry(w, totalH, d), wall, [0, totalH / 2, 0]));
+  g.add(mesh(new THREE.BoxGeometry(w * 0.96, 0.18, d * 0.96), dark, [0, floorH, 0]));
+  g.add(mesh(new THREE.BoxGeometry(w * 0.96, 0.18, d * 0.96), dark, [0, floorH * 2, 0]));
+  for (let f = 0; f < floors; f++) {
+    const y = 1.4 + f * floorH;
+    for (let i = 0; i < 5; i++) {
+      const wx = -w * 0.36 + i * (w * 0.18);
+      const win = mesh(new THREE.BoxGeometry(2.2, 1.0, 0.08), glass, [wx, y, -d / 2 - 0.05]);
+      if (f > 1) win.material = dark;
+      g.add(win);
+    }
+  }
+  const balcony = metalMat(0x2f3b46);
+  g.add(mesh(new THREE.BoxGeometry(w * 0.72, 0.24, 2.2), balcony, [0, floorH * 1.02, -d / 2 - 1.2]));
+  g.add(mesh(new THREE.BoxGeometry(w * 0.58, 0.24, 2.0), balcony, [0, floorH * 2.02, -d / 2 - 1.1]));
+  g.add(mesh(new THREE.BoxGeometry(4, 2.8, 0.16), dark, [0, 1.4, -d / 2 - 0.1]));
+  g.add(mesh(new THREE.BoxGeometry(w * 0.9, 0.5, d * 0.9), dark, [0, totalH + 0.25, 0]));
+  g.position.set(x, 0, z);
+  return g;
+}
+
 function brTower(x, z, tint = 0x9d6b42) {
   const g = new THREE.Group();
   const metal = metalMat(0x333840);
@@ -490,6 +532,26 @@ function brBridge(x, z, rot = 0) {
   return g;
 }
 
+function brRiver(x, z, w = 900, d = 42, rot = 0) {
+  const g = new THREE.Group();
+  const water = new THREE.Mesh(
+    new THREE.PlaneGeometry(w, d),
+    new THREE.MeshStandardMaterial({ color: 0x2d83c5, roughness: 0.25, metalness: 0.05, transparent: true, opacity: 0.78 })
+  );
+  water.rotation.x = -Math.PI / 2;
+  water.position.y = 0.035;
+  g.add(water);
+  const foam = mat(0xbfefff);
+  for (let i = 0; i < 18; i++) {
+    const streak = mesh(new THREE.BoxGeometry(18 + (i % 4) * 8, 0.03, 0.75), foam, [-w / 2 + i * (w / 17), 0.07, (i % 2 ? -1 : 1) * d * 0.22]);
+    streak.rotation.y = 0.08 * (i % 3 - 1);
+    g.add(streak);
+  }
+  g.position.set(x, 0, z);
+  g.rotation.y = rot;
+  return g;
+}
+
 function brBalloon(x, z, tint = 0xff5533) {
   const g = new THREE.Group();
   const crate = supplyBox(0, 0, 0x445533);
@@ -568,12 +630,15 @@ export function getPropCollider(prop) {
     br_pad: [0, 0],
     br_house: [0, 0],
     br_warehouse: [0, 0],
+    br_market: [0, 0],
+    cold_building: [Math.max(prop.w || 45, prop.d || 27) * 0.52, 15.5],
     br_tower: [3.2, 12.5],
     br_monster: [6.5 * (prop.scale || 1), 16 * (prop.scale || 1)],
     br_road: [0, 0],
     br_billboard: [6.4, 5.8],
     br_ramp: [7.2, 2.2],
     br_bridge: [22, 1.4],
+    br_river: [0, 0],
     br_balloon: [5.8, 12],
     cactus: [1.2 * (prop.scale || 1), 2.8 * (prop.scale || 1)],
     rock: [1.6 * (prop.scale || 1), 1.2 * (prop.scale || 1)],
@@ -612,13 +677,20 @@ const BUILDERS = {
   house: (p) => house(p.x, p.z, p.rot || 0, 1),
   house2: (p) => house(p.x, p.z, p.rot || 0, 2),
   br_pad: (p) => brCompoundPad(p.x, p.z, p.tint || 0x6f8a3f),
-  br_house: (p) => brHouse(p.x, p.z, p.w || 32, p.d || 24, p.floors || 2, p.tint || 0x9d6b42),
+  br_house: (p) => withBlockbenchModel(
+    brHouse(p.x, p.z, p.w || 32, p.d || 24, p.floors || 2, p.tint || 0x9d6b42),
+    "br_house_enterable",
+    { targetWidth: p.w || 32, targetHeight: (p.floors || 2) === 2 ? 6.4 : 4.2 }
+  ),
   br_warehouse: (p) => brWarehouse(p.x, p.z, p.w || 44, p.d || 26, p.tint || 0x5f7688),
+  br_market: (p) => brMarket(p.x, p.z, p.w || 54, p.d || 34, p.tint || 0xd1a83f),
+  cold_building: (p) => coldBuilding(p.x, p.z, p.w || 45, p.d || 27, p.floors || 5),
   br_tower: (p) => brTower(p.x, p.z, p.tint || 0x9d6b42),
   br_road: (p) => brRoad(p.x, p.z, p.w || 120, p.d || 12, p.rot || 0, p.tint || 0x5b5642),
   br_billboard: (p) => brBillboard(p.x, p.z, p.rot || 0, p.tint || 0x9d6b42),
   br_ramp: (p) => brRamp(p.x, p.z, p.rot || 0, p.tint || 0x7a4f2a),
   br_bridge: (p) => brBridge(p.x, p.z, p.rot || 0),
+  br_river: (p) => brRiver(p.x, p.z, p.w || 900, p.d || 42, p.rot || 0),
   br_balloon: (p) => brBalloon(p.x, p.z, p.tint || 0xff5533),
   cactus: (p) => cactus(p.x, p.z, p.scale || 1),
   br_monster: (p) => withBlockbenchModel(

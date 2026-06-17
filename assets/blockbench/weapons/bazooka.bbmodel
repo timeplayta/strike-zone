@@ -4,8 +4,8 @@
     "model_format": "free",
     "box_uv": true
   },
-  "name": "Glock Blockbench",
-  "model_identifier": "glock",
+  "name": "Bazuca Blockbench",
+  "model_identifier": "bazooka",
   "visible_box": [
     3,
     3,
@@ -19,16 +19,16 @@
   "elements": [
     {
       "uuid": "sz-0000",
-      "name": "slide",
+      "name": "main_tube",
       "from": [
-        -1.28,
-        2.88,
-        -4.32
+        -1.76,
+        1.76,
+        -8.64
       ],
       "to": [
-        1.28,
-        4.8,
-        1.76
+        1.76,
+        5.28,
+        6.08
       ],
       "color": 0,
       "faces": {
@@ -90,16 +90,16 @@
     },
     {
       "uuid": "sz-0001",
-      "name": "frame",
+      "name": "rear_cone",
       "from": [
-        -1.2,
-        1.28,
-        -3.04
+        -2.4,
+        1.12,
+        5.92
       ],
       "to": [
-        1.2,
-        3.2,
-        2.08
+        2.4,
+        5.92,
+        9.44
       ],
       "color": 1,
       "faces": {
@@ -161,16 +161,16 @@
     },
     {
       "uuid": "sz-0002",
-      "name": "grip",
+      "name": "front_muzzle",
       "from": [
-        -1.04,
-        -3.04,
-        0.24
+        -2.56,
+        0.96,
+        -12
       ],
       "to": [
-        1.04,
-        1.44,
-        2.32
+        2.56,
+        6.08,
+        -9.12
       ],
       "color": 1,
       "faces": {
@@ -228,31 +228,22 @@
           ],
           "texture": "#1"
         }
-      },
-      "rotation": {
-        "angle": -9.17,
-        "axis": "y",
-        "origin": [
-          0,
-          -0.8,
-          1.28
-        ]
       }
     },
     {
       "uuid": "sz-0003",
-      "name": "barrel_tip",
+      "name": "heat_shield",
       "from": [
-        -0.56,
-        3.28,
-        -5.36
+        -2.24,
+        2.96,
+        -6.24
       ],
       "to": [
-        0.56,
-        4.4,
-        -4.24
+        2.24,
+        4.08,
+        3.68
       ],
-      "color": 0,
+      "color": 2,
       "faces": {
         "north": {
           "uv": [
@@ -261,7 +252,7 @@
             16,
             16
           ],
-          "texture": "#0"
+          "texture": "#2"
         },
         "south": {
           "uv": [
@@ -270,7 +261,7 @@
             16,
             16
           ],
-          "texture": "#0"
+          "texture": "#2"
         },
         "east": {
           "uv": [
@@ -279,7 +270,7 @@
             16,
             16
           ],
-          "texture": "#0"
+          "texture": "#2"
         },
         "west": {
           "uv": [
@@ -288,7 +279,7 @@
             16,
             16
           ],
-          "texture": "#0"
+          "texture": "#2"
         },
         "up": {
           "uv": [
@@ -297,7 +288,7 @@
             16,
             16
           ],
-          "texture": "#0"
+          "texture": "#2"
         },
         "down": {
           "uv": [
@@ -306,24 +297,24 @@
             16,
             16
           ],
-          "texture": "#0"
+          "texture": "#2"
         }
       }
     },
     {
       "uuid": "sz-0004",
-      "name": "front_sight",
+      "name": "top_sight",
       "from": [
-        -0.28,
-        4.84,
-        -4.68
+        -0.8,
+        5.84,
+        -4.8
       ],
       "to": [
-        0.28,
-        5.4,
-        -4.28
+        0.8,
+        7.6,
+        -0.96
       ],
-      "color": 2,
+      "color": 3,
       "faces": {
         "north": {
           "uv": [
@@ -332,7 +323,7 @@
             16,
             16
           ],
-          "texture": "#2"
+          "texture": "#3"
         },
         "south": {
           "uv": [
@@ -341,7 +332,7 @@
             16,
             16
           ],
-          "texture": "#2"
+          "texture": "#3"
         },
         "east": {
           "uv": [
@@ -350,7 +341,7 @@
             16,
             16
           ],
-          "texture": "#2"
+          "texture": "#3"
         },
         "west": {
           "uv": [
@@ -359,7 +350,7 @@
             16,
             16
           ],
-          "texture": "#2"
+          "texture": "#3"
         },
         "up": {
           "uv": [
@@ -368,7 +359,7 @@
             16,
             16
           ],
-          "texture": "#2"
+          "texture": "#3"
         },
         "down": {
           "uv": [
@@ -377,24 +368,24 @@
             16,
             16
           ],
-          "texture": "#2"
+          "texture": "#3"
         }
       }
     },
     {
       "uuid": "sz-0005",
-      "name": "rear_sight",
+      "name": "front_grip",
       "from": [
-        -0.48,
-        4.88,
-        1.08
+        -0.8,
+        -2.32,
+        -4.64
       ],
       "to": [
-        0.48,
-        5.36,
-        1.48
+        0.8,
+        1.68,
+        -3.04
       ],
-      "color": 2,
+      "color": 4,
       "faces": {
         "north": {
           "uv": [
@@ -403,7 +394,7 @@
             16,
             16
           ],
-          "texture": "#2"
+          "texture": "#4"
         },
         "south": {
           "uv": [
@@ -412,7 +403,7 @@
             16,
             16
           ],
-          "texture": "#2"
+          "texture": "#4"
         },
         "east": {
           "uv": [
@@ -421,7 +412,7 @@
             16,
             16
           ],
-          "texture": "#2"
+          "texture": "#4"
         },
         "west": {
           "uv": [
@@ -430,7 +421,7 @@
             16,
             16
           ],
-          "texture": "#2"
+          "texture": "#4"
         },
         "up": {
           "uv": [
@@ -439,7 +430,7 @@
             16,
             16
           ],
-          "texture": "#2"
+          "texture": "#4"
         },
         "down": {
           "uv": [
@@ -448,22 +439,22 @@
             16,
             16
           ],
-          "texture": "#2"
+          "texture": "#4"
         }
       }
     },
     {
       "uuid": "sz-0006",
-      "name": "slide_cuts_l",
+      "name": "trigger_box",
       "from": [
-        -1.504,
-        3.72,
-        -3.04
+        -1.28,
+        -0.16,
+        0.48
       ],
       "to": [
-        -1.216,
-        4.6,
-        -0.16
+        1.28,
+        1.44,
+        3.36
       ],
       "color": 1,
       "faces": {
@@ -525,18 +516,18 @@
     },
     {
       "uuid": "sz-0007",
-      "name": "slide_cuts_r",
+      "name": "warning_stripe",
       "from": [
-        1.216,
-        3.72,
-        -3.04
+        -1.92,
+        5.24,
+        -8.96
       ],
       "to": [
-        1.504,
-        4.6,
-        -0.16
+        1.92,
+        5.96,
+        -7.68
       ],
-      "color": 1,
+      "color": 5,
       "faces": {
         "north": {
           "uv": [
@@ -545,7 +536,7 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#5"
         },
         "south": {
           "uv": [
@@ -554,7 +545,7 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#5"
         },
         "east": {
           "uv": [
@@ -563,7 +554,7 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#5"
         },
         "west": {
           "uv": [
@@ -572,7 +563,7 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#5"
         },
         "up": {
           "uv": [
@@ -581,7 +572,7 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#5"
         },
         "down": {
           "uv": [
@@ -590,7 +581,7 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#5"
         }
       }
     }
@@ -635,8 +626,8 @@
       "source": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiI+PHJlY3Qgd2lkdGg9IjE2IiBoZWlnaHQ9IjE2IiBmaWxsPSJyZ2IoMTcsMjEsMjgpIi8+PC9zdmc+"
     },
     {
-      "path": "gold.svg",
-      "name": "gold",
+      "path": "purple.svg",
+      "name": "purple",
       "folder": "Strike Zone",
       "namespace": "",
       "id": "2",
@@ -646,6 +637,48 @@
       "mode": "bitmap",
       "saved": true,
       "uuid": "tex-2",
+      "source": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiI+PHJlY3Qgd2lkdGg9IjE2IiBoZWlnaHQ9IjE2IiBmaWxsPSJyZ2IoMTAwLDc0LDEzNikiLz48L3N2Zz4="
+    },
+    {
+      "path": "glass.svg",
+      "name": "glass",
+      "folder": "Strike Zone",
+      "namespace": "",
+      "id": "3",
+      "particle": false,
+      "render_mode": "default",
+      "visible": true,
+      "mode": "bitmap",
+      "saved": true,
+      "uuid": "tex-3",
+      "source": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiI+PHJlY3Qgd2lkdGg9IjE2IiBoZWlnaHQ9IjE2IiBmaWxsPSJyZ2IoMTQzLDIwMCwyNTUpIi8+PC9zdmc+"
+    },
+    {
+      "path": "leatherDark.svg",
+      "name": "leatherDark",
+      "folder": "Strike Zone",
+      "namespace": "",
+      "id": "4",
+      "particle": false,
+      "render_mode": "default",
+      "visible": true,
+      "mode": "bitmap",
+      "saved": true,
+      "uuid": "tex-4",
+      "source": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiI+PHJlY3Qgd2lkdGg9IjE2IiBoZWlnaHQ9IjE2IiBmaWxsPSJyZ2IoNTgsMzYsMjIpIi8+PC9zdmc+"
+    },
+    {
+      "path": "gold.svg",
+      "name": "gold",
+      "folder": "Strike Zone",
+      "namespace": "",
+      "id": "5",
+      "particle": false,
+      "render_mode": "default",
+      "visible": true,
+      "mode": "bitmap",
+      "saved": true,
+      "uuid": "tex-5",
       "source": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiI+PHJlY3Qgd2lkdGg9IjE2IiBoZWlnaHQ9IjE2IiBmaWxsPSJyZ2IoMjE0LDE2NCw3OCkiLz48L3N2Zz4="
     }
   ]

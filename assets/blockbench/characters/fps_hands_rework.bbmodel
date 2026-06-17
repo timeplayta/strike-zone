@@ -4,8 +4,8 @@
     "model_format": "free",
     "box_uv": true
   },
-  "name": "AWM Blockbench",
-  "model_identifier": "awm",
+  "name": "Mãos FPS Refeitas",
+  "model_identifier": "fps_hands_rework",
   "visible_box": [
     3,
     3,
@@ -19,16 +19,16 @@
   "elements": [
     {
       "uuid": "sz-0000",
-      "name": "receiver",
+      "name": "left_palm",
       "from": [
-        -1.12,
+        -8.32,
         1.6,
-        -3.36
+        -3.2
       ],
       "to": [
-        1.12,
+        -3.84,
         4.16,
-        3.36
+        0.64
       ],
       "color": 0,
       "faces": {
@@ -90,18 +90,18 @@
     },
     {
       "uuid": "sz-0001",
-      "name": "barrel",
+      "name": "right_palm",
       "from": [
-        -0.44,
-        2.76,
-        -10.88
+        3.84,
+        1.6,
+        -3.2
       ],
       "to": [
-        0.44,
-        3.64,
-        -2.56
+        8.32,
+        4.16,
+        0.64
       ],
-      "color": 1,
+      "color": 0,
       "faces": {
         "north": {
           "uv": [
@@ -110,7 +110,7 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#0"
         },
         "south": {
           "uv": [
@@ -119,7 +119,7 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#0"
         },
         "east": {
           "uv": [
@@ -128,7 +128,7 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#0"
         },
         "west": {
           "uv": [
@@ -137,7 +137,7 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#0"
         },
         "up": {
           "uv": [
@@ -146,7 +146,7 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#0"
         },
         "down": {
           "uv": [
@@ -155,22 +155,22 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#0"
         }
       }
     },
     {
       "uuid": "sz-0002",
-      "name": "muzzle",
+      "name": "left_wrist",
       "from": [
-        -0.6,
-        2.6,
-        -12.16
+        -8.64,
+        -0.8,
+        -0.48
       ],
       "to": [
-        0.6,
-        3.8,
-        -10.88
+        -5.12,
+        2.08,
+        3.04
       ],
       "color": 1,
       "faces": {
@@ -232,18 +232,18 @@
     },
     {
       "uuid": "sz-0003",
-      "name": "stock",
+      "name": "right_wrist",
       "from": [
-        -0.96,
-        1.92,
-        3.2
+        5.12,
+        -0.8,
+        -0.48
       ],
       "to": [
-        0.96,
-        3.84,
-        7.68
+        8.64,
+        2.08,
+        3.04
       ],
-      "color": 2,
+      "color": 1,
       "faces": {
         "north": {
           "uv": [
@@ -252,7 +252,7 @@
             16,
             16
           ],
-          "texture": "#2"
+          "texture": "#1"
         },
         "south": {
           "uv": [
@@ -261,7 +261,7 @@
             16,
             16
           ],
-          "texture": "#2"
+          "texture": "#1"
         },
         "east": {
           "uv": [
@@ -270,7 +270,7 @@
             16,
             16
           ],
-          "texture": "#2"
+          "texture": "#1"
         },
         "west": {
           "uv": [
@@ -279,7 +279,7 @@
             16,
             16
           ],
-          "texture": "#2"
+          "texture": "#1"
         },
         "up": {
           "uv": [
@@ -288,7 +288,7 @@
             16,
             16
           ],
-          "texture": "#2"
+          "texture": "#1"
         },
         "down": {
           "uv": [
@@ -297,22 +297,22 @@
             16,
             16
           ],
-          "texture": "#2"
+          "texture": "#1"
         }
       }
     },
     {
       "uuid": "sz-0004",
-      "name": "grip",
+      "name": "finger_a",
       "from": [
-        -0.72,
-        -2.32,
-        0.56
+        -4.76,
+        3.52,
+        -3.24
       ],
       "to": [
-        0.72,
-        1.68,
-        2
+        -4.2,
+        5.44,
+        -2.52
       ],
       "color": 0,
       "faces": {
@@ -372,29 +372,29 @@
         }
       },
       "rotation": {
-        "angle": -10.31,
+        "angle": -4.58,
         "axis": "y",
         "origin": [
-          0,
-          -0.32,
-          1.28
+          -4.48,
+          4.48,
+          -2.88
         ]
       }
     },
     {
       "uuid": "sz-0005",
-      "name": "magazine",
+      "name": "finger_b",
       "from": [
-        -0.72,
-        -3.2,
-        -2.24
+        -4.72,
+        4.96,
+        -4
       ],
       "to": [
-        0.72,
-        1.28,
-        -0.32
+        -4.24,
+        6.56,
+        -3.36
       ],
-      "color": 2,
+      "color": 0,
       "faces": {
         "north": {
           "uv": [
@@ -403,7 +403,7 @@
             16,
             16
           ],
-          "texture": "#2"
+          "texture": "#0"
         },
         "south": {
           "uv": [
@@ -412,7 +412,7 @@
             16,
             16
           ],
-          "texture": "#2"
+          "texture": "#0"
         },
         "east": {
           "uv": [
@@ -421,7 +421,7 @@
             16,
             16
           ],
-          "texture": "#2"
+          "texture": "#0"
         },
         "west": {
           "uv": [
@@ -430,7 +430,7 @@
             16,
             16
           ],
-          "texture": "#2"
+          "texture": "#0"
         },
         "up": {
           "uv": [
@@ -439,7 +439,7 @@
             16,
             16
           ],
-          "texture": "#2"
+          "texture": "#0"
         },
         "down": {
           "uv": [
@@ -448,33 +448,33 @@
             16,
             16
           ],
-          "texture": "#2"
+          "texture": "#0"
         }
       },
       "rotation": {
-        "angle": 10.31,
+        "angle": -6.88,
         "axis": "y",
         "origin": [
-          0,
-          -0.96,
-          -1.28
+          -4.48,
+          5.76,
+          -3.68
         ]
       }
     },
     {
       "uuid": "sz-0006",
-      "name": "top_rail",
+      "name": "finger_a",
       "from": [
-        -1.28,
-        4.36,
-        -4.56
+        -5.32,
+        3.52,
+        -3.24
       ],
       "to": [
-        1.28,
-        4.92,
-        2.64
+        -4.76,
+        5.44,
+        -2.52
       ],
-      "color": 1,
+      "color": 0,
       "faces": {
         "north": {
           "uv": [
@@ -483,7 +483,7 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#0"
         },
         "south": {
           "uv": [
@@ -492,7 +492,7 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#0"
         },
         "east": {
           "uv": [
@@ -501,7 +501,7 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#0"
         },
         "west": {
           "uv": [
@@ -510,7 +510,7 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#0"
         },
         "up": {
           "uv": [
@@ -519,7 +519,7 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#0"
         },
         "down": {
           "uv": [
@@ -528,24 +528,33 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#0"
         }
+      },
+      "rotation": {
+        "angle": -4.58,
+        "axis": "y",
+        "origin": [
+          -5.040000000000001,
+          4.48,
+          -2.88
+        ]
       }
     },
     {
       "uuid": "sz-0007",
-      "name": "side_panel_l",
+      "name": "finger_b",
       "from": [
-        -1.48,
-        2.16,
+        -5.28,
+        4.96,
         -4
       ],
       "to": [
-        -1.08,
-        3.6,
-        1.44
+        -4.8,
+        6.56,
+        -3.36
       ],
-      "color": 1,
+      "color": 0,
       "faces": {
         "north": {
           "uv": [
@@ -554,7 +563,7 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#0"
         },
         "south": {
           "uv": [
@@ -563,7 +572,7 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#0"
         },
         "east": {
           "uv": [
@@ -572,7 +581,7 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#0"
         },
         "west": {
           "uv": [
@@ -581,7 +590,7 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#0"
         },
         "up": {
           "uv": [
@@ -590,7 +599,7 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#0"
         },
         "down": {
           "uv": [
@@ -599,24 +608,33 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#0"
         }
+      },
+      "rotation": {
+        "angle": -6.88,
+        "axis": "y",
+        "origin": [
+          -5.040000000000001,
+          5.76,
+          -3.68
+        ]
       }
     },
     {
       "uuid": "sz-0008",
-      "name": "side_panel_r",
+      "name": "finger_a",
       "from": [
-        1.08,
-        2.16,
-        -4
+        -5.88,
+        3.52,
+        -3.24
       ],
       "to": [
-        1.48,
-        3.6,
-        1.44
+        -5.32,
+        5.44,
+        -2.52
       ],
-      "color": 1,
+      "color": 0,
       "faces": {
         "north": {
           "uv": [
@@ -625,7 +643,7 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#0"
         },
         "south": {
           "uv": [
@@ -634,7 +652,7 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#0"
         },
         "east": {
           "uv": [
@@ -643,7 +661,7 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#0"
         },
         "west": {
           "uv": [
@@ -652,7 +670,7 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#0"
         },
         "up": {
           "uv": [
@@ -661,7 +679,7 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#0"
         },
         "down": {
           "uv": [
@@ -670,24 +688,33 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#0"
         }
+      },
+      "rotation": {
+        "angle": -4.58,
+        "axis": "y",
+        "origin": [
+          -5.6000000000000005,
+          4.48,
+          -2.88
+        ]
       }
     },
     {
       "uuid": "sz-0009",
-      "name": "trigger_guard",
+      "name": "finger_b",
       "from": [
-        -1.12,
-        -1.4,
-        -0.32
+        -5.84,
+        4.96,
+        -4
       ],
       "to": [
-        1.12,
-        -0.84,
-        1.6
+        -5.36,
+        6.56,
+        -3.36
       ],
-      "color": 1,
+      "color": 0,
       "faces": {
         "north": {
           "uv": [
@@ -696,7 +723,7 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#0"
         },
         "south": {
           "uv": [
@@ -705,7 +732,7 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#0"
         },
         "east": {
           "uv": [
@@ -714,7 +741,7 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#0"
         },
         "west": {
           "uv": [
@@ -723,7 +750,7 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#0"
         },
         "up": {
           "uv": [
@@ -732,7 +759,7 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#0"
         },
         "down": {
           "uv": [
@@ -741,24 +768,33 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#0"
         }
+      },
+      "rotation": {
+        "angle": -6.88,
+        "axis": "y",
+        "origin": [
+          -5.6000000000000005,
+          5.76,
+          -3.68
+        ]
       }
     },
     {
       "uuid": "sz-0010",
-      "name": "rear_sight",
+      "name": "finger_a",
       "from": [
-        -1.04,
-        5.28,
-        1.76
+        -6.44,
+        3.52,
+        -3.24
       ],
       "to": [
-        1.04,
-        6.24,
-        2.72
+        -5.88,
+        5.44,
+        -2.52
       ],
-      "color": 1,
+      "color": 0,
       "faces": {
         "north": {
           "uv": [
@@ -767,7 +803,7 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#0"
         },
         "south": {
           "uv": [
@@ -776,7 +812,7 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#0"
         },
         "east": {
           "uv": [
@@ -785,7 +821,7 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#0"
         },
         "west": {
           "uv": [
@@ -794,7 +830,7 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#0"
         },
         "up": {
           "uv": [
@@ -803,7 +839,7 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#0"
         },
         "down": {
           "uv": [
@@ -812,24 +848,33 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#0"
         }
+      },
+      "rotation": {
+        "angle": -4.58,
+        "axis": "y",
+        "origin": [
+          -6.16,
+          4.48,
+          -2.88
+        ]
       }
     },
     {
       "uuid": "sz-0011",
-      "name": "front_sight",
+      "name": "finger_b",
       "from": [
-        -0.48,
-        4.48,
-        -10.24
+        -6.4,
+        4.96,
+        -4
       ],
       "to": [
-        0.48,
-        5.76,
-        -9.6
+        -5.92,
+        6.56,
+        -3.36
       ],
-      "color": 1,
+      "color": 0,
       "faces": {
         "north": {
           "uv": [
@@ -838,7 +883,7 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#0"
         },
         "south": {
           "uv": [
@@ -847,7 +892,7 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#0"
         },
         "east": {
           "uv": [
@@ -856,7 +901,7 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#0"
         },
         "west": {
           "uv": [
@@ -865,7 +910,7 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#0"
         },
         "up": {
           "uv": [
@@ -874,7 +919,7 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#0"
         },
         "down": {
           "uv": [
@@ -883,24 +928,33 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#0"
         }
+      },
+      "rotation": {
+        "angle": -6.88,
+        "axis": "y",
+        "origin": [
+          -6.16,
+          5.76,
+          -3.68
+        ]
       }
     },
     {
       "uuid": "sz-0012",
-      "name": "bolt",
+      "name": "finger_a",
       "from": [
-        -1.8,
-        2.96,
-        -2.72
+        -7,
+        3.52,
+        -3.24
       ],
       "to": [
-        -1.24,
-        3.76,
-        0.16
+        -6.44,
+        5.44,
+        -2.52
       ],
-      "color": 1,
+      "color": 0,
       "faces": {
         "north": {
           "uv": [
@@ -909,7 +963,7 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#0"
         },
         "south": {
           "uv": [
@@ -918,7 +972,7 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#0"
         },
         "east": {
           "uv": [
@@ -927,7 +981,7 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#0"
         },
         "west": {
           "uv": [
@@ -936,7 +990,7 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#0"
         },
         "up": {
           "uv": [
@@ -945,7 +999,7 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#0"
         },
         "down": {
           "uv": [
@@ -954,24 +1008,33 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#0"
         }
+      },
+      "rotation": {
+        "angle": -4.58,
+        "axis": "y",
+        "origin": [
+          -6.720000000000001,
+          4.48,
+          -2.88
+        ]
       }
     },
     {
       "uuid": "sz-0013",
-      "name": "selector",
+      "name": "finger_b",
       "from": [
-        1.32,
-        2.8,
-        0.24
+        -6.96,
+        4.96,
+        -4
       ],
       "to": [
-        1.72,
-        3.6,
-        1.04
+        -6.48,
+        6.56,
+        -3.36
       ],
-      "color": 3,
+      "color": 0,
       "faces": {
         "north": {
           "uv": [
@@ -980,7 +1043,7 @@
             16,
             16
           ],
-          "texture": "#3"
+          "texture": "#0"
         },
         "south": {
           "uv": [
@@ -989,7 +1052,7 @@
             16,
             16
           ],
-          "texture": "#3"
+          "texture": "#0"
         },
         "east": {
           "uv": [
@@ -998,7 +1061,7 @@
             16,
             16
           ],
-          "texture": "#3"
+          "texture": "#0"
         },
         "west": {
           "uv": [
@@ -1007,7 +1070,7 @@
             16,
             16
           ],
-          "texture": "#3"
+          "texture": "#0"
         },
         "up": {
           "uv": [
@@ -1016,7 +1079,7 @@
             16,
             16
           ],
-          "texture": "#3"
+          "texture": "#0"
         },
         "down": {
           "uv": [
@@ -1025,24 +1088,33 @@
             16,
             16
           ],
-          "texture": "#3"
+          "texture": "#0"
         }
+      },
+      "rotation": {
+        "angle": -6.88,
+        "axis": "y",
+        "origin": [
+          -6.720000000000001,
+          5.76,
+          -3.68
+        ]
       }
     },
     {
       "uuid": "sz-0014",
-      "name": "scope",
+      "name": "thumb",
       "from": [
-        -1.04,
-        6,
-        -4
+        -9.24,
+        1.28,
+        -0.76
       ],
       "to": [
-        1.04,
-        8.08,
-        1.44
+        -8.36,
+        3.84,
+        0.12
       ],
-      "color": 1,
+      "color": 0,
       "faces": {
         "north": {
           "uv": [
@@ -1051,7 +1123,7 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#0"
         },
         "south": {
           "uv": [
@@ -1060,7 +1132,7 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#0"
         },
         "east": {
           "uv": [
@@ -1069,7 +1141,7 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#0"
         },
         "west": {
           "uv": [
@@ -1078,7 +1150,7 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#0"
         },
         "up": {
           "uv": [
@@ -1087,7 +1159,7 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#0"
         },
         "down": {
           "uv": [
@@ -1096,24 +1168,33 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#0"
         }
+      },
+      "rotation": {
+        "angle": 31.51,
+        "axis": "y",
+        "origin": [
+          -8.8,
+          2.56,
+          -0.32
+        ]
       }
     },
     {
       "uuid": "sz-0015",
-      "name": "scope_glass_front",
+      "name": "finger_a",
       "from": [
-        -0.8,
-        6.24,
-        -4.52
+        4.2,
+        3.52,
+        -3.24
       ],
       "to": [
-        0.8,
-        7.84,
-        -4.12
+        4.76,
+        5.44,
+        -2.52
       ],
-      "color": 4,
+      "color": 0,
       "faces": {
         "north": {
           "uv": [
@@ -1122,7 +1203,7 @@
             16,
             16
           ],
-          "texture": "#4"
+          "texture": "#0"
         },
         "south": {
           "uv": [
@@ -1131,7 +1212,7 @@
             16,
             16
           ],
-          "texture": "#4"
+          "texture": "#0"
         },
         "east": {
           "uv": [
@@ -1140,7 +1221,7 @@
             16,
             16
           ],
-          "texture": "#4"
+          "texture": "#0"
         },
         "west": {
           "uv": [
@@ -1149,7 +1230,7 @@
             16,
             16
           ],
-          "texture": "#4"
+          "texture": "#0"
         },
         "up": {
           "uv": [
@@ -1158,7 +1239,7 @@
             16,
             16
           ],
-          "texture": "#4"
+          "texture": "#0"
         },
         "down": {
           "uv": [
@@ -1167,24 +1248,33 @@
             16,
             16
           ],
-          "texture": "#4"
+          "texture": "#0"
         }
+      },
+      "rotation": {
+        "angle": 4.58,
+        "axis": "y",
+        "origin": [
+          4.48,
+          4.48,
+          -2.88
+        ]
       }
     },
     {
       "uuid": "sz-0016",
-      "name": "scope_glass_back",
+      "name": "finger_b",
       "from": [
-        -0.8,
-        6.24,
-        1.4
+        4.24,
+        4.96,
+        -4
       ],
       "to": [
-        0.8,
-        7.84,
-        1.8
+        4.72,
+        6.56,
+        -3.36
       ],
-      "color": 4,
+      "color": 0,
       "faces": {
         "north": {
           "uv": [
@@ -1193,7 +1283,7 @@
             16,
             16
           ],
-          "texture": "#4"
+          "texture": "#0"
         },
         "south": {
           "uv": [
@@ -1202,7 +1292,7 @@
             16,
             16
           ],
-          "texture": "#4"
+          "texture": "#0"
         },
         "east": {
           "uv": [
@@ -1211,7 +1301,7 @@
             16,
             16
           ],
-          "texture": "#4"
+          "texture": "#0"
         },
         "west": {
           "uv": [
@@ -1220,7 +1310,7 @@
             16,
             16
           ],
-          "texture": "#4"
+          "texture": "#0"
         },
         "up": {
           "uv": [
@@ -1229,7 +1319,7 @@
             16,
             16
           ],
-          "texture": "#4"
+          "texture": "#0"
         },
         "down": {
           "uv": [
@@ -1238,24 +1328,33 @@
             16,
             16
           ],
-          "texture": "#4"
+          "texture": "#0"
         }
+      },
+      "rotation": {
+        "angle": 6.88,
+        "axis": "y",
+        "origin": [
+          4.48,
+          5.76,
+          -3.68
+        ]
       }
     },
     {
       "uuid": "sz-0017",
-      "name": "long_barrel",
+      "name": "finger_a",
       "from": [
-        -0.36,
-        2.84,
-        -15.12
+        4.76,
+        3.52,
+        -3.24
       ],
       "to": [
-        0.36,
-        3.56,
-        -7.92
+        5.32,
+        5.44,
+        -2.52
       ],
-      "color": 1,
+      "color": 0,
       "faces": {
         "north": {
           "uv": [
@@ -1264,7 +1363,7 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#0"
         },
         "south": {
           "uv": [
@@ -1273,7 +1372,7 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#0"
         },
         "east": {
           "uv": [
@@ -1282,7 +1381,7 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#0"
         },
         "west": {
           "uv": [
@@ -1291,7 +1390,7 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#0"
         },
         "up": {
           "uv": [
@@ -1300,7 +1399,7 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#0"
         },
         "down": {
           "uv": [
@@ -1309,24 +1408,33 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#0"
         }
+      },
+      "rotation": {
+        "angle": 4.58,
+        "axis": "y",
+        "origin": [
+          5.040000000000001,
+          4.48,
+          -2.88
+        ]
       }
     },
     {
       "uuid": "sz-0018",
-      "name": "bipod_l",
+      "name": "finger_b",
       "from": [
-        -1.88,
-        -2.88,
-        -7.96
+        4.8,
+        4.96,
+        -4
       ],
       "to": [
-        -1.32,
-        1.92,
-        -7.4
+        5.28,
+        6.56,
+        -3.36
       ],
-      "color": 1,
+      "color": 0,
       "faces": {
         "north": {
           "uv": [
@@ -1335,7 +1443,7 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#0"
         },
         "south": {
           "uv": [
@@ -1344,7 +1452,7 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#0"
         },
         "east": {
           "uv": [
@@ -1353,7 +1461,7 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#0"
         },
         "west": {
           "uv": [
@@ -1362,7 +1470,7 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#0"
         },
         "up": {
           "uv": [
@@ -1371,7 +1479,7 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#0"
         },
         "down": {
           "uv": [
@@ -1380,33 +1488,33 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#0"
         }
       },
       "rotation": {
-        "angle": -10.31,
+        "angle": 6.88,
         "axis": "y",
         "origin": [
-          -1.6,
-          -0.48,
-          -7.68
+          5.040000000000001,
+          5.76,
+          -3.68
         ]
       }
     },
     {
       "uuid": "sz-0019",
-      "name": "bipod_r",
+      "name": "finger_a",
       "from": [
-        1.32,
-        -2.88,
-        -7.96
+        5.32,
+        3.52,
+        -3.24
       ],
       "to": [
-        1.88,
-        1.92,
-        -7.4
+        5.88,
+        5.44,
+        -2.52
       ],
-      "color": 1,
+      "color": 0,
       "faces": {
         "north": {
           "uv": [
@@ -1415,7 +1523,7 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#0"
         },
         "south": {
           "uv": [
@@ -1424,7 +1532,7 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#0"
         },
         "east": {
           "uv": [
@@ -1433,7 +1541,7 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#0"
         },
         "west": {
           "uv": [
@@ -1442,7 +1550,7 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#0"
         },
         "up": {
           "uv": [
@@ -1451,7 +1559,7 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#0"
         },
         "down": {
           "uv": [
@@ -1460,16 +1568,496 @@
             16,
             16
           ],
-          "texture": "#1"
+          "texture": "#0"
         }
       },
       "rotation": {
-        "angle": 10.31,
+        "angle": 4.58,
         "axis": "y",
         "origin": [
-          1.6,
-          -0.48,
-          -7.68
+          5.6000000000000005,
+          4.48,
+          -2.88
+        ]
+      }
+    },
+    {
+      "uuid": "sz-0020",
+      "name": "finger_b",
+      "from": [
+        5.36,
+        4.96,
+        -4
+      ],
+      "to": [
+        5.84,
+        6.56,
+        -3.36
+      ],
+      "color": 0,
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        }
+      },
+      "rotation": {
+        "angle": 6.88,
+        "axis": "y",
+        "origin": [
+          5.6000000000000005,
+          5.76,
+          -3.68
+        ]
+      }
+    },
+    {
+      "uuid": "sz-0021",
+      "name": "finger_a",
+      "from": [
+        5.88,
+        3.52,
+        -3.24
+      ],
+      "to": [
+        6.44,
+        5.44,
+        -2.52
+      ],
+      "color": 0,
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        }
+      },
+      "rotation": {
+        "angle": 4.58,
+        "axis": "y",
+        "origin": [
+          6.16,
+          4.48,
+          -2.88
+        ]
+      }
+    },
+    {
+      "uuid": "sz-0022",
+      "name": "finger_b",
+      "from": [
+        5.92,
+        4.96,
+        -4
+      ],
+      "to": [
+        6.4,
+        6.56,
+        -3.36
+      ],
+      "color": 0,
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        }
+      },
+      "rotation": {
+        "angle": 6.88,
+        "axis": "y",
+        "origin": [
+          6.16,
+          5.76,
+          -3.68
+        ]
+      }
+    },
+    {
+      "uuid": "sz-0023",
+      "name": "finger_a",
+      "from": [
+        6.44,
+        3.52,
+        -3.24
+      ],
+      "to": [
+        7,
+        5.44,
+        -2.52
+      ],
+      "color": 0,
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        }
+      },
+      "rotation": {
+        "angle": 4.58,
+        "axis": "y",
+        "origin": [
+          6.720000000000001,
+          4.48,
+          -2.88
+        ]
+      }
+    },
+    {
+      "uuid": "sz-0024",
+      "name": "finger_b",
+      "from": [
+        6.48,
+        4.96,
+        -4
+      ],
+      "to": [
+        6.96,
+        6.56,
+        -3.36
+      ],
+      "color": 0,
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        }
+      },
+      "rotation": {
+        "angle": 6.88,
+        "axis": "y",
+        "origin": [
+          6.720000000000001,
+          5.76,
+          -3.68
+        ]
+      }
+    },
+    {
+      "uuid": "sz-0025",
+      "name": "thumb",
+      "from": [
+        8.36,
+        1.28,
+        -0.76
+      ],
+      "to": [
+        9.24,
+        3.84,
+        0.12
+      ],
+      "color": 0,
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        }
+      },
+      "rotation": {
+        "angle": -31.51,
+        "axis": "y",
+        "origin": [
+          8.8,
+          2.56,
+          -0.32
         ]
       }
     }
@@ -1494,12 +2082,18 @@
     "sz-0016",
     "sz-0017",
     "sz-0018",
-    "sz-0019"
+    "sz-0019",
+    "sz-0020",
+    "sz-0021",
+    "sz-0022",
+    "sz-0023",
+    "sz-0024",
+    "sz-0025"
   ],
   "textures": [
     {
-      "path": "dark.svg",
-      "name": "dark",
+      "path": "leatherDark.svg",
+      "name": "leatherDark",
       "folder": "Strike Zone",
       "namespace": "",
       "id": "0",
@@ -1509,11 +2103,11 @@
       "mode": "bitmap",
       "saved": true,
       "uuid": "tex-0",
-      "source": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiI+PHJlY3Qgd2lkdGg9IjE2IiBoZWlnaHQ9IjE2IiBmaWxsPSJyZ2IoMTcsMjEsMjgpIi8+PC9zdmc+"
+      "source": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiI+PHJlY3Qgd2lkdGg9IjE2IiBoZWlnaHQ9IjE2IiBmaWxsPSJyZ2IoNTgsMzYsMjIpIi8+PC9zdmc+"
     },
     {
-      "path": "metal.svg",
-      "name": "metal",
+      "path": "cloth.svg",
+      "name": "cloth",
       "folder": "Strike Zone",
       "namespace": "",
       "id": "1",
@@ -1523,49 +2117,7 @@
       "mode": "bitmap",
       "saved": true,
       "uuid": "tex-1",
-      "source": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiI+PHJlY3Qgd2lkdGg9IjE2IiBoZWlnaHQ9IjE2IiBmaWxsPSJyZ2IoMTIyLDEyNywxMzYpIi8+PC9zdmc+"
-    },
-    {
-      "path": "tan.svg",
-      "name": "tan",
-      "folder": "Strike Zone",
-      "namespace": "",
-      "id": "2",
-      "particle": false,
-      "render_mode": "default",
-      "visible": true,
-      "mode": "bitmap",
-      "saved": true,
-      "uuid": "tex-2",
-      "source": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiI+PHJlY3Qgd2lkdGg9IjE2IiBoZWlnaHQ9IjE2IiBmaWxsPSJyZ2IoMTg0LDEzOCw4NikiLz48L3N2Zz4="
-    },
-    {
-      "path": "gold.svg",
-      "name": "gold",
-      "folder": "Strike Zone",
-      "namespace": "",
-      "id": "3",
-      "particle": false,
-      "render_mode": "default",
-      "visible": true,
-      "mode": "bitmap",
-      "saved": true,
-      "uuid": "tex-3",
-      "source": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiI+PHJlY3Qgd2lkdGg9IjE2IiBoZWlnaHQ9IjE2IiBmaWxsPSJyZ2IoMjE0LDE2NCw3OCkiLz48L3N2Zz4="
-    },
-    {
-      "path": "glass.svg",
-      "name": "glass",
-      "folder": "Strike Zone",
-      "namespace": "",
-      "id": "4",
-      "particle": false,
-      "render_mode": "default",
-      "visible": true,
-      "mode": "bitmap",
-      "saved": true,
-      "uuid": "tex-4",
-      "source": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiI+PHJlY3Qgd2lkdGg9IjE2IiBoZWlnaHQ9IjE2IiBmaWxsPSJyZ2IoMTQzLDIwMCwyNTUpIi8+PC9zdmc+"
+      "source": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiI+PHJlY3Qgd2lkdGg9IjE2IiBoZWlnaHQ9IjE2IiBmaWxsPSJyZ2IoMzcsNTAsNzQpIi8+PC9zdmc+"
     }
   ]
 }

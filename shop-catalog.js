@@ -32,6 +32,43 @@ export const WEAPON_SKINS = [
   { id: "bazooka_galaxy", type: "weapon", weapon: "bazooka", color: 0x120727, price: 2200, label: "Bazuca Galáxia", tier: "mítica", cosmic: "blackhole" },
 ];
 
+const COSMIC_SKIN_NAMES = {
+  ak47: "AK-47",
+  scar: "SCAR-H",
+  m4: "M4A1",
+  ump45: "UMP-45",
+  awm: "AWM",
+  doze: "Doze",
+  bazooka: "Bazuca",
+  glock: "Glock",
+  revolver: "Revólver",
+};
+
+for (const [weapon, label] of Object.entries(COSMIC_SKIN_NAMES)) {
+  WEAPON_SKINS.push(
+    {
+      id: `${weapon}_universo`,
+      type: "weapon",
+      weapon,
+      color: 0x090a2f,
+      price: weapon === "bazooka" || weapon === "awm" ? 2400 : 1500,
+      label: `${label} Universo Vivo`,
+      tier: "mítica",
+      cosmic: "galaxy",
+    },
+    {
+      id: `${weapon}_sistema_solar`,
+      type: "weapon",
+      weapon,
+      color: 0xff8a22,
+      price: weapon === "bazooka" || weapon === "awm" ? 2200 : 1350,
+      label: `${label} Sistema Solar`,
+      tier: "lendária",
+      cosmic: "sun",
+    }
+  );
+}
+
 export const CHARACTER_SKINS = [
   { id: "char_among_red", type: "character", skinId: "among_red", color: 0xff3355, price: 150, label: "Among Us Vermelho", tier: "lendária" },
   { id: "char_among_blue", type: "character", skinId: "among_blue", color: 0x2266ee, price: 150, label: "Among Us Azul", tier: "lendária" },

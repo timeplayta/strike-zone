@@ -8,6 +8,7 @@ import { upgradeWithBlockbenchModel } from "./blockbench-model-loader.js";
 const AMMO_COLORS = {
   ar: 0xffcc55,
   doze: 0xdd5533,
+  rocket: 0xaa66ff,
 };
 
 function makeRing(color) {

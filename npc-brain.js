@@ -3,10 +3,10 @@
 export const ENEMY_ROLES = ["rusher", "flanker", "sniper", "support"];
 
 const ROLE_PLANS = {
-  rusher: { idealMin: 4, idealMax: 10, aggression: 1.2, flankWeight: 0.2 },
-  flanker: { idealMin: 8, idealMax: 16, aggression: 0.95, flankWeight: 1.0 },
-  sniper: { idealMin: 14, idealMax: 24, aggression: 0.55, flankWeight: 0.35 },
-  support: { idealMin: 10, idealMax: 20, aggression: 0.7, flankWeight: 0.5 },
+  rusher: { idealMin: 4, idealMax: 11, aggression: 1.28, flankWeight: 0.28 },
+  flanker: { idealMin: 9, idealMax: 19, aggression: 1.0, flankWeight: 1.25 },
+  sniper: { idealMin: 16, idealMax: 30, aggression: 0.62, flankWeight: 0.42 },
+  support: { idealMin: 10, idealMax: 22, aggression: 0.78, flankWeight: 0.68 },
 };
 
 export function assignEnemyRole(index, total) {
@@ -124,7 +124,7 @@ export function getEnemyMoveTarget(e, px, pz, dt, others = []) {
   e.lastPosX = ex;
   e.lastPosZ = ez;
 
-  if ((e.stuckTimer || 0) > 0.55) {
+  if ((e.stuckTimer || 0) > 0.42) {
     e.stuckTimer = 0;
     e.strafeDir = -(e.strafeDir || 1);
     e.waypoint = null;
@@ -188,7 +188,11 @@ export function getEnemyMoveTarget(e, px, pz, dt, others = []) {
     tz = ez + Math.cos(toPlayer) * back * 0.3 + Math.sin(flankSide) * 3;
   }
 
-  const sep = computeSeparation(e, others);
+  if (intel > 0.62 && dist < 22 && Math.random() < 0.015) {
+    e.strafeDir = -(e.strafeDir || 1);
+  }
+
+  const sep = computeSeparation(e, others, role === "rusher" ? 2.8 : 3.4);
   tx += sep.sx;
   tz += sep.sz;
 
@@ -221,8 +225,9 @@ export function registerEnemyShot(e) {
 export function getEnemyAccuracy(e, dist, crouching) {
   const role = e.role || "flanker";
   let acc = crouching ? (e.coverAcc ?? 0.38) : (e.chaseAcc ?? 0.34);
-  if (role === "sniper") acc = dist > 12 && dist < 26 ? 0.72 : 0.45;
-  else if (role === "rusher") acc = dist < 10 ? 0.55 : 0.35;
+  if (role === "sniper") acc = dist > 12 && dist < 32 ? 0.76 : 0.48;
+  else if (role === "rusher") acc = dist < 10 ? 0.58 : 0.38;
+  else if (role === "flanker") acc += dist < 18 ? 0.05 : 0.02;
   else if (role === "solo") acc = 0.62 + (dist < 14 ? 0.15 : 0);
   if (crouching) acc += 0.08;
   return Math.min(0.94, Math.max(0.18, acc));

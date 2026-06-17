@@ -83,6 +83,21 @@ const SHOP = {
   },
 };
 
+for (const weapon of ["ak47", "scar", "m4", "ump45", "awm", "doze", "bazooka", "glock", "revolver"]) {
+  SHOP[`${weapon}_universo`] = {
+    type: "weapon",
+    weapon,
+    color: 0x090a2f,
+    price: weapon === "bazooka" || weapon === "awm" ? 2400 : 1500,
+  };
+  SHOP[`${weapon}_sistema_solar`] = {
+    type: "weapon",
+    weapon,
+    color: 0xff8a22,
+    price: weapon === "bazooka" || weapon === "awm" ? 2200 : 1350,
+  };
+}
+
 const LOADOUT_PRESETS = {
   ff_helmet_blue: { color: 0x2a4a7a, style: "helmet", neon: false },
   ff_helmet_black: { color: 0x1a1a22, style: "helmet", neon: false },

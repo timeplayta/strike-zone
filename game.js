@@ -74,13 +74,14 @@ import {
 } from "./perf-config.js";
 import { WEAPONS, calcWeaponDamage, getPrimaryWeapon, refillWeaponToMax } from "./weapons-data.js";
 import { configureCharacterRenderer } from "./human-model.js";
+import { upgradeWithBlockbenchModel } from "./blockbench-model-loader.js";
 import { initCharacterAnim, updateHumanAnimation, smoothTurn, getAnimOpts } from "./character-animation.js";
 import {
   spawnAmmoChests,
   ENEMY_MAG_SIZE,
   ENEMY_RELOAD_MS,
 } from "./ammo-stations.js";
-import { addKillReward, getWeaponSkinColor, getAccountCoins } from "./player-account.js";
+import { addKillReward, getWeaponSkinColor, getAccountCoins, getCharacterSkin } from "./player-account.js";
 import {
   initFloatingUI,
   createEnemyHealthBar,
@@ -128,6 +129,11 @@ const BASE_FOV = 75;
 const ADS_WEAPONS = ["ak47", "scar", "awm", "bazooka", "revolver"];
 const ENEMY_SPAWN_DELAY_MS = 3000;
 const MIN_SPAWN_DIST_FROM_PLAYER = 18;
+const BR_LOBBY_SECONDS = 75;
+const BR_STORM_START_RADIUS = 930;
+const BR_STORM_END_RADIUS = 145;
+const BR_STORM_WAIT_SECONDS = 45;
+const BR_STORM_CLOSE_SECONDS = 360;
 
 let botCount = 10;
 let useBotDifficulty = true;
@@ -172,6 +178,9 @@ let currentMapKey = "dust";
 let meleePickups = null;
 let battleRoyaleLoot = null;
 let battleRoyaleDoors = [];
+let battleRoyaleDrop = null;
+let battleRoyaleStorm = null;
+let battleRoyaleMiniMap = null;
 let exitZone = null;
 let currentMeleeId = null;
 let collectedMelee = { facao: false, porrete: false, katana: false };
@@ -417,9 +426,12 @@ function tryInteractBattleRoyaleLoot() {
   if (!item) return false;
   collectBattleRoyaleLoot(scene, battleRoyaleLoot, item);
   if (item.kind === "ammo") {
-    if (item.ammo === "doze") {
+    if (item.ammo === "rocket") {
+      if (primaryWeaponId === "bazooka" && weapons[1]) refillWeaponToMax(weapons[1], WEAPONS.bazooka);
+      showOverlay("Loot raro: foguetes de bazuca");
+    } else if (item.ammo === "doze") {
       if (primaryWeaponId === "doze") refillWeaponToMax(weapons[1], WEAPONS.doze);
-      else weapons[1].reserve = Math.min((weapons[1].reserve || 0) + 18, WEAPONS[primaryWeaponId]?.maxTotal || 120);
+      else if (weapons[1]) weapons[1].reserve = Math.min((weapons[1].reserve || 0) + 18, WEAPONS[primaryWeaponId]?.maxTotal || 120);
       showOverlay("Loot: munição de doze");
     } else {
       refillAllPlayerAmmo();
@@ -594,7 +606,444 @@ function bakeWallColliders() {
 function needsRoundWeaponPick() {
   if (adminPreviewMode === "map") return false;
   if (!mapData) return false;
+  if (mapData.openWorld) return false;
   return !isLabyrinthMap(mapData);
+}
+
+function isBattleRoyaleDropping() {
+  return mapData?.openWorld && battleRoyaleDrop && battleRoyaleDrop.phase !== "landed";
+}
+
+function canJumpFromBattleRoyaleVehicle() {
+  return mapData?.openWorld && battleRoyaleDrop?.phase === "vehicle";
+}
+
+function getPlayerCharacterModelKey() {
+  const skin = getCharacterSkin?.() || window.__characterSkin || "soldier";
+  if (skin === "cowboy_sheriff" || skin === "cowboy_outlaw" || skin === "cowboy_vaqueiro") return skin;
+  if (skin === "neon_runner") return "player_neon_runner";
+  if (skin === "shadow") return "player_shadow";
+  if (skin === "birthday_hero") return "player_birthday";
+  if (skin === "trevas_horror") return "player_shadow";
+  return "player_hero";
+}
+
+function clearBattleRoyaleMiniMap() {
+  battleRoyaleMiniMap?.root?.remove();
+  battleRoyaleMiniMap = null;
+}
+
+function createBattleRoyaleMiniMap() {
+  clearBattleRoyaleMiniMap();
+  const root = document.createElement("div");
+  root.id = "brMiniMap";
+  root.style.cssText = [
+    "position:fixed",
+    "left:14px",
+    "top:84px",
+    "width:154px",
+    "height:154px",
+    "border:2px solid rgba(255,255,255,.75)",
+    "border-radius:14px",
+    "background:linear-gradient(135deg,#2f7f45,#6aa04d)",
+    "box-shadow:0 8px 24px rgba(0,0,0,.38)",
+    "z-index:30",
+    "overflow:hidden",
+    "transition:width .18s,height .18s",
+  ].join(";");
+  const storm = document.createElement("div");
+  storm.style.cssText = "position:absolute;border:2px solid rgba(135,210,255,.9);border-radius:50%;box-shadow:0 0 18px rgba(90,170,255,.75);";
+  const safe = document.createElement("div");
+  safe.style.cssText = "position:absolute;border:2px solid rgba(255,255,255,.95);border-radius:50%;background:rgba(255,255,255,.05);";
+  const playerDot = document.createElement("div");
+  playerDot.style.cssText = "position:absolute;width:8px;height:8px;border-radius:50%;background:#ffeb3b;box-shadow:0 0 10px #ffeb3b;transform:translate(-50%,-50%);";
+  const label = document.createElement("div");
+  label.textContent = "MAPA";
+  label.style.cssText = "position:absolute;left:8px;top:6px;color:white;font:700 11px system-ui;text-shadow:0 1px 3px #000;";
+  root.append(storm, safe, playerDot, label);
+  root.addEventListener("click", () => root.classList.toggle("big"));
+  document.body.appendChild(root);
+  battleRoyaleMiniMap = { root, storm, safe, playerDot, label, big: false };
+}
+
+function updateBattleRoyaleMiniMap() {
+  if (!mapData?.openWorld || !battleRoyaleMiniMap) return;
+  const mm = battleRoyaleMiniMap;
+  const big = mm.root.classList.contains("big") || keys["KeyM"];
+  const size = big ? 300 : 154;
+  mm.root.style.width = `${size}px`;
+  mm.root.style.height = `${size}px`;
+  const lim = mapData.bounds?.limX || 980;
+  const limZ = mapData.bounds?.limZ || 980;
+  const px = ((camera.position.x + lim) / (lim * 2)) * size;
+  const pz = ((camera.position.z + limZ) / (limZ * 2)) * size;
+  mm.playerDot.style.left = `${px}px`;
+  mm.playerDot.style.top = `${pz}px`;
+  const storm = battleRoyaleStorm;
+  if (!storm) return;
+  const safeX = ((storm.center.x + lim) / (lim * 2)) * size;
+  const safeZ = ((storm.center.z + limZ) / (limZ * 2)) * size;
+  const safeR = (storm.targetRadius / (lim * 2)) * size * 2;
+  const curR = (storm.radius / (lim * 2)) * size * 2;
+  for (const [el, r] of [[mm.safe, safeR], [mm.storm, curR]]) {
+    el.style.width = `${Math.max(6, r)}px`;
+    el.style.height = `${Math.max(6, r)}px`;
+    el.style.left = `${safeX - r / 2}px`;
+    el.style.top = `${safeZ - r / 2}px`;
+  }
+}
+
+function createBattleRoyaleStorm() {
+  battleRoyaleStorm = {
+    center: mapData.safeZoneCenter || { x: 120, z: -80 },
+    radius: BR_STORM_START_RADIUS,
+    targetRadius: BR_STORM_END_RADIUS,
+    elapsed: 0,
+    damageAcc: 0,
+    ring: null,
+  };
+  const ring = new THREE.Mesh(
+    new THREE.RingGeometry(BR_STORM_START_RADIUS - 2, BR_STORM_START_RADIUS + 2, 96),
+    new THREE.MeshBasicMaterial({ color: 0x59b8ff, transparent: true, opacity: 0.45, side: THREE.DoubleSide })
+  );
+  ring.rotation.x = -Math.PI / 2;
+  ring.position.set(battleRoyaleStorm.center.x, 0.08, battleRoyaleStorm.center.z);
+  scene.add(ring);
+  battleRoyaleStorm.ring = ring;
+  createBattleRoyaleMiniMap();
+}
+
+function updateBattleRoyaleStorm(dt) {
+  if (!mapData?.openWorld || !battleRoyaleStorm || player.dead || !roundActive) return;
+  const s = battleRoyaleStorm;
+  s.elapsed += dt;
+  const timerEl = document.getElementById("timer");
+  if (timerEl) {
+    const left = s.elapsed < BR_STORM_WAIT_SECONDS
+      ? BR_STORM_WAIT_SECONDS - s.elapsed
+      : Math.max(0, BR_STORM_CLOSE_SECONDS - (s.elapsed - BR_STORM_WAIT_SECONDS));
+    timerEl.textContent = s.elapsed < BR_STORM_WAIT_SECONDS ? `Zona ${Math.ceil(left)}s` : `Fecha ${Math.ceil(left)}s`;
+  }
+  if (s.elapsed > BR_STORM_WAIT_SECONDS) {
+    const t = Math.min(1, (s.elapsed - BR_STORM_WAIT_SECONDS) / BR_STORM_CLOSE_SECONDS);
+    s.radius = THREE.MathUtils.lerp(BR_STORM_START_RADIUS, BR_STORM_END_RADIUS, t);
+  }
+  if (s.ring) {
+    s.ring.geometry.dispose();
+    s.ring.geometry = new THREE.RingGeometry(Math.max(4, s.radius - 2), s.radius + 2, 96);
+    s.ring.material.opacity = 0.32 + Math.sin(performance.now() * 0.004) * 0.08;
+  }
+  const dist = Math.hypot(camera.position.x - s.center.x, camera.position.z - s.center.z);
+  const obj = document.getElementById("objective");
+  if (dist > s.radius && !isBattleRoyaleDropping()) {
+    s.damageAcc += dt;
+    if (s.damageAcc >= 1) {
+      s.damageAcc = 0;
+      damagePlayer(5, "tempestade");
+    }
+    if (obj) obj.textContent = "Você está fora da zona! Volte para a área marcada no minimapa.";
+  }
+  updateBattleRoyaleMiniMap();
+}
+
+function clearBattleRoyaleStorm() {
+  if (battleRoyaleStorm?.ring) scene?.remove(battleRoyaleStorm.ring);
+  battleRoyaleStorm = null;
+  clearBattleRoyaleMiniMap();
+}
+
+function makeDropVehicle() {
+  const g = new THREE.Group();
+  const bodyMat = new THREE.MeshStandardMaterial({ color: 0x26384d, roughness: 0.55, metalness: 0.18 });
+  const trimMat = new THREE.MeshStandardMaterial({ color: 0xffc64a, roughness: 0.38, metalness: 0.35 });
+  const glassMat = new THREE.MeshStandardMaterial({ color: 0x9ed8ff, roughness: 0.18, metalness: 0.08, transparent: true, opacity: 0.72 });
+  const darkMat = new THREE.MeshStandardMaterial({ color: 0x101720, roughness: 0.65, metalness: 0.3 });
+  g.add(new THREE.Mesh(new THREE.BoxGeometry(26, 5.2, 9), bodyMat));
+  g.children[0].position.y = 0;
+  const nose = new THREE.Mesh(new THREE.ConeGeometry(4.7, 6.8, 8), bodyMat);
+  nose.rotation.z = Math.PI / 2;
+  nose.position.x = 15.6;
+  g.add(nose);
+  const tail = new THREE.Mesh(new THREE.BoxGeometry(5.6, 8.5, 1.2), darkMat);
+  tail.position.set(-15.2, 2.2, 0);
+  g.add(tail);
+  for (const sz of [-1, 1]) {
+    const wing = new THREE.Mesh(new THREE.BoxGeometry(14, 0.7, 22), bodyMat);
+    wing.position.set(0, 0.1, sz * 9.8);
+    wing.rotation.x = sz * 0.08;
+    g.add(wing);
+    const rotor = new THREE.Mesh(new THREE.TorusGeometry(2.4, 0.12, 8, 28), trimMat);
+    rotor.position.set(1.5, 0.2, sz * 20.4);
+    rotor.rotation.y = Math.PI / 2;
+    rotor.userData.rotor = true;
+    g.add(rotor);
+  }
+  for (let i = 0; i < 5; i++) {
+    const win = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.15, 0.08), glassMat);
+    win.position.set(-7 + i * 3.1, 1.05, -4.55);
+    g.add(win);
+  }
+  const stripe = new THREE.Mesh(new THREE.BoxGeometry(25, 0.35, 0.12), trimMat);
+  stripe.position.set(0, -1.25, -4.62);
+  g.add(stripe);
+  g.scale.setScalar(1.25);
+  return upgradeWithBlockbenchModel(g, "flying_drop_vehicle", { targetWidth: 42, targetHeight: 11 });
+}
+
+function makeBattleRoyaleLobby() {
+  const g = new THREE.Group();
+  const grass = new THREE.Mesh(
+    new THREE.CircleGeometry(150, 64),
+    new THREE.MeshStandardMaterial({ color: 0x58b957, roughness: 0.86, metalness: 0.02 })
+  );
+  grass.rotation.x = -Math.PI / 2;
+  grass.position.y = 0.04;
+  g.add(grass);
+  const ring = new THREE.Mesh(
+    new THREE.TorusGeometry(128, 1.2, 8, 64),
+    new THREE.MeshStandardMaterial({ color: 0xffd85a, roughness: 0.45, metalness: 0.2 })
+  );
+  ring.rotation.x = Math.PI / 2;
+  ring.position.y = 0.1;
+  g.add(ring);
+  const colors = [0xff5533, 0x3377ff, 0xffcc33, 0x55dd88, 0xaa66ff, 0xff66aa];
+  for (let i = 0; i < 24; i++) {
+    const a = i * Math.PI * 2 / 24;
+    const r = 32 + (i % 4) * 22;
+    const box = new THREE.Mesh(
+      new THREE.BoxGeometry(4 + (i % 3) * 2, 1.2 + (i % 2) * 0.6, 4 + (i % 4)),
+      new THREE.MeshStandardMaterial({ color: colors[i % colors.length], roughness: 0.55, metalness: 0.04 })
+    );
+    box.position.set(Math.cos(a) * r, 0.65, Math.sin(a) * r);
+    box.rotation.y = -a;
+    g.add(box);
+  }
+  for (let i = 0; i < 10; i++) {
+    const a = i * Math.PI * 2 / 10 + 0.2;
+    const balloon = new THREE.Group();
+    balloon.add(new THREE.Mesh(new THREE.SphereGeometry(2.6, 12, 10), new THREE.MeshStandardMaterial({ color: colors[i % colors.length], roughness: 0.35 })));
+    balloon.add(new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 10, 5), new THREE.MeshBasicMaterial({ color: 0xffffff })));
+    balloon.children[1].position.y = -5.5;
+    balloon.position.set(Math.cos(a) * 95, 14 + (i % 3) * 2, Math.sin(a) * 95);
+    g.add(balloon);
+  }
+  for (let i = 0; i < 18; i++) {
+    const avatar = makeDropAvatar();
+    const a = i * 2.399963;
+    avatar.position.set(Math.cos(a) * (18 + (i % 5) * 9), 0, Math.sin(a) * (18 + (i % 5) * 9));
+    avatar.rotation.y = -a;
+    avatar.scale.setScalar(0.9);
+    g.add(avatar);
+  }
+  g.userData.lobbyProps = true;
+  return g;
+}
+
+function startBattleRoyaleLobby() {
+  if (!mapData?.openWorld || !scene || adminPreviewMode === "map") {
+    battleRoyaleDrop = null;
+    return;
+  }
+  const lobby = makeBattleRoyaleLobby();
+  scene.add(lobby);
+  battleRoyaleDrop = {
+    phase: "lobby",
+    lobby,
+    lobbyLeft: BR_LOBBY_SECONDS,
+    phaseStarted: performance.now(),
+  };
+  camera.position.set(0, PLAYER_EYE_HEIGHT, 42);
+  yaw = Math.PI;
+  pitch = 0;
+  moveVel.x = 0;
+  moveVel.z = 0;
+  enemyMoveAllowedAt = Number.POSITIVE_INFINITY;
+  if (weaponView) hideAllWeapons(weaponView);
+  showOverlay("Lobby Battle Royale — aguarde a nave chegar");
+}
+
+function finishBattleRoyaleLobby() {
+  if (battleRoyaleDrop?.lobby) scene.remove(battleRoyaleDrop.lobby);
+  startBattleRoyaleDrop();
+}
+
+function makeDropAvatar() {
+  const g = new THREE.Group();
+  const suit = new THREE.MeshStandardMaterial({ color: 0x1d2a3b, roughness: 0.8, metalness: 0.05 });
+  const skin = new THREE.MeshStandardMaterial({ color: 0xc4956a, roughness: 0.78, metalness: 0.02 });
+  const pack = new THREE.MeshStandardMaterial({ color: 0x334455, roughness: 0.65, metalness: 0.15 });
+  const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.24, 0.58, 8, 12), suit);
+  torso.position.y = 1.12;
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.16, 14, 10), skin);
+  head.position.y = 1.62;
+  const backpack = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.5, 0.18), pack);
+  backpack.position.set(0, 1.1, 0.2);
+  g.add(torso, head, backpack);
+  for (const sx of [-1, 1]) {
+    const arm = new THREE.Mesh(new THREE.CapsuleGeometry(0.07, 0.5, 6, 8), suit);
+    arm.position.set(sx * 0.28, 1.08, -0.02);
+    arm.rotation.z = sx * 0.55;
+    g.add(arm);
+    const leg = new THREE.Mesh(new THREE.CapsuleGeometry(0.08, 0.58, 6, 8), suit);
+    leg.position.set(sx * 0.12, 0.48, 0);
+    leg.rotation.z = sx * 0.08;
+    g.add(leg);
+  }
+  return upgradeWithBlockbenchModel(g, getPlayerCharacterModelKey(), { targetWidth: 1.05, targetHeight: 1.82 });
+}
+
+function makeParachute() {
+  const g = new THREE.Group();
+  const canopyMat = new THREE.MeshStandardMaterial({ color: 0xff5533, roughness: 0.72, metalness: 0.03, side: THREE.DoubleSide });
+  const lineMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.9 });
+  const canopy = new THREE.Mesh(new THREE.SphereGeometry(2.7, 24, 10, 0, Math.PI * 2, 0, Math.PI * 0.5), canopyMat);
+  canopy.scale.set(1.35, 0.34, 0.62);
+  canopy.position.y = 3.8;
+  g.add(canopy);
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
+    const line = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 3.55, 5), lineMat);
+    line.position.set(sx * 1.2, 2.05, sz * 0.55);
+    line.rotation.z = sx * 0.18;
+    line.rotation.x = sz * -0.08;
+    g.add(line);
+  }
+  return upgradeWithBlockbenchModel(g, "parachute_default", { targetWidth: 7.5, targetHeight: 4.4 });
+}
+
+function startBattleRoyaleDrop() {
+  if (!mapData?.openWorld || !scene || adminPreviewMode === "map") {
+    battleRoyaleDrop = null;
+    return;
+  }
+  const vehicle = makeDropVehicle();
+  const avatar = makeDropAvatar();
+  const chute = makeParachute();
+  avatar.visible = false;
+  chute.visible = false;
+  scene.add(vehicle, avatar, chute);
+  battleRoyaleDrop = {
+    phase: "vehicle",
+    t: 0,
+    duration: 120,
+    start: { x: -980, z: -860, y: 220 },
+    end: { x: 980, z: 860, y: 220 },
+    vehicle,
+    avatar,
+    chute,
+    pos: new THREE.Vector3(-980, 220, -860),
+    vel: new THREE.Vector3(),
+  };
+  if (weaponView) hideAllWeapons(weaponView);
+  showOverlay("Veículo voador — clique ou Espaço para saltar");
+}
+
+function getDropVehiclePosition() {
+  const d = battleRoyaleDrop;
+  if (!d) return new THREE.Vector3();
+  const t = Math.min(1, d.t / d.duration);
+  return new THREE.Vector3(
+    THREE.MathUtils.lerp(d.start.x, d.end.x, t),
+    d.start.y + Math.sin(t * Math.PI * 2) * 8,
+    THREE.MathUtils.lerp(d.start.z, d.end.z, t)
+  );
+}
+
+function jumpFromDropVehicle() {
+  if (!battleRoyaleDrop || battleRoyaleDrop.phase !== "vehicle") return false;
+  const pos = getDropVehiclePosition();
+  battleRoyaleDrop.phase = "parachute";
+  battleRoyaleDrop.pos.copy(pos);
+  battleRoyaleDrop.vel.set(0, -8, 0);
+  battleRoyaleDrop.avatar.visible = true;
+  battleRoyaleDrop.chute.visible = true;
+  if (weaponView) hideAllWeapons(weaponView);
+  showOverlay("Paraquedas aberto — WASD planeja • mouse olha");
+  return true;
+}
+
+function finishBattleRoyaleDrop() {
+  if (!battleRoyaleDrop) return;
+  camera.position.set(battleRoyaleDrop.pos.x, PLAYER_EYE_HEIGHT, battleRoyaleDrop.pos.z);
+  if (battleRoyaleDrop.avatar) scene.remove(battleRoyaleDrop.avatar);
+  if (battleRoyaleDrop.chute) scene.remove(battleRoyaleDrop.chute);
+  battleRoyaleDrop.phase = "landed";
+  player.jumpOffset = 0;
+  player.grounded = true;
+  moveVel.x = 0;
+  moveVel.z = 0;
+  enemyMoveAllowedAt = performance.now() + ENEMY_SPAWN_DELAY_MS;
+  createBattleRoyaleStorm();
+  if (currentWeapon && weaponView) restorePlayerWeaponView();
+  document.getElementById("objective").textContent = "Procure armas e munição nas casas — E pega loot e abre portas";
+  showOverlay("Pouso completo — encontre uma arma!");
+}
+
+function updateBattleRoyaleDrop(dt) {
+  if (!isBattleRoyaleDropping()) return false;
+  const d = battleRoyaleDrop;
+  if (d.phase === "lobby") {
+    d.lobbyLeft = Math.max(0, d.lobbyLeft - dt);
+    const left = Math.ceil(d.lobbyLeft);
+    const obj = document.getElementById("objective");
+    if (obj) obj.textContent = `Lobby Battle Royale — partida real em ${left}s`;
+    const timerEl = document.getElementById("timer");
+    if (timerEl) timerEl.textContent = formatTime(left);
+    if (d.lobby) {
+      d.lobby.rotation.y += dt * 0.015;
+      d.lobby.children.forEach((c, i) => {
+        if (i > 25 && c.isGroup) c.position.y = Math.sin(performance.now() * 0.002 + i) * 0.05;
+      });
+    }
+    if (d.lobbyLeft <= 0) finishBattleRoyaleLobby();
+    return false;
+  }
+
+  processLook();
+  if (d.phase === "vehicle") {
+    d.t += dt;
+    const pos = getDropVehiclePosition();
+    d.vehicle.position.copy(pos);
+    d.vehicle.rotation.y = -Math.PI * 0.27;
+    d.vehicle.traverse((o) => { if (o.userData?.rotor) o.rotation.z += dt * 22; });
+    camera.position.set(pos.x - 20, pos.y + 9, pos.z + 24);
+    camera.lookAt(pos.x + 18, pos.y - 2, pos.z - 8);
+    const obj = document.getElementById("objective");
+    if (obj) obj.textContent = "Clique ou Espaço para saltar do veículo voador";
+    if (d.t >= d.duration) jumpFromDropVehicle();
+    return true;
+  }
+
+  _vForward.set(0, 0, -1).applyAxisAngle(_vUp, yaw);
+  _vRight.set(1, 0, 0).applyAxisAngle(_vUp, yaw);
+  let inputX = 0, inputZ = 0;
+  if (keys["KeyW"]) { inputX += _vForward.x; inputZ += _vForward.z; }
+  if (keys["KeyS"]) { inputX -= _vForward.x; inputZ -= _vForward.z; }
+  if (keys["KeyA"]) { inputX -= _vRight.x; inputZ -= _vRight.z; }
+  if (keys["KeyD"]) { inputX += _vRight.x; inputZ += _vRight.z; }
+  const len = Math.hypot(inputX, inputZ) || 1;
+  const glide = 32;
+  d.vel.x += ((inputX / len) * glide - d.vel.x) * Math.min(1, dt * 3.4);
+  d.vel.z += ((inputZ / len) * glide - d.vel.z) * Math.min(1, dt * 3.4);
+  d.vel.y += (-13 - d.vel.y) * Math.min(1, dt * 2.2);
+  d.pos.x += d.vel.x * dt;
+  d.pos.z += d.vel.z * dt;
+  d.pos.y += d.vel.y * dt;
+  const lim = mapData.bounds?.limX ?? 980;
+  const limZ = mapData.bounds?.limZ ?? 980;
+  d.pos.x = Math.max(-lim + 12, Math.min(lim - 12, d.pos.x));
+  d.pos.z = Math.max(-limZ + 12, Math.min(limZ - 12, d.pos.z));
+  d.avatar.position.copy(d.pos);
+  d.avatar.rotation.y = yaw;
+  d.chute.position.copy(d.pos);
+  d.chute.rotation.y = yaw;
+  camera.position.set(
+    d.pos.x + Math.sin(yaw) * 5,
+    d.pos.y + 2.3,
+    d.pos.z + Math.cos(yaw) * 5
+  );
+  camera.lookAt(d.pos.x, d.pos.y + 1.2, d.pos.z);
+  if (d.pos.y <= PLAYER_EYE_HEIGHT) finishBattleRoyaleDrop();
+  return true;
 }
 
 function finishRoundWeaponPick(id) {
@@ -682,6 +1131,10 @@ function startGame(config = {}) {
       const maxBots = mapData.maxBots || 20;
       botCount = mapData.defaultBotCount || Math.min(maxBots, Math.max(1, requestedBots));
       gameMode = document.getElementById("gameMode").value;
+      if (mapData.openWorld) {
+        wantHelpers = false;
+        gameMode = "tdm";
+      }
     }
     useBotDifficulty = true;
     botDifficulty = getBotDifficulty(Math.max(1, botCount));
@@ -745,7 +1198,8 @@ function startGame(config = {}) {
     if (!mapPreviewOnly && !isNoCombatMap(mapData)) spawnEnemies();
     if (!mapPreviewOnly) spawnHelpers();
     initWeapons();
-    roundTime = mapPreviewOnly ? 99999 : isLabyrinthMap(mapData) ? 9999 : gameMode === "defuse" ? 120 : 180;
+    if (!mapPreviewOnly && mapData.openWorld) startBattleRoyaleLobby();
+    roundTime = mapPreviewOnly ? 99999 : mapData.openWorld ? BR_LOBBY_SECONDS : isLabyrinthMap(mapData) ? 9999 : gameMode === "defuse" ? 120 : 180;
     roundActive = true;
     collectedMelee = { facao: false, porrete: false, katana: false };
     currentMeleeId = null;
@@ -765,6 +1219,10 @@ function startGame(config = {}) {
         showOverlay("Modo terror — 3 monstros nas sombras • J = lanterna");
         document.getElementById("objective").textContent =
           "Sobreviva — Gosmento, Gigante e Bam-Bam estão no mapa • J = lanterna";
+      } else if (mapData.openWorld) {
+        showOverlay("Battle Royale — lobby antes da queda");
+        document.getElementById("objective").textContent =
+          "Lobby colorido: espere a contagem para entrar no automóvel voador";
       } else {
         showOverlay(`ROUND ${round} — Inimigos entram em 3s`);
         document.getElementById("objective").textContent = isMobileMode()
@@ -1049,6 +1507,11 @@ function initThree() {
       return;
     }
     if (e.button !== 0) return;
+    if (isBattleRoyaleDropping()) {
+      if (!pointerLocked && !matchOver && !player.dead) requestPointerLock();
+      if (canJumpFromBattleRoyaleVehicle()) jumpFromDropVehicle();
+      return;
+    }
     if (!pointerLocked && !matchOver && !weaponPickPending && !player.dead) requestPointerLock();
     if (pointerLocked && roundActive && !player.dead && !inCinematic) {
       if (tryInteractWorld()) return;
@@ -1192,6 +1655,8 @@ function buildMap() {
   meleePickups = null;
   battleRoyaleLoot = null;
   battleRoyaleDoors = [];
+  battleRoyaleDrop = null;
+  clearBattleRoyaleStorm();
   exitZone = null;
   applyMapAtmosphere();
 
@@ -1476,6 +1941,16 @@ function initWeapons() {
     updateAmmoHUD();
     return;
   }
+  if (mapData?.openWorld) {
+    weapons = {
+      3: { ...WEAPONS.faca, mag: 1, reserve: 0, lastShot: 0 },
+    };
+    currentWeapon = null;
+    currentMeleeId = "faca";
+    if (weaponView) hideAllWeapons(weaponView);
+    updateAmmoHUD();
+    return;
+  }
   const primary = getPrimaryWeapon(primaryWeaponId);
   weapons = {
     1: { ...primary, mag: primary.mag, reserve: primary.reserve, lastShot: 0 },
@@ -1522,6 +1997,31 @@ function pickWalkablePatrolPoint(used = []) {
 }
 
 function pickEnemySpawnPositions(n, playerX, playerZ) {
+  if (mapData?.openWorld) {
+    const zones = mapData.botDropZones?.length ? mapData.botDropZones : mapData.patrolPoints;
+    const positions = [];
+    const used = [];
+    for (let i = 0; i < n; i++) {
+      const base = zones[(i * 7 + Math.floor(i / 3)) % zones.length];
+      const angle = i * 2.399963 + (i % 5) * 0.37;
+      const radius = 28 + (i % 9) * 18;
+      let x = base.x + Math.cos(angle) * radius;
+      let z = base.z + Math.sin(angle) * radius;
+      const lim = mapData.bounds?.limX ?? 940;
+      const limZ = mapData.bounds?.limZ ?? 940;
+      x = Math.max(-lim + 24, Math.min(lim - 24, x));
+      z = Math.max(-limZ + 24, Math.min(limZ - 24, z));
+      if (used.some((p) => Math.hypot(p.x - x, p.z - z) < 18)) {
+        x += Math.cos(angle + 1.7) * 38;
+        z += Math.sin(angle + 1.7) * 38;
+      }
+      const pos = { x, z };
+      used.push(pos);
+      positions.push(pos);
+    }
+    return positions;
+  }
+
   const spawnX = mapData.spawnCT.x;
   const spawnZ = mapData.spawnCT.z;
   const toTX = mapData.spawnT.x - spawnX;
@@ -1555,6 +2055,7 @@ function pickEnemySpawnPositions(n, playerX, playerZ) {
 
 function enemiesCanAct() {
   if (weaponPickPending) return false;
+  if (isBattleRoyaleDropping()) return false;
   return performance.now() >= enemyMoveAllowedAt;
 }
 
@@ -1951,6 +2452,11 @@ function onKeyDown(e) {
     return;
   }
   if (adminSpectator || adminPreviewMode) return;
+  if (e.code === "Space" && canJumpFromBattleRoyaleVehicle()) {
+    e.preventDefault();
+    jumpFromDropVehicle();
+    return;
+  }
   if (e.code === "KeyR") reload();
   if (e.code === "KeyE") tryInteractWorld();
   if (e.code === "Digit1") switchWeapon(1);
@@ -2126,13 +2632,14 @@ function shoot() {
     const ray = new THREE.Raycaster(origin, dir, 0, 80);
     const hits = ray.intersectObjects([...hitTargets, ...wallMeshCache, ...doorHitMeshes], false);
     const impactPoint = hits[0]?.point || origin.clone().add(dir.multiplyScalar(26));
-    spawnExplosion(impactPoint, 4.2);
+    const explosionRadius = w.explosiveRadius || 4.2;
+    spawnExplosion(impactPoint, explosionRadius);
     spawnImpact(impactPoint, false);
     for (const e of enemies) {
       if (!e.alive) continue;
       const dist = e.group.position.distanceTo(impactPoint);
-      if (dist > 4.2) continue;
-      const splash = w.damage * damageMul * Math.max(0.25, 1 - dist / 4.2);
+      if (dist > explosionRadius) continue;
+      const splash = w.damage * damageMul * Math.max(0.25, 1 - dist / explosionRadius);
       damageEnemy(e, splash, false, e.group.position.clone().add(new THREE.Vector3(0, 1, 0)));
     }
     return;
@@ -2297,22 +2804,65 @@ function spawnCosmicShotFx(kind, origin, dir) {
 
 function spawnExplosion(pos, radius = 3) {
   const core = new THREE.Mesh(
-    new THREE.SphereGeometry(0.35, 12, 10),
+    new THREE.SphereGeometry(0.55, 16, 12),
     new THREE.MeshBasicMaterial({ color: 0xff8844, transparent: true, opacity: 0.82 })
   );
   core.position.copy(pos);
   scene.add(core);
   const ring = new THREE.Mesh(
-    new THREE.TorusGeometry(radius * 0.32, 0.025, 8, 36),
+    new THREE.TorusGeometry(radius * 0.34, 0.035, 8, 48),
     new THREE.MeshBasicMaterial({ color: 0xffcc66, transparent: true, opacity: 0.75 })
   );
   ring.position.copy(pos);
   ring.rotation.x = Math.PI / 2;
   scene.add(ring);
-  setTimeout(() => {
-    scene.remove(core);
-    scene.remove(ring);
-  }, 220);
+  const shock = new THREE.Mesh(
+    new THREE.SphereGeometry(radius * 0.28, 18, 12),
+    new THREE.MeshBasicMaterial({ color: 0xff5522, transparent: true, opacity: 0.28, depthWrite: false })
+  );
+  shock.position.copy(pos);
+  scene.add(shock);
+  const sparks = [];
+  for (let i = 0; i < 18; i++) {
+    const spark = new THREE.Mesh(
+      new THREE.BoxGeometry(0.08, 0.08, 0.42),
+      new THREE.MeshBasicMaterial({ color: i % 2 ? 0xffdd88 : 0xff5522, transparent: true, opacity: 0.9 })
+    );
+    spark.position.copy(pos);
+    spark.userData.vel = new THREE.Vector3(
+      (Math.random() - 0.5) * radius * 4,
+      1.4 + Math.random() * radius * 0.8,
+      (Math.random() - 0.5) * radius * 4
+    );
+    sparks.push(spark);
+    scene.add(spark);
+  }
+  const born = performance.now();
+  const tick = () => {
+    const age = (performance.now() - born) / 1000;
+    const k = Math.min(1, age / 0.55);
+    core.scale.setScalar(1 + k * radius * 0.45);
+    ring.scale.setScalar(1 + k * 1.8);
+    shock.scale.setScalar(1 + k * 2.6);
+    for (const s of sparks) {
+      s.position.addScaledVector(s.userData.vel, 0.016);
+      s.userData.vel.y -= 0.18;
+      s.rotation.x += 0.18;
+      s.rotation.z += 0.12;
+      if (s.material) s.material.opacity = Math.max(0, 0.9 - k);
+    }
+    core.material.opacity = Math.max(0, 0.82 - k);
+    ring.material.opacity = Math.max(0, 0.75 - k);
+    shock.material.opacity = Math.max(0, 0.28 - k * 0.28);
+    if (age < 0.58) requestAnimationFrame(tick);
+    else {
+      scene.remove(core);
+      scene.remove(ring);
+      scene.remove(shock);
+      sparks.forEach((s) => scene.remove(s));
+    }
+  };
+  tick();
 }
 
 function spawnGhostSoul(pos) {
@@ -2591,6 +3141,7 @@ function finishMatchFromDeath() {
 }
 
 function damagePlayer(dmg, attacker) {
+  if (isBattleRoyaleDropping()) return;
   if (adminGodMode || adminSpectator || player.dead || inCinematic || weaponPickPending) return;
   player.health -= dmg;
   updateHealthHUD();
@@ -3070,6 +3621,8 @@ function collides(x, z, r, who = "player") {
 }
 
 function updatePlayer(dt) {
+  if (updateBattleRoyaleDrop(dt)) return;
+
   if (adminPreviewMode === "character") {
     if (adminCharPreviewFly) updateAdminFly(dt);
     else updateAdminCharOrbit(dt);
@@ -3167,7 +3720,7 @@ function updatePlayer(dt) {
     const nearLoot = tryPickupBattleRoyaleLoot(camera, battleRoyaleLoot, 3.4);
     if (obj && nearLoot) {
       const label = nearLoot.kind === "ammo"
-        ? (nearLoot.ammo === "doze" ? "munição de doze" : "munição AR")
+        ? (nearLoot.ammo === "rocket" ? "foguetes de bazuca" : nearLoot.ammo === "doze" ? "munição de doze" : "munição AR")
         : (WEAPONS[nearLoot.id]?.name || nearLoot.id);
       obj.textContent = `Pressione E — pegar ${label}`;
     } else if (obj) {
@@ -3413,7 +3966,18 @@ function updateHUD() {
   const lab = isLabyrinthMap(mapData);
   document.body.classList.toggle("hud-labyrinth", lab);
 
-  if (!lab) {
+  if (mapData?.openWorld) {
+    const labels = document.querySelectorAll(".scoreboard .team-label");
+    if (labels[0]) labels[0].textContent = "VIVOS";
+    if (labels[1]) labels[1].textContent = "ABATES";
+    const alive = Math.max(1, enemies.filter((e) => e.alive && !e.isBoss).length + (player.dead ? 0 : 1));
+    document.getElementById("scoreCT").textContent = alive;
+    document.getElementById("scoreT").textContent = kills;
+    document.getElementById("roundText").textContent = "BATTLE ROYALE";
+  } else if (!lab) {
+    const labels = document.querySelectorAll(".scoreboard .team-label");
+    if (labels[0]) labels[0].textContent = "CT";
+    if (labels[1]) labels[1].textContent = "T";
     document.getElementById("scoreCT").textContent = scoreCT;
     document.getElementById("scoreT").textContent = scoreT;
     document.getElementById("roundText").textContent = `ROUND ${round}`;
@@ -4168,7 +4732,7 @@ function animate() {
 
     if (frameCount % ENEMY_LABEL_FRAME_SKIP === 0) updateEnemyLabels([...enemies, ...helpers], camera);
 
-    if (roundActive && !player.dead && !isLabyrinthMap(mapData) && adminPreviewMode !== "map") {
+    if (roundActive && !player.dead && !mapData?.openWorld && !isLabyrinthMap(mapData) && adminPreviewMode !== "map") {
       roundTime -= dt;
       hudTimerAcc += dt;
       if (hudTimerAcc >= 0.1) {
@@ -4184,6 +4748,8 @@ function animate() {
       }
       if (bombPlanted) roundTime = Math.min(roundTime, 40);
     }
+
+    updateBattleRoyaleStorm(dt);
 
     if (isDarkMap(mapData) && isSessionAdmin()) updateAdminGameplayHud();
 

@@ -86,7 +86,7 @@ const THEMES = {
   dust: {
     mode: "shooting",
     name: "Dust Alley",
-    scale: 1,
+    scale: 3,
     sky: 0x87ceeb,
     fog: 0xc9b896,
     floorColor: 0xe8c878,
@@ -95,14 +95,14 @@ const THEMES = {
     ceilColor: 0xf5ecd8,
     woodColor: 0x7a4f2a,
     propTint: { barrel: 0x663322, supply: 0x445533 },
-    spawnCT: { x: -18, z: 0 },
-    spawnT: { x: 18, z: 0 },
+    spawnCT: { x: -62, z: 0 },
+    spawnT: { x: 62, z: 0 },
     bombSites: [{ x: 12, z: -8, id: "A" }, { x: 12, z: 8, id: "B" }],
   },
   warehouse: {
     mode: "shooting",
     name: "Cold Storage",
-    scale: 0.92,
+    scale: 3,
     sky: 0xaabbcc,
     fog: 0x8899aa,
     floorColor: 0x8899aa,
@@ -111,9 +111,14 @@ const THEMES = {
     ceilColor: 0xb0bcc8,
     woodColor: 0x5a4a3a,
     propTint: { barrel: 0x334455, supply: 0x334466 },
-    spawnCT: { x: -16.5, z: 0 },
-    spawnT: { x: 16.5, z: 0 },
+    spawnCT: { x: -60, z: 0 },
+    spawnT: { x: 60, z: 0 },
     bombSites: [{ x: 11, z: -7, id: "A" }, { x: 11, z: 7, id: "B" }],
+    extraProps: [
+      { type: "cold_building", x: 0, z: -14, w: 15, d: 9, floors: 5 },
+      { type: "br_ramp", x: -10, z: -8, rot: -0.25, tint: 0x667788 },
+      { type: "br_ramp", x: 10, z: -8, rot: 0.25, tint: 0x667788 },
+    ],
   },
   horror: {
     mode: "horror",
@@ -170,6 +175,7 @@ const THEMES = {
     skipBossRoom: true,
     skipAmmoChests: false,
     openWorld: true,
+    safeZoneCenter: { x: 120, z: -80 },
     maxBots: 100,
     defaultBotCount: 100,
   },
@@ -192,6 +198,13 @@ const FRONTIER_COMPOUNDS = [
   { id: "cowboy", name: "Cidade Cowboy", x: 40, z: -710, accent: 0xb87834 },
   { id: "mina", name: "Mina Cascavel", x: -740, z: 60, accent: 0x6b5a45 },
   { id: "oasis", name: "Oasis Azul", x: 720, z: 40, accent: 0x3f8fb5 },
+  { id: "mercado", name: "Mercado Central", x: 20, z: 120, accent: 0xd1a83f },
+  { id: "observatorio", name: "Observatorio Leste", x: 410, z: -120, accent: 0x5577aa },
+  { id: "serraria", name: "Serraria Velha", x: -330, z: 170, accent: 0x8a5a32 },
+  { id: "suburbio", name: "Suburbio Sul", x: 110, z: 720, accent: 0x6f8a72 },
+  { id: "terminal", name: "Terminal Aereo", x: -120, z: -260, accent: 0x445a78 },
+  { id: "docas", name: "Docas Azuis", x: 830, z: -730, accent: 0x3f6f8f },
+  { id: "templo", name: "Templo Pedra Alta", x: -850, z: 820, accent: 0x7b6b52 },
 ];
 
 function pushHouseCollision(covers, x, z, w, d, h, doorW = 4) {
@@ -215,6 +228,9 @@ function buildFrontierProps() {
     { type: "br_road", x: 0, z: 540, w: 1160, d: 14, rot: 0.03, tint: 0x5f6548 },
     { type: "br_bridge", x: 358, z: -592, rot: 0.05 },
     { type: "br_bridge", x: -356, z: 548, rot: -0.05 },
+    { type: "br_river", x: -280, z: 30, w: 1420, d: 54, rot: 0.62 },
+    { type: "br_bridge", x: -180, z: -62, rot: 0.62 },
+    { type: "br_bridge", x: 265, z: 265, rot: 0.62 },
     { type: "br_balloon", x: -120, z: -80, tint: 0xff5533 },
     { type: "br_balloon", x: 340, z: 340, tint: 0x3377ff }
   );
@@ -240,6 +256,22 @@ function buildFrontierProps() {
     const p = seededPoint(i, 850);
     props.push({ type: i % 3 === 0 ? "rock" : "tree", x: p.x, z: p.z, scale: 0.8 + (i % 5) * 0.16 });
   }
+  for (let i = 0; i < 72; i++) {
+    const a = i * 2.17;
+    const r = 30 + (i % 9) * 13;
+    props.push({ type: "tree", x: -470 + Math.cos(a) * r, z: 360 + Math.sin(a) * r, scale: 1.55 + (i % 5) * 0.28 });
+  }
+  for (let i = 0; i < 32; i++) {
+    const a = i * 1.91;
+    const r = 42 + (i % 7) * 19;
+    props.push({ type: i % 4 === 0 ? "rock" : "cactus", x: 420 + Math.cos(a) * r, z: -690 + Math.sin(a) * r, scale: 0.95 + (i % 4) * 0.22 });
+  }
+  [
+    { type: "br_warehouse", x: -210, z: -610, w: 52, d: 30, tint: 0x445a78 },
+    { type: "br_market", x: 310, z: -420, w: 50, d: 30, tint: 0xd1a83f },
+    { type: "br_house", x: -720, z: -240, w: 30, d: 22, floors: 1, tint: 0x9d6b42 },
+    { type: "br_house", x: 760, z: 360, w: 34, d: 24, floors: 2, tint: 0x5577aa },
+  ].forEach((p) => props.push(p));
   for (let i = 0; i < 44; i++) {
     const x = -890 + (i % 11) * 64;
     const z = -120 + Math.floor(i / 11) * 92;
@@ -257,6 +289,12 @@ function buildFrontierProps() {
       rot: side === 0 ? 0 : side === 1 ? Math.PI / 2 : side === 2 ? Math.PI : -Math.PI / 2,
     });
   }
+  [
+    { x: -430, z: -820, scale: 2.2, rot: 0.18 },
+    { x: 820, z: -260, scale: 2.45, rot: Math.PI / 2.4 },
+    { x: -820, z: 420, scale: 2.55, rot: -Math.PI / 2.2 },
+    { x: 420, z: 820, scale: 2.35, rot: Math.PI * 0.9 },
+  ].forEach((m) => props.push({ type: "mountain", ...m }));
   for (const c of FRONTIER_COMPOUNDS) {
     props.push({ type: "br_pad", x: c.x, z: c.z, scale: 1, tint: c.accent });
     props.push({ type: "br_billboard", x: c.x + 88, z: c.z + 86, rot: -0.45, tint: c.accent });
@@ -264,6 +302,7 @@ function buildFrontierProps() {
     props.push({ type: "br_house", x: c.x - 46, z: c.z - 28, w: 34, d: 24, floors: 2, tint: c.accent });
     props.push({ type: "br_house", x: c.x + 42, z: c.z + 30, w: 28, d: 22, floors: 1, tint: c.accent });
     props.push({ type: "br_warehouse", x: c.x + 6, z: c.z - 58, w: 44, d: 26, tint: c.accent });
+    props.push({ type: "br_market", x: c.x + 76, z: c.z - 54, w: 48, d: 30, tint: c.accent });
     props.push({ type: "br_tower", x: c.x - 90, z: c.z + 70, tint: c.accent });
     props.push({ type: "br_monster", x: c.x + 96, z: c.z - 88, scale: 1.35, tint: c.accent });
     if (c.id === "cowboy") {
@@ -301,10 +340,12 @@ function buildFrontierMap(theme) {
     pushHouseCollision(covers, c.x - 46, c.z - 28, 34, 24, 5.2, 4.6);
     pushHouseCollision(covers, c.x + 42, c.z + 30, 28, 22, 3.2, 4.2);
     pushHouseCollision(covers, c.x + 6, c.z - 58, 44, 26, 4.0, 5.2);
+    pushHouseCollision(covers, c.x + 76, c.z - 54, 48, 30, 4.0, 5.2);
     brDoors.push(
       { id: `${c.id}-casa`, x: c.x - 46, z: c.z - 40.15, w: 4.6, h: 3.1, tint: c.accent },
       { id: `${c.id}-cabana`, x: c.x + 42, z: c.z + 18.85, w: 4.2, h: 2.65, tint: c.accent },
-      { id: `${c.id}-galpao`, x: c.x + 6, z: c.z - 71.15, w: 5.2, h: 3.35, tint: c.accent }
+      { id: `${c.id}-galpao`, x: c.x + 6, z: c.z - 71.15, w: 5.2, h: 3.35, tint: c.accent },
+      { id: `${c.id}-mercado`, x: c.x + 76, z: c.z - 69.15, w: 5.2, h: 3.35, tint: c.accent }
     );
     const lootIds = ["ak47", "m4", "scar", "ump45", "awm", "doze", "glock", "revolver", "faca", "katana", "facao"];
     const lootPoints = [
@@ -315,6 +356,9 @@ function buildFrontierMap(theme) {
       const [dx, dz] = lootPoints[i];
       const id = lootIds[(i + c.id.length) % lootIds.length];
       brLoot.push({ kind: "weapon", id, x: c.x + dx, z: c.z + dz });
+      if (!["faca", "katana", "facao"].includes(id)) {
+        brLoot.push({ kind: "ammo", ammo: id === "doze" ? "doze" : "ar", x: c.x + dx + 3.4, z: c.z + dz + 2.2 });
+      }
     }
     for (let i = 0; i < 8; i++) {
       const dx = -80 + (i % 4) * 48;
@@ -323,6 +367,12 @@ function buildFrontierMap(theme) {
     }
   }
   brLoot.push(
+    { kind: "weapon", id: "bazooka", x: -430, z: -790 },
+    { kind: "ammo", ammo: "rocket", x: -426, z: -786 },
+    { kind: "weapon", id: "bazooka", x: 820, z: -230 },
+    { kind: "ammo", ammo: "rocket", x: 824, z: -226 },
+    { kind: "weapon", id: "bazooka", x: 410, z: 790 },
+    { kind: "ammo", ammo: "rocket", x: 414, z: 794 },
     { kind: "weapon", id: "revolver", x: -90, z: -74 },
     { kind: "weapon", id: "awm", x: -132, z: -92 },
     { kind: "ammo", ammo: "ar", x: -105, z: -112 },
@@ -335,6 +385,15 @@ function buildFrontierMap(theme) {
   for (const c of FRONTIER_COMPOUNDS) {
     patrolPoints.push({ x: c.x, z: c.z }, { x: c.x + 70, z: c.z - 70 }, { x: c.x - 70, z: c.z + 70 });
   }
+  const botDropZones = [
+    ...FRONTIER_COMPOUNDS.map((c) => ({ x: c.x, z: c.z })),
+    { x: -430, z: -820 },
+    { x: 820, z: -260 },
+    { x: -820, z: 420 },
+    { x: 420, z: 820 },
+    { x: -180, z: -62 },
+    { x: 265, z: 265 },
+  ];
   patrolPoints.push(theme.spawnCT, theme.spawnT);
   return {
     ...theme,
@@ -347,6 +406,7 @@ function buildFrontierMap(theme) {
     brDoors,
     brLoot,
     brCompounds: FRONTIER_COMPOUNDS,
+    botDropZones,
     patrolPoints,
     bossSpawn: { x: 0, z: 0 },
     innerBomb: { x: 0, z: 0 },
@@ -391,9 +451,18 @@ export function getMap(key) {
     tables: BASE_TABLES.map((t) => ({
       x: scaleVal(t.x, s), z: scaleVal(t.z, s), rot: t.rot,
     })),
-    props: BASE_PROPS.map((p) => ({
-      ...p, x: scaleVal(p.x, s), z: scaleVal(p.z, s),
-    })),
+    props: [
+      ...BASE_PROPS.map((p) => ({
+        ...p, x: scaleVal(p.x, s), z: scaleVal(p.z, s),
+      })),
+      ...(theme.extraProps || []).map((p) => ({
+        ...p,
+        x: scaleVal(p.x, s),
+        z: scaleVal(p.z, s),
+        w: p.w ? scaleVal(p.w, s) : p.w,
+        d: p.d ? scaleVal(p.d, s) : p.d,
+      })),
+    ],
     door: {
       ...DOOR,
       x: 0, z: 0,

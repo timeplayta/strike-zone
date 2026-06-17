@@ -12,6 +12,7 @@ const WEAPON_SOURCES = {
   m4:    ['./assets/models/blockbench/weapons/m4.glb', './assets/models/weapons/m4.glb'],
   ump45: ['./assets/models/blockbench/weapons/ump45.glb', './assets/models/weapons/ump45.glb'],
   doze:  ['./assets/models/blockbench/weapons/doze.glb', './assets/models/weapons/doze.glb'],
+  bazooka: ['./assets/models/blockbench/weapons/bazooka.glb'],
   revolver: ['./assets/models/blockbench/weapons/revolver.glb'],
 };
 
