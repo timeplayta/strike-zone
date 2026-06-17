@@ -800,10 +800,51 @@ function applyBattleRoyaleThirdPersonCamera(pos, opts = {}) {
   const cp = Math.cos(p);
   camera.position.set(
     pos.x + Math.sin(yaw) * cp * dist,
-    pos.y + baseY + lookY + Math.sin(p) * dist,
+    pos.y + baseY + lookY - Math.sin(p) * dist,
     pos.z + Math.cos(yaw) * cp * dist
   );
   camera.lookAt(pos.x, pos.y + lookY, pos.z);
+}
+
+function getBattleRoyaleDropForward(d) {
+  const dx = d.end.x - d.start.x;
+  const dz = d.end.z - d.start.z;
+  const len = Math.hypot(dx, dz) || 1;
+  return { x: dx / len, z: dz / len };
+}
+
+function applyBattleRoyaleVehicleCamera(pos, d) {
+  const f = getBattleRoyaleDropForward(d);
+  const right = { x: f.z, z: -f.x };
+  camera.position.set(
+    pos.x - f.x * 78 + right.x * 24,
+    pos.y + 38,
+    pos.z - f.z * 78 + right.z * 24
+  );
+  camera.lookAt(pos.x + f.x * 110, 82, pos.z + f.z * 110);
+}
+
+function makeDropRouteGuide(start, end) {
+  const g = new THREE.Group();
+  const mat = new THREE.LineBasicMaterial({ color: 0xffd84a, transparent: true, opacity: 0.86 });
+  const pts = [
+    new THREE.Vector3(start.x, 0.18, start.z),
+    new THREE.Vector3(end.x, 0.18, end.z),
+  ];
+  g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), mat));
+  const ringMat = new THREE.MeshBasicMaterial({ color: 0xfff2a0, transparent: true, opacity: 0.42, side: THREE.DoubleSide });
+  for (let i = 1; i < 8; i++) {
+    const t = i / 8;
+    const ring = new THREE.Mesh(new THREE.RingGeometry(11, 12.5, 32), ringMat);
+    ring.rotation.x = -Math.PI / 2;
+    ring.position.set(
+      THREE.MathUtils.lerp(start.x, end.x, t),
+      0.2,
+      THREE.MathUtils.lerp(start.z, end.z, t)
+    );
+    g.add(ring);
+  }
+  return g;
 }
 
 function readBattleRoyaleMoveInput() {
@@ -887,7 +928,7 @@ function startBattleRoyaleLobby() {
     vel: new THREE.Vector3(),
   };
   yaw = Math.PI;
-  pitch = 0.28;
+  pitch = -0.28;
   applyBattleRoyaleThirdPersonCamera(battleRoyaleDrop.pos, { dist: 8, lookY: 1.2 });
   moveVel.x = 0;
   moveVel.z = 0;
@@ -953,21 +994,28 @@ function startBattleRoyaleDrop() {
   const vehicle = makeDropVehicle();
   const avatar = makeDropAvatar();
   const chute = makeParachute();
+  const routeGuide = makeDropRouteGuide({ x: -940, z: -820 }, { x: 940, z: 820 });
   avatar.visible = false;
   chute.visible = false;
-  scene.add(vehicle, avatar, chute);
+  scene.add(routeGuide, vehicle, avatar, chute);
   battleRoyaleDrop = {
     phase: "vehicle",
     t: 0,
     duration: 120,
-    start: { x: -980, z: -860, y: 220 },
-    end: { x: 980, z: 860, y: 220 },
+    start: { x: -940, z: -820, y: 150 },
+    end: { x: 940, z: 820, y: 150 },
     vehicle,
     avatar,
     chute,
-    pos: new THREE.Vector3(-980, 220, -860),
+    routeGuide,
+    pos: new THREE.Vector3(-940, 150, -820),
     vel: new THREE.Vector3(),
   };
+  const pos = getDropVehiclePosition();
+  const f = getBattleRoyaleDropForward(battleRoyaleDrop);
+  vehicle.position.copy(pos);
+  vehicle.rotation.y = Math.atan2(-f.z, f.x);
+  applyBattleRoyaleVehicleCamera(pos, battleRoyaleDrop);
   if (weaponView) hideAllWeapons(weaponView);
   showOverlay("Veículo voador — clique ou Espaço para saltar");
 }
@@ -989,6 +1037,7 @@ function jumpFromDropVehicle() {
   battleRoyaleDrop.phase = "parachute";
   battleRoyaleDrop.pos.copy(pos);
   battleRoyaleDrop.vel.set(0, -8, 0);
+  pitch = -0.5;
   battleRoyaleDrop.avatar.visible = true;
   battleRoyaleDrop.chute.visible = true;
   if (weaponView) hideAllWeapons(weaponView);
@@ -1001,6 +1050,7 @@ function finishBattleRoyaleDrop() {
   camera.position.set(battleRoyaleDrop.pos.x, PLAYER_EYE_HEIGHT, battleRoyaleDrop.pos.z);
   if (battleRoyaleDrop.avatar) scene.remove(battleRoyaleDrop.avatar);
   if (battleRoyaleDrop.chute) scene.remove(battleRoyaleDrop.chute);
+  if (battleRoyaleDrop.routeGuide) scene.remove(battleRoyaleDrop.routeGuide);
   battleRoyaleDrop.phase = "landed";
   player.jumpOffset = 0;
   player.grounded = true;
@@ -1053,10 +1103,11 @@ function updateBattleRoyaleDrop(dt) {
   if (d.phase === "vehicle") {
     d.t += dt;
     const pos = getDropVehiclePosition();
+    const f = getBattleRoyaleDropForward(d);
     d.vehicle.position.copy(pos);
-    d.vehicle.rotation.y = -Math.PI * 0.27;
+    d.vehicle.rotation.y = Math.atan2(-f.z, f.x);
     d.vehicle.traverse((o) => { if (o.userData?.rotor) o.rotation.z += dt * 22; });
-    applyBattleRoyaleThirdPersonCamera(pos, { dist: 48, lookY: 0, baseY: 10 });
+    applyBattleRoyaleVehicleCamera(pos, d);
     const obj = document.getElementById("objective");
     if (obj) obj.textContent = "Clique ou Espaço para saltar do veículo voador";
     if (d.t >= d.duration) jumpFromDropVehicle();
