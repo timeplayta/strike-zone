@@ -135,6 +135,9 @@ const BR_STORM_END_RADIUS = 145;
 const BR_STORM_WAIT_SECONDS = 75;
 const BR_STORM_CLOSE_SECONDS = 360;
 const BR_POST_LAND_GRACE_MS = 22000;
+const BR_DROP_ALTITUDE = 92;
+const BR_DROP_START = { x: -760, z: -620 };
+const BR_DROP_END = { x: 760, z: 620 };
 
 let botCount = 10;
 let useBotDifficulty = true;
@@ -156,6 +159,8 @@ let moveVel = { x: 0, z: 0 };
 let wallMeshCache = [];
 let frameCount = 0;
 let hudTimerAcc = 0;
+let lastAnimationTick = 0;
+let animationFallbackTimer = null;
 let sunLight = null;
 let hemiLight = null;
 let ambientLight = null;
@@ -817,11 +822,19 @@ function applyBattleRoyaleVehicleCamera(pos, d) {
   const f = getBattleRoyaleDropForward(d);
   const right = { x: f.z, z: -f.x };
   camera.position.set(
-    pos.x - f.x * 78 + right.x * 24,
-    pos.y + 38,
-    pos.z - f.z * 78 + right.z * 24
+    pos.x - f.x * 54 + right.x * 16,
+    pos.y + 28,
+    pos.z - f.z * 54 + right.z * 16
   );
-  camera.lookAt(pos.x + f.x * 110, 82, pos.z + f.z * 110);
+  camera.lookAt(pos.x + f.x * 78, 24, pos.z + f.z * 78);
+}
+
+function updateVehiclePassenger(d, pos, f) {
+  if (!d.avatar) return;
+  d.avatar.visible = true;
+  d.avatar.position.set(pos.x - f.x * 7, pos.y - 7.5, pos.z - f.z * 7);
+  d.avatar.rotation.y = Math.atan2(f.x, f.z);
+  d.avatar.scale.setScalar(1.25);
 }
 
 function makeDropRouteGuide(start, end) {
@@ -994,27 +1007,29 @@ function startBattleRoyaleDrop() {
   const vehicle = makeDropVehicle();
   const avatar = makeDropAvatar();
   const chute = makeParachute();
-  const routeGuide = makeDropRouteGuide({ x: -940, z: -820 }, { x: 940, z: 820 });
-  avatar.visible = false;
+  const routeGuide = makeDropRouteGuide(BR_DROP_START, BR_DROP_END);
+  avatar.visible = true;
   chute.visible = false;
   scene.add(routeGuide, vehicle, avatar, chute);
   battleRoyaleDrop = {
     phase: "vehicle",
     t: 0,
     duration: 120,
-    start: { x: -940, z: -820, y: 150 },
-    end: { x: 940, z: 820, y: 150 },
+    phaseStarted: performance.now(),
+    start: { ...BR_DROP_START, y: BR_DROP_ALTITUDE },
+    end: { ...BR_DROP_END, y: BR_DROP_ALTITUDE },
     vehicle,
     avatar,
     chute,
     routeGuide,
-    pos: new THREE.Vector3(-940, 150, -820),
+    pos: new THREE.Vector3(BR_DROP_START.x, BR_DROP_ALTITUDE, BR_DROP_START.z),
     vel: new THREE.Vector3(),
   };
   const pos = getDropVehiclePosition();
   const f = getBattleRoyaleDropForward(battleRoyaleDrop);
   vehicle.position.copy(pos);
   vehicle.rotation.y = Math.atan2(-f.z, f.x);
+  updateVehiclePassenger(battleRoyaleDrop, pos, f);
   applyBattleRoyaleVehicleCamera(pos, battleRoyaleDrop);
   if (weaponView) hideAllWeapons(weaponView);
   showOverlay("Veículo voador — clique ou Espaço para saltar");
@@ -1034,12 +1049,14 @@ function getDropVehiclePosition() {
 function jumpFromDropVehicle() {
   if (!battleRoyaleDrop || battleRoyaleDrop.phase !== "vehicle") return false;
   const pos = getDropVehiclePosition();
+  const f = getBattleRoyaleDropForward(battleRoyaleDrop);
   battleRoyaleDrop.phase = "parachute";
-  battleRoyaleDrop.pos.copy(pos);
-  battleRoyaleDrop.vel.set(0, -8, 0);
-  pitch = -0.5;
+  battleRoyaleDrop.pos.set(pos.x - f.x * 8, pos.y - 8, pos.z - f.z * 8);
+  battleRoyaleDrop.vel.set(f.x * 8, -6.8, f.z * 8);
+  pitch = -0.58;
   battleRoyaleDrop.avatar.visible = true;
   battleRoyaleDrop.chute.visible = true;
+  battleRoyaleDrop.avatar.scale.setScalar(1);
   if (weaponView) hideAllWeapons(weaponView);
   showOverlay("Paraquedas aberto — WASD planeja • mouse olha");
   return true;
@@ -1068,7 +1085,7 @@ function updateBattleRoyaleDrop(dt) {
   const d = battleRoyaleDrop;
   if (d.phase === "lobby") {
     processLook();
-    d.lobbyLeft = Math.max(0, d.lobbyLeft - dt);
+    d.lobbyLeft = Math.max(0, BR_LOBBY_SECONDS - (performance.now() - d.phaseStarted) / 1000);
     const left = Math.ceil(d.lobbyLeft);
     const obj = document.getElementById("objective");
     if (obj) obj.textContent = `A partida irá começar em ${left}s`;
@@ -1101,12 +1118,13 @@ function updateBattleRoyaleDrop(dt) {
 
   processLook();
   if (d.phase === "vehicle") {
-    d.t += dt;
+    d.t = Math.min(d.duration, (performance.now() - d.phaseStarted) / 1000);
     const pos = getDropVehiclePosition();
     const f = getBattleRoyaleDropForward(d);
     d.vehicle.position.copy(pos);
     d.vehicle.rotation.y = Math.atan2(-f.z, f.x);
     d.vehicle.traverse((o) => { if (o.userData?.rotor) o.rotation.z += dt * 22; });
+    updateVehiclePassenger(d, pos, f);
     applyBattleRoyaleVehicleCamera(pos, d);
     const obj = document.getElementById("objective");
     if (obj) obj.textContent = "Clique ou Espaço para saltar do veículo voador";
@@ -1116,10 +1134,10 @@ function updateBattleRoyaleDrop(dt) {
 
   const move = readBattleRoyaleMoveInput();
   const len = move.len || 1;
-  const glide = 32;
+  const glide = 28;
   d.vel.x += ((move.inputX / len) * glide - d.vel.x) * Math.min(1, dt * 3.4);
   d.vel.z += ((move.inputZ / len) * glide - d.vel.z) * Math.min(1, dt * 3.4);
-  d.vel.y += (-13 - d.vel.y) * Math.min(1, dt * 2.2);
+  d.vel.y += (-7.8 - d.vel.y) * Math.min(1, dt * 2.2);
   d.pos.x += d.vel.x * dt;
   d.pos.z += d.vel.z * dt;
   d.pos.y += d.vel.y * dt;
@@ -1335,10 +1353,7 @@ function startGame(config = {}) {
     updateFlashlightHud();
 
     clock = new THREE.Clock();
-    if (!window.__gameAnimating) {
-      window.__gameAnimating = true;
-      animate();
-    }
+    ensureGameLoop();
 
     offerRoundWeaponPick().then(() => {
       showMatchOverlay();
@@ -1560,6 +1575,7 @@ function initThree() {
     if (camera) scene.add(camera);
     addSceneLights();
     configureCharacterRenderer(renderer);
+    renderer.debug.checkShaderErrors = false;
     window.__strikeRenderer = renderer;
     if (sunLight) sunLight.castShadow = false;
     return;
@@ -1579,6 +1595,8 @@ function initThree() {
     powerPreference: LOW_GRAPHICS ? "low-power" : "high-performance",
     alpha: false,
   });
+  // Alguns drivers WebGL no Windows retornam null nos logs de shader; o Three.js tenta usar trim() e trava o render.
+  renderer.debug.checkShaderErrors = false;
   renderer.setSize(window.innerWidth, window.innerHeight);
   configureCharacterRenderer(renderer);
   window.__strikeRenderer = renderer;
@@ -4535,10 +4553,7 @@ function startCharacterPreviewSession(config) {
     clock = clock || new THREE.Clock();
     updateAdminHud();
 
-    if (!window.__gameAnimating) {
-      window.__gameAnimating = true;
-      animate();
-    }
+    ensureGameLoop();
     if (!window.__adminWheelBound && canvas) {
       window.__adminWheelBound = true;
       canvas.addEventListener("wheel", onAdminWheel, { passive: false });
@@ -4851,12 +4866,37 @@ function runAdminCommand(raw) {
   return "Comando desconhecido. Digite / no chat para ver opções.";
 }
 
+function ensureGameLoop() {
+  if (!renderer) return;
+  if (window.__strikeAnimationRenderer === renderer) return;
+  if (window.__strikeAnimationRenderer?.setAnimationLoop) {
+    window.__strikeAnimationRenderer.setAnimationLoop(null);
+  }
+  if (animationFallbackTimer) clearInterval(animationFallbackTimer);
+  window.__strikeAnimationRenderer = renderer;
+  window.__gameAnimating = true;
+  renderer.setAnimationLoop(runAnimationTick);
+  animationFallbackTimer = setInterval(() => {
+    if (performance.now() - lastAnimationTick > 250) runAnimationTick();
+  }, 1000 / 30);
+}
+
+function runAnimationTick() {
+  lastAnimationTick = performance.now();
+  try {
+    animate();
+  } catch (err) {
+    window.__lastGameError = err?.stack || err?.message || String(err);
+    console.error(err);
+  }
+}
+
 function animate() {
-  requestAnimationFrame(animate);
   if (!clock || !renderer || !scene || !camera) return;
 
   const dt = Math.min(clock.getDelta(), 0.033);
   frameCount++;
+  window.__strikeFrameCount = frameCount;
 
   if (matchOver && !isCinematicActive() && !inCinematic) {
     renderer.render(scene, camera);
