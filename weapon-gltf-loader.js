@@ -85,6 +85,8 @@ export function buildGltfWeapon(type, tint = 0x5c3a1e) {
 }
 
 export function buildWeaponModel(type, tint = 0x5c3a1e) {
-  if (templates.has(type)) return buildGltfWeapon(type, tint);
+  // Os GLBs gerados em cubos ficam bons como fonte Blockbench, mas no gameplay
+  // estavam parecendo peças soltas/gigantes. Para legibilidade, usamos o HD
+  // procedural como modelo principal até os GLBs serem revisados manualmente.
   return buildHdWeapon(type, tint);
 }

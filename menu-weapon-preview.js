@@ -58,9 +58,9 @@ function mountWeaponPreview(canvas, weaponId) {
 
   const gun = buildNpcWeapon(weaponId, TINTS[weaponId] || 0x5c3a1e);
   gun.rotation.set(-0.15, Math.PI / 2, 0);
-  gun.scale.setScalar(weaponId === "bazooka" ? 1.55 : (weaponId === "glock" || weaponId === "revolver") ? 3.0 : 1.9);
+  gun.scale.setScalar(weaponId === "bazooka" ? 1.25 : (weaponId === "glock" || weaponId === "revolver") ? 1.75 : 1.35);
   scene.add(gun);
-  frameWeapon(camera, gun, (weaponId === "glock" || weaponId === "revolver") ? 1.4 : 1.12);
+  frameWeapon(camera, gun, (weaponId === "glock" || weaponId === "revolver") ? 1.05 : 0.92);
 
   renderer.render(scene, camera);
   viewers.push({ renderer, scene, camera, gun, canvas, weaponId });

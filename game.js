@@ -74,6 +74,7 @@ import {
 } from "./perf-config.js";
 import { WEAPONS, calcWeaponDamage, getPrimaryWeapon, refillWeaponToMax } from "./weapons-data.js";
 import { configureCharacterRenderer } from "./human-model.js";
+import { buildAmongUsCharacter } from "./among-us-model.js";
 import { upgradeWithBlockbenchModel } from "./blockbench-model-loader.js";
 import { initCharacterAnim, updateHumanAnimation, smoothTurn, getAnimOpts } from "./character-animation.js";
 import {
@@ -957,6 +958,12 @@ function finishBattleRoyaleLobby() {
 }
 
 function makeDropAvatar() {
+  const equippedSkin = getCharacterSkin?.() || window.__characterSkin || "soldier";
+  if (equippedSkin.startsWith("among")) {
+    const among = buildAmongUsCharacter(equippedSkin, 1.18, window.__playerLoadout || null);
+    among.group.userData.playerAvatar = true;
+    return among.group;
+  }
   const g = new THREE.Group();
   const suit = new THREE.MeshStandardMaterial({ color: 0x1d2a3b, roughness: 0.8, metalness: 0.05 });
   const skin = new THREE.MeshStandardMaterial({ color: 0xc4956a, roughness: 0.78, metalness: 0.02 });
@@ -2094,13 +2101,16 @@ function initWeapons() {
     return;
   }
   const primary = getPrimaryWeapon(primaryWeaponId);
+  const secondary = WEAPONS.revolver || WEAPONS.glock;
   weapons = {
     1: { ...primary, mag: primary.mag, reserve: primary.reserve, lastShot: 0 },
-    2: { ...WEAPONS.glock, mag: WEAPONS.glock.mag, reserve: WEAPONS.glock.reserve, lastShot: 0 },
+    2: { ...secondary, mag: secondary.mag, reserve: secondary.reserve, lastShot: 0 },
     3: { ...WEAPONS.faca, mag: 1, reserve: 0, lastShot: 0 },
   };
   currentWeapon = weapons[1];
   if (weaponView) {
+    setWeaponView(weaponView, 1, primaryWeaponId);
+    setWeaponView(weaponView, 2, secondary.id);
     setWeaponView(weaponView, 1, primaryWeaponId);
     applyPlayerWeaponSkins();
   }

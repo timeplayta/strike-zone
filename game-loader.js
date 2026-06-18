@@ -30,7 +30,7 @@ async function loadGame() {
 
     }
 
-    await import("./game.js?v=92");
+    await import("./game.js?v=93");
 
     if (typeof window.startStrikeZone !== "function") {
 

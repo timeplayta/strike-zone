@@ -1,4 +1,4 @@
-const CACHE = "strike-zone-v92";
+const CACHE = "strike-zone-v93";
 const ASSETS = [
   "/",
   "/index.html",
@@ -122,7 +122,19 @@ function shouldCache(request, response) {
   if (!response || response.status !== 200) return false;
   const url = new URL(request.url);
   if (url.pathname.startsWith("/api/")) return false;
+  if (/\.(html|js|css|json|webmanifest)$/i.test(url.pathname)) return false;
   return true;
+}
+
+function offlineAppResponse() {
+  return new Response(
+    `<!doctype html><meta charset="utf-8"><title>Strike Zone offline</title>
+    <body style="font-family:system-ui;background:#101722;color:white;padding:24px">
+      <h1>Servidor do jogo offline</h1>
+      <p>Abra o servidor local de novo e recarregue a página. Não vou carregar versão velha do jogo.</p>
+    </body>`,
+    { status: 503, headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" } }
+  );
 }
 
 self.addEventListener("install", (e) => {
@@ -146,8 +158,13 @@ self.addEventListener("fetch", (e) => {
 
   if (e.request.mode === "navigate") {
     e.respondWith(
-      fetch(e.request).catch(() => caches.match("/index.html"))
+      fetch(e.request).catch(() => offlineAppResponse())
     );
+    return;
+  }
+
+  if (/\.(html|js|css|json|webmanifest)$/i.test(url.pathname)) {
+    e.respondWith(fetch(e.request));
     return;
   }
 

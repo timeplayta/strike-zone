@@ -54,14 +54,7 @@ export function buildPreviewCharacter(loadout, team = "ct", portrait = false, ch
   if (
     skinId &&
     skinId !== "soldier" &&
-    (
-      skinId.startsWith("among") ||
-      skinId.startsWith("cowboy") ||
-      skinId === "neon_runner" ||
-      skinId === "shadow" ||
-      skinId === "trevas_horror" ||
-      skinId === "birthday_hero"
-    )
+    skinId.startsWith("among")
   ) {
     const body = buildAmongUsCharacter(skinId, portrait ? 0.95 : 1.1, normalizeLoadout(loadout));
     return { group: body.group, mixer: null, human: false, among: true };

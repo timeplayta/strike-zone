@@ -68,9 +68,9 @@ function createLootItem(def) {
     model.scale.multiplyScalar(def.id === "katana" ? 1.45 : 1.25);
   } else {
     model = buildNpcWeapon(def.id || "ak47", 0x5c3a1e);
-    model.scale.setScalar(def.id === "glock" || def.id === "revolver" ? 2.0 : 2.45);
+    model.scale.setScalar(def.id === "bazooka" ? 1.5 : (def.id === "glock" || def.id === "revolver") ? 1.15 : 1.35);
     model.rotation.set(-0.35, Math.PI * 0.25, 0.1);
-    model.position.y = 0.78;
+    model.position.y = 0.52;
   }
 
   root.add(model);

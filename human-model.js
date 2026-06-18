@@ -109,6 +109,74 @@ function applyTeamTint(material, shirt, team, variant = 0) {
   material.envMapIntensity = 0.4;
 }
 
+function wearableMat(color = 0xffffff, neon = null) {
+  const m = new THREE.MeshStandardMaterial({ color, roughness: 0.48, metalness: 0.12 });
+  if (neon) {
+    m.emissive = new THREE.Color(neon);
+    m.emissiveIntensity = 0.35;
+  }
+  return m;
+}
+
+function addPlayerWearables(root, bones, opts) {
+  const {
+    helmet = false,
+    accessory = null,
+    helmetColor = 0x2a4a7a,
+    capColor = helmetColor,
+    gloves = null,
+    shoes = null,
+    helmetNeon = null,
+    glovesNeon = null,
+    shoesNeon = null,
+  } = opts;
+
+  const headAnchor = bones.head || bones.neck || bones.spine;
+  if (headAnchor && (helmet || accessory)) {
+    const hMat = wearableMat(accessory === "cap" ? capColor : helmetColor, helmetNeon);
+    if (accessory === "mask" || accessory === "bandana") {
+      const mask = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.07, 0.035), hMat);
+      mask.position.set(0, 0.03, 0.13);
+      headAnchor.add(mask);
+    } else if (accessory === "glasses") {
+      const lens = wearableMat(helmetColor, helmetColor);
+      lens.transparent = true;
+      lens.opacity = 0.78;
+      const l = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.035, 0.02), lens);
+      const r = l.clone();
+      l.position.set(-0.055, 0.055, 0.13);
+      r.position.set(0.055, 0.055, 0.13);
+      headAnchor.add(l, r);
+    } else {
+      const cap = new THREE.Mesh(new THREE.SphereGeometry(0.15, 18, 10, 0, Math.PI * 2, 0, Math.PI * 0.55), hMat);
+      cap.position.set(0, 0.13, 0);
+      const brim = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.025, 0.09), hMat);
+      brim.position.set(0, 0.06, 0.13);
+      headAnchor.add(cap, brim);
+    }
+  }
+
+  const gloveMat = gloves ? wearableMat(gloves, glovesNeon) : null;
+  if (gloveMat) {
+    for (const hand of [bones.handL, bones.handR]) {
+      if (!hand) continue;
+      const glove = new THREE.Mesh(new THREE.SphereGeometry(0.055, 10, 8), gloveMat);
+      glove.scale.set(1.15, 0.8, 1.05);
+      hand.add(glove);
+    }
+  }
+
+  const shoeMat = shoes ? wearableMat(shoes, shoesNeon) : null;
+  if (shoeMat) {
+    for (const leg of [bones.legL, bones.legR]) {
+      if (!leg) continue;
+      const boot = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.055, 0.18), shoeMat);
+      boot.position.set(0, -0.38, 0.05);
+      leg.add(boot);
+    }
+  }
+}
+
 function upgradeMaterials(model, opts, renderer) {
   const { shirt, team, variant = 0, horror = false } = opts;
   model.traverse((o) => {
@@ -193,12 +261,15 @@ export function buildHumanCharacter(opts = {}) {
     shoulderL: findBone(model, ["mixamorigLeftShoulder", "LeftShoulder"]),
     spine: findBone(model, ["mixamorigSpine2", "Spine2", "mixamorigSpine1"]),
     spine1: findBone(model, ["mixamorigSpine1", "Spine1"]),
+    head: findBone(model, ["mixamorigHead", "Head"]),
     upLegL: findBone(model, ["mixamorigLeftUpLeg", "LeftUpLeg"]),
     upLegR: findBone(model, ["mixamorigRightUpLeg", "RightUpLeg"]),
     legL: findBone(model, ["mixamorigLeftLeg", "LeftLeg"]),
     legR: findBone(model, ["mixamorigRightLeg", "RightLeg"]),
     neck: findBone(model, ["mixamorigNeck", "Neck"]),
   };
+
+  addPlayerWearables(root, bones, opts);
 
   let gun = null;
   let weaponPivot = null;
