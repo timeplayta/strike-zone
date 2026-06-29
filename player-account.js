@@ -9,7 +9,7 @@ import {
   LOADOUT_ITEMS,
   getShopItem,
 } from "./shop-catalog.js";
-import { getShopItemThumbDataUrl } from "./shop-item-preview.js";
+import { getShopItemThumbDataUrl, getShopItemThumbDataUrlAsync, mountShopFeaturedPreview, stopShopFeaturedPreview, preloadShopPreviews, warmShopThumbCache } from "./shop-item-preview.js";
 import { ownsWeapon } from "./weapon-unlocks.js";
 
 export const SHOP_ITEMS = ALL_SHOP_ITEMS;
@@ -386,11 +386,27 @@ function getShopItemState(item, acc) {
 
 function updateShopSelectedPreview(item, owned = false, active = false) {
   const img = document.getElementById("shopSelectedPreviewImg");
+  const canvas = document.getElementById("shopWeaponPreviewCanvas");
   const title = document.getElementById("shopSelectedPreviewTitle");
   const desc = document.getElementById("shopSelectedPreviewDesc");
-  if (!item || !img || !title || !desc) return;
-  const url = getShopItemThumbDataUrl(item);
-  if (url) img.src = url;
+  if (!item || !title || !desc) return;
+
+  const isWeapon = item.type === "weapon" || item.type === "weapon_unlock";
+  if (isWeapon && canvas) {
+    img?.classList.add("hidden");
+    canvas.classList.remove("hidden");
+    mountShopFeaturedPreview(canvas, item);
+  } else {
+    stopShopFeaturedPreview();
+    canvas?.classList.add("hidden");
+    img?.classList.remove("hidden");
+    if (img) {
+      getShopItemThumbDataUrlAsync(item).then((url) => {
+        if (url) img.src = url;
+      });
+    }
+  }
+
   title.textContent = item.label;
   const isUnlock = item.type === "weapon_unlock";
   const action = owned
@@ -405,9 +421,10 @@ function updateShopSelectedPreview(item, owned = false, active = false) {
   desc.textContent = `${type} • ${item.tier || "comum"} • ${action}`;
 }
 
-function renderShopGrid(grid, items, acc, onBuy) {
+async function renderShopGrid(grid, items, acc, onBuy) {
   if (!grid) return;
   grid.innerHTML = "";
+  await preloadShopPreviews();
   for (const item of items) {
     const { owned, active } = getShopItemState(item, acc);
     const isUnlock = item.type === "weapon_unlock";
@@ -428,8 +445,9 @@ function renderShopGrid(grid, items, acc, onBuy) {
       `<span class="shop-item-price">${owned ? (isUnlock ? "Desbloqueada" : active ? "Em uso" : "Equipar") : item.price + " 🪙"}</span>`;
     const thumb = btn.querySelector(".shop-preview-img");
     if (thumb) {
-      const url = getShopItemThumbDataUrl(item);
-      if (url) thumb.src = url;
+      getShopItemThumbDataUrlAsync(item).then((url) => {
+        if (url) thumb.src = url;
+      });
     }
     btn.addEventListener("mouseenter", () => updateShopSelectedPreview(item, owned, active));
     btn.addEventListener("focus", () => updateShopSelectedPreview(item, owned, active));
@@ -486,6 +504,10 @@ export async function refreshShopUI(username) {
     ...LOADOUT_ITEMS.filter((i) => i.price > 0),
   ];
 
+  await preloadShopPreviews();
+  const shopItems = [...WEAPON_UNLOCKS, ...WEAPON_SKINS, ...charItems.filter((i) => i.price > 0)];
+  await warmShopThumbCache(shopItems);
+
   renderShopGrid(weaponGrid, [...WEAPON_UNLOCKS, ...WEAPON_SKINS], acc, handleBuy);
   renderShopGrid(
     charGrid,
@@ -495,7 +517,9 @@ export async function refreshShopUI(username) {
   );
 
   const activeTab = document.querySelector(".shop-tab.selected")?.dataset?.shopTab || "weapons";
-  const firstItem = activeTab === "chars" ? charItems[0] : WEAPON_SKINS[0];
+  const firstItem = activeTab === "chars"
+    ? charItems[0]
+    : (WEAPON_UNLOCKS[0] || WEAPON_SKINS[0]);
   if (firstItem) {
     const { owned, active } = getShopItemState(firstItem, acc);
     updateShopSelectedPreview(firstItem, owned, active);
@@ -508,6 +532,7 @@ export async function refreshShopUI(username) {
 }
 
 export function bindShopUI() {
+  preloadShopPreviews();
   const refresh = () => refreshShopUI(getLoggedInName());
   document.getElementById("playerName")?.addEventListener("input", refresh);
   refresh();

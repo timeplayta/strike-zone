@@ -2743,7 +2743,6 @@ body.mode-mobile .flashlight-hud {
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
 }
 .hub-panel-character {
-  width: min(96vw, 820px);
   border-color: rgba(255, 120, 60, 0.4);
 }
 .hub-header {
@@ -2987,7 +2986,7 @@ body.mode-mobile .flashlight-hud {
   align-items: center;
   gap: 8px;
 }
-.hub-panel-solo { width: min(96vw, 880px); }
+.hub-panel-solo { width: 100%; max-width: none; }
 
 .ff-menu {
   display: flex;
@@ -3047,8 +3046,9 @@ body.mode-mobile .flashlight-hud {
 }
 
 .ff-hub-overlay.hub-open {
-  background: rgba(4, 6, 12, 0.58);
-  backdrop-filter: blur(7px);
+  background: rgba(4, 6, 12, 0.96);
+  backdrop-filter: blur(10px);
+  padding: 0;
 }
 
 .ff-hub-overlay .ff-hub-panel:not(.hidden) {
@@ -3065,6 +3065,22 @@ body.mode-mobile .flashlight-hud {
   backdrop-filter: blur(10px);
   padding: clamp(0.7rem, 1.8vw, 1rem);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+}
+
+.ff-hub-overlay.hub-open .ff-hub-panel:not(.hidden) {
+  width: 100vw;
+  max-width: none;
+  height: 100vh;
+  height: 100dvh;
+  margin: 0;
+  border-radius: 0;
+  border: none;
+  box-shadow: none;
+  padding: clamp(0.75rem, 2vw, 1.35rem);
+}
+
+body.hub-panel-open {
+  overflow: hidden;
 }
 
 .ff-side-nav-btn {
@@ -3176,16 +3192,35 @@ body.mode-mobile .flashlight-hud {
 
 .shop-selected-preview {
   display: grid;
-  grid-template-columns: minmax(120px, 0.85fr) minmax(120px, 1fr);
-  gap: 0.75rem;
+  grid-template-columns: minmax(220px, 1.15fr) minmax(140px, 0.85fr);
+  gap: 0.85rem;
   align-items: center;
-  min-height: 150px;
-  padding: 0.75rem;
+  min-height: 220px;
+  padding: 0.85rem;
   border: 1px solid rgba(120, 150, 200, 0.18);
   border-radius: 12px;
   background:
     radial-gradient(circle at 28% 35%, rgba(80, 150, 255, 0.2), transparent 38%),
     linear-gradient(145deg, rgba(18, 26, 40, 0.94), rgba(7, 10, 16, 0.98));
+}
+
+.shop-selected-preview-media {
+  min-height: 180px;
+}
+
+.shop-selected-preview-canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  min-height: 180px;
+  max-height: 300px;
+  border-radius: 10px;
+  background: radial-gradient(ellipse at 50% 45%, #23344e 0%, #080b12 76%);
+}
+
+.shop-selected-preview-canvas.hidden,
+.shop-selected-preview-img.hidden {
+  display: none;
 }
 
 .shop-selected-preview-img {
@@ -4305,7 +4340,8 @@ body.round-weapon-pick-active #mobileControls {
 }
 
 .hub-panel-arsenal {
-  width: min(92vw, 720px);
+  width: 100%;
+  max-width: none;
 }
 
 .arsenal-canvas {

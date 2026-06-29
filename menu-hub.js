@@ -1,5 +1,7 @@
 /** Navegação do hub no menu principal */
 
+import { stopShopFeaturedPreview } from "./shop-item-preview.js";
+
 const HUB_PANELS = {
   character: "ffHubPanelCharacter",
   arsenal: "ffHubPanelArsenal",
@@ -12,6 +14,7 @@ function syncHubOverlay(openPanel) {
   const open = !!openPanel && openPanel in HUB_PANELS;
   stage.classList.toggle("hub-open", open);
   stage.setAttribute("aria-hidden", open ? "false" : "true");
+  document.body.classList.toggle("hub-panel-open", open);
 }
 
 export function switchHubPanel(panel) {
@@ -38,5 +41,6 @@ export function switchHubPanel(panel) {
 }
 
 export function showPlayHub() {
+  stopShopFeaturedPreview();
   switchHubPanel(null);
 }
