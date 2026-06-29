@@ -51,6 +51,7 @@ const COLORS = {
   shadowBlack: 0x12091f,
   solarOrange: 0xff8a22,
   galaxy: 0x0a0824,
+  faceInk: 0x2a1810,
 };
 
 function ensureDir(dir) {
@@ -83,9 +84,10 @@ function writeBbModel(filePath, model) {
   const elements = model.parts.map((p, i) => {
     const s = model.blockbenchScale || 16;
     const isSphere = p.shape === "sphere";
-    const hw = isSphere ? p.r : p.w / 2;
-    const hh = isSphere ? p.r : p.h / 2;
-    const hd = isSphere ? p.r : p.d / 2;
+    const isCylinder = p.shape === "cylinder";
+    const hw = isSphere ? p.r : isCylinder ? p.radius : p.w / 2;
+    const hh = isSphere ? p.r : isCylinder ? p.height / 2 : p.h / 2;
+    const hd = isSphere ? p.r : isCylinder ? p.radius : p.d / 2;
     const from = [(p.x - hw) * s, (p.y - hh) * s, (p.z - hd) * s];
     const to = [(p.x + hw) * s, (p.y + hh) * s, (p.z + hd) * s];
     const origin = [p.x * s, p.y * s, p.z * s];
@@ -143,11 +145,40 @@ function rotateY(x, z, ry = 0) {
 const part = (name, mat, x, y, z, w, h, d, ry = 0, rx = 0, rz = 0) =>
   ({ name, mat, x, y, z, w, h, d, ry, rx, rz, shape: "box" });
 
-function sphere(name, mat, x, y, z, r) {
-  return { name, mat, x, y, z, r, shape: "sphere" };
+function sphere(name, mat, x, y, z, r, seg = 18) {
+  return { name, mat, x, y, z, r, seg, shape: "sphere" };
 }
 
-function sphereGeom(p, seg = 14) {
+function cylinder(name, mat, x, y, z, radius, height, ry = 0, rx = 0) {
+  return { name, mat, x, y, z, radius, height, ry, rx, shape: "cylinder" };
+}
+
+function transformLocal(lx, ly, lz, p) {
+  let x = lx, y = ly, z = lz;
+  if (p.ry) [x, z] = rotateY(x, z, p.ry);
+  if (p.rx) {
+    const c = Math.cos(p.rx), s = Math.sin(p.rx);
+    const y2 = y * c - z * s;
+    z = y * s + z * c;
+    y = y2;
+  }
+  return [x + p.x, y + p.y, z + p.z];
+}
+
+function transformNormal(nx, ny, nz, p) {
+  let x = nx, y = ny, z = nz;
+  if (p.ry) [x, z] = rotateY(x, z, p.ry);
+  if (p.rx) {
+    const c = Math.cos(p.rx), s = Math.sin(p.rx);
+    const y2 = y * c - z * s;
+    z = y * s + z * c;
+    y = y2;
+  }
+  const len = Math.hypot(x, y, z) || 1;
+  return [x / len, y / len, z / len];
+}
+
+function sphereGeom(p, seg = p.seg || 14) {
   const positions = [], normals = [], indices = [];
   const r = p.r;
   for (let lat = 0; lat <= seg; lat++) {
@@ -173,8 +204,56 @@ function sphereGeom(p, seg = 14) {
   return { positions, normals, indices };
 }
 
+function cylinderGeom(p, seg = 14) {
+  const positions = [], normals = [], indices = [];
+  const r = p.radius;
+  const hh = p.height / 2;
+  const bottomIdx = [];
+  const topIdx = [];
+
+  for (let i = 0; i < seg; i++) {
+    const theta = (i / seg) * Math.PI * 2;
+    const lx = Math.cos(theta) * r;
+    const lz = Math.sin(theta) * r;
+    const n = transformNormal(Math.cos(theta), 0, Math.sin(theta), p);
+
+    bottomIdx.push(positions.length / 3);
+    positions.push(...transformLocal(lx, -hh, lz, p));
+    normals.push(...n);
+
+    topIdx.push(positions.length / 3);
+    positions.push(...transformLocal(lx, hh, lz, p));
+    normals.push(...n);
+  }
+
+  for (let i = 0; i < seg; i++) {
+    const i1 = (i + 1) % seg;
+    indices.push(bottomIdx[i], topIdx[i], topIdx[i1], bottomIdx[i], topIdx[i1], bottomIdx[i1]);
+  }
+
+  const topCenter = positions.length / 3;
+  positions.push(...transformLocal(0, hh, 0, p));
+  normals.push(...transformNormal(0, 1, 0, p));
+  for (let i = 0; i < seg; i++) {
+    const i1 = (i + 1) % seg;
+    indices.push(topCenter, topIdx[i1], topIdx[i]);
+  }
+
+  const botCenter = positions.length / 3;
+  positions.push(...transformLocal(0, -hh, 0, p));
+  normals.push(...transformNormal(0, -1, 0, p));
+  for (let i = 0; i < seg; i++) {
+    const i1 = (i + 1) % seg;
+    indices.push(botCenter, bottomIdx[i], bottomIdx[i1]);
+  }
+
+  return { positions, normals, indices };
+}
+
 function geomPart(p) {
-  return p.shape === "sphere" ? sphereGeom(p) : boxGeom(p);
+  if (p.shape === "sphere") return sphereGeom(p);
+  if (p.shape === "cylinder") return cylinderGeom(p);
+  return boxGeom(p);
 }
 
 function boxGeom(p) {
@@ -334,25 +413,37 @@ function operator() {
   return { id: "operator", name: "Strike Zone Operator", parts: hero.parts };
 }
 
-/** Jogador padrão — cabeça/mãos redondas, tênis (editável no Blockbench) */
+/** Jogador padrão — cabeça/mãos redondas, tênis, rosto fechado (editável no Blockbench) */
 function playerHeroStylized() {
+  const headY = 1.5;
+  const headR = 0.2;
   const p = [
     part("torso", "suitBlue", 0, 1.02, 0, 0.42, 0.52, 0.2),
     part("vest", "armor", 0, 1.06, -0.12, 0.36, 0.4, 0.05),
     part("belt", "leatherDark", 0, 0.78, -0.01, 0.46, 0.07, 0.24),
     part("backpack", "dark", 0, 1.0, 0.14, 0.32, 0.44, 0.12),
-    sphere("head", "skin", 0, 1.48, 0.02, 0.17),
-    sphere("helmet", "trimBlue", 0, 1.56, -0.02, 0.19),
-    part("visor", "glass", 0, 1.5, -0.14, 0.18, 0.05, 0.03),
+    sphere("head", "skin", 0, headY, 0.02, headR, 22),
+    part("helmet_cap", "trimBlue", 0, headY + headR * 0.72, -0.02, 0.3, 0.09, 0.28),
+    part("helmet_rim", "trimBlue", 0, headY + headR * 0.35, -0.02, 0.38, 0.05, 0.34),
+    part("eye_closed_l", "faceInk", -0.06, headY + 0.02, -headR + 0.02, 0.055, 0.014, 0.025),
+    part("eye_closed_r", "faceInk", 0.06, headY + 0.02, -headR + 0.02, 0.055, 0.014, 0.025),
+    part("brow_l", "faceInk", -0.06, headY + 0.05, -headR + 0.018, 0.05, 0.01, 0.02),
+    part("brow_r", "faceInk", 0.06, headY + 0.05, -headR + 0.018, 0.05, 0.01, 0.02),
+    part("mouth_closed", "faceInk", 0, headY - 0.07, -headR + 0.015, 0.07, 0.012, 0.022),
     part("collar", "armor", 0, 1.28, -0.02, 0.34, 0.06, 0.18),
     part("knee_pad_l", "armor", -0.12, 0.28, -0.08, 0.14, 0.09, 0.04),
     part("knee_pad_r", "armor", 0.12, 0.28, -0.08, 0.14, 0.09, 0.04),
   ];
   for (const sx of [-1, 1]) {
+    const side = sx === 1 ? "r" : "l";
     p.push(
-      part("upper_arm", "suitBlue", sx * 0.34, 1.14, 0, 0.13, 0.4, 0.13, sx * 0.12),
-      part("forearm", "skin", sx * 0.38, 0.78, 0.02, 0.11, 0.32, 0.11, sx * -0.08),
-      sx === 1 ? sphere("hand_r", "skin", sx * 0.38, 0.6, 0.05, 0.07) : sphere("hand_l", "skin", sx * 0.38, 0.6, 0.05, 0.07),
+      sphere(`shoulder_${side}`, "suitBlue", sx * 0.32, 1.28, 0, 0.078, 16),
+      cylinder(`upper_arm_${side}`, "suitBlue", sx * 0.34, 1.1, 0, 0.068, 0.38, sx * 0.12),
+      sphere(`elbow_${side}`, "skin", sx * 0.38, 0.9, 0.01, 0.058, 14),
+      cylinder(`forearm_${side}`, "skin", sx * 0.38, 0.74, 0.02, 0.062, 0.3, sx * -0.08),
+      sx === 1
+        ? sphere("hand_r", "skin", sx * 0.38, 0.58, 0.05, 0.078, 18)
+        : sphere("hand_l", "skin", sx * 0.38, 0.58, 0.05, 0.078, 18),
       part("pants", "denim", sx * 0.12, 0.46, 0, 0.14, 0.52, 0.15),
       part("sneaker_sole", "shoeWhite", sx * 0.12, 0.05, 0.06, 0.2, 0.07, 0.26),
       part("sneaker_body", "suitBlue", sx * 0.12, 0.12, -0.01, 0.18, 0.11, 0.24),

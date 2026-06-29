@@ -305,14 +305,14 @@
       "uuid": "sz-0004",
       "name": "head",
       "from": [
-        -2.72,
-        20.96,
-        -2.4
+        -3.2,
+        20.8,
+        -2.88
       ],
       "to": [
-        2.72,
-        26.4,
-        3.04
+        3.2,
+        27.2,
+        3.52
       ],
       "color": 4,
       "faces": {
@@ -374,16 +374,16 @@
     },
     {
       "uuid": "sz-0005",
-      "name": "helmet",
+      "name": "helmet_cap",
       "from": [
-        -3.04,
-        21.92,
-        -3.36
+        -2.4,
+        25.584,
+        -2.56
       ],
       "to": [
-        3.04,
-        28,
-        2.72
+        2.4,
+        27.024,
+        1.92
       ],
       "color": 5,
       "faces": {
@@ -445,16 +445,87 @@
     },
     {
       "uuid": "sz-0006",
-      "name": "visor",
+      "name": "helmet_rim",
       "from": [
-        -1.44,
-        23.6,
-        -2.48
+        -3.04,
+        24.72,
+        -3.04
       ],
       "to": [
-        1.44,
-        24.4,
-        -2
+        3.04,
+        25.52,
+        2.4
+      ],
+      "color": 5,
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#5"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#5"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#5"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#5"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#5"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#5"
+        }
+      }
+    },
+    {
+      "uuid": "sz-0007",
+      "name": "eye_closed_l",
+      "from": [
+        -1.4,
+        24.208,
+        -3.08
+      ],
+      "to": [
+        -0.52,
+        24.432,
+        -2.68
       ],
       "color": 6,
       "faces": {
@@ -515,7 +586,291 @@
       }
     },
     {
-      "uuid": "sz-0007",
+      "uuid": "sz-0008",
+      "name": "eye_closed_r",
+      "from": [
+        0.52,
+        24.208,
+        -3.08
+      ],
+      "to": [
+        1.4,
+        24.432,
+        -2.68
+      ],
+      "color": 6,
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#6"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#6"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#6"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#6"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#6"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#6"
+        }
+      }
+    },
+    {
+      "uuid": "sz-0009",
+      "name": "brow_l",
+      "from": [
+        -1.36,
+        24.72,
+        -3.072
+      ],
+      "to": [
+        -0.56,
+        24.88,
+        -2.752
+      ],
+      "color": 6,
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#6"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#6"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#6"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#6"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#6"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#6"
+        }
+      }
+    },
+    {
+      "uuid": "sz-0010",
+      "name": "brow_r",
+      "from": [
+        0.56,
+        24.72,
+        -3.072
+      ],
+      "to": [
+        1.36,
+        24.88,
+        -2.752
+      ],
+      "color": 6,
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#6"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#6"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#6"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#6"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#6"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#6"
+        }
+      }
+    },
+    {
+      "uuid": "sz-0011",
+      "name": "mouth_closed",
+      "from": [
+        -0.56,
+        22.784,
+        -3.136
+      ],
+      "to": [
+        0.56,
+        22.976,
+        -2.784
+      ],
+      "color": 6,
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#6"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#6"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#6"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#6"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#6"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#6"
+        }
+      }
+    },
+    {
+      "uuid": "sz-0012",
       "name": "collar",
       "from": [
         -2.72,
@@ -586,7 +941,7 @@
       }
     },
     {
-      "uuid": "sz-0008",
+      "uuid": "sz-0013",
       "name": "knee_pad_l",
       "from": [
         -3.04,
@@ -657,7 +1012,7 @@
       }
     },
     {
-      "uuid": "sz-0009",
+      "uuid": "sz-0014",
       "name": "knee_pad_r",
       "from": [
         0.8,
@@ -728,17 +1083,88 @@
       }
     },
     {
-      "uuid": "sz-0010",
-      "name": "upper_arm",
+      "uuid": "sz-0015",
+      "name": "shoulder_l",
       "from": [
-        -6.48,
-        15.04,
-        -1.04
+        -6.368,
+        19.232,
+        -1.248
       ],
       "to": [
-        -4.4,
-        21.44,
-        1.04
+        -3.872,
+        21.728,
+        1.248
+      ],
+      "color": 0,
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        }
+      }
+    },
+    {
+      "uuid": "sz-0016",
+      "name": "upper_arm_l",
+      "from": [
+        -6.528,
+        14.56,
+        -1.088
+      ],
+      "to": [
+        -4.352,
+        20.64,
+        1.088
       ],
       "color": 0,
       "faces": {
@@ -802,23 +1228,94 @@
         "axis": "y",
         "origin": [
           -5.44,
-          18.24,
+          17.6,
           0
         ]
       }
     },
     {
-      "uuid": "sz-0011",
-      "name": "forearm",
+      "uuid": "sz-0017",
+      "name": "elbow_l",
       "from": [
-        -6.96,
-        9.92,
-        -0.56
+        -7.008,
+        13.472,
+        -0.768
       ],
       "to": [
-        -5.2,
-        15.04,
-        1.2
+        -5.152,
+        15.328,
+        1.088
+      ],
+      "color": 4,
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#4"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#4"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#4"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#4"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#4"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#4"
+        }
+      }
+    },
+    {
+      "uuid": "sz-0018",
+      "name": "forearm_l",
+      "from": [
+        -7.072,
+        9.44,
+        -0.672
+      ],
+      "to": [
+        -5.088,
+        14.24,
+        1.312
       ],
       "color": 4,
       "faces": {
@@ -882,23 +1379,23 @@
         "axis": "y",
         "origin": [
           -6.08,
-          12.48,
+          11.84,
           0.32
         ]
       }
     },
     {
-      "uuid": "sz-0012",
+      "uuid": "sz-0019",
       "name": "hand_l",
       "from": [
-        -7.2,
-        8.48,
-        -0.32
+        -7.328,
+        8.032,
+        -0.448
       ],
       "to": [
-        -4.96,
-        10.72,
-        1.92
+        -4.832,
+        10.528,
+        2.048
       ],
       "color": 4,
       "faces": {
@@ -959,7 +1456,7 @@
       }
     },
     {
-      "uuid": "sz-0013",
+      "uuid": "sz-0020",
       "name": "pants",
       "from": [
         -3.04,
@@ -1030,7 +1527,7 @@
       }
     },
     {
-      "uuid": "sz-0014",
+      "uuid": "sz-0021",
       "name": "sneaker_sole",
       "from": [
         -3.52,
@@ -1101,7 +1598,7 @@
       }
     },
     {
-      "uuid": "sz-0015",
+      "uuid": "sz-0022",
       "name": "sneaker_body",
       "from": [
         -3.36,
@@ -1172,7 +1669,7 @@
       }
     },
     {
-      "uuid": "sz-0016",
+      "uuid": "sz-0023",
       "name": "sneaker_tongue",
       "from": [
         -2.72,
@@ -1243,7 +1740,7 @@
       }
     },
     {
-      "uuid": "sz-0017",
+      "uuid": "sz-0024",
       "name": "sneaker_lace",
       "from": [
         -2.56,
@@ -1314,17 +1811,88 @@
       }
     },
     {
-      "uuid": "sz-0018",
-      "name": "upper_arm",
+      "uuid": "sz-0025",
+      "name": "shoulder_r",
       "from": [
-        4.4,
-        15.04,
-        -1.04
+        3.872,
+        19.232,
+        -1.248
       ],
       "to": [
-        6.48,
-        21.44,
-        1.04
+        6.368,
+        21.728,
+        1.248
+      ],
+      "color": 0,
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        }
+      }
+    },
+    {
+      "uuid": "sz-0026",
+      "name": "upper_arm_r",
+      "from": [
+        4.352,
+        14.56,
+        -1.088
+      ],
+      "to": [
+        6.528,
+        20.64,
+        1.088
       ],
       "color": 0,
       "faces": {
@@ -1388,23 +1956,94 @@
         "axis": "y",
         "origin": [
           5.44,
-          18.24,
+          17.6,
           0
         ]
       }
     },
     {
-      "uuid": "sz-0019",
-      "name": "forearm",
+      "uuid": "sz-0027",
+      "name": "elbow_r",
       "from": [
-        5.2,
-        9.92,
-        -0.56
+        5.152,
+        13.472,
+        -0.768
       ],
       "to": [
-        6.96,
-        15.04,
-        1.2
+        7.008,
+        15.328,
+        1.088
+      ],
+      "color": 4,
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#4"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#4"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#4"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#4"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#4"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#4"
+        }
+      }
+    },
+    {
+      "uuid": "sz-0028",
+      "name": "forearm_r",
+      "from": [
+        5.088,
+        9.44,
+        -0.672
+      ],
+      "to": [
+        7.072,
+        14.24,
+        1.312
       ],
       "color": 4,
       "faces": {
@@ -1468,23 +2107,23 @@
         "axis": "y",
         "origin": [
           6.08,
-          12.48,
+          11.84,
           0.32
         ]
       }
     },
     {
-      "uuid": "sz-0020",
+      "uuid": "sz-0029",
       "name": "hand_r",
       "from": [
-        4.96,
-        8.48,
-        -0.32
+        4.832,
+        8.032,
+        -0.448
       ],
       "to": [
-        7.2,
-        10.72,
-        1.92
+        7.328,
+        10.528,
+        2.048
       ],
       "color": 4,
       "faces": {
@@ -1545,7 +2184,7 @@
       }
     },
     {
-      "uuid": "sz-0021",
+      "uuid": "sz-0030",
       "name": "pants",
       "from": [
         0.8,
@@ -1616,7 +2255,7 @@
       }
     },
     {
-      "uuid": "sz-0022",
+      "uuid": "sz-0031",
       "name": "sneaker_sole",
       "from": [
         0.32,
@@ -1687,7 +2326,7 @@
       }
     },
     {
-      "uuid": "sz-0023",
+      "uuid": "sz-0032",
       "name": "sneaker_body",
       "from": [
         0.48,
@@ -1758,7 +2397,7 @@
       }
     },
     {
-      "uuid": "sz-0024",
+      "uuid": "sz-0033",
       "name": "sneaker_tongue",
       "from": [
         1.12,
@@ -1829,7 +2468,7 @@
       }
     },
     {
-      "uuid": "sz-0025",
+      "uuid": "sz-0034",
       "name": "sneaker_lace",
       "from": [
         1.28,
@@ -1926,7 +2565,16 @@
     "sz-0022",
     "sz-0023",
     "sz-0024",
-    "sz-0025"
+    "sz-0025",
+    "sz-0026",
+    "sz-0027",
+    "sz-0028",
+    "sz-0029",
+    "sz-0030",
+    "sz-0031",
+    "sz-0032",
+    "sz-0033",
+    "sz-0034"
   ],
   "textures": [
     {
@@ -2014,8 +2662,8 @@
       "source": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiI+PHJlY3Qgd2lkdGg9IjE2IiBoZWlnaHQ9IjE2IiBmaWxsPSJyZ2IoMzgsNTYsNzcpIi8+PC9zdmc+"
     },
     {
-      "path": "glass.svg",
-      "name": "glass",
+      "path": "faceInk.svg",
+      "name": "faceInk",
       "folder": "Strike Zone",
       "namespace": "",
       "id": "6",
@@ -2025,7 +2673,7 @@
       "mode": "bitmap",
       "saved": true,
       "uuid": "tex-6",
-      "source": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiI+PHJlY3Qgd2lkdGg9IjE2IiBoZWlnaHQ9IjE2IiBmaWxsPSJyZ2IoMTQzLDIwMCwyNTUpIi8+PC9zdmc+"
+      "source": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiI+PHJlY3Qgd2lkdGg9IjE2IiBoZWlnaHQ9IjE2IiBmaWxsPSJyZ2IoNDIsMjQsMTYpIi8+PC9zdmc+"
     },
     {
       "path": "denim.svg",

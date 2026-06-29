@@ -124,7 +124,7 @@ function buildBlockbenchPlayer(skinId, opts) {
     new THREE.MeshBasicMaterial({ visible: false })
   );
   headHit.userData.hitPart = "head";
-  headHit.position.set(0, targetH * 0.82, 0.02);
+  headHit.position.set(0, targetH * 0.84, 0.02);
   root.add(headHit);
 
   const rig = model
