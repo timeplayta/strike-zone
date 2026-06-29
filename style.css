@@ -1285,6 +1285,21 @@ body.mode-mobile .menu-actions {
   box-shadow: 0 0 12px rgba(240, 160, 48, 0.2);
 }
 
+.weapon-btn.locked {
+  opacity: 0.45;
+  filter: grayscale(0.85);
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.weapon-lock-tag {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.72rem;
+  color: #f0a030;
+  font-weight: 700;
+}
+
 .weapon-name {
   display: block;
   font-weight: 600;

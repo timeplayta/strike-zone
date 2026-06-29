@@ -42,6 +42,8 @@ const SHOP = {
   revolver_outlaw: { type: "weapon", weapon: "revolver", color: 0x6b2a1d, price: 260 },
   bazooka_mythic: { type: "weapon", weapon: "bazooka", color: 0x8b45ff, price: 1000 },
   bazooka_galaxy: { type: "weapon", weapon: "bazooka", color: 0x120727, price: 2200 },
+  unlock_bazooka: { type: "weapon_unlock", weapon: "bazooka", price: 1200 },
+  unlock_revolver: { type: "weapon_unlock", weapon: "revolver", price: 1200 },
   char_among_red: { type: "character", skinId: "among_red", color: 0xff3355, price: 150 },
   char_among_blue: { type: "character", skinId: "among_blue", color: 0x2266ee, price: 150 },
   char_among_green: { type: "character", skinId: "among_green", color: 0x33aa44, price: 120 },

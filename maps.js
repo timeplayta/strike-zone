@@ -115,9 +115,9 @@ const THEMES = {
     spawnT: { x: 60, z: 0 },
     bombSites: [{ x: 11, z: -7, id: "A" }, { x: 11, z: 7, id: "B" }],
     extraProps: [
-      { type: "cold_building", x: 0, z: -14, w: 15, d: 9, floors: 5 },
-      { type: "br_ramp", x: -10, z: -8, rot: -0.25, tint: 0x667788 },
-      { type: "br_ramp", x: 10, z: -8, rot: 0.25, tint: 0x667788 },
+      { type: "cold_building", x: 0, z: -14, w: 15, d: 9, floors: 5, noCollide: true },
+      { type: "br_ramp", x: -10, z: -8, rot: -0.25, tint: 0x667788, noCollide: true },
+      { type: "br_ramp", x: 10, z: -8, rot: 0.25, tint: 0x667788, noCollide: true },
     ],
   },
   horror: {

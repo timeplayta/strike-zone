@@ -187,15 +187,18 @@ export function spawnTeleportFx(scene, x, z) {
 }
 
 export function spawnBloodPool(scene, position, size = 1) {
-  const pool = new THREE.Mesh(
-    new THREE.CircleGeometry(0.55 * size, 24),
-    new THREE.MeshBasicMaterial({
-      map: getBloodPoolTexture(),
-      transparent: true,
-      opacity: 0.92,
-      depthWrite: false,
-    })
-  );
+  const poolMat = new THREE.MeshStandardMaterial({
+    map: getBloodPoolTexture(),
+    transparent: true,
+    opacity: 0.96,
+    depthWrite: false,
+    color: 0xff4455,
+    emissive: 0xcc2233,
+    emissiveIntensity: 0.52,
+    roughness: 0.55,
+    metalness: 0.04,
+  });
+  const pool = new THREE.Mesh(new THREE.CircleGeometry(0.55 * size, 24), poolMat);
   pool.rotation.x = -Math.PI / 2;
   pool.rotation.z = Math.random() * Math.PI * 2;
   pool.position.set(position.x, 0.018, position.z);
@@ -203,15 +206,17 @@ export function spawnBloodPool(scene, position, size = 1) {
 
   const splats = [];
   for (let i = 0; i < 8; i++) {
-    const s = new THREE.Mesh(
-      new THREE.CircleGeometry(0.06 + Math.random() * 0.14, 8),
-      new THREE.MeshBasicMaterial({
-        map: getBloodSplatterTexture(),
-        transparent: true,
-        opacity: 0.75 + Math.random() * 0.2,
-        depthWrite: false,
-      })
-    );
+    const sMat = new THREE.MeshStandardMaterial({
+      map: getBloodSplatterTexture(),
+      transparent: true,
+      opacity: 0.82 + Math.random() * 0.16,
+      depthWrite: false,
+      color: 0xff5566,
+      emissive: 0xaa1122,
+      emissiveIntensity: 0.38,
+      roughness: 0.62,
+    });
+    const s = new THREE.Mesh(new THREE.CircleGeometry(0.06 + Math.random() * 0.14, 8), sMat);
     s.rotation.x = -Math.PI / 2;
     s.rotation.z = Math.random() * Math.PI * 2;
     s.position.set(
@@ -222,7 +227,12 @@ export function spawnBloodPool(scene, position, size = 1) {
     scene.add(s);
     splats.push(s);
   }
-  return { pool, splats };
+
+  const glow = new THREE.PointLight(0xff4455, 0.42, 3.8 * size, 1.6);
+  glow.position.set(position.x, 0.35, position.z);
+  scene.add(glow);
+
+  return { pool, splats, glow };
 }
 
 export function spawnBloodSpray(scene, position, count = 12, opts = {}) {
@@ -340,10 +350,11 @@ function getBloodPoolTexture() {
   c.height = 128;
   const ctx = c.getContext("2d");
   const g = ctx.createRadialGradient(64, 64, 4, 64, 64, 62);
-  g.addColorStop(0, "rgba(75,0,0,0.98)");
-  g.addColorStop(0.35, "rgba(110,10,8,0.9)");
-  g.addColorStop(0.65, "rgba(55,0,0,0.55)");
-  g.addColorStop(1, "rgba(15,0,0,0)");
+  g.addColorStop(0, "rgba(220,28,38,0.98)");
+  g.addColorStop(0.28, "rgba(180,18,28,0.92)");
+  g.addColorStop(0.55, "rgba(120,8,18,0.72)");
+  g.addColorStop(0.78, "rgba(70,4,10,0.38)");
+  g.addColorStop(1, "rgba(20,0,0,0)");
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, 128, 128);
   for (let i = 0; i < 35; i++) {
@@ -416,15 +427,21 @@ function smoothstep(t) {
 export function initRagdoll(enemy, opts = {}) {
   enemy.ragdoll = true;
   enemy.ragdollTime = 0;
-  enemy.ragdollDur = opts.headshot ? 0.95 : 1.15;
+  enemy.ragdollDur = opts.headshot ? 0.85 : 1.05;
   enemy.deathHeadshot = !!opts.headshot;
   enemy.deathFallSide = opts.fallSide ?? (Math.random() > 0.5 ? 1 : -1);
   enemy.deathStartY = enemy.group?.position?.y ?? 0;
+  enemy.deathYaw = enemy.group?.rotation?.y ?? 0;
   enemy.ragdollDone = false;
-  enemy.deathKick = opts.headshot ? 0.35 : 0.12;
+  enemy.deathKick = opts.headshot ? 0.22 : 0.08;
 
   if (enemy.mixer) enemy.mixer.stopAllAction();
   clearEnemyFlash(enemy);
+
+  if (enemy.group) {
+    enemy.group.rotation.x = 0;
+    enemy.group.rotation.z = 0;
+  }
 
   if (enemy.gun) {
     enemy.gun.traverse((o) => {
@@ -436,58 +453,53 @@ export function initRagdoll(enemy, opts = {}) {
 export function applyRagdoll(enemy, dt) {
   if (!enemy.ragdoll) return;
   enemy.ragdollTime = (enemy.ragdollTime || 0) + dt;
-  const dur = enemy.ragdollDur || 1.1;
+  const dur = enemy.ragdollDur || 1.05;
   const raw = Math.min(1, enemy.ragdollTime / dur);
   const t = smoothstep(raw);
   const b = enemy.bones;
+  const side = enemy.deathFallSide || 1;
   const hs = enemy.deathHeadshot;
 
   if (b) {
-    const kneeT = smoothstep(Math.min(1, raw * 2.8));
-    if (b.upLegL) b.upLegL.rotation.x = lerp(b.upLegL.rotation.x, 0.95, kneeT);
-    if (b.upLegR) b.upLegR.rotation.x = lerp(b.upLegR.rotation.x, 0.95, kneeT);
-    if (b.legL) b.legL.rotation.x = lerp(b.legL.rotation.x, -1.35, kneeT);
-    if (b.legR) b.legR.rotation.x = lerp(b.legR.rotation.x, -1.35, kneeT);
+    const kneeT = smoothstep(Math.min(1, raw * 2.4));
+    const legFold = kneeT * 0.92;
+    if (b.upLegL) b.upLegL.rotation.x = legFold;
+    if (b.upLegR) b.upLegR.rotation.x = legFold;
+    if (b.legL) b.legL.rotation.x = -legFold * 1.12;
+    if (b.legR) b.legR.rotation.x = -legFold * 1.12;
 
-    const torsoT = smoothstep(Math.min(1, Math.max(0, (raw - 0.12) * 2.2)));
-    const spineFall = hs ? -1.35 : -0.95;
-    if (b.spine) b.spine.rotation.x = lerp(b.spine.rotation.x, spineFall, torsoT);
-    if (b.spine1) b.spine1.rotation.x = lerp(b.spine1.rotation.x, spineFall * 0.45, torsoT);
-    if (b.hips) b.hips.rotation.x = lerp(b.hips.rotation.x, -0.25, torsoT);
+    const torsoT = smoothstep(Math.max(0, (raw - 0.14) * 1.9));
+    const spineFall = hs ? -0.95 : -0.72;
+    if (b.spine) b.spine.rotation.x = spineFall * torsoT;
+    if (b.spine1) b.spine1.rotation.x = spineFall * 0.38 * torsoT;
+    if (b.hips) b.hips.rotation.x = -0.18 * torsoT;
 
-    const armT = smoothstep(Math.min(1, Math.max(0, (raw - 0.08) * 2.5)));
+    const armT = smoothstep(Math.max(0, (raw - 0.1) * 1.7));
     if (b.shoulderR) {
-      b.shoulderR.rotation.x = lerp(b.shoulderR.rotation.x, 0.15, armT);
-      b.shoulderR.rotation.z = lerp(b.shoulderR.rotation.z, 0.6 * enemy.deathFallSide, armT);
+      b.shoulderR.rotation.x = 0.22 * armT;
+      b.shoulderR.rotation.z = 0.42 * side * armT;
     }
     if (b.shoulderL) {
-      b.shoulderL.rotation.x = lerp(b.shoulderL.rotation.x, 0.1, armT);
-      b.shoulderL.rotation.z = lerp(b.shoulderL.rotation.z, -0.4 * enemy.deathFallSide, armT);
+      b.shoulderL.rotation.x = 0.16 * armT;
+      b.shoulderL.rotation.z = -0.28 * side * armT;
     }
-    if (b.armR) b.armR.rotation.x = lerp(b.armR.rotation.x, 0.35, armT);
-    if (b.armL) b.armL.rotation.x = lerp(b.armL.rotation.x, 0.25, armT);
-    if (b.foreR) b.foreR.rotation.x = lerp(b.foreR.rotation.x, -0.35, armT);
-    if (b.foreL) b.foreL.rotation.x = lerp(b.foreL.rotation.x, -0.5, armT);
-
-    if (b.neck && hs) {
-      b.neck.rotation.x = lerp(b.neck.rotation.x, -0.55, torsoT);
-    }
+    if (b.armR) b.armR.rotation.x = 0.38 * armT;
+    if (b.armL) b.armL.rotation.x = 0.28 * armT;
+    if (b.foreR) b.foreR.rotation.x = -0.22 * armT;
+    if (b.foreL) b.foreL.rotation.x = -0.3 * armT;
+    if (b.neck && hs) b.neck.rotation.x = -0.42 * torsoT;
   }
 
-  const fallT = smoothstep(Math.min(1, Math.max(0, (raw - 0.2) * 1.65)));
-  const tipAngle = hs ? 1.45 : 1.15;
-  enemy.group.rotation.x = lerp(enemy.group.rotation.x, tipAngle, fallT);
-  enemy.group.rotation.z = lerp(
-    enemy.group.rotation.z,
-    enemy.deathFallSide * (hs ? 0.25 : 0.45),
-    fallT
-  );
+  const fallT = smoothstep(Math.max(0, (raw - 0.32) * 1.55));
+  enemy.group.rotation.y = enemy.deathYaw;
+  enemy.group.rotation.x = fallT * (hs ? 0.98 : 0.82);
+  enemy.group.rotation.z = fallT * side * 0.24;
 
   const kick = (enemy.deathKick || 0) * Math.sin(Math.min(1, raw * 4) * Math.PI) * (1 - t);
-  enemy.group.position.y = Math.max(0, (enemy.deathStartY ?? 0) + kick - fallT * 0.08);
+  enemy.group.position.y = Math.max(0.1, (enemy.deathStartY ?? 0) + kick - t * 0.12);
 
   if (raw >= 1) {
-    enemy.group.position.y = 0;
+    enemy.group.position.y = 0.1;
     enemy.ragdollDone = true;
   }
 }

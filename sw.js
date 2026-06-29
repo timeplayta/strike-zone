@@ -1,4 +1,4 @@
-const CACHE = "strike-zone-v93";
+const CACHE = "strike-zone-v96";
 const ASSETS = [
   "/",
   "/index.html",
@@ -44,6 +44,8 @@ const ASSETS = [
   "/characters.js",
   "/human-model.js",
   "/npc-weapon.js",
+  "/weapon-unlocks.js",
+  "/player-character.js",
   "/ammo-stations.js",
   "/player-account.js",
   "/admin-config.js",

@@ -2,9 +2,9 @@
 
 import * as THREE from "three";
 import { buildStylizedHuman } from "./stylized-character.js";
-import { loadoutToBuildOpts, normalizeLoadout } from "./character-loadout.js";
-import { buildHumanCharacter, configureCharacterRenderer, isHumanModelReady } from "./human-model.js";
-import { buildAmongUsCharacter } from "./among-us-model.js";
+import { normalizeLoadout } from "./character-loadout.js";
+import { buildPlayerCharacter } from "./player-character.js";
+import { configureCharacterRenderer } from "./human-model.js";
 import { applyWeaponSkinsToCharacter } from "./weapon-skin-apply.js";
 import { getAccountWeaponSkins } from "./player-account.js";
 
@@ -50,53 +50,26 @@ function applyPreviewWeaponSkins(charGroup) {
 }
 
 export function buildPreviewCharacter(loadout, team = "ct", portrait = false, characterSkin, accountFab = false) {
-  const skinId = characterSkin || window.__characterSkin || "soldier";
-  if (
-    skinId &&
-    skinId !== "soldier" &&
-    skinId.startsWith("among")
-  ) {
-    const body = buildAmongUsCharacter(skinId, portrait ? 0.95 : 1.1, normalizeLoadout(loadout));
-    return { group: body.group, mixer: null, human: false, among: true };
-  }
-
-  const opts = loadoutToBuildOpts(loadout);
-  opts.team = team;
-  opts.scale = portrait ? 0.92 : 1;
-  opts.withRifle = !accountFab;
-  opts.weaponType = "ak47";
-
-  if (isHumanModelReady()) {
-    try {
-      const body = buildHumanCharacter(opts);
-      applyPreviewWeaponSkins(body.group);
-      return { group: body.group, mixer: body.mixer, human: true };
-    } catch (err) {
-      console.warn("Preview humano:", err);
-    }
-  }
-
-  const body = buildStylizedHuman(opts);
+  const body = buildPlayerCharacter({
+    loadout,
+    characterSkin: characterSkin || window.__characterSkin || "soldier",
+    scale: portrait ? 0.92 : 1,
+    withRifle: !accountFab,
+    weaponType: "ak47",
+    team,
+    portrait,
+  });
   applyPreviewWeaponSkins(body.group);
-  return { group: body.group, mixer: null, human: false };
+  return {
+    group: body.group,
+    mixer: body.mixer || null,
+    human: false,
+    player: true,
+    among: !!body.among,
+  };
 }
 
 export function buildEnemyPreview() {
-  if (isHumanModelReady()) {
-    try {
-      const body = buildHumanCharacter({
-        shirt: 0xd45a2a,
-        pants: 0x3d2817,
-        team: "t",
-        withRifle: true,
-        weaponType: "ak47",
-        scale: 1,
-      });
-      return { group: body.group, mixer: body.mixer, human: true };
-    } catch {
-      /* fallback */
-    }
-  }
   const body = buildStylizedHuman({
     shirt: 0xd45a2a,
     pants: 0x3d2817,
@@ -105,6 +78,7 @@ export function buildEnemyPreview() {
     accessory: "mask",
     faceProfile: { headStyle: "mask", maskPattern: "skull", maskColor: 0x222222 },
     withRifle: true,
+    team: "t",
   });
   return { group: body.group, mixer: null, human: false };
 }

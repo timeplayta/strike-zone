@@ -14,6 +14,39 @@ export function assignEnemyRole(index, total) {
   return ENEMY_ROLES[index % ENEMY_ROLES.length];
 }
 
+export function initTeamBehavior(e, index, total, mapData) {
+  if (mapData?.openWorld) return;
+  e.teamRally = { x: mapData.spawnT.x, z: mapData.spawnT.z };
+  e.teamSpreadUntil = performance.now() + 5500 + Math.floor(index / 2) * 900;
+  e.spreadTarget = pickTeamSpreadTarget(index, total, mapData);
+  e.spreadDone = false;
+}
+
+export function pickTeamSpreadTarget(index, total, mapData) {
+  const sx = mapData.spawnT.x;
+  const sz = mapData.spawnT.z;
+  const pts = (mapData.patrolPoints || [])
+    .map((p) => ({ ...p, d: Math.hypot(p.x - sx, p.z - sz) }))
+    .filter((p) => p.d > 10)
+    .sort((a, b) => a.d - b.d);
+  const pairId = Math.floor(index / 2);
+  const base = pts[(pairId + index) % Math.max(1, pts.length)] || { x: sx + 14, z: sz };
+  const pairSpread = total >= 4 ? (index % 2 === 0 ? 2.4 : -2.4) : 0;
+  const lane = (index - (total - 1) / 2) * 3.2;
+  return {
+    x: base.x + pairSpread + lane * 0.35,
+    z: base.z + lane,
+  };
+}
+
+export function isTeamRallying(e) {
+  return e.teamSpreadUntil && performance.now() < e.teamSpreadUntil;
+}
+
+export function isTeamSpreading(e) {
+  return e.spreadTarget && !e.spreadDone;
+}
+
 export function initEnemyBrain(e, index = 0, total = 1) {
   e.role = assignEnemyRole(index, total);
   e.plan = ROLE_PLANS[e.role] || ROLE_PLANS.flanker;

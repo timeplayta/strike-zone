@@ -32,6 +32,9 @@ import {
   shouldNpcJump,
   getHelperMoveTarget,
   initEnemyBrain,
+  initTeamBehavior,
+  isTeamRallying,
+  isTeamSpreading,
   shouldEnemyShoot,
   registerEnemyShot,
   getEnemyAccuracy,
@@ -73,8 +76,9 @@ import {
   BLOOD_SPRAY_MUL,
 } from "./perf-config.js";
 import { WEAPONS, calcWeaponDamage, getPrimaryWeapon, refillWeaponToMax } from "./weapons-data.js";
+import { ownsWeapon, getAccountForUnlocks, getSecondaryWeaponId, isPremiumWeapon } from "./weapon-unlocks.js";
 import { configureCharacterRenderer } from "./human-model.js";
-import { buildAmongUsCharacter } from "./among-us-model.js";
+import { buildPlayerCharacter } from "./player-character.js";
 import { upgradeWithBlockbenchModel } from "./blockbench-model-loader.js";
 import { initCharacterAnim, updateHumanAnimation, smoothTurn, getAnimOpts } from "./character-animation.js";
 import {
@@ -823,11 +827,11 @@ function applyBattleRoyaleVehicleCamera(pos, d) {
   const f = getBattleRoyaleDropForward(d);
   const right = { x: f.z, z: -f.x };
   camera.position.set(
-    pos.x - f.x * 54 + right.x * 16,
-    pos.y + 28,
-    pos.z - f.z * 54 + right.z * 16
+    pos.x - f.x * 48 + right.x * 14,
+    pos.y + 18,
+    pos.z - f.z * 48 + right.z * 14
   );
-  camera.lookAt(pos.x + f.x * 78, 24, pos.z + f.z * 78);
+  camera.lookAt(pos.x + f.x * 120, 8, pos.z + f.z * 120);
 }
 
 function updateVehiclePassenger(d, pos, f) {
@@ -874,19 +878,25 @@ function readBattleRoyaleMoveInput() {
 
 function makeBattleRoyaleLobby() {
   const g = new THREE.Group();
+  const platform = new THREE.Mesh(
+    new THREE.CylinderGeometry(152, 158, 1.8, 64),
+    new THREE.MeshStandardMaterial({ color: 0x4a9a48, roughness: 0.82, metalness: 0.04 })
+  );
+  platform.position.y = 0.9;
+  g.add(platform);
   const grass = new THREE.Mesh(
     new THREE.CircleGeometry(150, 64),
     new THREE.MeshStandardMaterial({ color: 0x58b957, roughness: 0.86, metalness: 0.02 })
   );
   grass.rotation.x = -Math.PI / 2;
-  grass.position.y = 0.04;
+  grass.position.y = 1.82;
   g.add(grass);
   const ring = new THREE.Mesh(
     new THREE.TorusGeometry(128, 1.2, 8, 64),
     new THREE.MeshStandardMaterial({ color: 0xffd85a, roughness: 0.45, metalness: 0.2 })
   );
   ring.rotation.x = Math.PI / 2;
-  ring.position.y = 0.1;
+  ring.position.y = 1.88;
   g.add(ring);
   const colors = [0xff5533, 0x3377ff, 0xffcc33, 0x55dd88, 0xaa66ff, 0xff66aa];
   for (let i = 0; i < 24; i++) {
@@ -896,7 +906,7 @@ function makeBattleRoyaleLobby() {
       new THREE.BoxGeometry(4 + (i % 3) * 2, 1.2 + (i % 2) * 0.6, 4 + (i % 4)),
       new THREE.MeshStandardMaterial({ color: colors[i % colors.length], roughness: 0.55, metalness: 0.04 })
     );
-    box.position.set(Math.cos(a) * r, 0.65, Math.sin(a) * r);
+    box.position.set(Math.cos(a) * r, 2.45, Math.sin(a) * r);
     box.rotation.y = -a;
     g.add(box);
   }
@@ -912,7 +922,7 @@ function makeBattleRoyaleLobby() {
   for (let i = 0; i < 18; i++) {
     const avatar = makeDropAvatar();
     const a = i * 2.399963;
-    avatar.position.set(Math.cos(a) * (18 + (i % 5) * 9), 0, Math.sin(a) * (18 + (i % 5) * 9));
+    avatar.position.set(Math.cos(a) * (18 + (i % 5) * 9), 1.82, Math.sin(a) * (18 + (i % 5) * 9));
     avatar.rotation.y = -a;
     avatar.scale.setScalar(0.9);
     g.add(avatar);
@@ -928,7 +938,7 @@ function startBattleRoyaleLobby() {
   }
   const lobby = makeBattleRoyaleLobby();
   const lobbyAvatar = makeDropAvatar();
-  lobbyAvatar.position.set(0, 0, 42);
+  lobbyAvatar.position.set(0, 1.82, 42);
   lobbyAvatar.rotation.y = Math.PI;
   scene.add(lobby);
   scene.add(lobbyAvatar);
@@ -938,7 +948,7 @@ function startBattleRoyaleLobby() {
     lobbyAvatar,
     lobbyLeft: BR_LOBBY_SECONDS,
     phaseStarted: performance.now(),
-    pos: new THREE.Vector3(0, 0, 42),
+    pos: new THREE.Vector3(0, 1.82, 42),
     vel: new THREE.Vector3(),
   };
   yaw = Math.PI;
@@ -958,34 +968,15 @@ function finishBattleRoyaleLobby() {
 }
 
 function makeDropAvatar() {
-  const equippedSkin = getCharacterSkin?.() || window.__characterSkin || "soldier";
-  if (equippedSkin.startsWith("among")) {
-    const among = buildAmongUsCharacter(equippedSkin, 1.18, window.__playerLoadout || null);
-    among.group.userData.playerAvatar = true;
-    return among.group;
-  }
-  const g = new THREE.Group();
-  const suit = new THREE.MeshStandardMaterial({ color: 0x1d2a3b, roughness: 0.8, metalness: 0.05 });
-  const skin = new THREE.MeshStandardMaterial({ color: 0xc4956a, roughness: 0.78, metalness: 0.02 });
-  const pack = new THREE.MeshStandardMaterial({ color: 0x334455, roughness: 0.65, metalness: 0.15 });
-  const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.24, 0.58, 8, 12), suit);
-  torso.position.y = 1.12;
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.16, 14, 10), skin);
-  head.position.y = 1.62;
-  const backpack = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.5, 0.18), pack);
-  backpack.position.set(0, 1.1, 0.2);
-  g.add(torso, head, backpack);
-  for (const sx of [-1, 1]) {
-    const arm = new THREE.Mesh(new THREE.CapsuleGeometry(0.07, 0.5, 6, 8), suit);
-    arm.position.set(sx * 0.28, 1.08, -0.02);
-    arm.rotation.z = sx * 0.55;
-    g.add(arm);
-    const leg = new THREE.Mesh(new THREE.CapsuleGeometry(0.08, 0.58, 6, 8), suit);
-    leg.position.set(sx * 0.12, 0.48, 0);
-    leg.rotation.z = sx * 0.08;
-    g.add(leg);
-  }
-  return upgradeWithBlockbenchModel(g, getPlayerCharacterModelKey(), { targetWidth: 1.05, targetHeight: 1.82 });
+  const char = buildPlayerCharacter({
+    loadout: window.__playerLoadout || null,
+    characterSkin: getCharacterSkin?.() || window.__characterSkin || "soldier",
+    scale: 1.08,
+    withRifle: false,
+    weaponType: "ak47",
+    team: "ct",
+  });
+  return char.group;
 }
 
 function makeParachute() {
@@ -1110,10 +1101,10 @@ function updateBattleRoyaleDrop(dt) {
       }
     }
     if (d.lobbyAvatar) {
-      d.lobbyAvatar.position.copy(d.pos);
+      d.lobbyAvatar.position.set(d.pos.x, 1.82, d.pos.z);
       d.lobbyAvatar.rotation.y = yaw;
     }
-    applyBattleRoyaleThirdPersonCamera(d.pos, { dist: 8, lookY: 1.2 });
+    applyBattleRoyaleThirdPersonCamera(d.pos, { dist: 8, lookY: 1.2, baseY: 1.82 });
     if (d.lobby) {
       d.lobby.children.forEach((c, i) => {
         if (i > 25 && c.isGroup) c.position.y = Math.sin(performance.now() * 0.002 + i) * 0.05;
@@ -1162,6 +1153,8 @@ function updateBattleRoyaleDrop(dt) {
 }
 
 function finishRoundWeaponPick(id) {
+  const acc = getAccountForUnlocks();
+  if (isPremiumWeapon(id) && !ownsWeapon(acc, id)) id = "ak47";
   primaryWeaponId = id;
   initWeapons();
   weaponPickPending = false;
@@ -1422,7 +1415,12 @@ function applyMapAtmosphere() {
     fillLight.color.setHex(0x90c7ff);
     fillLight.intensity = 0.58;
     scene.background = new THREE.Color(mapData.sky);
-    scene.fog = new THREE.Fog(mapData.fog, 260, 1450);
+    scene.fog = new THREE.Fog(mapData.fog, 80, 2200);
+    if (camera) {
+      camera.far = 2400;
+      camera.near = 0.35;
+      camera.updateProjectionMatrix();
+    }
   } else if (horror) {
     hemiLight.color.setHex(0x554466);
     hemiLight.groundColor.setHex(0x0c0a0a);
@@ -1719,6 +1717,40 @@ function buildLabyrinthHorrorAmbience(scene, mapData) {
   }
 }
 
+function buildFrontierTerrain(scene, mapData, floorMat) {
+  const size = mapData.floorW || 2000;
+  const geo = new THREE.PlaneGeometry(size, size, 64, 64);
+  const pos = geo.attributes.position;
+  for (let i = 0; i < pos.count; i++) {
+    const x = pos.getX(i);
+    const z = pos.getZ(i);
+    const dist = Math.hypot(x, z) / (size * 0.5);
+    const edgeDrop = Math.max(0, dist - 0.78) ** 2 * 22;
+    const hill = Math.sin(x * 0.0038) * Math.cos(z * 0.0032) * 2.4;
+    pos.setY(i, hill - edgeDrop);
+  }
+  geo.computeVertexNormals();
+  const mat = floorMat?.clone?.() || new THREE.MeshStandardMaterial({
+    color: mapData.floorColor || 0x6aa04d,
+    roughness: 0.9,
+    metalness: 0.02,
+  });
+  const terrain = new THREE.Mesh(geo, mat);
+  terrain.rotation.x = -Math.PI / 2;
+  terrain.receiveShadow = true;
+  terrain.userData.frontierTerrain = true;
+  scene.add(terrain);
+
+  const shore = new THREE.Mesh(
+    new THREE.RingGeometry(size * 0.46, size * 0.5, 96),
+    new THREE.MeshStandardMaterial({ color: 0xc4a56a, roughness: 0.95, metalness: 0.01 })
+  );
+  shore.rotation.x = -Math.PI / 2;
+  shore.position.y = 0.03;
+  scene.add(shore);
+  return terrain;
+}
+
 function buildOpenWorldScenery(scene, mapData) {
   openWorldSkyObjects = [];
   buildMapProps(scene, mapData.props || [], mapData.propTint || {});
@@ -1819,7 +1851,11 @@ function buildMap() {
   );
   floor.rotation.x = -Math.PI / 2;
   floor.receiveShadow = true;
-  scene.add(floor);
+  if (mapData.openWorld) {
+    buildFrontierTerrain(scene, mapData, floorMat);
+  } else {
+    scene.add(floor);
+  }
 
   const wallMeshesForCeil = [];
 
@@ -1905,7 +1941,7 @@ function buildMap() {
     ammoStation = null;
   }
   for (const p of mapData.props || []) {
-    if (isLabyrinthMap(mapData)) continue;
+    if (isLabyrinthMap(mapData) || p.noCollide) continue;
     const col = getPropCollider(p);
     if (!col.w || !col.h) continue;
     walls.push({
@@ -2101,7 +2137,8 @@ function initWeapons() {
     return;
   }
   const primary = getPrimaryWeapon(primaryWeaponId);
-  const secondary = WEAPONS.revolver || WEAPONS.glock;
+  const secondaryId = getSecondaryWeaponId(getAccountForUnlocks());
+  const secondary = WEAPONS[secondaryId] || WEAPONS.glock;
   weapons = {
     1: { ...primary, mag: primary.mag, reserve: primary.reserve, lastShot: 0 },
     2: { ...secondary, mag: secondary.mag, reserve: secondary.reserve, lastShot: 0 },
@@ -2174,32 +2211,17 @@ function pickEnemySpawnPositions(n, playerX, playerZ) {
     return positions;
   }
 
-  const spawnX = mapData.spawnCT.x;
-  const spawnZ = mapData.spawnCT.z;
-  const toTX = mapData.spawnT.x - spawnX;
-  const toTZ = mapData.spawnT.z - spawnZ;
-
-  const ranked = mapData.patrolPoints
-    .map((p) => {
-      const distPlayer = Math.hypot(p.x - playerX, p.z - playerZ);
-      const onEnemySide = (p.x - spawnX) * toTX + (p.z - spawnZ) * toTZ;
-      return { x: p.x, z: p.z, distPlayer, onEnemySide };
-    })
-    .sort((a, b) => {
-      if (Math.abs(a.distPlayer - b.distPlayer) > 2) return b.distPlayer - a.distPlayer;
-      return b.onEnemySide - a.onEnemySide;
-    });
-
-  const far = ranked.filter((p) => p.distPlayer >= MIN_SPAWN_DIST_FROM_PLAYER);
-  const pool = far.length >= n ? far : ranked;
-
+  const spawnX = mapData.spawnT.x;
+  const spawnZ = mapData.spawnT.z;
+  const clusterR = 3.8 * (mapData.scale || 1);
   const positions = [];
-  const step = Math.max(1, Math.floor(pool.length / n));
   for (let i = 0; i < n; i++) {
-    const base = pool[Math.min(i * step, pool.length - 1)];
+    const ring = Math.floor(i / 8);
+    const angle = (i / Math.max(n, 1)) * Math.PI * 2 + ring * 0.55;
+    const r = clusterR + ring * 2.4;
     positions.push({
-      x: base.x + (Math.random() - 0.5) * 4,
-      z: base.z + (Math.random() - 0.5) * 4,
+      x: spawnX + Math.cos(angle) * r + (Math.random() - 0.5) * 1.4,
+      z: spawnZ + Math.sin(angle) * r + (Math.random() - 0.5) * 1.4,
     });
   }
   return positions;
@@ -2281,6 +2303,7 @@ function spawnEnemies() {
     initEnemyAmmo(enemy);
     enemy.indexInSquad = 0;
     initEnemyBrain(enemy, 0, 1);
+    initTeamBehavior(enemy, 0, 1, mapData);
     createEnemyHealthBar(enemy);
     bindCharacterAnim(enemy, char);
     enemies.push(enemy);
@@ -2333,6 +2356,7 @@ function spawnEnemies() {
     initJumpState(enemy);
     initEnemyAmmo(enemy);
     initEnemyBrain(enemy, i, n);
+    initTeamBehavior(enemy, i, n, mapData);
     createEnemyHealthBar(enemy);
     bindCharacterAnim(enemy, char);
     enemies.push(enemy);
@@ -3413,6 +3437,38 @@ function updateEnemies(dt) {
         jumping: !!e.jumping,
       }));
       continue;
+    }
+
+    if (isTeamRallying(e)) {
+      const rx = e.teamRally.x + Math.sin((e.indexInSquad || 0) * 2.1) * 2.8;
+      const rz = e.teamRally.z + Math.cos((e.indexInSquad || 0) * 1.7) * 2.8;
+      lookAtHorizontal(e.group, px, pz, dt, e);
+      moveEntitySmooth(e, rx, rz, (e.speed || 2.5) * 0.55, dt, "npc");
+      tickEntityJump(e, dt);
+      updateHumanAnimation(e, dt, getAnimOpts(e, {
+        moving: true, speed: e.speed * 0.55, aiming: seesPlayer, shooting: false, crouching: false, jumping: !!e.jumping,
+      }));
+      if (seesPlayer && shouldEnemyShoot(e, performance.now(), e.fireMs ?? ENEMY_FIRE_MS)) {
+        e.lastShot = performance.now();
+        if (Math.random() < getEnemyAccuracy(e, dist, false)) enemyShootPlayer(e);
+      }
+      continue;
+    }
+
+    if (isTeamSpreading(e)) {
+      const tx = e.spreadTarget.x;
+      const tz = e.spreadTarget.z;
+      const sd = Math.hypot(tx - e.group.position.x, tz - e.group.position.z);
+      lookAtHorizontal(e.group, px, pz, dt, e);
+      if (sd > 2.2) {
+        moveEntitySmooth(e, tx, tz, (e.speed || 2.5) * 0.78, dt, "npc");
+        tickEntityJump(e, dt);
+        updateHumanAnimation(e, dt, getAnimOpts(e, {
+          moving: true, speed: e.speed * 0.78, aiming: seesPlayer, shooting: false, crouching: false, jumping: !!e.jumping,
+        }));
+        continue;
+      }
+      e.spreadDone = true;
     }
 
     if (e.reloading) {

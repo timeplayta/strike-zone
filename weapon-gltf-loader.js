@@ -1,4 +1,4 @@
-/** Armas GLTF (Poly Pizza / assets locais) com fallback procedural */
+/** Armas GLTF (Blockbench / assets locais) com fallback procedural */
 
 import * as THREE from "three";
 import { GLTFLoader } from "./vendor/GLTFLoader.js";
@@ -16,6 +16,9 @@ const WEAPON_SOURCES = {
   revolver: ['./assets/models/blockbench/weapons/revolver.glb'],
 };
 
+/** Armas que preferem o GLB Blockbench quando carregado */
+const GLTF_PREFERRED = new Set(["revolver"]);
+
 const templates = new Map();
 let loadPromise = null;
 
@@ -27,6 +30,36 @@ function tagMeshMaterials(root) {
       if (!m.userData.weaponPart) {
         const metalness = m.metalness ?? 0;
         m.userData.weaponPart = metalness > 0.5 ? "metal" : "body";
+      }
+    }
+  });
+}
+
+function applyWeaponTint(root, tint) {
+  const bodyColor = new THREE.Color(tint);
+  const gripColor = bodyColor.clone().multiplyScalar(0.55);
+  root.traverse((o) => {
+    if (!o.isMesh || !o.material) return;
+    const mats = Array.isArray(o.material) ? o.material : [o.material];
+    for (const m of mats) {
+      const part = m.userData?.weaponPart;
+      if (part === "body") m.color.copy(bodyColor);
+      else if (part === "grip") m.color.copy(gripColor);
+      else if (!part || part === "dark") {
+        if (!m.color || m.color.getHex() === 0xffffff) m.color.setHex(0x1a1a22);
+      }
+    }
+  });
+}
+
+function fixUntaggedMeshes(root) {
+  root.traverse((o) => {
+    if (!o.isMesh || !o.material) return;
+    const mats = Array.isArray(o.material) ? o.material : [o.material];
+    for (const m of mats) {
+      if (!m.userData.weaponPart) {
+        m.userData.weaponPart = "metal";
+        if (!m.color || m.color.getHex() === 0xffffff) m.color.setHex(0x7a7a88);
       }
     }
   });
@@ -67,6 +100,7 @@ export function buildGltfWeapon(type, tint = 0x5c3a1e) {
 
   const g = template.clone(true);
   tagMeshMaterials(g);
+  fixUntaggedMeshes(g);
 
   const box = new THREE.Box3().setFromObject(g);
   const size = new THREE.Vector3();
@@ -79,14 +113,21 @@ export function buildGltfWeapon(type, tint = 0x5c3a1e) {
   const target = type === "glock" || type === "revolver" ? 0.38 : 0.52;
   g.scale.setScalar(target / maxDim);
 
+  applyWeaponTint(g, tint);
   g.userData.weaponType = type;
   g.userData.isGltf = true;
   return g;
 }
 
 export function buildWeaponModel(type, tint = 0x5c3a1e) {
-  // Os GLBs gerados em cubos ficam bons como fonte Blockbench, mas no gameplay
-  // estavam parecendo peças soltas/gigantes. Para legibilidade, usamos o HD
-  // procedural como modelo principal até os GLBs serem revisados manualmente.
-  return buildHdWeapon(type, tint);
+  let g;
+  if (GLTF_PREFERRED.has(type) && templates.has(type)) {
+    g = buildGltfWeapon(type, tint);
+  } else {
+    g = buildHdWeapon(type, tint);
+    applyWeaponTint(g, tint);
+    fixUntaggedMeshes(g);
+  }
+  g.userData.weaponType = type;
+  return g;
 }

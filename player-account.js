@@ -2,6 +2,7 @@
 
 import {
   ALL_SHOP_ITEMS,
+  WEAPON_UNLOCKS,
   WEAPON_SKINS,
   CHARACTER_SKINS,
   SHOP_OUTFITS,
@@ -9,6 +10,7 @@ import {
   getShopItem,
 } from "./shop-catalog.js";
 import { getShopItemThumbDataUrl } from "./shop-item-preview.js";
+import { ownsWeapon } from "./weapon-unlocks.js";
 
 export const SHOP_ITEMS = ALL_SHOP_ITEMS;
 
@@ -62,6 +64,7 @@ export function saveSession(name, token, account) {
   cachedAccount = account || emptyAccount();
   cachedAccountId = account?.id || "";
   cachedIsAdmin = !!cachedAccount.isAdmin;
+  if (typeof window !== "undefined") window.__cachedAccount = cachedAccount;
   try {
     localStorage.setItem(
       SESSION_KEY,
@@ -81,6 +84,7 @@ export function clearSession() {
   cachedAccountId = "";
   cachedAccount = null;
   cachedIsAdmin = false;
+  if (typeof window !== "undefined") window.__cachedAccount = null;
   try {
     localStorage.removeItem(SESSION_KEY);
   } catch { /* ignore */ }
@@ -361,17 +365,22 @@ export function getAccountWeaponSkins() {
 }
 
 function getShopItemState(item, acc) {
-  const owned = (acc.purchases || []).includes(item.id);
+  const isUnlock = item.type === "weapon_unlock";
+  const owned = isUnlock
+    ? ownsWeapon(acc, item.weapon)
+    : (acc.purchases || []).includes(item.id);
   const isWeapon = item.type === "weapon";
   const isOutfit = item.type === "outfit";
   const isLoadout = item.type === "loadout";
-  const active = isWeapon
-    ? acc.skins?.[item.weapon] === item.color
-    : isOutfit
-      ? (acc.outfitId === item.id || acc.loadout?.outfitId === item.id)
-      : isLoadout
-        ? acc.loadout?.[item.slot]?.presetId === item.presetId
-        : acc.characterSkin === item.skinId;
+  const active = isUnlock
+    ? false
+    : isWeapon
+      ? acc.skins?.[item.weapon] === item.color
+      : isOutfit
+        ? (acc.outfitId === item.id || acc.loadout?.outfitId === item.id)
+        : isLoadout
+          ? acc.loadout?.[item.slot]?.presetId === item.presetId
+          : acc.characterSkin === item.skinId;
   return { owned, active };
 }
 
@@ -383,9 +392,13 @@ function updateShopSelectedPreview(item, owned = false, active = false) {
   const url = getShopItemThumbDataUrl(item);
   if (url) img.src = url;
   title.textContent = item.label;
-  const action = owned ? (active ? "Já está equipado." : "Clique para equipar.") : `Clique para comprar por ${item.price} moedas.`;
+  const isUnlock = item.type === "weapon_unlock";
+  const action = owned
+    ? (isUnlock ? "Arma desbloqueada — use no jogo." : active ? "Já está equipado." : "Clique para equipar.")
+    : `Clique para comprar por ${item.price} moedas.`;
   const type =
-    item.type === "weapon" ? "Arma"
+    item.type === "weapon_unlock" ? "Desbloqueio de arma"
+    : item.type === "weapon" ? "Arma"
     : item.type === "outfit" ? "Conjunto"
     : item.type === "loadout" ? item.category || "Peça"
     : "Personagem";
@@ -397,6 +410,7 @@ function renderShopGrid(grid, items, acc, onBuy) {
   grid.innerHTML = "";
   for (const item of items) {
     const { owned, active } = getShopItemState(item, acc);
+    const isUnlock = item.type === "weapon_unlock";
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className =
@@ -411,7 +425,7 @@ function renderShopGrid(grid, items, acc, onBuy) {
       `<span class="shop-item-row"><span class="shop-swatch" style="background:#${colorHex}"></span>` +
       `<span class="shop-item-name">${item.label}</span></span>` +
       `<span class="shop-item-tier">${item.category || item.tier || ""}</span>` +
-      `<span class="shop-item-price">${owned ? (active ? "Em uso" : "Equipar") : item.price + " 🪙"}</span>`;
+      `<span class="shop-item-price">${owned ? (isUnlock ? "Desbloqueada" : active ? "Em uso" : "Equipar") : item.price + " 🪙"}</span>`;
     const thumb = btn.querySelector(".shop-preview-img");
     if (thumb) {
       const url = getShopItemThumbDataUrl(item);
@@ -448,6 +462,7 @@ export async function refreshShopUI(username) {
   const charGrid = document.getElementById("shopGridChars");
 
   const handleBuy = async (item, owned, active) => {
+    if (item.type === "weapon_unlock" && owned) return;
     if (!owned) {
       const res = await buyShopItem(username, item.id);
       if (res.ok) await refreshShopUI(username);
@@ -471,7 +486,7 @@ export async function refreshShopUI(username) {
     ...LOADOUT_ITEMS.filter((i) => i.price > 0),
   ];
 
-  renderShopGrid(weaponGrid, WEAPON_SKINS, acc, handleBuy);
+  renderShopGrid(weaponGrid, [...WEAPON_UNLOCKS, ...WEAPON_SKINS], acc, handleBuy);
   renderShopGrid(
     charGrid,
     charItems,

@@ -241,39 +241,39 @@ export function createWeaponView(camera) {
 
 
 
-  const akGroup = makeFpsWeapon("ak47", 2.35, 0x5c3a1e);
+  const akGroup = makeFpsWeapon("ak47", 0.94, 0x5c3a1e);
 
-  const scarGroup = makeFpsWeapon("scar", 2.2, 0x3a4a55);
+  const scarGroup = makeFpsWeapon("scar", 0.9, 0x3a4a55);
 
   scarGroup.visible = false;
 
-  const m4Group = makeFpsWeapon("m4", 2.15, 0x3d4a38);
+  const m4Group = makeFpsWeapon("m4", 0.88, 0x3d4a38);
 
   m4Group.visible = false;
 
-  const umpGroup = makeFpsWeapon("ump45", 2.05, 0x2a2a32);
+  const umpGroup = makeFpsWeapon("ump45", 0.84, 0x2a2a32);
 
   umpGroup.visible = false;
 
-  const awmGroup = makeFpsWeapon("awm", 2.5, 0x4a3a28);
+  const awmGroup = makeFpsWeapon("awm", 1.0, 0x4a3a28);
 
   awmGroup.visible = false;
 
-  const shotgunGroup = makeFpsWeapon("doze", 2.3, 0x6b4423);
+  const shotgunGroup = makeFpsWeapon("doze", 0.92, 0x6b4423);
 
   shotgunGroup.visible = false;
 
-  const bazookaGroup = makeFpsWeapon("bazooka", 2.65, 0x45305f);
+  const bazookaGroup = makeFpsWeapon("bazooka", 1.05, 0x45305f);
 
   bazookaGroup.visible = false;
 
 
 
-  const glockGroup = makeFpsWeapon("glock", 1.85, 0x2a2a30);
+  const glockGroup = makeFpsWeapon("glock", 0.76, 0x2a2a30);
 
   glockGroup.visible = false;
 
-  const revolverGroup = makeFpsWeapon("revolver", 1.95, 0x6b3f1f);
+  const revolverGroup = makeFpsWeapon("revolver", 0.8, 0x6b3f1f);
 
   revolverGroup.visible = false;
 
@@ -395,7 +395,7 @@ export function createWeaponView(camera) {
 
     adsBlend: 0,
 
-    basePos: { x: 0.22, y: -0.18, z: -0.42 },
+    basePos: { x: 0.2, y: -0.15, z: -0.34 },
 
   };
 
@@ -405,21 +405,23 @@ export function createWeaponView(camera) {
 
 const MUZZLE_Z = {
 
-  ak47: -0.55,
+  ak47: -0.22,
 
-  scar: -0.52,
+  scar: -0.21,
 
-  m4: -0.5,
+  m4: -0.2,
 
-  ump45: -0.42,
+  ump45: -0.17,
 
-  awm: -0.68,
+  awm: -0.27,
 
-  doze: -0.58,
+  doze: -0.23,
 
-  bazooka: -0.72,
+  bazooka: -0.29,
 
-  revolver: -0.36,
+  revolver: -0.15,
+
+  glock: -0.12,
 
 };
 

@@ -362,6 +362,7 @@ export function buildStylizedHuman(opts = {}) {
       shoulderR: armR.shoulder,
       elbowL: armL.elbow,
       elbowR: armR.elbow,
+      handL: armL.hand,
       neckPivot,
       gun,
       gunPivot,

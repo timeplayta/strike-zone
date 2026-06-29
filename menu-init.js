@@ -234,7 +234,7 @@
     const st = $("loadStatus");
     if (st) st.textContent = "Carregando... aguarde";
     try {
-      await import("./game.js?v=93");
+      await import("./game.js?v=95");
       if (typeof window.startStrikeZone === "function") {
         window.__strikeZoneReady = true;
         $("loadError")?.classList.add("hidden");

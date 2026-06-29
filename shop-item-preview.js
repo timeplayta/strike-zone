@@ -82,9 +82,9 @@ export function getShopItemThumbDataUrl(item) {
   addLights();
   clearPivot();
 
-  if (item.type === "weapon") {
-    const gun = buildNpcWeapon(item.weapon, item.color);
-    applyWeaponSkin(gun, item.weapon, item.color, item.id);
+  if (item.type === "weapon" || item.type === "weapon_unlock") {
+    const gun = buildNpcWeapon(item.weapon, item.color || 0x6b4423);
+    if (item.type === "weapon") applyWeaponSkin(gun, item.weapon, item.color, item.id);
     gun.rotation.set(-0.08, Math.PI / 2, 0);
     gun.scale.setScalar(item.weapon === "bazooka" ? 1.9 : item.weapon === "glock" ? 3.5 : 2.45);
     pivot.add(gun);

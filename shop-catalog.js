@@ -2,6 +2,11 @@
 
 import { OUTFIT_SETS, SLOT_META, SLOT_PRESETS, DEFAULT_LOADOUT_PRESET_IDS } from "./character-loadout.js";
 
+export const WEAPON_UNLOCKS = [
+  { id: "unlock_bazooka", type: "weapon_unlock", weapon: "bazooka", color: 0x45305f, price: 1200, label: "Bazuca", tier: "épica" },
+  { id: "unlock_revolver", type: "weapon_unlock", weapon: "revolver", color: 0x6b3f1f, price: 1200, label: "Revólver Frontier", tier: "épica" },
+];
+
 export const WEAPON_SKINS = [
   { id: "ak_blue", type: "weapon", weapon: "ak47", color: 0x2266cc, price: 80, label: "AK-47 Azul", tier: "comum" },
   { id: "ak_red", type: "weapon", weapon: "ak47", color: 0xcc3322, price: 95, label: "AK-47 Vermelha", tier: "comum" },
@@ -122,6 +127,7 @@ export const LOADOUT_ITEMS = Object.entries(SLOT_PRESETS).flatMap(([slot, preset
 );
 
 export const ALL_SHOP_ITEMS = [
+  ...WEAPON_UNLOCKS,
   ...WEAPON_SKINS,
   ...CHARACTER_SKINS.filter((i) => i.price > 0),
   ...SHOP_OUTFITS,
@@ -131,7 +137,8 @@ export const ALL_SHOP_ITEMS = [
 export const WEAPON_IDS = ["ak47", "scar", "m4", "ump45", "awm", "doze", "bazooka", "glock", "revolver"];
 
 export function getShopItem(id) {
-  return WEAPON_SKINS.find((i) => i.id === id) ||
+  return WEAPON_UNLOCKS.find((i) => i.id === id) ||
+    WEAPON_SKINS.find((i) => i.id === id) ||
     CHARACTER_SKINS.find((i) => i.id === id) ||
     SHOP_OUTFITS.find((i) => i.id === id) ||
     LOADOUT_ITEMS.find((i) => i.id === id);
