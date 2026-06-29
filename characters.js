@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { buildHumanCharacter } from "./human-model.js";
+import { buildPlayerCharacter } from "./player-character.js";
 import { pickNpcWeaponType } from "./npc-weapon.js";
 
 const OUTFITS = {
@@ -60,17 +60,12 @@ export function createBandit(index, mapKey = "dust", opts = {}) {
 
   const weaponType = opts.weaponType || pickNpcWeaponType(index, opts.squadSize ?? 4);
 
-  const body = buildHumanCharacter({
-    shirt: outfit.shirt,
-    pants: outfit.pants,
-    skin: faceProfile.skinTone,
-    faceProfile,
+  const body = buildPlayerCharacter({
+    characterSkin: "soldier",
+    scale: opts.solo ? 1.08 : 1,
     withRifle: true,
     weaponType,
-    scale: opts.solo ? 1.08 : 1,
     team: "t",
-    variant: index,
-    horror: mapKey === "horror",
   });
 
   const names = mapKey === "horror"
@@ -88,10 +83,9 @@ export function createBandit(index, mapKey = "dust", opts = {}) {
 
 export function createHostage(variant = 0) {
   const colors = [0x4466aa, 0xaa6644, 0x44aa66];
-  return buildHumanCharacter({
-    shirt: colors[variant % 3],
-    pants: 0x333355,
-    faceProfile: { headStyle: "face", hairColor: 0x332211, eyeColor: 0x4488aa },
+  return buildPlayerCharacter({
+    characterSkin: "soldier",
+    scale: 1,
     withRifle: false,
     team: "t",
   }).group;
@@ -100,17 +94,12 @@ export function createHostage(variant = 0) {
 export function createHelper(index, mapKey = "dust") {
   const horror = mapKey === "horror";
   const faceProfile = HELPER_FACES[index] || HELPER_FACES[0];
-  const body = buildHumanCharacter({
-    shirt: horror ? 0x0a1018 : index === 0 ? 0x1e3a5c : 0x152d48,
-    pants: horror ? 0x060808 : 0x0c1218,
-    skin: horror ? 0x6a5a4a : 0xc4956a,
-    faceProfile: { ...faceProfile, kneePads: true },
+  const body = buildPlayerCharacter({
+    characterSkin: "soldier",
+    scale: 1.04,
     withRifle: true,
     weaponType: index === 0 ? "m4" : "scar",
     team: "ct",
-    variant: index + 3,
-    scale: 1.04,
-    horror,
   });
   return {
     ...body,
@@ -121,20 +110,11 @@ export function createHelper(index, mapKey = "dust") {
 }
 
 export function createBoss() {
-  const body = buildHumanCharacter({
-    shirt: 0x1a1a1a,
-    pants: 0x111111,
-    skin: 0xb07850,
+  const body = buildPlayerCharacter({
+    characterSkin: "soldier",
     scale: 1.12,
-    faceProfile: {
-      headStyle: "mask",
-      maskPattern: "skull",
-      maskColor: 0x111111,
-      maskAccent: 0xff2200,
-    },
     withRifle: false,
     team: "t",
-    variant: 9,
   });
 
   const minigun = new THREE.Group();

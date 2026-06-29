@@ -8,10 +8,10 @@ async function loadGame() {
 
   try {
 
-    if (loadStatus) loadStatus.textContent = "Carregando personagens 3D...";
+    if (loadStatus) loadStatus.textContent = "Carregando personagens Blockbench...";
 
-    const { preloadHumanModels, isHumanModelReady } = await import("./human-model.js");
-    await preloadHumanModels();
+    const { preloadPlayerCharacterModels, isPlayerBlockbenchReady } = await import("./player-character.js");
+    await preloadPlayerCharacterModels();
 
     const { preloadWeaponModels } = await import("./npc-weapon.js");
     await preloadWeaponModels();
@@ -19,9 +19,6 @@ async function loadGame() {
     if (!isWeaponGltfReady("revolver")) {
       console.warn("Strike Zone: revólver Blockbench não carregou — verifique revolver.glb");
     }
-
-    const { preloadPlayerCharacterModels } = await import("./player-character.js");
-    await preloadPlayerCharacterModels();
 
     const { preloadGrimyHand } = await import("./grimy-hand-loader.js");
     await preloadGrimyHand();
@@ -31,10 +28,8 @@ async function loadGame() {
     const { preloadMapSurfaceTextures } = await import("./environment-textures.js");
     await preloadMapSurfaceTextures();
 
-    if (!isHumanModelReady()) {
-
-      throw new Error("Modelo humano 3D não carregou. Use Ctrl+Shift+R ou JOGAR.bat.");
-
+    if (!isPlayerBlockbenchReady()) {
+      throw new Error("Modelo Blockbench do jogador não carregou. Use Ctrl+Shift+R ou JOGAR.bat.");
     }
 
     await import("./game.js?v=95");

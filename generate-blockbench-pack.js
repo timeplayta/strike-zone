@@ -236,31 +236,12 @@ function padJson(buf) {
 
 function writeGlb(filePath, model) {
   const matNames = [...new Set(model.parts.map((p) => p.mat || "dark"))];
+  const matIndex = new Map(matNames.map((m, i) => [m, i]));
   const bufferViews = [], accessors = [], meshes = [], materials = [], nodes = [], chunks = [];
   let byteOffset = 0;
 
   for (const matName of matNames) {
-    const geom = merge(model.parts.filter((p) => (p.mat || "dark") === matName));
-    const pos = Buffer.from(geom.positions.buffer);
-    const nor = Buffer.from(geom.normals.buffer);
-    const idx = Buffer.from(geom.indices.buffer);
-    const posView = bufferViews.length; bufferViews.push({ buffer: 0, byteOffset, byteLength: pos.length, target: 34962 }); byteOffset += pos.length; chunks.push(pos);
-    const norView = bufferViews.length; bufferViews.push({ buffer: 0, byteOffset, byteLength: nor.length, target: 34962 }); byteOffset += nor.length; chunks.push(nor);
-    const idxView = bufferViews.length; bufferViews.push({ buffer: 0, byteOffset, byteLength: idx.length, target: 34963 }); byteOffset += idx.length; chunks.push(idx);
-
-    let minX = Infinity, minY = Infinity, minZ = Infinity, maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
-    for (let i = 0; i < geom.positions.length; i += 3) {
-      minX = Math.min(minX, geom.positions[i]); maxX = Math.max(maxX, geom.positions[i]);
-      minY = Math.min(minY, geom.positions[i + 1]); maxY = Math.max(maxY, geom.positions[i + 1]);
-      minZ = Math.min(minZ, geom.positions[i + 2]); maxZ = Math.max(maxZ, geom.positions[i + 2]);
-    }
-
-    const posAcc = accessors.length; accessors.push({ bufferView: posView, componentType: 5126, count: geom.positions.length / 3, type: "VEC3", min: [minX, minY, minZ], max: [maxX, maxY, maxZ] });
-    const norAcc = accessors.length; accessors.push({ bufferView: norView, componentType: 5126, count: geom.normals.length / 3, type: "VEC3" });
-    const idxAcc = accessors.length; accessors.push({ bufferView: idxView, componentType: 5125, count: geom.indices.length, type: "SCALAR" });
-
     const [r, g, b] = hexParts(COLORS[matName] || COLORS.dark).map((v) => v / 255);
-    const matIdx = materials.length;
     materials.push({
       name: matName,
       pbrMetallicRoughness: {
@@ -269,15 +250,71 @@ function writeGlb(filePath, model) {
         roughnessFactor: matName === "metal" ? 0.32 : 0.78,
       },
     });
-    meshes.push({ name: `${model.id}_${matName}`, primitives: [{ attributes: { POSITION: posAcc, NORMAL: norAcc }, indices: idxAcc, material: matIdx }] });
-    nodes.push({ mesh: meshes.length - 1, name: `${model.id}_${matName}` });
   }
+
+  const partNodeIndices = [];
+  for (const p of model.parts) {
+    const geom = geomPart(p);
+    const pos = Buffer.from(new Float32Array(geom.positions).buffer);
+    const nor = Buffer.from(new Float32Array(geom.normals).buffer);
+    const idx = Buffer.from(new Uint32Array(geom.indices).buffer);
+
+    const posView = bufferViews.length;
+    bufferViews.push({ buffer: 0, byteOffset, byteLength: pos.length, target: 34962 });
+    byteOffset += pos.length;
+    chunks.push(pos);
+
+    const norView = bufferViews.length;
+    bufferViews.push({ buffer: 0, byteOffset, byteLength: nor.length, target: 34962 });
+    byteOffset += nor.length;
+    chunks.push(nor);
+
+    const idxView = bufferViews.length;
+    bufferViews.push({ buffer: 0, byteOffset, byteLength: idx.length, target: 34963 });
+    byteOffset += idx.length;
+    chunks.push(idx);
+
+    let minX = Infinity, minY = Infinity, minZ = Infinity, maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
+    for (let i = 0; i < geom.positions.length; i += 3) {
+      minX = Math.min(minX, geom.positions[i]); maxX = Math.max(maxX, geom.positions[i]);
+      minY = Math.min(minY, geom.positions[i + 1]); maxY = Math.max(maxY, geom.positions[i + 1]);
+      minZ = Math.min(minZ, geom.positions[i + 2]); maxZ = Math.max(maxZ, geom.positions[i + 2]);
+    }
+
+    const posAcc = accessors.length;
+    accessors.push({ bufferView: posView, componentType: 5126, count: geom.positions.length / 3, type: "VEC3", min: [minX, minY, minZ], max: [maxX, maxY, maxZ] });
+    const norAcc = accessors.length;
+    accessors.push({ bufferView: norView, componentType: 5126, count: geom.normals.length / 3, type: "VEC3" });
+    const idxAcc = accessors.length;
+    accessors.push({ bufferView: idxView, componentType: 5125, count: geom.indices.length, type: "SCALAR" });
+
+    const meshIdx = meshes.length;
+    meshes.push({
+      name: p.name || `part_${meshIdx}`,
+      primitives: [{
+        attributes: { POSITION: posAcc, NORMAL: norAcc },
+        indices: idxAcc,
+        material: matIndex.get(p.mat || "dark"),
+      }],
+    });
+
+    const nodeIdx = nodes.length;
+    nodes.push({ name: p.name || `part_${nodeIdx}`, mesh: meshIdx });
+    partNodeIndices.push(nodeIdx);
+  }
+
+  const rootIdx = nodes.length;
+  nodes.push({ name: model.id, children: partNodeIndices });
 
   const json = Buffer.from(JSON.stringify({
     asset: { version: "2.0", generator: "Strike Zone Blockbench Pack" },
     scene: 0,
-    scenes: [{ nodes: nodes.map((_, i) => i) }],
-    nodes, meshes, materials, accessors, bufferViews,
+    scenes: [{ name: model.name, nodes: [rootIdx] }],
+    nodes,
+    meshes,
+    materials,
+    accessors,
+    bufferViews,
     buffers: [{ byteLength: byteOffset }],
   }));
   const jsonBuf = padJson(json);
@@ -293,21 +330,8 @@ function writeGlb(filePath, model) {
 }
 
 function operator() {
-  const p = [
-    part("torso", "cloth", 0, 1.1, 0, 0.46, 0.68, 0.24),
-    part("vest", "armor", 0, 1.12, -0.14, 0.5, 0.54, 0.08),
-    part("head", "skin", 0, 1.62, -0.02, 0.26, 0.28, 0.24),
-    part("helmet", "armor", 0, 1.78, -0.02, 0.32, 0.14, 0.28),
-    part("visor", "glass", 0, 1.63, -0.15, 0.22, 0.08, 0.035),
-  ];
-  for (const sx of [-1, 1]) {
-    p.push(part("upper_arm", "cloth", sx * 0.34, 1.18, 0, 0.14, 0.48, 0.14, sx * 0.16));
-    p.push(part("forearm", "skin", sx * 0.38, 0.82, 0, 0.12, 0.36, 0.12, sx * -0.1));
-    p.push(part("hand", "skin", sx * 0.38, 0.58, -0.02, 0.13, 0.09, 0.14));
-    p.push(part("leg", "cloth", sx * 0.13, 0.48, 0, 0.15, 0.58, 0.16));
-    p.push(part("boot", "boot", sx * 0.13, 0.12, -0.03, 0.18, 0.17, 0.28));
-  }
-  return { id: "operator", name: "Strike Zone Operator", parts: p };
+  const hero = playerHeroStylized();
+  return { id: "operator", name: "Strike Zone Operator", parts: hero.parts };
 }
 
 /** Jogador padrão — cabeça/mãos redondas, tênis (editável no Blockbench) */
@@ -709,7 +733,11 @@ function main() {
     { model: weapon("bazooka", "Bazuca Blockbench", "purple"), src: "weapons", out: "weapons" },
   ];
 
+  const onlyArg = process.argv.find((a) => a.startsWith("--only="));
+  const onlyIds = onlyArg ? onlyArg.slice(7).split(",").map((s) => s.trim()).filter(Boolean) : null;
+
   for (const item of models) {
+    if (onlyIds && !onlyIds.includes(item.model.id)) continue;
     ensureDir(path.join(SRC_DIR, item.src));
     writeBbModel(path.join(SRC_DIR, item.src, `${item.model.id}.bbmodel`), item.model);
     writeGlb(path.join(MODEL_DIR, item.out, `${item.model.id}.glb`), item.model);
