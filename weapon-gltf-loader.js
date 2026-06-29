@@ -13,24 +13,58 @@ const WEAPON_SOURCES = {
   ump45: ['./assets/models/blockbench/weapons/ump45.glb', './assets/models/weapons/ump45.glb'],
   doze:  ['./assets/models/blockbench/weapons/doze.glb', './assets/models/weapons/doze.glb'],
   bazooka: ['./assets/models/blockbench/weapons/bazooka.glb'],
-  revolver: ['./assets/models/blockbench/weapons/revolver.glb'],
+  revolver: [
+    '/assets/models/blockbench/weapons/revolver.glb',
+    './assets/models/blockbench/weapons/revolver.glb',
+  ],
 };
 
-/** Armas que preferem o GLB Blockbench quando carregado */
-const GLTF_PREFERRED = new Set(["revolver"]);
+/** Só usa o GLB Blockbench — nunca o modelo procedural HD */
+export const BLOCKBENCH_ONLY = new Set(["revolver"]);
 
 const templates = new Map();
 let loadPromise = null;
+
+const BLOCKBENCH_PART_BY_MAT = {
+  gold: "metal",
+  metal: "metal",
+  leather: "grip",
+  leatherdark: "grip",
+  dark: "dark",
+  wood: "body",
+  tan: "body",
+};
 
 function tagMeshMaterials(root) {
   root.traverse((o) => {
     if (!o.isMesh || !o.material) return;
     const mats = Array.isArray(o.material) ? o.material : [o.material];
     for (const m of mats) {
-      if (!m.userData.weaponPart) {
-        const metalness = m.metalness ?? 0;
+      if (m.userData.weaponPart) continue;
+      const matName = String(m.name || "").toLowerCase().replace(/[^a-z]/g, "");
+      if (BLOCKBENCH_PART_BY_MAT[matName]) {
+        m.userData.weaponPart = BLOCKBENCH_PART_BY_MAT[matName];
+      } else {
+        const metalness = m.metalness ?? m.metalnessFactor ?? 0;
         m.userData.weaponPart = metalness > 0.5 ? "metal" : "body";
       }
+    }
+  });
+}
+
+function cloneBlockbenchMaterials(root) {
+  root.traverse((o) => {
+    if (!o.isMesh || !o.material) return;
+    if (Array.isArray(o.material)) {
+      o.material = o.material.map((m) => {
+        const c = m.clone();
+        c.userData.weaponPart = m.userData?.weaponPart;
+        return c;
+      });
+    } else {
+      const c = o.material.clone();
+      c.userData.weaponPart = o.material.userData?.weaponPart;
+      o.material = c;
     }
   });
 }
@@ -65,6 +99,20 @@ function fixUntaggedMeshes(root) {
   });
 }
 
+function normalizeWeaponScale(g, type) {
+  g.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(g);
+  const size = new THREE.Vector3();
+  const center = new THREE.Vector3();
+  box.getSize(size);
+  box.getCenter(center);
+  g.position.sub(center);
+
+  const maxDim = Math.max(size.x, size.y, size.z, 0.01);
+  const target = type === "glock" || type === "revolver" ? 0.42 : 0.52;
+  g.scale.setScalar(target / maxDim);
+}
+
 async function loadOne(type) {
   const urls = WEAPON_SOURCES[type];
   if (!urls) return null;
@@ -81,12 +129,21 @@ async function loadOne(type) {
       console.warn("Strike Zone: falha arma", type, url, err);
     }
   }
+  if (BLOCKBENCH_ONLY.has(type)) {
+    console.error(`Strike Zone: revólver Blockbench não carregou (${urls.join(", ")})`);
+  }
   return null;
 }
 
 export function preloadWeaponModels() {
   if (loadPromise) return loadPromise;
-  loadPromise = Promise.all(Object.keys(WEAPON_SOURCES).map((t) => loadOne(t)));
+  loadPromise = loadOne("revolver").then(() =>
+    Promise.all(
+      Object.keys(WEAPON_SOURCES)
+        .filter((t) => t !== "revolver")
+        .map((t) => loadOne(t))
+    )
+  );
   return loadPromise;
 }
 
@@ -94,40 +151,57 @@ export function isWeaponGltfReady(type) {
   return templates.has(type);
 }
 
+export function isBlockbenchWeapon(type) {
+  return BLOCKBENCH_ONLY.has(type);
+}
+
+/** Monta arma Blockbench preservando cores originais do GLB */
+export function buildBlockbenchWeapon(type) {
+  const template = templates.get(type);
+  if (!template) {
+    console.warn(`Strike Zone: ${type} Blockbench indisponível — aguarde o preload ou Ctrl+Shift+R`);
+    const empty = new THREE.Group();
+    empty.userData.weaponType = type;
+    empty.userData.blockbenchMissing = true;
+    return empty;
+  }
+
+  const g = template.clone(true);
+  tagMeshMaterials(g);
+  cloneBlockbenchMaterials(g);
+  normalizeWeaponScale(g, type);
+
+  g.userData.weaponType = type;
+  g.userData.isGltf = true;
+  g.userData.blockbench = true;
+  return g;
+}
+
 export function buildGltfWeapon(type, tint = 0x5c3a1e) {
+  if (BLOCKBENCH_ONLY.has(type)) return buildBlockbenchWeapon(type);
+
   const template = templates.get(type);
   if (!template) return buildHdWeapon(type, tint);
 
   const g = template.clone(true);
   tagMeshMaterials(g);
   fixUntaggedMeshes(g);
-
-  const box = new THREE.Box3().setFromObject(g);
-  const size = new THREE.Vector3();
-  const center = new THREE.Vector3();
-  box.getSize(size);
-  box.getCenter(center);
-  g.position.sub(center);
-
-  const maxDim = Math.max(size.x, size.y, size.z, 0.01);
-  const target = type === "glock" || type === "revolver" ? 0.38 : 0.52;
-  g.scale.setScalar(target / maxDim);
-
+  normalizeWeaponScale(g, type);
   applyWeaponTint(g, tint);
+
   g.userData.weaponType = type;
   g.userData.isGltf = true;
   return g;
 }
 
 export function buildWeaponModel(type, tint = 0x5c3a1e) {
-  let g;
-  if (GLTF_PREFERRED.has(type) && templates.has(type)) {
-    g = buildGltfWeapon(type, tint);
-  } else {
-    g = buildHdWeapon(type, tint);
-    applyWeaponTint(g, tint);
-    fixUntaggedMeshes(g);
+  if (BLOCKBENCH_ONLY.has(type)) {
+    return buildBlockbenchWeapon(type);
   }
+
+  const g = buildHdWeapon(type, tint);
+  applyWeaponTint(g, tint);
+  fixUntaggedMeshes(g);
   g.userData.weaponType = type;
   return g;
 }

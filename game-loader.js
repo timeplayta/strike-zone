@@ -15,6 +15,10 @@ async function loadGame() {
 
     const { preloadWeaponModels } = await import("./npc-weapon.js");
     await preloadWeaponModels();
+    const { isWeaponGltfReady } = await import("./weapon-gltf-loader.js");
+    if (!isWeaponGltfReady("revolver")) {
+      console.warn("Strike Zone: revólver Blockbench não carregou — verifique revolver.glb");
+    }
 
     const { preloadGrimyHand } = await import("./grimy-hand-loader.js");
     await preloadGrimyHand();

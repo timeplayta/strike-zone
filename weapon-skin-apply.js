@@ -211,6 +211,7 @@ export function getWeaponSkinStyle(weaponId, color, itemId) {
 
 export function applyWeaponSkin(group, weaponId, color, itemId) {
   if (!group || !color) return;
+  if (group.userData?.blockbench && !itemId && !findWeaponSkinItem(weaponId, color)) return;
   const item = itemId ? WEAPON_SKINS.find((i) => i.id === itemId) : findWeaponSkinItem(weaponId, color);
   const style = getWeaponSkinStyle(weaponId, color, itemId);
 
