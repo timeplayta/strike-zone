@@ -3,8 +3,8 @@
 import * as THREE from "three";
 import { buildNpcWeapon, preloadWeaponModels } from "./npc-weapon.js";
 import { buildAmongUsCharacter } from "./among-us-model.js";
-import { buildStylizedHuman } from "./stylized-character.js";
-import { DEFAULT_LOADOUT, applyOutfitToLoadout, applyPresetToLoadout, loadoutToBuildOpts } from "./character-loadout.js";
+import { buildPlayerCharacter, preloadPlayerCharacterModels } from "./player-character.js";
+import { DEFAULT_LOADOUT, applyOutfitToLoadout, applyPresetToLoadout } from "./character-loadout.js";
 import { applyWeaponSkin } from "./weapon-skin-apply.js";
 import { isWeaponGltfReady } from "./weapon-gltf-loader.js";
 
@@ -36,7 +36,7 @@ function ensureWeaponsReady() {
 }
 
 export function preloadShopPreviews() {
-  return ensureWeaponsReady();
+  return Promise.all([ensureWeaponsReady(), preloadPlayerCharacterModels()]);
 }
 
 function ensureThumbPreview() {
@@ -140,20 +140,18 @@ function frameObject(obj, cam, zoom = 1.15) {
 function addNonWeaponToPivot(item, targetPivot, cam) {
   if (item.type === "loadout") {
     const loadout = applyPresetToLoadout(DEFAULT_LOADOUT, item.slot, item.presetId);
-    const opts = loadoutToBuildOpts(loadout);
-    opts.withRifle = false;
-    opts.scale = 0.72;
-    targetPivot.add(buildStylizedHuman(opts).group);
+    targetPivot.add(
+      buildPlayerCharacter({ loadout, scale: 0.72, withRifle: false, portrait: true }).group
+    );
     cam.position.set(0, 1.05, 2.15);
     cam.lookAt(0, 0.9, 0);
     return;
   }
   if (item.type === "outfit") {
     const loadout = applyOutfitToLoadout(DEFAULT_LOADOUT, item.id);
-    const opts = loadoutToBuildOpts(loadout);
-    opts.withRifle = false;
-    opts.scale = 0.72;
-    targetPivot.add(buildStylizedHuman(opts).group);
+    targetPivot.add(
+      buildPlayerCharacter({ loadout, scale: 0.72, withRifle: false, portrait: true }).group
+    );
     cam.position.set(0, 1.05, 2.15);
     cam.lookAt(0, 0.9, 0);
     return;

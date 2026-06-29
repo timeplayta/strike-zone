@@ -614,6 +614,10 @@
     });
 
     watchGameLoad();
+
+    import("./player-character.js")
+      .then((m) => m.preloadPlayerCharacterModels?.())
+      .catch(() => {});
   }
 
   window.addEventListener("error", (e) => {

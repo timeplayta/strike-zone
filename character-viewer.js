@@ -1,12 +1,17 @@
-/** Visualizador 3D compartilhado — conta e customização (modelo humano estilo CS) */
+/** Visualizador 3D compartilhado — personagem Blockbench (player_hero.glb) */
 
 import * as THREE from "three";
-import { buildStylizedHuman } from "./stylized-character.js";
 import { normalizeLoadout } from "./character-loadout.js";
-import { buildPlayerCharacter } from "./player-character.js";
+import { buildPlayerCharacter, preloadPlayerCharacterModels } from "./player-character.js";
 import { configureCharacterRenderer } from "./human-model.js";
 import { applyWeaponSkinsToCharacter } from "./weapon-skin-apply.js";
 import { getAccountWeaponSkins } from "./player-account.js";
+import {
+  cloneBlockbenchModelSync,
+  waitForBlockbenchModel,
+  fitBlockbenchModel,
+} from "./blockbench-model-loader.js";
+import { buildNpcWeapon, attachStylizedWeapon } from "./npc-weapon.js";
 
 const viewers = new Map();
 
@@ -49,6 +54,16 @@ function applyPreviewWeaponSkins(charGroup) {
   if (Object.keys(skins).length) applyWeaponSkinsToCharacter(charGroup, skins);
 }
 
+function attachPreviewWeapon(model) {
+  const handR = model.getObjectByName("hand_r") || model.getObjectByName("handR");
+  const anchor = handR || model;
+  const gunPivot = new THREE.Group();
+  gunPivot.name = "gunPivot";
+  gunPivot.position.set(handR ? 0 : 0.38, handR ? 0 : 0.6, handR ? 0.02 : 0.05);
+  anchor.add(gunPivot);
+  attachStylizedWeapon({ gunPivot }, buildNpcWeapon("ak47", 0xd45a2a), "ak47");
+}
+
 export function buildPreviewCharacter(loadout, team = "ct", portrait = false, characterSkin, accountFab = false) {
   const body = buildPlayerCharacter({
     loadout,
@@ -70,20 +85,29 @@ export function buildPreviewCharacter(loadout, team = "ct", portrait = false, ch
 }
 
 export function buildEnemyPreview() {
-  const body = buildStylizedHuman({
-    shirt: 0xd45a2a,
-    pants: 0x3d2817,
-    gloves: 0x1a1a1a,
-    shoes: 0x141010,
-    accessory: "mask",
-    faceProfile: { headStyle: "mask", maskPattern: "skull", maskColor: 0x222222 },
-    withRifle: true,
-    team: "t",
-  });
-  return { group: body.group, mixer: null, human: false };
+  const root = new THREE.Group();
+  root.userData.blockbenchHero = true;
+
+  const model = cloneBlockbenchModelSync("operator", { targetWidth: 1.05, targetHeight: 1.82 });
+  if (model) {
+    root.add(model);
+    attachPreviewWeapon(model);
+  } else {
+    waitForBlockbenchModel("operator").then((template) => {
+      if (!template || root.userData.blockbenchApplied) return;
+      const m = template.clone(true);
+      fitBlockbenchModel(m, 1.05, 1.82);
+      m.userData.blockbenchMesh = true;
+      root.add(m);
+      root.userData.blockbenchApplied = true;
+      attachPreviewWeapon(m);
+    });
+  }
+
+  return { group: root, mixer: null, human: false };
 }
 
-export function mountCharacterViewer(canvasId, opts = {}) {
+function mountCharacterViewerImpl(canvasId, opts = {}) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return null;
 
@@ -193,6 +217,15 @@ export function mountCharacterViewer(canvasId, opts = {}) {
   return v;
 }
 
+export async function mountCharacterViewer(canvasId, opts = {}) {
+  if (opts.enemy) {
+    await waitForBlockbenchModel("operator");
+  } else {
+    await preloadPlayerCharacterModels();
+  }
+  return mountCharacterViewerImpl(canvasId, opts);
+}
+
 export function updateViewerLoadout(canvasId, loadout) {
   const v = viewers.get(canvasId);
   if (!v || v.enemy) return;
@@ -249,6 +282,18 @@ export function destroyViewer(canvasId) {
   if (!v) return;
   disposeViewer(v);
   viewers.delete(canvasId);
+}
+
+function refreshPlayerViewers() {
+  for (const [canvasId, v] of viewers) {
+    if (v.enemy) continue;
+    updateViewerLoadout(canvasId, v.loadout);
+  }
+}
+
+if (typeof window !== "undefined") {
+  window.addEventListener("strikezone-blockbench-ready", refreshPlayerViewers);
+  window.addEventListener("strikezone-player-ready", refreshPlayerViewers);
 }
 
 export { hexStr };

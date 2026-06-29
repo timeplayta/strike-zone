@@ -9,6 +9,7 @@ const SOURCES = {
   flying_drop_vehicle: "./assets/models/blockbench/props/flying_drop_vehicle.glb",
   parachute_default: "./assets/models/blockbench/props/parachute_default.glb",
   br_house_enterable: "./assets/models/blockbench/props/br_house_enterable.glb",
+  operator: "/assets/models/blockbench/characters/operator.glb",
   player_hero: "/assets/models/blockbench/characters/player_hero.glb",
   player_neon_runner: "/assets/models/blockbench/characters/player_neon_runner.glb",
   player_shadow: "/assets/models/blockbench/characters/player_shadow.glb",
@@ -29,6 +30,10 @@ function resolveUrls(key) {
   if (!primary) return [];
   if (primary.startsWith("/")) return [primary, `.${primary}`];
   return [primary, primary.replace(/^\.\//, "/")];
+}
+
+export function waitForBlockbenchModel(key) {
+  return loadTemplate(key);
 }
 
 function loadTemplate(key) {
@@ -55,6 +60,7 @@ function loadTemplate(key) {
         console.warn("[Strike Zone] falha Blockbench:", key, url, err);
       }
     }
+    console.error("[Strike Zone] Blockbench não encontrado:", key);
     return null;
   })();
 
@@ -71,7 +77,7 @@ export function isBlockbenchModelReady(key) {
   return templates.has(key);
 }
 
-function fitToBox(root, targetWidth = 1, targetHeight = 1) {
+export function fitBlockbenchModel(root, targetWidth = 1, targetHeight = 1.78) {
   root.updateMatrixWorld(true);
   const box = new THREE.Box3().setFromObject(root);
   const size = new THREE.Vector3();
@@ -93,8 +99,17 @@ export function cloneBlockbenchModelSync(key, opts = {}) {
   const template = templates.get(key);
   if (!template) return null;
   const model = template.clone(true);
-  fitToBox(model, opts.targetWidth || 1, opts.targetHeight || 1.78);
+  fitBlockbenchModel(model, opts.targetWidth || 1, opts.targetHeight || 1.78);
+  model.userData.blockbenchMesh = true;
   return model;
+}
+
+function removeBlockbenchMeshes(group) {
+  const remove = [];
+  group.traverse((o) => {
+    if (o !== group && o.userData?.blockbenchMesh) remove.push(o);
+  });
+  for (const o of remove) o.parent?.remove(o);
 }
 
 export function upgradeWithBlockbenchModel(group, key, opts = {}) {
@@ -102,14 +117,16 @@ export function upgradeWithBlockbenchModel(group, key, opts = {}) {
   group.userData.blockbenchKey = key;
 
   const apply = (template) => {
-    if (!template || group.userData.blockbenchApplied) return;
+    if (!template) return;
     const model = template.clone(true);
-    fitToBox(model, opts.targetWidth || 1, opts.targetHeight || 1.78);
-    group.clear();
+    fitBlockbenchModel(model, opts.targetWidth || 1, opts.targetHeight || 1.78);
+    model.userData.blockbenchMesh = true;
+    removeBlockbenchMeshes(group);
     group.add(model);
     group.userData.blockbenchApplied = true;
     group.userData.blockbenchModel = model;
     opts.onReady?.(model, group);
+    window.dispatchEvent(new CustomEvent("strikezone-blockbench-ready", { detail: { key } }));
   };
 
   const cached = templates.get(key);

@@ -29,14 +29,14 @@ function updateFabName(name) {
   if (el) el.textContent = name || "Operador";
 }
 
-export function mountAccountFab() {
+export async function mountAccountFab() {
   const name = getLoggedInName() || $("playerName")?.value?.trim();
   updateFabName(name);
   const loadout = normalizeLoadout(window.__playerLoadout || DEFAULT_LOADOUT);
   const characterSkin = getCharacterSkin();
   window.__characterSkin = characterSkin;
   if (!fabPortraitMounted && $("accountFabCanvas")) {
-    mountCharacterViewer("accountFabCanvas", {
+    await mountCharacterViewer("accountFabCanvas", {
       loadout,
       portrait: true,
       autoSpin: false,
@@ -57,11 +57,11 @@ export function refreshAccountFabHuman() {
   mountAccountFab();
 }
 
-function mountViewers() {
+async function mountViewers() {
   const loadout = normalizeLoadout(window.__playerLoadout || DEFAULT_LOADOUT);
   const characterSkin = getCharacterSkin();
-  mountCharacterViewer("accountPlayerCanvas", { loadout, autoSpin: true, characterSkin });
-  mountCharacterViewer("accountEnemyCanvas", { enemy: true, autoSpin: true });
+  await mountCharacterViewer("accountPlayerCanvas", { loadout, autoSpin: true, characterSkin });
+  await mountCharacterViewer("accountEnemyCanvas", { enemy: true, autoSpin: true });
   resizeViewer("accountPlayerCanvas");
   resizeViewer("accountEnemyCanvas");
   viewersMounted = true;

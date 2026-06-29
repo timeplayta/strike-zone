@@ -134,9 +134,9 @@ async function openModal() {
   renderSkinList(acc);
 
   const loadout = normalizeLoadout(window.__playerLoadout || DEFAULT_LOADOUT);
-  requestAnimationFrame(() => {
+  requestAnimationFrame(async () => {
     if (!arsenalMounted) {
-      mountCharacterViewer("arsenalCanvas", {
+      await mountCharacterViewer("arsenalCanvas", {
         loadout,
         characterSkin: getCharacterSkin(),
         autoSpin: true,

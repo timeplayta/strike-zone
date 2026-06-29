@@ -35,9 +35,9 @@ async function openModal() {
     panel.setAttribute("aria-hidden", "false");
   }
   const loadout = normalizeLoadout(window.__playerLoadout || DEFAULT_LOADOUT);
-  requestAnimationFrame(() => {
+  requestAnimationFrame(async () => {
     if (!soloMounted) {
-      mountCharacterViewer("soloCanvas", {
+      await mountCharacterViewer("soloCanvas", {
         loadout,
         characterSkin: getCharacterSkin(),
         autoSpin: true,

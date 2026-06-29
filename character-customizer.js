@@ -225,9 +225,9 @@ async function openModal() {
     panel.classList.remove("hidden");
     panel.setAttribute("aria-hidden", "false");
   }
-  requestAnimationFrame(() => {
+  requestAnimationFrame(async () => {
     if (!viewerMounted) {
-      mountCharacterViewer("customizerCanvas", {
+      await mountCharacterViewer("customizerCanvas", {
         loadout: currentLoadout,
         autoSpin: true,
         characterSkin: currentCharacterSkin,
