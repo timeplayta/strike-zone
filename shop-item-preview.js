@@ -9,7 +9,7 @@ import { applyWeaponSkin } from "./weapon-skin-apply.js";
 import { isWeaponGltfReady } from "./weapon-gltf-loader.js";
 
 const cache = new Map();
-const THUMB_CACHE_VER = "v10";
+const THUMB_CACHE_VER = "v11";
 
 let weaponsReadyPromise = null;
 let renderer;

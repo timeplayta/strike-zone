@@ -166,15 +166,21 @@ export function buildBlockbenchWeapon(type) {
     return empty;
   }
 
-  const g = template.clone(true);
-  tagMeshMaterials(g);
-  cloneBlockbenchMaterials(g);
+  const g = new THREE.Group();
+  const cloned = template.clone(true);
+  g.add(cloned);
   normalizeWeaponScale(g, type);
 
   g.userData.weaponType = type;
   g.userData.isGltf = true;
   g.userData.blockbench = true;
   return g;
+}
+
+export async function ensureBlockbenchWeapon(type) {
+  if (templates.has(type)) return true;
+  await loadOne(type);
+  return templates.has(type);
 }
 
 export function buildGltfWeapon(type, tint = 0x5c3a1e) {
@@ -196,7 +202,11 @@ export function buildGltfWeapon(type, tint = 0x5c3a1e) {
 
 export function buildWeaponModel(type, tint = 0x5c3a1e) {
   if (BLOCKBENCH_ONLY.has(type)) {
-    return buildBlockbenchWeapon(type);
+    const g = buildBlockbenchWeapon(type);
+    if (g.userData.blockbenchMissing) {
+      console.error(`Strike Zone: ${type} Blockbench obrigatório mas não carregou`);
+    }
+    return g;
   }
 
   const g = buildHdWeapon(type, tint);

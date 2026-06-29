@@ -1,17 +1,21 @@
 /**
- * Personagem do JOGADOR — corpo humano base (pele nos braços/rosto) + peças do loadout.
- * Skins completas (Among Us, Neon, Cowboy…) usam modelos Blockbench próprios.
- * Inimigos continuam no human-model.js (Mixamo Soldier).
+ * Personagem do JOGADOR — modelo Blockbench (player_hero.glb).
+ * Edite em assets/blockbench/characters/player_hero.bbmodel
  */
 
 import * as THREE from "three";
-import { buildStylizedHuman } from "./stylized-character.js";
 import { loadoutToBuildOpts, normalizeLoadout } from "./character-loadout.js";
 import { buildAmongUsCharacter } from "./among-us-model.js";
-import { upgradeWithBlockbenchModel } from "./blockbench-model-loader.js";
+import {
+  upgradeWithBlockbenchModel,
+  cloneBlockbenchModelSync,
+  preloadBlockbenchModels,
+  isBlockbenchModelReady,
+} from "./blockbench-model-loader.js";
 import { buildNpcWeapon, attachStylizedWeapon, attachWeaponToCharacter } from "./npc-weapon.js";
 
 const BLOCKBENCH_FULL_BODY = {
+  soldier: { key: "player_hero", w: 1.05, h: 1.82 },
   neon_runner: { key: "player_neon_runner", w: 1.05, h: 1.82 },
   shadow: { key: "player_shadow", w: 1.02, h: 1.78 },
   trevas_horror: { key: "player_shadow", w: 1.08, h: 1.85 },
@@ -22,47 +26,74 @@ const BLOCKBENCH_FULL_BODY = {
 };
 
 export function getPlayerBlockbenchSkin(skinId) {
-  return BLOCKBENCH_FULL_BODY[skinId] || null;
+  return BLOCKBENCH_FULL_BODY[skinId] || BLOCKBENCH_FULL_BODY.soldier;
+}
+
+export function preloadPlayerCharacterModels() {
+  return preloadBlockbenchModels(Object.values(BLOCKBENCH_FULL_BODY).map((c) => c.key));
+}
+
+function attachWeaponToBlockbenchBody(bodyGroup, model, weaponType, shirt, withRifle) {
+  if (!withRifle) return { gun: null, weaponPivot: null, handR: null };
+
+  const handR = new THREE.Group();
+  handR.name = "handR";
+  handR.position.set(0.38, 0.6, 0.05);
+  (model || bodyGroup).add(handR);
+
+  const gunPivot = new THREE.Group();
+  gunPivot.name = "gunPivot";
+  handR.add(gunPivot);
+
+  const wp = buildNpcWeapon(weaponType, shirt);
+  const attached = attachStylizedWeapon({ gunPivot }, wp, weaponType);
+  return { gun: attached.gun, weaponPivot: attached.pivot, handR };
 }
 
 function buildBlockbenchPlayer(skinId, opts) {
-  const cfg = BLOCKBENCH_FULL_BODY[skinId];
+  const cfg = getPlayerBlockbenchSkin(skinId);
   const root = new THREE.Group();
-  const anchor = new THREE.Group();
-  anchor.name = "playerBody";
-  root.add(anchor);
-  upgradeWithBlockbenchModel(root, cfg.key, {
-    targetWidth: cfg.w,
-    targetHeight: opts.portrait ? cfg.h * 0.95 : cfg.h,
-  });
+  const body = new THREE.Group();
+  body.name = "playerBody";
+  root.add(body);
 
-  const handR = new THREE.Group();
-  handR.position.set(0.32, cfg.h * 0.58, 0.1);
-  root.add(handR);
+  const targetH = opts.portrait ? cfg.h * 0.95 : cfg.h;
+  let model = cloneBlockbenchModelSync(cfg.key, { targetWidth: cfg.w, targetHeight: targetH });
+
+  if (model) {
+    body.add(model);
+    body.userData.blockbenchApplied = true;
+    body.userData.blockbenchModel = model;
+  } else {
+    upgradeWithBlockbenchModel(body, cfg.key, {
+      targetWidth: cfg.w,
+      targetHeight: targetH,
+      onReady: (m) => {
+        model = m;
+      },
+    });
+  }
 
   const headHit = new THREE.Mesh(
-    new THREE.SphereGeometry(0.11 * (opts.scale || 1), 10, 10),
+    new THREE.SphereGeometry(0.17 * (opts.scale || 1), 12, 12),
     new THREE.MeshBasicMaterial({ visible: false })
   );
   headHit.userData.hitPart = "head";
-  headHit.position.set(0, cfg.h * 0.88, 0);
+  headHit.position.set(0, targetH * 0.82, 0.02);
   root.add(headHit);
 
-  let gun = null;
-  let weaponPivot = null;
-  if (opts.withRifle !== false) {
-    const weaponType = opts.weaponType || "ak47";
-    const wp = buildNpcWeapon(weaponType, opts.shirt || 0x2266aa);
-    const gunPivot = new THREE.Group();
-    gunPivot.name = "gunPivot";
-    handR.add(gunPivot);
-    const attached = attachStylizedWeapon({ gunPivot }, wp, weaponType);
-    gun = attached.gun;
-    weaponPivot = attached.pivot;
-  }
+  const weaponType = opts.weaponType || "ak47";
+  const { gun, weaponPivot, handR } = attachWeaponToBlockbenchBody(
+    body,
+    model,
+    weaponType,
+    opts.shirt || 0x2266aa,
+    opts.withRifle !== false
+  );
 
   root.scale.setScalar(opts.scale || 1);
   root.userData.playerAvatar = true;
+  root.userData.blockbenchHero = true;
 
   return {
     group: root,
@@ -71,7 +102,7 @@ function buildBlockbenchPlayer(skinId, opts) {
     gun,
     weaponPivot,
     handR,
-    rig: null,
+    rig: handR ? { gunPivot: handR.children.find((c) => c.name === "gunPivot"), handR } : null,
     mixer: null,
     playerModel: true,
   };
@@ -79,14 +110,24 @@ function buildBlockbenchPlayer(skinId, opts) {
 
 function equipRealWeapon(body, buildOpts, weaponType, withRifle) {
   if (!withRifle) return;
+  const handR = body.handR || body.rig?.handR;
+  if (handR) {
+    const gunPivot = handR.children.find((c) => c.name === "gunPivot") || body.rig?.gunPivot;
+    if (gunPivot) gunPivot.clear();
+    const wp = buildNpcWeapon(weaponType, buildOpts.shirt);
+    const attached = gunPivot
+      ? attachStylizedWeapon({ gunPivot }, wp, weaponType)
+      : attachWeaponToCharacter(body, wp, weaponType);
+    body.gun = attached.gun;
+    body.weaponPivot = attached.pivot;
+    body.weaponType = weaponType;
+    return;
+  }
   const wp = buildNpcWeapon(weaponType, buildOpts.shirt);
   const attached = attachWeaponToCharacter(body, wp, weaponType);
   body.gun = attached.gun;
   body.weaponPivot = attached.pivot;
   body.weaponType = weaponType;
-  if (body.rig?.handL && weaponType !== "glock" && weaponType !== "revolver") {
-    body.rig.handL.position.z = 0.04;
-  }
 }
 
 /**
@@ -107,6 +148,7 @@ export function buildPlayerCharacter(options = {}) {
   const normalized = normalizeLoadout(
     loadout ?? (typeof window !== "undefined" ? window.__playerLoadout : null)
   );
+  const buildOpts = loadoutToBuildOpts(normalized);
 
   if (skinId.startsWith("among")) {
     const among = buildAmongUsCharacter(skinId, scale * (portrait ? 0.95 : 1.1), normalized);
@@ -114,24 +156,22 @@ export function buildPlayerCharacter(options = {}) {
     return { ...among, playerModel: true };
   }
 
-  if (BLOCKBENCH_FULL_BODY[skinId]) {
-    const buildOpts = loadoutToBuildOpts(normalized);
-    return buildBlockbenchPlayer(skinId, {
-      scale,
-      portrait,
-      withRifle,
-      weaponType,
-      shirt: buildOpts.shirt,
-    });
+  const body = buildBlockbenchPlayer(skinId, {
+    scale,
+    portrait,
+    withRifle,
+    weaponType,
+    shirt: buildOpts.shirt,
+    team,
+  });
+
+  if (withRifle && weaponType !== body.weaponType) {
+    equipRealWeapon(body, buildOpts, weaponType, withRifle);
   }
 
-  const buildOpts = loadoutToBuildOpts(normalized);
-  buildOpts.scale = scale;
-  buildOpts.withRifle = false;
-  buildOpts.team = team;
+  return body;
+}
 
-  const body = buildStylizedHuman(buildOpts);
-  equipRealWeapon(body, buildOpts, weaponType, withRifle);
-  body.group.userData.playerAvatar = true;
-  return { ...body, playerModel: true };
+export function isPlayerBlockbenchReady() {
+  return isBlockbenchModelReady("player_hero");
 }

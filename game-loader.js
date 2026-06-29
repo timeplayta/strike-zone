@@ -20,6 +20,9 @@ async function loadGame() {
       console.warn("Strike Zone: revólver Blockbench não carregou — verifique revolver.glb");
     }
 
+    const { preloadPlayerCharacterModels } = await import("./player-character.js");
+    await preloadPlayerCharacterModels();
+
     const { preloadGrimyHand } = await import("./grimy-hand-loader.js");
     await preloadGrimyHand();
     const { preloadRogerJanitor } = await import("./gigante-monster-builder.js");

@@ -19,6 +19,8 @@ const COLORS = {
   cloth: 0x25324a,
   armor: 0x334455,
   boot: 0x111318,
+  shoeWhite: 0xf2f2f8,
+  shoeAccent: 0x00ccff,
   metal: 0x7a7f88,
   dark: 0x11151c,
   wood: 0x6b4423,
@@ -80,8 +82,12 @@ function writeBbModel(filePath, model) {
   const matIndex = new Map(mats.map((m, i) => [m, i]));
   const elements = model.parts.map((p, i) => {
     const s = model.blockbenchScale || 16;
-    const from = [(p.x - p.w / 2) * s, (p.y - p.h / 2) * s, (p.z - p.d / 2) * s];
-    const to = [(p.x + p.w / 2) * s, (p.y + p.h / 2) * s, (p.z + p.d / 2) * s];
+    const isSphere = p.shape === "sphere";
+    const hw = isSphere ? p.r : p.w / 2;
+    const hh = isSphere ? p.r : p.h / 2;
+    const hd = isSphere ? p.r : p.d / 2;
+    const from = [(p.x - hw) * s, (p.y - hh) * s, (p.z - hd) * s];
+    const to = [(p.x + hw) * s, (p.y + hh) * s, (p.z + hd) * s];
     const origin = [p.x * s, p.y * s, p.z * s];
     const el = {
       uuid: uuid(i),
@@ -134,6 +140,43 @@ function rotateY(x, z, ry = 0) {
   return [x * c - z * s, x * s + z * c];
 }
 
+const part = (name, mat, x, y, z, w, h, d, ry = 0, rx = 0, rz = 0) =>
+  ({ name, mat, x, y, z, w, h, d, ry, rx, rz, shape: "box" });
+
+function sphere(name, mat, x, y, z, r) {
+  return { name, mat, x, y, z, r, shape: "sphere" };
+}
+
+function sphereGeom(p, seg = 14) {
+  const positions = [], normals = [], indices = [];
+  const r = p.r;
+  for (let lat = 0; lat <= seg; lat++) {
+    const v = lat / seg;
+    const phi = v * Math.PI;
+    for (let lon = 0; lon <= seg; lon++) {
+      const u = lon / seg;
+      const theta = u * Math.PI * 2;
+      const x = r * Math.sin(phi) * Math.cos(theta) + p.x;
+      const y = r * Math.cos(phi) + p.y;
+      const z = r * Math.sin(phi) * Math.sin(theta) + p.z;
+      positions.push(x, y, z);
+      normals.push(Math.sin(phi) * Math.cos(theta), Math.cos(phi), Math.sin(phi) * Math.sin(theta));
+    }
+  }
+  for (let lat = 0; lat < seg; lat++) {
+    for (let lon = 0; lon < seg; lon++) {
+      const a = lat * (seg + 1) + lon;
+      const b = a + seg + 1;
+      indices.push(a, b, a + 1, b, b + 1, a + 1);
+    }
+  }
+  return { positions, normals, indices };
+}
+
+function geomPart(p) {
+  return p.shape === "sphere" ? sphereGeom(p) : boxGeom(p);
+}
+
 function boxGeom(p) {
   const hw = p.w / 2, hh = p.h / 2, hd = p.d / 2;
   const corners = [
@@ -168,7 +211,7 @@ function merge(parts) {
   const positions = [], normals = [], indices = [];
   let offset = 0;
   for (const p of parts) {
-    const g = boxGeom(p);
+    const g = geomPart(p);
     positions.push(...g.positions);
     normals.push(...g.normals);
     indices.push(...g.indices.map((i) => i + offset));
@@ -249,8 +292,6 @@ function writeGlb(filePath, model) {
   fs.writeFileSync(filePath, Buffer.concat([header, jsonHeader, jsonBuf, binHeader, binBuf]));
 }
 
-const part = (name, mat, x, y, z, w, h, d, ry = 0) => ({ name, mat, x, y, z, w, h, d, ry });
-
 function operator() {
   const p = [
     part("torso", "cloth", 0, 1.1, 0, 0.46, 0.68, 0.24),
@@ -267,6 +308,35 @@ function operator() {
     p.push(part("boot", "boot", sx * 0.13, 0.12, -0.03, 0.18, 0.17, 0.28));
   }
   return { id: "operator", name: "Strike Zone Operator", parts: p };
+}
+
+/** Jogador padrão — cabeça/mãos redondas, tênis (editável no Blockbench) */
+function playerHeroStylized() {
+  const p = [
+    part("torso", "suitBlue", 0, 1.02, 0, 0.42, 0.52, 0.2),
+    part("vest", "armor", 0, 1.06, -0.12, 0.36, 0.4, 0.05),
+    part("belt", "leatherDark", 0, 0.78, -0.01, 0.46, 0.07, 0.24),
+    part("backpack", "dark", 0, 1.0, 0.14, 0.32, 0.44, 0.12),
+    sphere("head", "skin", 0, 1.48, 0.02, 0.17),
+    sphere("helmet", "trimBlue", 0, 1.56, -0.02, 0.19),
+    part("visor", "glass", 0, 1.5, -0.14, 0.18, 0.05, 0.03),
+    part("collar", "armor", 0, 1.28, -0.02, 0.34, 0.06, 0.18),
+    part("knee_pad_l", "armor", -0.12, 0.28, -0.08, 0.14, 0.09, 0.04),
+    part("knee_pad_r", "armor", 0.12, 0.28, -0.08, 0.14, 0.09, 0.04),
+  ];
+  for (const sx of [-1, 1]) {
+    p.push(
+      part("upper_arm", "suitBlue", sx * 0.34, 1.14, 0, 0.13, 0.4, 0.13, sx * 0.12),
+      part("forearm", "skin", sx * 0.38, 0.78, 0.02, 0.11, 0.32, 0.11, sx * -0.08),
+      sx === 1 ? sphere("hand_r", "skin", sx * 0.38, 0.6, 0.05, 0.07) : sphere("hand_l", "skin", sx * 0.38, 0.6, 0.05, 0.07),
+      part("pants", "denim", sx * 0.12, 0.46, 0, 0.14, 0.52, 0.15),
+      part("sneaker_sole", "shoeWhite", sx * 0.12, 0.05, 0.06, 0.2, 0.07, 0.26),
+      part("sneaker_body", "suitBlue", sx * 0.12, 0.12, -0.01, 0.18, 0.11, 0.24),
+      part("sneaker_tongue", "shoeAccent", sx * 0.12, 0.16, -0.1, 0.1, 0.05, 0.06),
+      part("sneaker_lace", "shoeWhite", sx * 0.12, 0.17, -0.04, 0.08, 0.02, 0.04)
+    );
+  }
+  return { id: "player_hero", name: "Strike Zone Hero", parts: p };
 }
 
 function playerCharacter(id, name, variant = "hero") {
@@ -608,7 +678,7 @@ function main() {
   const models = [
     { model: operator(), src: "characters", out: "characters" },
     { model: fpsHands(), src: "characters", out: "characters" },
-    { model: playerCharacter("player_hero", "Jogador Principal Strike Zone", "hero"), src: "characters", out: "characters" },
+    { model: playerHeroStylized(), src: "characters", out: "characters" },
     { model: playerCharacter("player_neon_runner", "Jogador Neon Runner", "neon"), src: "characters", out: "characters" },
     { model: playerCharacter("player_shadow", "Jogador Sombra Cósmica", "shadow"), src: "characters", out: "characters" },
     { model: playerCharacter("player_birthday", "Jogador Aniversariante Solar", "birthday"), src: "characters", out: "characters" },
