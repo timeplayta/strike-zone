@@ -13,7 +13,7 @@ export function isInstalledApp() {
 }
 
 /** Bump quando assets críticos mudarem — invalida skip do boot. */
-const PRELOAD_DONE_KEY = "strikezone_assets_v109";
+const PRELOAD_DONE_KEY = "strikezone_assets_v110";
 
 const CRITICAL_FETCH = [
   "/assets/models/blockbench/characters/player_hero.glb",
@@ -120,8 +120,9 @@ export async function runGamePreload(onProgress) {
   const { preloadBlockbenchModels } = await import("./blockbench-model-loader.js");
   await preloadBlockbenchModels();
 
-  report(52, "Ilha Frontier — mapa e objetos…");
+  report(52, "Ilha Frontier — mapa completo e POIs…");
   const { getMap } = await import("./maps.js");
+  await import("./frontier-map.js");
   getMap("frontier");
   await preloadBlockbenchModels(FRONTIER_BLOCKBENCH);
 

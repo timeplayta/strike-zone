@@ -5,6 +5,7 @@ import {
   ENEMY_BASE_FIRE_MS,
 } from "./bot-difficulty.js";
 import { MAPS, isHorrorMap, isLabyrinthMap, isNoCombatMap, isDarkMap, getMapMeta, getOpenWorldGroundY } from "./maps.js";
+import { getFrontierBiome, getFrontierTerrainColor } from "./frontier-map.js";
 import {
   createBandit,
   createBoss,
@@ -155,8 +156,21 @@ const BR_STORM_WAIT_SECONDS = 75;
 const BR_STORM_CLOSE_SECONDS = 360;
 const BR_POST_LAND_GRACE_MS = 22000;
 const BR_DROP_ALTITUDE = 92;
-const BR_DROP_START = { x: -760, z: -620 };
-const BR_DROP_END = { x: 760, z: 620 };
+function getBattleRoyaleDropRoute() {
+  const route = mapData?.dropRoute;
+  if (route?.start && route?.end) {
+    return {
+      start: { ...route.start },
+      end: { ...route.end },
+      altitude: route.altitude ?? BR_DROP_ALTITUDE,
+    };
+  }
+  return {
+    start: { x: -880, z: -720 },
+    end: { x: 880, z: 760 },
+    altitude: BR_DROP_ALTITUDE,
+  };
+}
 
 let botCount = 10;
 let useBotDifficulty = true;
@@ -1069,7 +1083,8 @@ function startBattleRoyaleDrop() {
   const vehicle = makeDropVehicle();
   const avatar = makeDropAvatar();
   const chute = makeParachute();
-  const routeGuide = makeDropRouteGuide(BR_DROP_START, BR_DROP_END);
+  const dropRoute = getBattleRoyaleDropRoute();
+  const routeGuide = makeDropRouteGuide(dropRoute.start, dropRoute.end);
   avatar.visible = true;
   chute.visible = false;
   scene.add(routeGuide, vehicle, avatar, chute);
@@ -1078,13 +1093,13 @@ function startBattleRoyaleDrop() {
     t: 0,
     duration: 120,
     phaseStarted: performance.now(),
-    start: { ...BR_DROP_START, y: BR_DROP_ALTITUDE },
-    end: { ...BR_DROP_END, y: BR_DROP_ALTITUDE },
+    start: { ...dropRoute.start, y: dropRoute.altitude },
+    end: { ...dropRoute.end, y: dropRoute.altitude },
     vehicle,
     avatar,
     chute,
     routeGuide,
-    pos: new THREE.Vector3(BR_DROP_START.x, BR_DROP_ALTITUDE, BR_DROP_START.z),
+    pos: new THREE.Vector3(dropRoute.start.x, dropRoute.altitude, dropRoute.start.z),
     vel: new THREE.Vector3(),
   };
   const pos = getDropVehiclePosition();
@@ -1126,7 +1141,8 @@ function jumpFromDropVehicle() {
 
 function finishBattleRoyaleDrop() {
   if (!battleRoyaleDrop) return;
-  camera.position.set(battleRoyaleDrop.pos.x, PLAYER_EYE_HEIGHT, battleRoyaleDrop.pos.z);
+  const landY = getOpenWorldGroundY(battleRoyaleDrop.pos.x, battleRoyaleDrop.pos.z, mapData) + PLAYER_EYE_HEIGHT;
+  camera.position.set(battleRoyaleDrop.pos.x, landY, battleRoyaleDrop.pos.z);
   if (battleRoyaleDrop.avatar) scene.remove(battleRoyaleDrop.avatar);
   if (battleRoyaleDrop.chute) scene.remove(battleRoyaleDrop.chute);
   if (battleRoyaleDrop.routeGuide) scene.remove(battleRoyaleDrop.routeGuide);
@@ -1784,22 +1800,31 @@ function buildLabyrinthHorrorAmbience(scene, mapData) {
 
 function buildFrontierTerrain(scene, mapData, floorMat) {
   const size = mapData.floorW || 2000;
-  const geo = new THREE.PlaneGeometry(size, size, 64, 64);
+  const geo = new THREE.PlaneGeometry(size, size, 80, 80);
   const pos = geo.attributes.position;
+  const colors = new Float32Array(pos.count * 3);
+  const colorTmp = new THREE.Color();
   for (let i = 0; i < pos.count; i++) {
     const x = pos.getX(i);
     const z = pos.getY(i);
-    const dist = Math.hypot(x, z) / (size * 0.5);
-    const edgeDrop = Math.max(0, dist - 0.78) ** 2 * 22;
-    const hill = Math.sin(x * 0.0038) * Math.cos(z * 0.0032) * 2.4;
-    pos.setY(i, hill - edgeDrop);
+    const y = getOpenWorldGroundY(x, z, mapData);
+    pos.setY(i, y);
+    const biome = getFrontierBiome(x, z);
+    colorTmp.setHex(getFrontierTerrainColor(biome));
+    if (y > 12) colorTmp.lerp(new THREE.Color(0x9a8a78), 0.35);
+    colors[i * 3] = colorTmp.r;
+    colors[i * 3 + 1] = colorTmp.g;
+    colors[i * 3 + 2] = colorTmp.b;
   }
+  geo.setAttribute("color", new THREE.BufferAttribute(colors, 3));
   geo.computeVertexNormals();
   const mat = floorMat?.clone?.() || new THREE.MeshStandardMaterial({
-    color: mapData.floorColor || 0x6aa04d,
-    roughness: 0.9,
+    color: mapData.floorColor || 0x5f9a48,
+    roughness: 0.92,
     metalness: 0.02,
+    vertexColors: true,
   });
+  mat.vertexColors = true;
   const terrain = new THREE.Mesh(geo, mat);
   terrain.rotation.x = -Math.PI / 2;
   terrain.receiveShadow = true;
@@ -1807,11 +1832,11 @@ function buildFrontierTerrain(scene, mapData, floorMat) {
   scene.add(terrain);
 
   const shore = new THREE.Mesh(
-    new THREE.RingGeometry(size * 0.46, size * 0.5, 96),
-    new THREE.MeshStandardMaterial({ color: 0xc4a56a, roughness: 0.95, metalness: 0.01 })
+    new THREE.RingGeometry(size * 0.44, size * 0.5, 96),
+    new THREE.MeshStandardMaterial({ color: 0xd4b878, roughness: 0.96, metalness: 0.01 })
   );
   shore.rotation.x = -Math.PI / 2;
-  shore.position.y = 0.03;
+  shore.position.y = -0.08;
   scene.add(shore);
   return terrain;
 }
@@ -1821,53 +1846,39 @@ function buildOpenWorldScenery(scene, mapData) {
   buildMapProps(scene, mapData.props || [], mapData.propTint || {});
 
   const water = new THREE.Mesh(
-    new THREE.PlaneGeometry(2300, 2300, 1, 1),
-    new THREE.MeshLambertMaterial({ color: 0x2f75b6, transparent: true, opacity: 0.55 })
+    new THREE.PlaneGeometry(2400, 2400, 1, 1),
+    new THREE.MeshLambertMaterial({ color: 0x1e6a9e, transparent: true, opacity: 0.62 })
   );
   water.rotation.x = -Math.PI / 2;
-  water.position.y = -0.035;
+  water.position.y = -0.12;
   scene.add(water);
 
-  const roadMat = new THREE.MeshLambertMaterial({ color: 0x5a554a });
-  const roads = [
-    { x: 0, z: -160, w: 1300, d: 12, rot: 0.12 },
-    { x: -210, z: 120, w: 12, d: 920, rot: -0.25 },
-    { x: 360, z: 120, w: 12, d: 760, rot: 0.42 },
-  ];
-  for (const r of roads) {
-    const m = new THREE.Mesh(new THREE.PlaneGeometry(r.w, r.d), roadMat);
-    m.rotation.x = -Math.PI / 2;
-    m.rotation.z = r.rot;
-    m.position.set(r.x, 0.018, r.z);
-    scene.add(m);
-  }
-
-  const cloudMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.72 });
-  for (let i = 0; i < 16; i++) {
+  const cloudMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.68 });
+  for (let i = 0; i < 18; i++) {
     const cloud = new THREE.Group();
-    for (let j = 0; j < 4; j++) {
-      const puff = new THREE.Mesh(new THREE.SphereGeometry(18 + j * 3, 10, 8), cloudMat);
-      puff.position.set(j * 18, Math.sin(j) * 5, 0);
-      puff.scale.y = 0.38;
+    for (let j = 0; j < 5; j++) {
+      const puff = new THREE.Mesh(new THREE.SphereGeometry(16 + j * 4, 10, 8), cloudMat);
+      puff.position.set(j * 16, Math.sin(j) * 4, (j % 2) * 6);
+      puff.scale.y = 0.35;
       cloud.add(puff);
     }
-    cloud.position.set(-780 + (i % 8) * 220, 150 + (i % 3) * 28, -740 + Math.floor(i / 8) * 1280);
+    cloud.position.set(-820 + (i % 9) * 210, 165 + (i % 4) * 24, -760 + Math.floor(i / 9) * 1320);
     cloud.userData.skyDrift = {
       baseX: cloud.position.x,
       baseY: cloud.position.y,
       baseZ: cloud.position.z,
-      speed: 3.5 + (i % 5) * 0.8,
-      phase: i * 0.73,
+      speed: 2.8 + (i % 5) * 0.7,
+      phase: i * 0.81,
     };
     openWorldSkyObjects.push(cloud);
     scene.add(cloud);
   }
 
   const sun = new THREE.Mesh(
-    new THREE.SphereGeometry(28, 16, 12),
-    new THREE.MeshBasicMaterial({ color: 0xffef9a })
+    new THREE.SphereGeometry(32, 16, 12),
+    new THREE.MeshBasicMaterial({ color: 0xffe8a0 })
   );
-  sun.position.set(560, 420, -740);
+  sun.position.set(480, 440, -680);
   sun.userData.skySun = true;
   openWorldSkyObjects.push(sun);
   scene.add(sun);
@@ -1878,7 +1889,7 @@ function updateOpenWorldSky(dt) {
   const t = performance.now() * 0.001;
   if (frameCount % 4 === 0) {
     const mix = 0.5 + Math.sin(t * 0.12) * 0.5;
-    scene.background = new THREE.Color(0x76c7ff).lerp(new THREE.Color(0xaadfff), mix * 0.38);
+    scene.background = new THREE.Color(0x6ec8ff).lerp(new THREE.Color(0xa8dfff), mix * 0.42);
     if (scene.fog) scene.fog.color.copy(scene.background).multiplyScalar(0.92);
   }
   for (const obj of openWorldSkyObjects) {

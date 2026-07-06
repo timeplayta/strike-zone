@@ -7,7 +7,7 @@ const MAPS = [
   { id: "warehouse", category: "tiro", name: "Cold Storage", desc: "Armazém fechado" },
   { id: "horror", category: "terror", name: "Terror", desc: "Combate escuro", horror: true },
   { id: "labyrinth", category: "esconde-esconde", name: "Fim das Trevas", desc: "Labirinto de escape", horror: true },
-  { id: "frontier", category: "tiro", name: "Ilha Frontier", desc: "Ilha 2km • lobby + queda + 100 bots" },
+  { id: "frontier", category: "tiro", name: "Ilha Frontier", desc: "Ilha 2km • 10 POIs • deserto, selva e costa • 100 bots" },
 ];
 
 const CATEGORIES = ["tiro", "terror", "esconde-esconde"];

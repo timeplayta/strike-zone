@@ -171,13 +171,13 @@
     if (!hint) return;
     if (device === "mobile") {
       hint.textContent = frontier
-        ? "Battle Royale — Ilha 2km • lobby na floresta • depois queda de paraquedas"
+        ? "Battle Royale — Ilha Frontier • 10 POIs • lobby no Mercado Central"
         : horror
         ? "Joystick mover • ↑ pular • Arraste para mirar • ATIRAR • 🔦 = lanterna (mapa terror)"
         : "Joystick redondo (esquerda) = mover • Botão ↑ pular • Arraste a tela para mirar • ATIRAR = botão vermelho";
     } else {
       hint.textContent = frontier
-        ? "Battle Royale — escolha Ilha Frontier • lobby na floresta da ilha • queda e loot nas vilas"
+        ? "Battle Royale — Ilha Frontier refeita • 10 vilas • biomas e loot em cada POI"
         : horror
         ? "WASD mover • Espaço pular • J = equipar lanterna (só mapa terror) • R recarregar • Clique porta/atirar • Botão direito mirar"
         : "WASD mover • Espaço pular • E = baú de munição (base CT) • R recarregar • Clique porta/atirar • Botão direito mirar";

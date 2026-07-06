@@ -178,40 +178,55 @@ function drawLabyrinth(ctx) {
 }
 
 function drawFrontier(ctx) {
-  sky(ctx, "#7ed7ff", "#d7f2ff");
-  sun(ctx, W * 0.76, H * 0.16, 54, "rgba(255,235,160,0.95)");
-  ground(ctx, "#5fa84b", H * 0.5);
-  ctx.fillStyle = "#2b72b8";
+  sky(ctx, "#6ec8ff", "#cceeff");
+  sun(ctx, W * 0.78, H * 0.14, 58, "rgba(255,230,150,0.95)");
+  ground(ctx, "#5f9a48", H * 0.48);
+  ctx.fillStyle = "#c9ad72";
   ctx.beginPath();
-  ctx.ellipse(W * 0.5, H * 0.66, W * 0.46, H * 0.24, 0, 0, Math.PI * 2);
+  ctx.ellipse(W * 0.32, H * 0.58, W * 0.22, H * 0.14, -0.1, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "#3a7a38";
+  ctx.beginPath();
+  ctx.ellipse(W * 0.68, H * 0.62, W * 0.2, H * 0.16, 0.12, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "#1e6a9e";
+  ctx.beginPath();
+  ctx.ellipse(W * 0.5, H * 0.7, W * 0.48, H * 0.22, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.fillStyle = "#6fb25a";
   ctx.beginPath();
-  ctx.ellipse(W * 0.48, H * 0.63, W * 0.37, H * 0.2, -0.08, 0, Math.PI * 2);
+  ctx.ellipse(W * 0.48, H * 0.64, W * 0.34, H * 0.18, -0.06, 0, Math.PI * 2);
   ctx.fill();
-  ctx.strokeStyle = "rgba(255,255,255,0.78)";
-  ctx.lineWidth = 5;
+  ctx.strokeStyle = "rgba(90,70,40,0.65)";
+  ctx.lineWidth = 4;
   ctx.beginPath();
-  ctx.moveTo(170, 230);
-  ctx.bezierCurveTo(240, 190, 295, 245, 365, 200);
-  ctx.bezierCurveTo(420, 165, 480, 188, 530, 145);
+  ctx.moveTo(120, 250);
+  ctx.lineTo(280, 210);
+  ctx.lineTo(420, 240);
+  ctx.lineTo(540, 180);
   ctx.stroke();
-  ctx.strokeStyle = "rgba(255,255,255,0.5)";
+  ctx.strokeStyle = "rgba(255,255,255,0.55)";
   ctx.lineWidth = 2;
-  for (let i = 0; i < 9; i++) {
-    ctx.strokeRect(145 + (i % 3) * 34, 196 + Math.floor(i / 3) * 22, 18, 12);
-    ctx.strokeRect(410 + (i % 3) * 30, 225 + Math.floor(i / 3) * 20, 16, 11);
+  for (let i = 0; i < 6; i++) {
+    ctx.strokeRect(248 + (i % 3) * 28, 198 + Math.floor(i / 3) * 18, 14, 10);
   }
-  ctx.fillStyle = "rgba(70,70,65,0.72)";
-  for (let i = 0; i < 9; i++) {
+  ctx.fillStyle = "rgba(70,65,55,0.75)";
+  for (let i = 0; i < 7; i++) {
     ctx.beginPath();
-    ctx.moveTo(22 + i * 70, 186);
-    ctx.lineTo(58 + i * 70, 80 + (i % 3) * 24);
-    ctx.lineTo(96 + i * 70, 186);
+    ctx.moveTo(18 + i * 88, 188);
+    ctx.lineTo(48 + i * 88, 78 + (i % 3) * 22);
+    ctx.lineTo(78 + i * 88, 188);
     ctx.closePath();
     ctx.fill();
   }
-  runner(ctx, 315, 234, 0.72, "#111820", "rgba(255,255,255,0.22)");
+  ctx.fillStyle = "rgba(180,130,60,0.85)";
+  for (let i = 0; i < 5; i++) {
+    ctx.fillRect(160 + i * 18, 228, 3, 14);
+    ctx.beginPath();
+    ctx.arc(161.5 + i * 18, 226, 4, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  runner(ctx, 310, 232, 0.7, "#1a2018", "rgba(255,255,255,0.2)");
 }
 
 const DRAWERS = {
