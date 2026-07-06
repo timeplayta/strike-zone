@@ -1,6 +1,7 @@
 import * as THREE from "three";
 
 import { buildNpcWeapon } from "./npc-weapon.js";
+import { WEAPON_FPS_SCALE } from "./weapon-gltf-loader.js";
 import { applyWeaponSkin, findWeaponSkinItem } from "./weapon-skin-apply.js";
 
 import { buildMeleeFpsModel } from "./melee-weapons.js";
@@ -235,45 +236,45 @@ export function createWeaponView(camera) {
 
   const root = new THREE.Group();
 
-  root.position.set(0.22, -0.18, -0.42);
+  root.position.set(0.2, -0.16, -0.38);
 
   camera.add(root);
 
 
 
-  const akGroup = makeFpsWeapon("ak47", 0.94, 0x5c3a1e);
+  const akGroup = makeFpsWeapon("ak47", WEAPON_FPS_SCALE.ak47, 0x5c3a1e);
 
-  const scarGroup = makeFpsWeapon("scar", 0.9, 0x3a4a55);
+  const scarGroup = makeFpsWeapon("scar", WEAPON_FPS_SCALE.scar, 0x3a4a55);
 
   scarGroup.visible = false;
 
-  const m4Group = makeFpsWeapon("m4", 0.88, 0x3d4a38);
+  const m4Group = makeFpsWeapon("m4", WEAPON_FPS_SCALE.m4, 0x3d4a38);
 
   m4Group.visible = false;
 
-  const umpGroup = makeFpsWeapon("ump45", 0.84, 0x2a2a32);
+  const umpGroup = makeFpsWeapon("ump45", WEAPON_FPS_SCALE.ump45, 0x2a2a32);
 
   umpGroup.visible = false;
 
-  const awmGroup = makeFpsWeapon("awm", 1.0, 0x4a3a28);
+  const awmGroup = makeFpsWeapon("awm", WEAPON_FPS_SCALE.awm, 0x4a3a28);
 
   awmGroup.visible = false;
 
-  const shotgunGroup = makeFpsWeapon("doze", 0.92, 0x6b4423);
+  const shotgunGroup = makeFpsWeapon("doze", WEAPON_FPS_SCALE.doze, 0x6b4423);
 
   shotgunGroup.visible = false;
 
-  const bazookaGroup = makeFpsWeapon("bazooka", 1.05, 0x45305f);
+  const bazookaGroup = makeFpsWeapon("bazooka", WEAPON_FPS_SCALE.bazooka, 0x45305f);
 
   bazookaGroup.visible = false;
 
 
 
-  const glockGroup = makeFpsWeapon("glock", 0.76, 0x2a2a30);
+  const glockGroup = makeFpsWeapon("glock", WEAPON_FPS_SCALE.glock, 0x2a2a30);
 
   glockGroup.visible = false;
 
-  const revolverGroup = makeFpsWeapon("revolver", 0.8, 0x6b3f1f);
+  const revolverGroup = makeFpsWeapon("revolver", WEAPON_FPS_SCALE.revolver, 0x6b3f1f);
 
   revolverGroup.visible = false;
 

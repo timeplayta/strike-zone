@@ -22,6 +22,31 @@ const WEAPON_SOURCES = {
 /** Só usa o GLB Blockbench — nunca o modelo procedural HD */
 export const BLOCKBENCH_ONLY = new Set(["revolver"]);
 
+/** Tamanho alvo do GLB após normalizar (metros aprox.) — compacto mas legível */
+export const WEAPON_TARGET_SIZE = {
+  ak47: 0.38,
+  scar: 0.38,
+  m4: 0.37,
+  ump45: 0.36,
+  awm: 0.4,
+  doze: 0.36,
+  bazooka: 0.46,
+  glock: 0.3,
+  revolver: 0.32,
+};
+
+export const WEAPON_FPS_SCALE = {
+  ak47: 0.68,
+  scar: 0.66,
+  m4: 0.64,
+  ump45: 0.6,
+  awm: 0.72,
+  doze: 0.65,
+  bazooka: 0.68,
+  glock: 0.52,
+  revolver: 0.54,
+};
+
 const templates = new Map();
 let loadPromise = null;
 
@@ -109,7 +134,7 @@ function normalizeWeaponScale(g, type) {
   g.position.sub(center);
 
   const maxDim = Math.max(size.x, size.y, size.z, 0.01);
-  const target = type === "glock" || type === "revolver" ? 0.42 : 0.52;
+  const target = WEAPON_TARGET_SIZE[type] ?? 0.38;
   g.scale.setScalar(target / maxDim);
 }
 

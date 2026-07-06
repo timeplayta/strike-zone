@@ -477,15 +477,18 @@ export function buildHdBazooka(tint = 0x45305f) {
 }
 
 export function buildHdWeapon(type = "ak47", tint = 0x5c3a1e) {
+  let g;
   switch (type) {
-    case "scar": return buildHdScar(tint);
-    case "m4": return buildHdM4(tint);
-    case "ump45": return buildHdUmp45(tint);
-    case "awm": return buildHdAwm(tint);
-    case "doze": return buildHdShotgun(tint);
-    case "bazooka": return buildHdBazooka(tint);
-    case "glock": return buildHdGlock(tint);
-    case "revolver": return buildHdRevolver(tint);
-    default: return buildHdAk47(tint);
+    case "scar": g = buildHdScar(tint); break;
+    case "m4": g = buildHdM4(tint); break;
+    case "ump45": g = buildHdUmp45(tint); break;
+    case "awm": g = buildHdAwm(tint); break;
+    case "doze": g = buildHdShotgun(tint); break;
+    case "bazooka": g = buildHdBazooka(tint); break;
+    case "glock": g = buildHdGlock(tint); break;
+    case "revolver": g = buildHdRevolver(tint); break;
+    default: g = buildHdAk47(tint);
   }
+  g.scale.setScalar(0.78);
+  return g;
 }

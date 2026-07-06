@@ -1,21 +1,40 @@
 /** Armas reconhecíveis — GLTF quando disponível + modelos HD */
 
 import * as THREE from "three";
-import { buildWeaponModel, preloadWeaponModels } from "./weapon-gltf-loader.js";
+import { buildGltfWeapon, preloadWeaponModels } from "./weapon-gltf-loader.js";
 
 export { preloadWeaponModels, isWeaponGltfReady } from "./weapon-gltf-loader.js";
 
-/** Offsets no gunPivot do rig estilizado — mesmo eixo do rifle procedural (-Z = cano) */
+/** Pivot na mão direita do Blockbench — alinhado com pose de rifle do personagem */
+export const HAND_GUN_PIVOT = {
+  pos: [0.04, -0.02, 0.06],
+  rot: [-0.12, 0, 0.08],
+};
+
+/** Offsets para armas GLB Blockbench (cano em -Z, já normalizadas) */
+export const BLOCKBENCH_GRIP = {
+  ak47: { pos: [0.02, -0.05, 0.07], rot: [0, 0, 0], scale: 0.78 },
+  scar: { pos: [0.02, -0.05, 0.07], rot: [0, 0, 0], scale: 0.78 },
+  m4: { pos: [0.02, -0.05, 0.07], rot: [0, 0, 0], scale: 0.76 },
+  ump45: { pos: [0.02, -0.04, 0.06], rot: [0, 0, 0], scale: 0.74 },
+  awm: { pos: [0.02, -0.05, 0.08], rot: [0, 0, 0], scale: 0.8 },
+  doze: { pos: [0.02, -0.04, 0.07], rot: [0, 0, 0], scale: 0.76 },
+  bazooka: { pos: [0, -0.03, 0.1], rot: [0, 0, 0], scale: 0.62 },
+  glock: { pos: [0, -0.025, 0.035], rot: [0, 0, 0], scale: 0.82 },
+  revolver: { pos: [0, -0.025, 0.035], rot: [0, 0, 0], scale: 0.8 },
+};
+
+/** Fallback procedural HD — eixo diferente do GLB */
 export const STYLIZED_GRIP = {
-  ak47: { pos: [0.02, -0.03, -0.05], rot: [-1.5708, Math.PI, 0.06], scale: 0.52 },
-  scar: { pos: [0, 0, 0], rot: [0, 0, 0], scale: 0.5 },
-  m4: { pos: [0, 0, 0], rot: [0, 0, 0], scale: 0.5 },
-  ump45: { pos: [0, 0, 0.01], rot: [0, 0, 0], scale: 0.48 },
-  awm: { pos: [0, 0, 0], rot: [0, 0, 0], scale: 0.52 },
-  doze: { pos: [0, 0.005, 0.02], rot: [0, 0, 0], scale: 0.5 },
-  bazooka: { pos: [0, -0.01, 0.05], rot: [0, 0, 0], scale: 0.36 },
-  glock: { pos: [0, 0, 0.03], rot: [0, 0, 0], scale: 0.58 },
-  revolver: { pos: [0, 0, 0.02], rot: [0, 0, 0], scale: 0.55 },
+  ak47: { pos: [0.02, -0.03, -0.05], rot: [-1.5708, Math.PI, 0.06], scale: 0.42 },
+  scar: { pos: [0, 0, 0], rot: [0, 0, 0], scale: 0.4 },
+  m4: { pos: [0, 0, 0], rot: [0, 0, 0], scale: 0.4 },
+  ump45: { pos: [0, 0, 0.01], rot: [0, 0, 0], scale: 0.38 },
+  awm: { pos: [0, 0, 0], rot: [0, 0, 0], scale: 0.42 },
+  doze: { pos: [0, 0.005, 0.02], rot: [0, 0, 0], scale: 0.4 },
+  bazooka: { pos: [0, -0.01, 0.05], rot: [0, 0, 0], scale: 0.3 },
+  glock: { pos: [0, 0, 0.03], rot: [0, 0, 0], scale: 0.48 },
+  revolver: { pos: [0, 0, 0.02], rot: [0, 0, 0], scale: 0.46 },
 };
 
 /** Offsets Mixamo — mão direita, cano para frente */
@@ -36,6 +55,17 @@ function tuneWeaponMeshes(gun) {
     if (o.isMesh) {
       o.castShadow = false;
       o.frustumCulled = true;
+      const mats = Array.isArray(o.material) ? o.material : [o.material];
+      for (const m of mats) {
+        if (!m?.isMeshStandardMaterial) continue;
+        if (m.userData?.weaponPart === "metal") {
+          m.metalness = Math.min(Math.max(m.metalness ?? 0.7, 0.55), 0.92);
+          m.roughness = Math.min(Math.max(m.roughness ?? 0.35, 0.18), 0.42);
+        } else if (m.userData?.weaponPart === "grip" || m.userData?.weaponPart === "body") {
+          m.roughness = Math.max(m.roughness ?? 0.72, 0.62);
+          m.metalness = Math.min(m.metalness ?? 0.08, 0.15);
+        }
+      }
     }
   });
 }
@@ -50,14 +80,28 @@ export function pickNpcWeaponType(index, total = 4, role = null) {
 }
 
 export function buildNpcWeapon(type = "ak47", tint = 0x5c3a1e) {
-  return buildWeaponModel(type, tint);
+  return buildGltfWeapon(type, tint);
+}
+
+export function ensureHandGunPivot(anchor) {
+  if (!anchor) return null;
+  let gunPivot = anchor.getObjectByName("gunPivot");
+  if (!gunPivot) {
+    gunPivot = new THREE.Group();
+    gunPivot.name = "gunPivot";
+    gunPivot.position.set(...HAND_GUN_PIVOT.pos);
+    gunPivot.rotation.set(...HAND_GUN_PIVOT.rot);
+    anchor.add(gunPivot);
+  }
+  return gunPivot;
 }
 
 export function attachStylizedWeapon(rig, gun, weaponType = "ak47") {
   if (!gun || !rig?.gunPivot) return { gun, pivot: null };
 
   rig.gunPivot.clear();
-  const cfg = STYLIZED_GRIP[weaponType] || STYLIZED_GRIP.ak47;
+  const gripTable = gun.userData?.isGltf ? BLOCKBENCH_GRIP : STYLIZED_GRIP;
+  const cfg = gripTable[weaponType] || gripTable.ak47;
   gun.scale.setScalar(cfg.scale);
   gun.position.set(...cfg.pos);
   gun.rotation.set(...cfg.rot);
