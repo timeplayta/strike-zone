@@ -3,12 +3,16 @@
 import { getMapCardArtUrl } from "./map-card-art.js?v=72";
 
 const MAPS = [
-  { id: "dust", mode: "Jogo de tiro", name: "Dust Alley", desc: "Deserto aberto" },
-  { id: "warehouse", mode: "Jogo de tiro", name: "Cold Storage", desc: "Armazém fechado" },
-  { id: "horror", mode: "Terror", name: "Terror", desc: "Combate escuro", horror: true },
-  { id: "labyrinth", mode: "Terror", name: "Fim das Trevas", desc: "Labirinto de escape", horror: true },
-  { id: "frontier", mode: "Battle Royale", name: "Ilha Frontier", desc: "Ilha 2km • lobby + queda + 100 bots" },
+  { id: "dust", category: "tiro", name: "Dust Alley", desc: "Deserto aberto" },
+  { id: "warehouse", category: "tiro", name: "Cold Storage", desc: "Armazém fechado" },
+  { id: "horror", category: "terror", name: "Terror", desc: "Combate escuro", horror: true },
+  { id: "labyrinth", category: "esconde-esconde", name: "Fim das Trevas", desc: "Labirinto de escape", horror: true },
+  { id: "frontier", category: "tiro", name: "Ilha Frontier", desc: "Ilha 2km • lobby + queda + 100 bots" },
 ];
+
+const CATEGORIES = ["tiro", "terror", "esconde-esconde"];
+
+let activeCategory = "tiro";
 
 function $(id) {
   return document.getElementById(id);
@@ -18,31 +22,56 @@ function selectedMapId() {
   return document.querySelector(".map-btn.selected")?.dataset?.map || "dust";
 }
 
+function categoryForMap(mapId) {
+  return MAPS.find((m) => m.id === mapId)?.category || "tiro";
+}
+
 function buildMapCards() {
   const grid = $("ffMapCardGrid");
   if (!grid) return;
-  if (grid.dataset.built === "1" && grid.children.length) return;
+  if (grid.dataset.built === "3" && grid.children.length) return;
   try {
     grid.innerHTML = MAPS.map((m) => {
       const art = getMapCardArtUrl(m.id);
       const sel = m.id === selectedMapId() ? " selected" : "";
       const horror = m.horror ? " ff-map-card-horror" : "";
       return (
+        `<div class="ff-map-item" data-category="${m.category}">` +
         `<button type="button" class="map-btn ff-map-card${horror}${sel}" data-map="${m.id}">` +
         `<img class="ff-map-card-img" src="${art}" alt="${m.name}" loading="lazy" />` +
         `<span class="ff-map-card-shade"></span>` +
         `<span class="ff-map-card-body">` +
-        `<span class="ff-map-card-mode">${m.mode}</span>` +
         `<span class="map-name">${m.name}</span>` +
         `<span class="map-desc">${m.desc}</span>` +
-        `</span></button>`
+        `</span></button>` +
+        `</div>`
       );
     }).join("");
-    grid.dataset.built = "1";
+    grid.dataset.built = "3";
   } catch (err) {
     console.warn("[Strike Zone] Falha ao montar cards de mapa:", err);
     grid.dataset.built = "0";
   }
+}
+
+function syncCategoryBar() {
+  document.querySelectorAll("#ffMapCategoryBar .ff-map-cat-btn").forEach((btn) => {
+    btn.classList.toggle("selected", btn.dataset.category === activeCategory);
+    btn.setAttribute("aria-pressed", btn.dataset.category === activeCategory ? "true" : "false");
+  });
+}
+
+function applyCategoryFilter() {
+  document.querySelectorAll("#ffMapCardGrid .ff-map-item").forEach((item) => {
+    item.classList.toggle("hidden", item.dataset.category !== activeCategory);
+  });
+  syncCategoryBar();
+}
+
+function setActiveCategory(category) {
+  if (!CATEGORIES.includes(category)) return;
+  activeCategory = category;
+  applyCategoryFilter();
 }
 
 function syncCardSelection() {
@@ -54,6 +83,8 @@ function syncCardSelection() {
 
 export function openMapFullscreen() {
   buildMapCards();
+  activeCategory = categoryForMap(selectedMapId());
+  applyCategoryFilter();
   syncCardSelection();
   const el = $("ffMapFullscreen");
   if (!el) return;
@@ -111,12 +142,20 @@ export function initMapView() {
     if (e.target.id === "ffMapFullscreen") closeMapFullscreen();
   });
 
-  $("ffMapCardGrid")?.addEventListener("click", (e) => {
-    const btn = e.target.closest(".map-btn");
-    if (!btn) return;
+  $("ffMapCategoryBar")?.addEventListener("click", (e) => {
+    const catBtn = e.target.closest(".ff-map-cat-btn");
+    if (!catBtn?.dataset?.category) return;
     e.preventDefault();
     e.stopPropagation();
-    onMapCardClick(btn);
+    setActiveCategory(catBtn.dataset.category);
+  });
+
+  $("ffMapCardGrid")?.addEventListener("click", (e) => {
+    const mapBtn = e.target.closest(".map-btn");
+    if (!mapBtn) return;
+    e.preventDefault();
+    e.stopPropagation();
+    onMapCardClick(mapBtn);
   });
 
   document.addEventListener("keydown", (e) => {
