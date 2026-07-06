@@ -57,6 +57,16 @@ import { createWeaponView, setWeaponView, setWeaponADS, triggerMuzzleFlash, trig
 import { findWeaponSkinItem } from "./weapon-skin-apply.js";
 import { spawnMeleePickups, updateMeleePickups, tryPickupMelee, collectMeleePickup } from "./melee-pickups.js";
 import { spawnBattleRoyaleLoot, updateBattleRoyaleLoot, tryPickupBattleRoyaleLoot, collectBattleRoyaleLoot } from "./battle-royale-loot.js";
+import {
+  LOBBY_RADIUS,
+  LOBBY_WORLD,
+  makeBattleRoyaleLobbyForest,
+  hideWorldForLobby,
+  restoreWorldAfterLobby,
+  clearLobbyOtherPlayers,
+  updateLobbyPlayerPhysics,
+  animateLobbyJumpPads,
+} from "./battle-royale-lobby.js";
 import { createExitZone, updateExitZone, checkExitReached } from "./exit-zone.js";
 import { playGunshot, playEmptyClip } from "./audio.js";
 import { showJumpscareOverlay, isJumpscareActive } from "./horror-jumpscare.js";
@@ -813,7 +823,7 @@ function applyBattleRoyaleThirdPersonCamera(pos, opts = {}) {
     pos.y + baseY + lookY - Math.sin(p) * dist,
     pos.z + Math.cos(yaw) * cp * dist
   );
-  camera.lookAt(pos.x, pos.y + lookY, pos.z);
+  camera.lookAt(pos.x, pos.y + baseY + lookY * 0.92, pos.z);
 }
 
 function getBattleRoyaleDropForward(d) {
@@ -876,94 +886,67 @@ function readBattleRoyaleMoveInput() {
   return { inputX, inputZ, len: Math.hypot(inputX, inputZ) };
 }
 
-function makeBattleRoyaleLobby() {
-  const g = new THREE.Group();
-  const platform = new THREE.Mesh(
-    new THREE.CylinderGeometry(152, 158, 1.8, 64),
-    new THREE.MeshStandardMaterial({ color: 0x4a9a48, roughness: 0.82, metalness: 0.04 })
-  );
-  platform.position.y = 0.9;
-  g.add(platform);
-  const grass = new THREE.Mesh(
-    new THREE.CircleGeometry(150, 64),
-    new THREE.MeshStandardMaterial({ color: 0x58b957, roughness: 0.86, metalness: 0.02 })
-  );
-  grass.rotation.x = -Math.PI / 2;
-  grass.position.y = 1.82;
-  g.add(grass);
-  const ring = new THREE.Mesh(
-    new THREE.TorusGeometry(128, 1.2, 8, 64),
-    new THREE.MeshStandardMaterial({ color: 0xffd85a, roughness: 0.45, metalness: 0.2 })
-  );
-  ring.rotation.x = Math.PI / 2;
-  ring.position.y = 1.88;
-  g.add(ring);
-  const colors = [0xff5533, 0x3377ff, 0xffcc33, 0x55dd88, 0xaa66ff, 0xff66aa];
-  for (let i = 0; i < 24; i++) {
-    const a = i * Math.PI * 2 / 24;
-    const r = 32 + (i % 4) * 22;
-    const box = new THREE.Mesh(
-      new THREE.BoxGeometry(4 + (i % 3) * 2, 1.2 + (i % 2) * 0.6, 4 + (i % 4)),
-      new THREE.MeshStandardMaterial({ color: colors[i % colors.length], roughness: 0.55, metalness: 0.04 })
-    );
-    box.position.set(Math.cos(a) * r, 2.45, Math.sin(a) * r);
-    box.rotation.y = -a;
-    g.add(box);
-  }
-  for (let i = 0; i < 10; i++) {
-    const a = i * Math.PI * 2 / 10 + 0.2;
-    const balloon = new THREE.Group();
-    balloon.add(new THREE.Mesh(new THREE.SphereGeometry(2.6, 12, 10), new THREE.MeshStandardMaterial({ color: colors[i % colors.length], roughness: 0.35 })));
-    balloon.add(new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 10, 5), new THREE.MeshBasicMaterial({ color: 0xffffff })));
-    balloon.children[1].position.y = -5.5;
-    balloon.position.set(Math.cos(a) * 95, 14 + (i % 3) * 2, Math.sin(a) * 95);
-    g.add(balloon);
-  }
-  for (let i = 0; i < 18; i++) {
-    const avatar = makeDropAvatar();
-    const a = i * 2.399963;
-    avatar.position.set(Math.cos(a) * (18 + (i % 5) * 9), 1.82, Math.sin(a) * (18 + (i % 5) * 9));
-    avatar.rotation.y = -a;
-    avatar.scale.setScalar(0.9);
-    g.add(avatar);
-  }
-  g.userData.lobbyProps = true;
-  return g;
-}
-
 function startBattleRoyaleLobby() {
   if (!mapData?.openWorld || !scene || adminPreviewMode === "map") {
     battleRoyaleDrop = null;
     return;
   }
-  const lobby = makeBattleRoyaleLobby();
+  const lobby = makeBattleRoyaleLobbyForest();
+  const spawn = lobby.userData.spawnLocal;
+  const startX = LOBBY_WORLD.x + spawn.x;
+  const startZ = LOBBY_WORLD.z + spawn.z;
   const lobbyAvatar = makeDropAvatar();
-  lobbyAvatar.position.set(0, 1.82, 42);
+  lobbyAvatar.userData.lobbyAvatar = true;
+  lobbyAvatar.position.set(startX, 0, startZ);
   lobbyAvatar.rotation.y = Math.PI;
   scene.add(lobby);
   scene.add(lobbyAvatar);
+  const hiddenWorld = hideWorldForLobby(scene, lobby, [lobbyAvatar]);
+  if (camera) {
+    camera.far = 920;
+    camera.updateProjectionMatrix();
+  }
+  if (scene.fog) {
+    scene.fog.near = 80;
+    scene.fog.far = 520;
+  }
+  scene.background = new THREE.Color(0x7ec8ff);
   battleRoyaleDrop = {
     phase: "lobby",
     lobby,
     lobbyAvatar,
+    hiddenWorld,
+    jumpPads: lobby.userData.jumpPads,
+    otherAvatars: new Map(),
     lobbyLeft: BR_LOBBY_SECONDS,
     phaseStarted: performance.now(),
-    pos: new THREE.Vector3(0, 1.82, 42),
+    pos: new THREE.Vector3(startX, 0, startZ),
     vel: new THREE.Vector3(),
+    velY: 0,
+    jumpY: 0,
+    grounded: true,
+    padCooldown: 0,
   };
   yaw = Math.PI;
-  pitch = -0.28;
-  applyBattleRoyaleThirdPersonCamera(battleRoyaleDrop.pos, { dist: 8, lookY: 1.2 });
+  pitch = -0.22;
+  applyBattleRoyaleThirdPersonCamera(battleRoyaleDrop.pos, { dist: 8.5, lookY: 1.35, baseY: battleRoyaleDrop.jumpY });
   moveVel.x = 0;
   moveVel.z = 0;
   enemyMoveAllowedAt = Number.POSITIVE_INFINITY;
   if (weaponView) hideAllWeapons(weaponView);
-  showOverlay("A partida irá começar em breve");
+  showOverlay("Mini floresta — explore, pule nas rodas e espere a queda");
 }
 
 function finishBattleRoyaleLobby() {
+  restoreWorldAfterLobby(battleRoyaleDrop?.hiddenWorld);
+  clearLobbyOtherPlayers(battleRoyaleDrop, scene);
   if (battleRoyaleDrop?.lobby) scene.remove(battleRoyaleDrop.lobby);
   if (battleRoyaleDrop?.lobbyAvatar) scene.remove(battleRoyaleDrop.lobbyAvatar);
+  if (camera && mapData?.openWorld) {
+    camera.far = 1800;
+    camera.updateProjectionMatrix();
+  }
+  applyMapAtmosphere();
   startBattleRoyaleDrop();
 }
 
@@ -1086,30 +1069,29 @@ function updateBattleRoyaleDrop(dt) {
     d.lobbyLeft = Math.max(0, BR_LOBBY_SECONDS - (performance.now() - d.phaseStarted) / 1000);
     const left = Math.ceil(d.lobbyLeft);
     const obj = document.getElementById("objective");
-    if (obj) obj.textContent = `A partida irá começar em ${left}s`;
+    if (obj) obj.textContent = `Floresta do lobby — começa em ${left}s • pule nas rodas`;
     const timerEl = document.getElementById("timer");
     if (timerEl) timerEl.textContent = `Começa ${left}s`;
     const move = readBattleRoyaleMoveInput();
-    const speed = 8.2;
+    const speed = 8.6;
     if (move.len > 0.05) {
       d.pos.x += (move.inputX / move.len) * speed * dt;
       d.pos.z += (move.inputZ / move.len) * speed * dt;
-      const r = Math.hypot(d.pos.x, d.pos.z);
-      if (r > 138) {
-        d.pos.x = (d.pos.x / r) * 138;
-        d.pos.z = (d.pos.z / r) * 138;
+      const lx = d.pos.x - LOBBY_WORLD.x;
+      const lz = d.pos.z - LOBBY_WORLD.z;
+      const r = Math.hypot(lx, lz);
+      if (r > LOBBY_RADIUS - 6) {
+        d.pos.x = LOBBY_WORLD.x + (lx / r) * (LOBBY_RADIUS - 6);
+        d.pos.z = LOBBY_WORLD.z + (lz / r) * (LOBBY_RADIUS - 6);
       }
     }
+    updateLobbyPlayerPhysics(d, dt, d.jumpPads, keys);
     if (d.lobbyAvatar) {
-      d.lobbyAvatar.position.set(d.pos.x, 1.82, d.pos.z);
+      d.lobbyAvatar.position.set(d.pos.x, d.jumpY, d.pos.z);
       d.lobbyAvatar.rotation.y = yaw;
     }
-    applyBattleRoyaleThirdPersonCamera(d.pos, { dist: 8, lookY: 1.2, baseY: 1.82 });
-    if (d.lobby) {
-      d.lobby.children.forEach((c, i) => {
-        if (i > 25 && c.isGroup) c.position.y = Math.sin(performance.now() * 0.002 + i) * 0.05;
-      });
-    }
+    applyBattleRoyaleThirdPersonCamera(d.pos, { dist: 8.5, lookY: 1.35, baseY: d.jumpY });
+    animateLobbyJumpPads(d.lobby, performance.now());
     if (d.lobbyLeft <= 0) finishBattleRoyaleLobby();
     return true;
   }
@@ -1328,9 +1310,9 @@ function startGame(config = {}) {
         document.getElementById("objective").textContent =
           "Sobreviva — Gosmento, Gigante e Bam-Bam estão no mapa • J = lanterna";
       } else if (mapData.openWorld) {
-        showOverlay("Battle Royale — lobby antes da queda");
+        showOverlay("Battle Royale — mini floresta do lobby");
         document.getElementById("objective").textContent =
-          "Lobby colorido: espere a contagem para entrar no automóvel voador";
+          "Explore a floresta, pule nas rodas e espere o voo para a ilha";
       } else {
         showOverlay(`ROUND ${round} — Inimigos entram em 3s`);
         document.getElementById("objective").textContent = isMobileMode()
