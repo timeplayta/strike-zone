@@ -3,8 +3,15 @@ import * as THREE from "three";
 /** Diâmetro do lobby em metros */
 export const LOBBY_DIAMETER = 500;
 export const LOBBY_RADIUS = LOBBY_DIAMETER / 2;
-/** Centro isolado — mapa principal fica escondido durante o lobby */
+/** Centro padrão do lobby (safe zone da Frontier quando disponível). */
 export const LOBBY_WORLD = { x: 0, z: 0 };
+
+export function getLobbyWorldCenter(mapData) {
+  if (mapData?.safeZoneCenter) {
+    return { x: mapData.safeZoneCenter.x, z: mapData.safeZoneCenter.z };
+  }
+  return { ...LOBBY_WORLD };
+}
 
 const GRASS = 0x4a9a48;
 const GRASS_LIGHT = 0x58b957;
@@ -265,7 +272,6 @@ export function makeBattleRoyaleLobbyForest() {
     jumpPads.push(pad.userData.jumpPad);
   }
 
-  g.position.set(LOBBY_WORLD.x, 0.06, LOBBY_WORLD.z);
   g.userData.jumpPads = jumpPads;
   g.userData.spawnLocal = { x: 0, z: 24 };
 
@@ -329,8 +335,9 @@ export function syncLobbyOtherPlayers(lobbyState, scene, makeAvatar, players = [
       scene.add(av);
       lobbyState.otherAvatars.set(p.id, av);
     }
-    const wx = LOBBY_WORLD.x + (p.x ?? 0);
-    const wz = LOBBY_WORLD.z + (p.z ?? 0);
+    const lc = lobbyState.lobbyCenter || LOBBY_WORLD;
+    const wx = lc.x + (p.x ?? 0);
+    const wz = lc.z + (p.z ?? 0);
     const wy = 0;
     av.position.set(wx, wy + (p.jumpY ?? 0), wz);
     av.rotation.y = p.yaw ?? 0;
@@ -354,8 +361,9 @@ export function clearLobbyOtherPlayers(lobbyState, scene) {
 const LOBBY_GRAVITY = 26;
 const LOBBY_JUMP = 7.5;
 
-export function updateLobbyPlayerPhysics(state, dt, jumpPads, keys) {
+export function updateLobbyPlayerPhysics(state, dt, jumpPads, keys, lobbyCenter) {
   if (!state) return;
+  const lc = lobbyCenter || state.lobbyCenter || LOBBY_WORLD;
   state.velY = state.velY ?? 0;
   state.jumpY = state.jumpY ?? 0;
   state.grounded = state.grounded !== false;
@@ -377,8 +385,8 @@ export function updateLobbyPlayerPhysics(state, dt, jumpPads, keys) {
 
   if (state.grounded && jumpPads?.length) {
     for (const pad of jumpPads) {
-      const wx = LOBBY_WORLD.x + pad.localX;
-      const wz = LOBBY_WORLD.z + pad.localZ;
+      const wx = lc.x + pad.localX;
+      const wz = lc.z + pad.localZ;
       const dist = Math.hypot(state.pos.x - wx, state.pos.z - wz);
       if (dist <= pad.radius) {
         state.velY = pad.power;

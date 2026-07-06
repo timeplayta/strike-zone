@@ -1,6 +1,7 @@
 /**
  * Pré-carregamento completo do Strike Zone — personagens, armas, mapas, props e motor.
  * Usado na tela de boot (PWA / tela inicial e primeira entrada).
+ * Após a 1ª visita bem-sucedida, visitas seguintes usam caminho rápido (localStorage).
  */
 
 export function isInstalledApp() {
@@ -11,16 +12,37 @@ export function isInstalledApp() {
   );
 }
 
+/** Bump quando assets críticos mudarem — invalida skip do boot. */
+const PRELOAD_DONE_KEY = "strikezone_assets_v109";
+
 const CRITICAL_FETCH = [
   "/assets/models/blockbench/characters/player_hero.glb",
+  "/assets/models/blockbench/characters/operator.glb",
   "/assets/models/blockbench/characters/player_neon_runner.glb",
   "/assets/models/blockbench/characters/player_shadow.glb",
   "/assets/models/blockbench/characters/cowboy_sheriff.glb",
   "./assets/models/blockbench/props/flying_drop_vehicle.glb",
   "./assets/models/blockbench/props/br_house_enterable.glb",
+  "./assets/models/blockbench/props/border_mountain.glb",
+  "./assets/models/blockbench/props/cactus_prop.glb",
+  "./assets/models/blockbench/props/parachute_default.glb",
+  "./assets/models/blockbench/props/rock_cluster.glb",
   "./assets/models/blockbench/loot/loot_crate.glb",
   "./assets/textures/dust/bricks094/Bricks094_1K-JPG_Color.jpg",
   "./assets/textures/dust/woodfloor062/WoodFloor062_1K-JPG_Color.jpg",
+];
+
+const FRONTIER_BLOCKBENCH = [
+  "border_mountain",
+  "cactus_prop",
+  "parachute_default",
+  "rock_cluster",
+  "flying_drop_vehicle",
+  "br_house_enterable",
+  "br_monster",
+  "loot_crate",
+  "loot_ammo_ar",
+  "loot_ammo_doze",
 ];
 
 async function warmCriticalFiles(onProgress, basePct, span) {
@@ -42,11 +64,43 @@ async function warmCriticalFiles(onProgress, basePct, span) {
   );
 }
 
+async function runFastPreload(report) {
+  report(12, "Recuperando do cache — validando motor…");
+  const [{ preloadPlayerCharacterModels, isPlayerBlockbenchReady }] = await Promise.all([
+    import("./player-character.js"),
+    import("./maps.js"),
+  ]);
+  await preloadPlayerCharacterModels();
+
+  report(55, "Motor do jogo…");
+  await import("./game.js?v=97");
+
+  if (typeof window.startStrikeZone !== "function") {
+    throw new Error("game.js não definiu startStrikeZone");
+  }
+  if (!isPlayerBlockbenchReady()) {
+    localStorage.removeItem(PRELOAD_DONE_KEY);
+    throw new Error("Modelo Blockbench do jogador não carregou. Use Ctrl+Shift+R.");
+  }
+
+  report(100, "Pronto!");
+}
+
 /**
  * @param {(state: { pct: number, label: string }) => void} onProgress
  */
 export async function runGamePreload(onProgress) {
   const report = (pct, label) => onProgress?.({ pct: Math.min(100, Math.max(0, pct)), label });
+
+  if (localStorage.getItem(PRELOAD_DONE_KEY) === "1") {
+    try {
+      await runFastPreload(report);
+      return;
+    } catch (err) {
+      console.warn("Strike Zone: preload rápido falhou, recarregando tudo…", err);
+      localStorage.removeItem(PRELOAD_DONE_KEY);
+    }
+  }
 
   report(2, isInstalledApp() ? "App na tela inicial — preparando tudo…" : "Preparando Strike Zone…");
 
@@ -65,6 +119,11 @@ export async function runGamePreload(onProgress) {
   report(44, "Props, casas e loot da ilha…");
   const { preloadBlockbenchModels } = await import("./blockbench-model-loader.js");
   await preloadBlockbenchModels();
+
+  report(52, "Ilha Frontier — mapa e objetos…");
+  const { getMap } = await import("./maps.js");
+  getMap("frontier");
+  await preloadBlockbenchModels(FRONTIER_BLOCKBENCH);
 
   report(58, "Monstros e efeitos de terror…");
   const [{ preloadGrimyHand }, { preloadRogerJanitor }] = await Promise.all([
@@ -97,6 +156,7 @@ export async function runGamePreload(onProgress) {
     throw new Error("Modelo Blockbench do jogador não carregou. Use Ctrl+Shift+R.");
   }
 
+  localStorage.setItem(PRELOAD_DONE_KEY, "1");
   report(100, "Pronto!");
 }
 

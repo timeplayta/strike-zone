@@ -4,7 +4,7 @@ import {
   ENEMY_BASE_HP,
   ENEMY_BASE_FIRE_MS,
 } from "./bot-difficulty.js";
-import { MAPS, isHorrorMap, isLabyrinthMap, isNoCombatMap, isDarkMap, getMapMeta } from "./maps.js";
+import { MAPS, isHorrorMap, isLabyrinthMap, isNoCombatMap, isDarkMap, getMapMeta, getOpenWorldGroundY } from "./maps.js";
 import {
   createBandit,
   createBoss,
@@ -59,9 +59,8 @@ import { spawnMeleePickups, updateMeleePickups, tryPickupMelee, collectMeleePick
 import { spawnBattleRoyaleLoot, updateBattleRoyaleLoot, tryPickupBattleRoyaleLoot, collectBattleRoyaleLoot } from "./battle-royale-loot.js";
 import {
   LOBBY_RADIUS,
-  LOBBY_WORLD,
   makeBattleRoyaleLobbyForest,
-  hideWorldForLobby,
+  getLobbyWorldCenter,
   restoreWorldAfterLobby,
   clearLobbyOtherPlayers,
   setLobbyCombatantsVisible,
@@ -962,39 +961,39 @@ function startBattleRoyaleLobby() {
     return;
   }
   try {
+    const lobbyCenter = getLobbyWorldCenter(mapData);
     const lobby = makeBattleRoyaleLobbyForest();
     const spawn = lobby.userData.spawnLocal;
-    const startX = LOBBY_WORLD.x + spawn.x;
-    const startZ = LOBBY_WORLD.z + spawn.z;
+    const groundAtCenter = getOpenWorldGroundY(lobbyCenter.x, lobbyCenter.z, mapData);
+    lobby.position.set(lobbyCenter.x, groundAtCenter, lobbyCenter.z);
+    const startX = lobbyCenter.x + spawn.x;
+    const startZ = lobbyCenter.z + spawn.z;
+    const baseGroundY = getOpenWorldGroundY(startX, startZ, mapData);
     const lobbyAvatar = makeDropAvatar();
     lobbyAvatar.userData.lobbyAvatar = true;
-    lobbyAvatar.position.set(startX, 0.06, startZ);
+    lobbyAvatar.position.set(startX, baseGroundY, startZ);
     lobbyAvatar.rotation.y = Math.PI;
     scene.add(lobby);
     scene.add(lobbyAvatar);
-    const hiddenWorld = hideWorldForLobby(scene, lobby, [lobbyAvatar]);
     setLobbyCombatantsVisible(enemies, helpers, false);
     document.body.classList.add("br-lobby-active");
+    applyMapAtmosphere();
     if (camera) {
-      camera.far = 920;
+      camera.far = 2400;
       camera.updateProjectionMatrix();
-    }
-    scene.background = new THREE.Color(0x7ec8ff);
-    if (scene.fog) {
-      scene.fog.color.set(0x9ad4ff);
-      scene.fog.near = 80;
-      scene.fog.far = 520;
     }
     battleRoyaleDrop = {
       phase: "lobby",
       lobby,
       lobbyAvatar,
-      hiddenWorld,
+      lobbyCenter: { ...lobbyCenter },
+      baseGroundY,
+      hiddenWorld: null,
       jumpPads: lobby.userData.jumpPads,
       otherAvatars: new Map(),
       lobbyLeft: BR_LOBBY_SECONDS,
       phaseStarted: performance.now(),
-      pos: new THREE.Vector3(startX, 0.06, startZ),
+      pos: new THREE.Vector3(startX, baseGroundY, startZ),
       vel: new THREE.Vector3(),
       velY: 0,
       jumpY: 0,
@@ -1008,7 +1007,7 @@ function startBattleRoyaleLobby() {
     moveVel.z = 0;
     enemyMoveAllowedAt = Number.POSITIVE_INFINITY;
     if (weaponView) hideAllWeapons(weaponView);
-    showOverlay("Lobby — mini floresta 500m • pule nas rodas e espere a queda");
+    showOverlay("Lobby na ilha — explore a safe zone enquanto espera a queda");
   } catch (err) {
     console.error("Strike Zone: falha ao criar lobby BR", err);
     battleRoyaleDrop = null;
@@ -1151,25 +1150,26 @@ function updateBattleRoyaleDrop(dt) {
     d.lobbyLeft = Math.max(0, BR_LOBBY_SECONDS - (performance.now() - d.phaseStarted) / 1000);
     const left = Math.ceil(d.lobbyLeft);
     const obj = document.getElementById("objective");
-    if (obj) obj.textContent = `Lobby floresta — começa em ${left}s • pule nas rodas laranjas`;
+    if (obj) obj.textContent = `Lobby na ilha — queda em ${left}s • pule nas rodas laranjas`;
     const timerEl = document.getElementById("timer");
     if (timerEl) timerEl.textContent = `Começa ${left}s`;
     const move = readBattleRoyaleMoveInput();
     const speed = 8.6;
     if (move.len > 0.05) {
+    const lc = d.lobbyCenter || { x: 0, z: 0 };
       d.pos.x += (move.inputX / move.len) * speed * dt;
       d.pos.z += (move.inputZ / move.len) * speed * dt;
-      const lx = d.pos.x - LOBBY_WORLD.x;
-      const lz = d.pos.z - LOBBY_WORLD.z;
+      const lx = d.pos.x - lc.x;
+      const lz = d.pos.z - lc.z;
       const r = Math.hypot(lx, lz);
       if (r > LOBBY_RADIUS - 6) {
-        d.pos.x = LOBBY_WORLD.x + (lx / r) * (LOBBY_RADIUS - 6);
-        d.pos.z = LOBBY_WORLD.z + (lz / r) * (LOBBY_RADIUS - 6);
+        d.pos.x = lc.x + (lx / r) * (LOBBY_RADIUS - 6);
+        d.pos.z = lc.z + (lz / r) * (LOBBY_RADIUS - 6);
       }
     }
-    updateLobbyPlayerPhysics(d, dt, d.jumpPads, keys);
+    updateLobbyPlayerPhysics(d, dt, d.jumpPads, keys, d.lobbyCenter);
     if (d.lobbyAvatar) {
-      d.lobbyAvatar.position.set(d.pos.x, 0.06 + d.jumpY, d.pos.z);
+      d.lobbyAvatar.position.set(d.pos.x, (d.baseGroundY ?? 0) + d.jumpY, d.pos.z);
       d.lobbyAvatar.rotation.y = yaw;
     }
     applyBattleRoyaleThirdPersonCamera(d.pos, { dist: 8.5, lookY: 1.35, baseY: d.jumpY });
@@ -1677,6 +1677,7 @@ function initThree() {
   document.addEventListener("keyup", onKeyUp);
   document.addEventListener("mousemove", onMouseMove);
   document.addEventListener("mousedown", (e) => {
+    if (window.__strikeInGameMenuOpen) return;
     if (isMobileMode()) return;
     if (e.button === 2) {
       e.preventDefault();
@@ -2170,13 +2171,22 @@ function initPlayer() {
   player.alive = true;
   player.baseY = 0;
   initJumpState(player);
-  const spawn = mapData.spawnPlayer || mapData.spawnCT;
-  yaw = isLabyrinthMap(mapData) ? 0 : Math.atan2(
-    mapData.spawnT.x - mapData.spawnCT.x,
-    mapData.spawnT.z - mapData.spawnCT.z
-  );
-  pitch = 0;
-  camera.position.set(spawn.x, 1.65, spawn.z);
+  if (mapData?.openWorld) {
+    const center = getLobbyWorldCenter(mapData);
+    const spawn = { x: center.x, z: center.z + 24 };
+    const groundY = getOpenWorldGroundY(spawn.x, spawn.z, mapData);
+    yaw = Math.PI;
+    pitch = -0.22;
+    camera.position.set(spawn.x, groundY + PLAYER_EYE_HEIGHT, spawn.z);
+  } else {
+    const spawn = mapData.spawnPlayer || mapData.spawnCT;
+    yaw = isLabyrinthMap(mapData) ? 0 : Math.atan2(
+      mapData.spawnT.x - mapData.spawnCT.x,
+      mapData.spawnT.z - mapData.spawnCT.z
+    );
+    pitch = 0;
+    camera.position.set(spawn.x, 1.65, spawn.z);
+  }
   applyCameraRotation();
   updateHealthHUD();
 }
@@ -2660,6 +2670,7 @@ function findEnemyFromHit(obj) {
 
 function onKeyDown(e) {
   if (window.__devChatOpen) return;
+  if (window.__strikeInGameMenuOpen) return;
   keys[e.code] = true;
   if (e.code === "Escape" && adminLiveSpectator) {
     toggleAdminLiveSpectator(false);
@@ -2714,6 +2725,7 @@ function onKeyUp(e) {
 }
 
 function onMouseMove(e) {
+  if (window.__strikeInGameMenuOpen) return;
   if (isMobileMode() || inCinematic) return;
   if (adminPreviewMode === "character" || (adminSpectator && adminNoclip)) {
     lookDelta.x += e.movementX;
@@ -2802,6 +2814,7 @@ function reload() {
 }
 
 function shoot() {
+  if (window.__strikeInGameMenuOpen) return;
   if (player.dead || inCinematic || !roundActive || weaponPickPending) return;
   if (!currentWeapon) {
     if (isLabyrinthMap(mapData)) showOverlay("Desarmado — procure uma arma no labirinto (E ou clique)");
@@ -3380,6 +3393,40 @@ function finishMatchFromDeath() {
   endMatch("t", { skipCinematic: true });
 }
 
+function leaveMatchFromMenu() {
+  if (matchOver) return;
+  window.__strikeInGameMenuOpen = false;
+  document.body.classList.remove("in-game-menu-open", "show-cursor");
+
+  if (adminSpectator || adminPreviewMode) {
+    adminExitToMenu();
+    return;
+  }
+
+  player.dead = true;
+  player.health = 0;
+  deaths++;
+  roundActive = false;
+  weaponPickPending = false;
+  matchOver = true;
+  inCinematic = false;
+  deathJumpscareRunning = false;
+  mouseDown = false;
+  rightMouseDown = false;
+
+  if (flashlightLight) flashlightLight.intensity = 0;
+  if (flashlightFill) flashlightFill.intensity = 0;
+  flashlightEquipped = false;
+
+  document.exitPointerLock?.();
+  mobileControls?.hide();
+  hud.classList.add("hidden");
+  hideDeathChoice();
+
+  addKillfeed("Saída", playerName);
+  endMatch("t", { skipCinematic: true });
+}
+
 function damagePlayer(dmg, attacker) {
   if (isBattleRoyaleDropping()) return;
   if (adminGodMode || adminSpectator || player.dead || inCinematic || weaponPickPending) return;
@@ -3894,6 +3941,11 @@ function collides(x, z, r, who = "player") {
 
 function updatePlayer(dt) {
   if (updateBattleRoyaleDrop(dt)) return;
+
+  if (window.__strikeInGameMenuOpen) {
+    applyCameraRotation();
+    return;
+  }
 
   if (adminPreviewMode === "character") {
     if (adminCharPreviewFly) updateAdminFly(dt);
@@ -5105,7 +5157,7 @@ function animate() {
     updateDoor(dt);
     updateInnerBomb(dt);
 
-    if (!player.dead && !adminSpectator && !adminPreviewMode) {
+    if (!player.dead && !adminSpectator && !adminPreviewMode && !window.__strikeInGameMenuOpen) {
       if (isMobileMode() && mobileControls?.isFiring()) {
         if (!tryInteractWorld()) shoot();
       } else if (currentWeapon?.auto && mouseDown && pointerLocked) {
@@ -5130,5 +5182,11 @@ window.strikeZoneToggleAdminLight = () => {
     return;
   }
   applyAdminDevFullLight(!adminHorrorFullLight);
+};
+window.strikeZoneLeaveMatch = leaveMatchFromMenu;
+window.strikeZoneResumeAfterMenu = () => {
+  if (matchOver || player.dead || inCinematic || weaponPickPending || window.__strikeInGameMenuOpen) return;
+  if (isMobileMode()) mobileControls?.show();
+  else requestPointerLock();
 };
 window.__strikeZoneReady = true;

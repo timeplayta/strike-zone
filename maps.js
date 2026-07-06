@@ -166,8 +166,8 @@ const THEMES = {
     ceilColor: 0xdff3ff,
     woodColor: 0x7a4f2a,
     propTint: { barrel: 0x4f5b68, supply: 0x556b35 },
-    spawnCT: { x: -820, z: -760 },
-    spawnT: { x: 780, z: 720 },
+    spawnCT: { x: 120, z: -56 },
+    spawnT: { x: 140, z: -80 },
     bombSites: [],
     floorW: 2000,
     floorH: 2000,
@@ -180,6 +180,15 @@ const THEMES = {
     defaultBotCount: 100,
   },
 };
+
+/** Altura do terreno da Ilha Frontier (mesma fórmula do mesh em game.js). */
+export function getOpenWorldGroundY(x, z, mapData = {}) {
+  const size = mapData.floorW || 2000;
+  const dist = Math.hypot(x, z) / (size * 0.5);
+  const edgeDrop = Math.max(0, dist - 0.78) ** 2 * 22;
+  const hill = Math.sin(x * 0.0038) * Math.cos(z * 0.0032) * 2.4;
+  return hill - edgeDrop;
+}
 
 function seededPoint(i, radius = 780) {
   const a = i * 2.399963;

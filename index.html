@@ -40,7 +40,7 @@
       background: rgba(0,0,0,.25); color: rgba(255,255,255,.75); cursor: pointer; }
     .welcome-tab.active { background: rgba(232,192,96,.18); border-color: rgba(232,192,96,.45); color: #e8c060; }
   </style>
-  <link rel="stylesheet" href="/style.css?v=80" />
+  <link rel="stylesheet" href="/style.css?v=81" />
 
   <script>
 
@@ -633,6 +633,54 @@
 
 
 
+  <button type="button" id="inGameMenuBtn" class="in-game-menu-btn hidden" aria-label="Opções da partida" title="Opções">⚙</button>
+
+  <div id="inGameMenu" class="in-game-menu hidden" aria-hidden="true" role="dialog" aria-label="Opções da partida">
+    <div class="in-game-menu-layout">
+      <nav class="in-game-menu-nav" aria-label="Seções">
+        <button type="button" class="in-game-menu-nav-btn selected" data-ingame-tab="hud">HUD</button>
+        <button type="button" class="in-game-menu-nav-btn in-game-menu-nav-leave" data-ingame-tab="leave">Sair da partida</button>
+      </nav>
+      <div class="in-game-menu-main">
+        <header class="in-game-menu-head">
+          <h2 id="inGameMenuTitle" class="in-game-menu-title">HUD</h2>
+          <button type="button" id="inGameMenuCloseBtn" class="shop-close" aria-label="Fechar">✕</button>
+        </header>
+        <div id="inGameTabHud" class="in-game-tab-panel">
+          <p class="in-game-menu-desc">Ajuste a mira e os botões de armas durante a partida. As mudanças aparecem na hora.</p>
+          <label class="in-game-hud-field">
+            <span>Mira — horizontal</span>
+            <input type="range" id="hudCrosshairX" min="-20" max="20" value="0" step="1" />
+            <span id="hudCrosshairXVal" class="in-game-hud-val">0</span>
+          </label>
+          <label class="in-game-hud-field">
+            <span>Mira — vertical</span>
+            <input type="range" id="hudCrosshairY" min="-20" max="20" value="0" step="1" />
+            <span id="hudCrosshairYVal" class="in-game-hud-val">0</span>
+          </label>
+          <label class="in-game-hud-field">
+            <span>Tamanho da mira</span>
+            <input type="range" id="hudCrosshairSize" min="50" max="150" value="100" step="5" />
+            <span id="hudCrosshairSizeVal" class="in-game-hud-val">100%</span>
+          </label>
+          <label class="in-game-hud-field">
+            <span>Tamanho botões de armas</span>
+            <input type="range" id="hudMobBtnScale" min="70" max="140" value="100" step="5" />
+            <span id="hudMobBtnScaleVal" class="in-game-hud-val">100%</span>
+          </label>
+          <p class="in-game-hud-note">Botões de armas valem no modo celular.</p>
+          <button type="button" id="hudResetBtn" class="in-game-hud-reset">Restaurar padrão</button>
+        </div>
+        <div id="inGameTabLeave" class="in-game-tab-panel hidden">
+          <p class="in-game-leave-text">Você vai sair da partida agora. Seu personagem será morto e a partida encerra para você.</p>
+          <button type="button" id="inGameLeaveConfirmBtn" class="btn-danger in-game-leave-btn">Sair da partida</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+
   <div id="mobileControls" class="mobile-controls hidden">
 
     <div id="aimLayer" class="aim-layer" aria-label="Arraste para mirar"></div>
@@ -812,7 +860,8 @@
     </div>
   </div>
 
-  <script type="module" src="game-loader.js?v=100"></script>
+  <script type="module" src="in-game-menu.js?v=1"></script>
+  <script type="module" src="game-loader.js?v=102"></script>
   <script type="module">
     import { bindShopUI } from "./player-account.js?v=78";
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", bindShopUI);
