@@ -7,7 +7,7 @@ export { preloadWeaponModels, isWeaponGltfReady } from "./weapon-gltf-loader.js"
 
 /** Offsets no gunPivot do rig estilizado — mesmo eixo do rifle procedural (-Z = cano) */
 export const STYLIZED_GRIP = {
-  ak47: { pos: [0, 0, 0], rot: [0, 0, 0], scale: 0.52 },
+  ak47: { pos: [0.02, -0.03, -0.05], rot: [-1.5708, Math.PI, 0.06], scale: 0.52 },
   scar: { pos: [0, 0, 0], rot: [0, 0, 0], scale: 0.5 },
   m4: { pos: [0, 0, 0], rot: [0, 0, 0], scale: 0.5 },
   ump45: { pos: [0, 0, 0.01], rot: [0, 0, 0], scale: 0.48 },

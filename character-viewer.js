@@ -2,7 +2,7 @@
 
 import * as THREE from "three";
 import { normalizeLoadout } from "./character-loadout.js";
-import { buildPlayerCharacter, preloadPlayerCharacterModels } from "./player-character.js";
+import { buildPlayerCharacter, preloadPlayerCharacterModels, decorateBlockbenchFace } from "./player-character.js";
 import { configureCharacterRenderer } from "./human-model.js";
 import { applyWeaponSkinsToCharacter } from "./weapon-skin-apply.js";
 import { getAccountWeaponSkins } from "./player-account.js";
@@ -55,12 +55,22 @@ function applyPreviewWeaponSkins(charGroup) {
 }
 
 function attachPreviewWeapon(model) {
+  decorateBlockbenchFace(model);
   const handR = model.getObjectByName("hand_r") || model.getObjectByName("handR");
   const anchor = handR || model;
-  const gunPivot = new THREE.Group();
-  gunPivot.name = "gunPivot";
-  gunPivot.position.set(handR ? 0 : 0.38, handR ? 0 : 0.6, handR ? 0.02 : 0.05);
-  anchor.add(gunPivot);
+  let gunPivot = anchor.getObjectByName("gunPivot");
+  if (!gunPivot) {
+    gunPivot = new THREE.Group();
+    gunPivot.name = "gunPivot";
+    if (handR) {
+      gunPivot.position.set(0.04, -0.02, -0.04);
+      gunPivot.rotation.set(-0.12, 0, 0.08);
+    } else {
+      gunPivot.position.set(0.12, 0.92, -0.38);
+      gunPivot.rotation.set(-1.45, 0, 0.05);
+    }
+    anchor.add(gunPivot);
+  }
   attachStylizedWeapon({ gunPivot }, buildNpcWeapon("ak47", 0xd45a2a), "ak47");
 }
 

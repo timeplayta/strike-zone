@@ -52,6 +52,8 @@ const COLORS = {
   solarOrange: 0xff8a22,
   galaxy: 0x0a0824,
   faceInk: 0x2a1810,
+  eyeWhite: 0xf4f4f8,
+  eyeDark: 0x181820,
 };
 
 function ensureDir(dir) {
@@ -413,10 +415,11 @@ function operator() {
   return { id: "operator", name: "Strike Zone Operator", parts: hero.parts };
 }
 
-/** Jogador padrão — cabeça/mãos redondas, tênis, rosto fechado (editável no Blockbench) */
+/** Jogador padrão — cabeça redonda, rosto aberto, pose de rifle (editável no Blockbench) */
 function playerHeroStylized() {
   const headY = 1.5;
   const headR = 0.2;
+  const faceZ = -headR + 0.03;
   const p = [
     part("torso", "suitBlue", 0, 1.02, 0, 0.42, 0.52, 0.2),
     part("vest", "armor", 0, 1.06, -0.12, 0.36, 0.4, 0.05),
@@ -425,25 +428,38 @@ function playerHeroStylized() {
     sphere("head", "skin", 0, headY, 0.02, headR, 22),
     part("helmet_cap", "trimBlue", 0, headY + headR * 0.72, -0.02, 0.3, 0.09, 0.28),
     part("helmet_rim", "trimBlue", 0, headY + headR * 0.35, -0.02, 0.38, 0.05, 0.34),
-    part("eye_closed_l", "faceInk", -0.06, headY + 0.02, -headR + 0.02, 0.055, 0.014, 0.025),
-    part("eye_closed_r", "faceInk", 0.06, headY + 0.02, -headR + 0.02, 0.055, 0.014, 0.025),
-    part("brow_l", "faceInk", -0.06, headY + 0.05, -headR + 0.018, 0.05, 0.01, 0.02),
-    part("brow_r", "faceInk", 0.06, headY + 0.05, -headR + 0.018, 0.05, 0.01, 0.02),
-    part("mouth_closed", "faceInk", 0, headY - 0.07, -headR + 0.015, 0.07, 0.012, 0.022),
+    part("eye_white_l", "eyeWhite", -0.065, headY + 0.028, faceZ, 0.05, 0.04, 0.02),
+    part("eye_white_r", "eyeWhite", 0.065, headY + 0.028, faceZ, 0.05, 0.04, 0.02),
+    part("eye_pupil_l", "eyeDark", -0.065, headY + 0.024, faceZ + 0.012, 0.024, 0.024, 0.014),
+    part("eye_pupil_r", "eyeDark", 0.065, headY + 0.024, faceZ + 0.012, 0.024, 0.024, 0.014),
+    part("brow_l", "faceInk", -0.065, headY + 0.058, faceZ - 0.004, 0.052, 0.012, 0.018),
+    part("brow_r", "faceInk", 0.065, headY + 0.058, faceZ - 0.004, 0.052, 0.012, 0.018),
+    part("nose", "skin", 0, headY - 0.012, faceZ + 0.006, 0.03, 0.034, 0.024),
+    part("mouth_smile", "faceInk", 0, headY - 0.072, faceZ + 0.004, 0.082, 0.018, 0.026),
+    part("cheek_l", "skin", -0.11, headY - 0.03, faceZ - 0.01, 0.04, 0.028, 0.02),
+    part("cheek_r", "skin", 0.11, headY - 0.03, faceZ - 0.01, 0.04, 0.028, 0.02),
     part("collar", "armor", 0, 1.28, -0.02, 0.34, 0.06, 0.18),
     part("knee_pad_l", "armor", -0.12, 0.28, -0.08, 0.14, 0.09, 0.04),
     part("knee_pad_r", "armor", 0.12, 0.28, -0.08, 0.14, 0.09, 0.04),
   ];
+
+  // Braço direito no grip — esquerdo na coronha/foregrip
+  p.push(
+    sphere("shoulder_r", "suitBlue", 0.26, 1.26, -0.04, 0.078, 16),
+    cylinder("upper_arm_r", "suitBlue", 0.22, 1.14, -0.12, 0.068, 0.32, -0.82),
+    sphere("elbow_r", "skin", 0.16, 1.04, -0.22, 0.058, 14),
+    cylinder("forearm_r", "skin", 0.12, 0.96, -0.30, 0.062, 0.26, -0.48),
+    sphere("hand_r", "skin", 0.1, 0.92, -0.34, 0.078, 18),
+    sphere("shoulder_l", "suitBlue", -0.22, 1.24, -0.06, 0.078, 16),
+    cylinder("upper_arm_l", "suitBlue", -0.16, 1.1, -0.16, 0.068, 0.3, 0.78),
+    sphere("elbow_l", "skin", -0.04, 1.02, -0.28, 0.058, 14),
+    cylinder("forearm_l", "skin", 0.02, 0.96, -0.36, 0.062, 0.24, -0.22),
+    sphere("hand_l", "skin", 0.06, 0.92, -0.42, 0.078, 18)
+  );
+
   for (const sx of [-1, 1]) {
     const side = sx === 1 ? "r" : "l";
     p.push(
-      sphere(`shoulder_${side}`, "suitBlue", sx * 0.32, 1.28, 0, 0.078, 16),
-      cylinder(`upper_arm_${side}`, "suitBlue", sx * 0.34, 1.1, 0, 0.068, 0.38, sx * 0.12),
-      sphere(`elbow_${side}`, "skin", sx * 0.38, 0.9, 0.01, 0.058, 14),
-      cylinder(`forearm_${side}`, "skin", sx * 0.38, 0.74, 0.02, 0.062, 0.3, sx * -0.08),
-      sx === 1
-        ? sphere("hand_r", "skin", sx * 0.38, 0.58, 0.05, 0.078, 18)
-        : sphere("hand_l", "skin", sx * 0.38, 0.58, 0.05, 0.078, 18),
       part("pants", "denim", sx * 0.12, 0.46, 0, 0.14, 0.52, 0.15),
       part("sneaker_sole", "shoeWhite", sx * 0.12, 0.05, 0.06, 0.2, 0.07, 0.26),
       part("sneaker_body", "suitBlue", sx * 0.12, 0.12, -0.01, 0.18, 0.11, 0.24),

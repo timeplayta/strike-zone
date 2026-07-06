@@ -16,6 +16,65 @@ import {
 } from "./blockbench-model-loader.js";
 import { buildNpcWeapon, attachStylizedWeapon } from "./npc-weapon.js";
 
+const FACE_COLORS = {
+  eyeWhite: 0xf4f4f8,
+  eyeDark: 0x181820,
+  faceInk: 0x2a1810,
+  skin: 0xc4956a,
+};
+
+function faceMat(color, rough = 0.78) {
+  return new THREE.MeshStandardMaterial({ color, roughness: rough, metalness: 0.04 });
+}
+
+function addFacePart(group, geo, color, x, y, z) {
+  const mesh = new THREE.Mesh(geo, faceMat(color));
+  mesh.position.set(x, y, z);
+  mesh.castShadow = false;
+  group.add(mesh);
+  return mesh;
+}
+
+/** Rosto legível no boneco Blockbench (olhos abertos, nariz, boca) */
+export function decorateBlockbenchFace(model) {
+  if (!model || model.userData.faceDecorated) return;
+
+  for (const legacy of ["eye_closed_l", "eye_closed_r", "mouth_closed"]) {
+    const old = model.getObjectByName(legacy);
+    if (old) old.visible = false;
+  }
+
+  const head = model.getObjectByName("head");
+  const hasFace =
+    model.getObjectByName("eye_white_l") ||
+    model.getObjectByName("eye_pupil_l") ||
+    model.getObjectByName("mouth_smile");
+  if (hasFace) {
+    model.userData.faceDecorated = true;
+    return;
+  }
+
+  const headY = 1.5;
+  const headR = 0.2;
+  const fz = -headR + 0.03;
+  const face = new THREE.Group();
+  face.name = "runtimeFace";
+
+  addFacePart(face, new THREE.BoxGeometry(0.05, 0.04, 0.02), FACE_COLORS.eyeWhite, -0.065, headY + 0.028, fz);
+  addFacePart(face, new THREE.BoxGeometry(0.05, 0.04, 0.02), FACE_COLORS.eyeWhite, 0.065, headY + 0.028, fz);
+  addFacePart(face, new THREE.BoxGeometry(0.024, 0.024, 0.014), FACE_COLORS.eyeDark, -0.065, headY + 0.024, fz + 0.012);
+  addFacePart(face, new THREE.BoxGeometry(0.024, 0.024, 0.014), FACE_COLORS.eyeDark, 0.065, headY + 0.024, fz + 0.012);
+  addFacePart(face, new THREE.BoxGeometry(0.052, 0.012, 0.018), FACE_COLORS.faceInk, -0.065, headY + 0.058, fz - 0.004);
+  addFacePart(face, new THREE.BoxGeometry(0.052, 0.012, 0.018), FACE_COLORS.faceInk, 0.065, headY + 0.058, fz - 0.004);
+  addFacePart(face, new THREE.BoxGeometry(0.03, 0.034, 0.024), FACE_COLORS.skin, 0, headY - 0.012, fz + 0.006);
+  addFacePart(face, new THREE.BoxGeometry(0.082, 0.018, 0.026), FACE_COLORS.faceInk, 0, headY - 0.072, fz + 0.004);
+
+  if (head) head.add(face);
+  else model.add(face);
+
+  model.userData.faceDecorated = true;
+}
+
 const BLOCKBENCH_FULL_BODY = {
   soldier: { key: "player_hero", w: 1.05, h: 1.82 },
   neon_runner: { key: "player_neon_runner", w: 1.05, h: 1.82 },
@@ -49,9 +108,11 @@ function attachWeaponRig(model, weaponType, shirt, withRifle) {
     gunPivot = new THREE.Group();
     gunPivot.name = "gunPivot";
     if (handR) {
-      gunPivot.position.set(0, 0, 0.02);
+      gunPivot.position.set(0.04, -0.02, -0.04);
+      gunPivot.rotation.set(-0.12, 0, 0.08);
     } else {
-      gunPivot.position.set(0.38, 0.6, 0.05);
+      gunPivot.position.set(0.12, 0.92, -0.38);
+      gunPivot.rotation.set(-1.45, 0, 0.05);
     }
     anchor.add(gunPivot);
   } else {
@@ -78,6 +139,7 @@ function mountBlockbenchBody(body, cfg, opts) {
     if (!model) return null;
     body.userData.blockbenchApplied = true;
     body.userData.blockbenchModel = model;
+    decorateBlockbenchFace(model);
     body.add(model);
     return model;
   };
