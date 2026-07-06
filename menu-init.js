@@ -146,9 +146,12 @@
   function updateMapModeUI() {
     const map = document.querySelector(".map-btn.selected")?.dataset?.map;
     const isLab = map === "labyrinth";
+    const isFrontier = map === "frontier";
     document.querySelectorAll(".labyrinth-hide").forEach((el) => {
       el.classList.toggle("hidden", isLab);
     });
+    const botSlider = $("botCount");
+    if (botSlider && isFrontier) botSlider.value = "100";
     updateMenuHint();
   }
 
@@ -162,14 +165,19 @@
     const device = document.querySelector(".device-btn.selected")?.dataset.device || "desktop";
     const map = document.querySelector(".map-btn.selected")?.dataset?.map;
     const horror = map === "horror";
+    const frontier = map === "frontier";
     const hint = $("menuHint");
     if (!hint) return;
     if (device === "mobile") {
-      hint.textContent = horror
+      hint.textContent = frontier
+        ? "Battle Royale — Ilha 2km • lobby na floresta • depois queda de paraquedas"
+        : horror
         ? "Joystick mover • ↑ pular • Arraste para mirar • ATIRAR • 🔦 = lanterna (mapa terror)"
         : "Joystick redondo (esquerda) = mover • Botão ↑ pular • Arraste a tela para mirar • ATIRAR = botão vermelho";
     } else {
-      hint.textContent = horror
+      hint.textContent = frontier
+        ? "Battle Royale — escolha Ilha Frontier • lobby na floresta da ilha • queda e loot nas vilas"
+        : horror
         ? "WASD mover • Espaço pular • J = equipar lanterna (só mapa terror) • R recarregar • Clique porta/atirar • Botão direito mirar"
         : "WASD mover • Espaço pular • E = baú de munição (base CT) • R recarregar • Clique porta/atirar • Botão direito mirar";
     }

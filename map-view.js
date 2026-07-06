@@ -7,7 +7,7 @@ const MAPS = [
   { id: "warehouse", mode: "Jogo de tiro", name: "Cold Storage", desc: "Armazém fechado" },
   { id: "horror", mode: "Terror", name: "Terror", desc: "Combate escuro", horror: true },
   { id: "labyrinth", mode: "Terror", name: "Fim das Trevas", desc: "Labirinto de escape", horror: true },
-  { id: "frontier", mode: "Mundo aberto", name: "Ilha Frontier", desc: "2km • casas, montanhas e 100 bots" },
+  { id: "frontier", mode: "Battle Royale", name: "Ilha Frontier", desc: "Ilha 2km • lobby + queda + 100 bots" },
 ];
 
 function $(id) {

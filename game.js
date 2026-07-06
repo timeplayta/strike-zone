@@ -61,8 +61,6 @@ import {
   LOBBY_RADIUS,
   LOBBY_WORLD,
   makeBattleRoyaleLobbyForest,
-  hideWorldForLobby,
-  restoreWorldAfterLobby,
   clearLobbyOtherPlayers,
   updateLobbyPlayerPhysics,
   animateLobbyJumpPads,
@@ -901,21 +899,18 @@ function startBattleRoyaleLobby() {
   lobbyAvatar.rotation.y = Math.PI;
   scene.add(lobby);
   scene.add(lobbyAvatar);
-  const hiddenWorld = hideWorldForLobby(scene, lobby, [lobbyAvatar]);
   if (camera) {
-    camera.far = 920;
+    camera.far = 2400;
     camera.updateProjectionMatrix();
   }
   if (scene.fog) {
-    scene.fog.near = 80;
-    scene.fog.far = 520;
+    scene.fog.near = 90;
+    scene.fog.far = 1900;
   }
-  scene.background = new THREE.Color(0x7ec8ff);
   battleRoyaleDrop = {
     phase: "lobby",
     lobby,
     lobbyAvatar,
-    hiddenWorld,
     jumpPads: lobby.userData.jumpPads,
     otherAvatars: new Map(),
     lobbyLeft: BR_LOBBY_SECONDS,
@@ -934,11 +929,10 @@ function startBattleRoyaleLobby() {
   moveVel.z = 0;
   enemyMoveAllowedAt = Number.POSITIVE_INFINITY;
   if (weaponView) hideAllWeapons(weaponView);
-  showOverlay("Mini floresta — explore, pule nas rodas e espere a queda");
+  showOverlay("Ilha Frontier — lobby na floresta • montanhas e mar ao redor");
 }
 
 function finishBattleRoyaleLobby() {
-  restoreWorldAfterLobby(battleRoyaleDrop?.hiddenWorld);
   clearLobbyOtherPlayers(battleRoyaleDrop, scene);
   if (battleRoyaleDrop?.lobby) scene.remove(battleRoyaleDrop.lobby);
   if (battleRoyaleDrop?.lobbyAvatar) scene.remove(battleRoyaleDrop.lobbyAvatar);
@@ -1069,7 +1063,7 @@ function updateBattleRoyaleDrop(dt) {
     d.lobbyLeft = Math.max(0, BR_LOBBY_SECONDS - (performance.now() - d.phaseStarted) / 1000);
     const left = Math.ceil(d.lobbyLeft);
     const obj = document.getElementById("objective");
-    if (obj) obj.textContent = `Floresta do lobby — começa em ${left}s • pule nas rodas`;
+    if (obj) obj.textContent = `Ilha Frontier — lobby ${left}s • veja montanhas e vilas ao redor`;
     const timerEl = document.getElementById("timer");
     if (timerEl) timerEl.textContent = `Começa ${left}s`;
     const move = readBattleRoyaleMoveInput();
@@ -1705,7 +1699,7 @@ function buildFrontierTerrain(scene, mapData, floorMat) {
   const pos = geo.attributes.position;
   for (let i = 0; i < pos.count; i++) {
     const x = pos.getX(i);
-    const z = pos.getZ(i);
+    const z = pos.getY(i);
     const dist = Math.hypot(x, z) / (size * 0.5);
     const edgeDrop = Math.max(0, dist - 0.78) ** 2 * 22;
     const hill = Math.sin(x * 0.0038) * Math.cos(z * 0.0032) * 2.4;

@@ -3,8 +3,8 @@ import * as THREE from "three";
 /** Diâmetro do lobby em metros */
 export const LOBBY_DIAMETER = 500;
 export const LOBBY_RADIUS = LOBBY_DIAMETER / 2;
-/** Offset longe do mapa principal (Ilha Frontier) */
-export const LOBBY_WORLD = { x: 4200, z: 4200 };
+/** Canto sudoeste da Ilha Frontier — lobby dentro do mapa, ilha visível ao redor */
+export const LOBBY_WORLD = { x: -720, z: 720 };
 
 const GRASS = 0x4a9a48;
 const GRASS_LIGHT = 0x58b957;
