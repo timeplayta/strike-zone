@@ -40,7 +40,7 @@
       background: rgba(0,0,0,.25); color: rgba(255,255,255,.75); cursor: pointer; }
     .welcome-tab.active { background: rgba(232,192,96,.18); border-color: rgba(232,192,96,.45); color: #e8c060; }
   </style>
-  <link rel="stylesheet" href="/style.css?v=78" />
+  <link rel="stylesheet" href="/style.css?v=80" />
 
   <script>
 
@@ -70,7 +70,19 @@
 
 </head>
 
-<body class="mode-desktop">
+<body class="mode-desktop boot-active">
+
+  <div id="bootScreen" class="boot-screen" aria-live="polite" aria-busy="true">
+    <div class="boot-inner">
+      <h1 class="boot-logo">STRIKE ZONE</h1>
+      <p id="bootSubtitle" class="boot-sub">Preparando o jogo…</p>
+      <div class="boot-progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+        <div id="bootProgressBar" class="boot-progress-fill"></div>
+      </div>
+      <p id="bootStatus" class="boot-status">Iniciando…</p>
+      <p id="bootPercent" class="boot-percent">0%</p>
+    </div>
+  </div>
 
   <div id="welcomeScreen" class="screen active">
     <div class="welcome-card">
@@ -440,6 +452,11 @@
           <button type="button" id="closeMapFullscreenBtn" class="shop-close ff-map-fullscreen-close" aria-label="Fechar">✕</button>
         </header>
         <div id="ffMapCardGrid" class="ff-map-fullscreen-grid"></div>
+        <nav id="ffMapCategoryBar" class="ff-map-category-bar" aria-label="Categorias de mapa">
+          <button type="button" class="ff-map-cat-btn ff-map-cat-tiro" data-category="tiro">tiro</button>
+          <button type="button" class="ff-map-cat-btn ff-map-cat-terror" data-category="terror">terror</button>
+          <button type="button" class="ff-map-cat-btn ff-map-cat-esconde-esconde" data-category="esconde-esconde">esconde-esconde</button>
+        </nav>
       </div>
     </div>
 
@@ -773,7 +790,7 @@
   <script type="module" src="account-hub.js"></script>
   <script type="module" src="character-customizer.js"></script>
   <script type="module" src="solo-view.js"></script>
-  <script type="module" src="map-view.js?v=78"></script>
+  <script type="module" src="map-view.js?v=80"></script>
 
   <!-- Modal de compra de moedas -->
   <div id="coinPackModal" class="coin-pack-modal hidden" role="dialog" aria-modal="true" aria-labelledby="coinPackModalTitle">
@@ -795,7 +812,7 @@
     </div>
   </div>
 
-  <script type="module" src="game-loader.js?v=99"></script>
+  <script type="module" src="game-loader.js?v=100"></script>
   <script type="module">
     import { bindShopUI } from "./player-account.js?v=78";
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", bindShopUI);

@@ -52,7 +52,7 @@
     }
 
     if (window.__strikeZoneReady) {
-      el.textContent = "Pronto — clique em INICIAR PARTIDA";
+      el.textContent = "Pronto — clique em JOGAR";
       el.className = "load-status load-ok";
       if (btn) btn.disabled = false;
       return;
@@ -61,12 +61,13 @@
     if (window.__strikeZoneLoadError) {
       el.textContent = "Falha ao carregar — recarregue a pagina (F5)";
       el.className = "load-status load-bad";
+      if (btn) btn.disabled = true;
       return;
     }
 
-    el.textContent = "Carregando motor do jogo...";
+    el.textContent = "Carregando mapas, skins e personagens…";
     el.className = "load-status";
-    if (btn) btn.disabled = false;
+    if (btn) btn.disabled = true;
   }
 
   function watchGameLoad() {
@@ -622,10 +623,7 @@
     });
 
     watchGameLoad();
-
-    import("./player-character.js")
-      .then((m) => m.preloadPlayerCharacterModels?.())
-      .catch(() => {});
+    window.addEventListener("strikezone-ready", updateLoadStatus);
   }
 
   window.addEventListener("error", (e) => {

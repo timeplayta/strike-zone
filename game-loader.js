@@ -1,115 +1,85 @@
-async function loadGame() {
+import { runGamePreload, finishBootScreen, showBootError, isInstalledApp } from "./game-preload.js";
 
+function updateBootUI(pct, label) {
+  const bar = document.getElementById("bootProgressBar");
+  const track = bar?.parentElement;
+  const status = document.getElementById("bootStatus");
+  const percent = document.getElementById("bootPercent");
+  const sub = document.getElementById("bootSubtitle");
+  if (bar) bar.style.width = `${pct}%`;
+  if (track) track.setAttribute("aria-valuenow", String(Math.round(pct)));
+  if (status) status.textContent = label;
+  if (percent) percent.textContent = `${Math.round(pct)}%`;
+  if (sub && pct < 100) {
+    sub.textContent = isInstalledApp()
+      ? "Instalado na tela inicial — carregando mapas, skins e personagens"
+      : "Carregando mapas, skins, personagens e armas…";
+  } else if (sub && pct >= 100) {
+    sub.textContent = "Tudo pronto — bom jogo!";
+  }
+}
+
+function updateMenuLoadStatus(ok, errMsg) {
   const loadStatus = document.getElementById("loadStatus");
+  const btn = document.getElementById("startBtn");
+  if (loadStatus) {
+    loadStatus.textContent = ok
+      ? "Pronto — clique em JOGAR"
+      : errMsg || "Falha ao carregar — recarregue (F5)";
+    loadStatus.className = ok ? "load-status load-ok" : "load-status load-bad";
+  }
+  if (btn) btn.disabled = !ok;
+}
+
+async function loadGame() {
+  document.body.classList.add("boot-active");
+
   const isWelcomeVisible = () => {
     const welcome = document.getElementById("welcomeScreen");
     return !!welcome && !welcome.classList.contains("hidden");
   };
 
   try {
-
-    if (loadStatus) loadStatus.textContent = "Carregando personagens Blockbench...";
-
-    const { preloadPlayerCharacterModels, isPlayerBlockbenchReady } = await import("./player-character.js");
-    await preloadPlayerCharacterModels();
-
-    const { preloadWeaponModels } = await import("./npc-weapon.js");
-    await preloadWeaponModels();
-    const { isWeaponGltfReady } = await import("./weapon-gltf-loader.js");
-    if (!isWeaponGltfReady("revolver")) {
-      console.warn("Strike Zone: revólver Blockbench não carregou — verifique revolver.glb");
-    }
-
-    const { preloadGrimyHand } = await import("./grimy-hand-loader.js");
-    await preloadGrimyHand();
-    const { preloadRogerJanitor } = await import("./gigante-monster-builder.js");
-    await preloadRogerJanitor();
-
-    const { preloadMapSurfaceTextures } = await import("./environment-textures.js");
-    await preloadMapSurfaceTextures();
-
-    if (!isPlayerBlockbenchReady()) {
-      throw new Error("Modelo Blockbench do jogador não carregou. Use Ctrl+Shift+R ou JOGAR.bat.");
-    }
-
-    await import("./game.js?v=96");
-
-    if (typeof window.startStrikeZone !== "function") {
-
-      throw new Error("game.js nao definiu startStrikeZone");
-
-    }
+    await runGamePreload(({ pct, label }) => updateBootUI(pct, label));
 
     window.__strikeZoneReady = true;
-
     window.__strikeZoneLoadError = null;
+    window.dispatchEvent(new CustomEvent("strikezone-ready"));
+
+    updateMenuLoadStatus(true);
+    finishBootScreen();
 
     try {
       const hub = await import("./account-hub.js");
       hub.refreshAccountFabHuman?.() || hub.mountAccountFab?.();
-    } catch { /* optional */ }
-
-    if (loadStatus) {
-
-      loadStatus.textContent = "Pronto — clique em INICIAR PARTIDA";
-
-      loadStatus.className = "load-status load-ok";
-
+    } catch {
+      /* optional */
     }
-
-    const btn = document.getElementById("startBtn");
-
-    if (btn) btn.disabled = false;
-
   } catch (err) {
-
     console.error("Strike Zone:", err);
-
     window.__strikeZoneLoadError = err?.message || String(err);
-
     window.__strikeZoneReady = false;
 
-    if (loadStatus) {
-
-      loadStatus.textContent = "Erro: " + (err?.message || err);
-
-      loadStatus.className = "load-status load-bad";
-
-    }
+    showBootError(err?.message || String(err));
+    updateMenuLoadStatus(false, err?.message || String(err));
 
     if (isWelcomeVisible() && location.protocol !== "file:") return;
 
     let el = document.getElementById("loadError");
-
     if (!el) {
-
       el = document.createElement("div");
-
       el.id = "loadError";
-
       el.className = "load-error";
-
       document.body.prepend(el);
-
     }
-
     el.classList.remove("hidden");
-
     el.innerHTML =
-
       "<strong>Erro ao carregar</strong><p>" +
-
       (err?.message || err) +
-
       "</p><p>Pressione <b>Ctrl+Shift+R</b> para limpar o cache.</p><p><a href=\"" +
       location.origin +
       "\">Recarregar</a></p>";
-
   }
-
 }
 
-
-
 loadGame();
-
