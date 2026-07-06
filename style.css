@@ -1712,6 +1712,34 @@ body.hud-labyrinth .round-info #roundText {
   letter-spacing: 0.08em;
 }
 
+body.play-labyrinth.labyrinth-intro-done .hud-top .round-info {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.55s ease, visibility 0.55s;
+}
+
+body.play-labyrinth.labyrinth-intro-done #adminHud {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.55s ease, visibility 0.55s;
+}
+
+body.play-labyrinth.labyrinth-intro-done #objective:not(.objective-visible) {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.55s ease, visibility 0.55s;
+}
+
+body.play-labyrinth.labyrinth-intro .hud-top .round-info,
+body.play-labyrinth.labyrinth-intro #adminHud,
+body.play-labyrinth.labyrinth-intro #objective {
+  opacity: 1;
+  visibility: visible;
+}
+
 body.play-labyrinth.game-active::after {
   content: "";
   position: fixed;

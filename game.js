@@ -129,6 +129,8 @@ let roundTime = 180, bomb = null, bombPlanted = false;
 let kills = 0, deaths = 0;
 let bloodParticles = [];
 let bloodPools = [];
+let labyrinthIntroUntil = 0;
+let labyrinthIntroHideTimer = null;
 
 const MOVE_SPEED = 7.5;
 const MOVE_SPEED_MOBILE = 6.5;
@@ -144,6 +146,8 @@ const BOSS_FIRE_MS = 353;
 const BASE_FOV = 75;
 const ADS_WEAPONS = ["ak47", "scar", "awm", "bazooka", "revolver"];
 const ENEMY_SPAWN_DELAY_MS = 3000;
+const LABYRINTH_INTRO_MS = 6000;
+const LABYRINTH_CONTEXT_HINT_MS = 3200;
 const MIN_SPAWN_DIST_FROM_PLAYER = 18;
 const BR_LOBBY_SECONDS = 75;
 const BR_STORM_START_RADIUS = 1500;
@@ -616,6 +620,71 @@ function applyPlayModeUI() {
     document.exitPointerLock?.();
   } else {
     mobileControls?.hide();
+  }
+}
+
+function isLabyrinthIntroActive() {
+  return isLabyrinthMap(mapData) && performance.now() < labyrinthIntroUntil;
+}
+
+function clearLabyrinthIntro() {
+  labyrinthIntroUntil = 0;
+  if (labyrinthIntroHideTimer) {
+    clearTimeout(labyrinthIntroHideTimer);
+    labyrinthIntroHideTimer = null;
+  }
+  document.body.classList.remove("labyrinth-intro", "labyrinth-intro-done");
+}
+
+function startLabyrinthIntro() {
+  clearLabyrinthIntro();
+  labyrinthIntroUntil = performance.now() + LABYRINTH_INTRO_MS;
+  document.body.classList.add("labyrinth-intro");
+  document.body.classList.remove("labyrinth-intro-done");
+
+  const obj = document.getElementById("objective");
+  if (obj) {
+    obj.textContent = "Armas: 0/3 • Saída no fim do labirinto • E = pegar arma";
+    obj.classList.remove("hidden", "objective-visible");
+  }
+
+  labyrinthIntroHideTimer = setTimeout(() => {
+    labyrinthIntroUntil = 0;
+    document.body.classList.remove("labyrinth-intro");
+    document.body.classList.add("labyrinth-intro-done");
+    const hint = document.getElementById("objective");
+    if (hint && !hint.classList.contains("objective-visible")) {
+      hint.textContent = "";
+      hint.classList.add("hidden");
+    }
+    const adminEl = document.getElementById("adminHud");
+    if (adminEl && isLabyrinthMap(mapData) && !adminSpectator && !adminPreviewMode) {
+      adminEl.classList.add("hidden");
+    }
+    labyrinthIntroHideTimer = null;
+  }, LABYRINTH_INTRO_MS);
+}
+
+function showLabyrinthObjective(text, contextual = false) {
+  const obj = document.getElementById("objective");
+  if (!obj) return;
+  if (!contextual && !isLabyrinthIntroActive()) {
+    if (!obj.classList.contains("objective-visible")) {
+      obj.textContent = "";
+      obj.classList.add("hidden");
+    }
+    return;
+  }
+  obj.textContent = text;
+  obj.classList.remove("hidden");
+  if (contextual) {
+    obj.classList.add("objective-visible");
+    clearTimeout(obj._contextHideTimer);
+    obj._contextHideTimer = setTimeout(() => {
+      obj.classList.remove("objective-visible");
+      obj.textContent = "";
+      obj.classList.add("hidden");
+    }, LABYRINTH_CONTEXT_HINT_MS);
   }
 }
 
@@ -1274,6 +1343,7 @@ function startGame(config = {}) {
     lookDelta.y = 0;
     hudTimerAcc = 0;
     disposeFlashlight();
+    clearLabyrinthIntro();
 
     menu.classList.remove("active");
     menu.classList.add("hidden");
@@ -1315,8 +1385,7 @@ function startGame(config = {}) {
         hud.classList.add("hidden");
       } else if (isLabyrinthMap(mapData)) {
         showOverlay("Labirinto das Trevas — 3 monstros no escuro • J = lanterna");
-        document.getElementById("objective").textContent =
-          "J = lanterna • O Gosmento, o Gigante e Bam-Bam estão nas trevas";
+        startLabyrinthIntro();
         document.getElementById("timer").textContent = "∞";
       } else if (isHorrorMap(mapData)) {
         showOverlay("Modo terror — 3 monstros nas sombras • J = lanterna");
@@ -3905,18 +3974,17 @@ function updatePlayer(dt) {
   }
 
   if (isLabyrinthMap(mapData)) {
-    const obj = document.getElementById("objective");
-    if (obj) {
-      const got = ["facao", "porrete", "katana"].filter((k) => collectedMelee[k]).length;
-      const nearExit = exitZone && Math.hypot(camera.position.x - exitZone.x, camera.position.z - exitZone.z) < 8;
-      obj.textContent = nearExit
-        ? "Saída perto! Entre no portal verde."
-        : `Armas: ${got}/3 • Saída no fim do labirinto • E = pegar arma`;
-    }
+    const got = ["facao", "porrete", "katana"].filter((k) => collectedMelee[k]).length;
+    const nearExit = exitZone && Math.hypot(camera.position.x - exitZone.x, camera.position.z - exitZone.z) < 8;
     const near = tryPickupMelee(camera, meleePickups, 3.2);
     if (near && !near.collected) {
-      const hint = document.getElementById("objective");
-      if (hint) hint.textContent = `Pressione E — ${WEAPONS[near.id]?.name || near.id}`;
+      showLabyrinthObjective(`Pressione E — ${WEAPONS[near.id]?.name || near.id}`, true);
+    } else if (nearExit) {
+      showLabyrinthObjective("Saída perto! Entre no portal verde.", true);
+    } else if (isLabyrinthIntroActive()) {
+      showLabyrinthObjective(`Armas: ${got}/3 • Saída no fim do labirinto • E = pegar arma`);
+    } else {
+      showLabyrinthObjective("", false);
     }
   } else if (mapData.openWorld && roundActive && !player.dead) {
     const obj = document.getElementById("objective");
@@ -4068,6 +4136,7 @@ function endMatch(winner, opts = {}) {
   matchOver = true;
   roundActive = false;
   weaponPickPending = false;
+  clearLabyrinthIntro();
   import("./round-weapon-picker.js").then((m) => m.hideRoundWeaponPicker?.()).catch(() => {});
   mobileControls?.hide();
   document.exitPointerLock?.();
@@ -4367,6 +4436,10 @@ function updateAdminGameplayHud() {
   const el = document.getElementById("adminHud");
   if (!el || !isSessionAdmin() || !isDarkMap(mapData) || adminPreviewMode) return;
   if (adminLiveSpectator || adminSpectator) return;
+  if (isLabyrinthMap(mapData) && !isLabyrinthIntroActive()) {
+    el.classList.add("hidden");
+    return;
+  }
   el.classList.remove("hidden");
   if (isHorrorMap(mapData)) {
     const light = adminHorrorFullLight ? "ON" : "OFF";
