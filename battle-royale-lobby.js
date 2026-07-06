@@ -3,8 +3,8 @@ import * as THREE from "three";
 /** Diâmetro do lobby em metros */
 export const LOBBY_DIAMETER = 500;
 export const LOBBY_RADIUS = LOBBY_DIAMETER / 2;
-/** Canto sudoeste da Ilha Frontier — lobby dentro do mapa, ilha visível ao redor */
-export const LOBBY_WORLD = { x: -720, z: 720 };
+/** Centro isolado — mapa principal fica escondido durante o lobby */
+export const LOBBY_WORLD = { x: 0, z: 0 };
 
 const GRASS = 0x4a9a48;
 const GRASS_LIGHT = 0x58b957;
@@ -100,6 +100,23 @@ function addTrailSegment(g, x, z, w, d, rot = 0) {
   g.add(edge);
 }
 
+function addLobbyHorizon(g) {
+  const far = new THREE.MeshLambertMaterial({ color: 0x3d5240 });
+  const mid = new THREE.MeshLambertMaterial({ color: 0x556b52 });
+  for (let i = 0; i < 28; i++) {
+    const a = (i / 28) * Math.PI * 2;
+    const r = LOBBY_RADIUS - 18 + (i % 4) * 6;
+    const h = 55 + (i % 5) * 22;
+    const mount = mesh(new THREE.ConeGeometry(70 + (i % 3) * 18, h, 6), i % 2 ? far : mid, [
+      Math.cos(a) * r,
+      h * 0.42,
+      Math.sin(a) * r,
+    ]);
+    mount.rotation.y = a + 0.4;
+    g.add(mount);
+  }
+}
+
 function buildTrails(g) {
   addTrailSegment(g, 0, 0, LOBBY_DIAMETER * 0.92, 9);
   addTrailSegment(g, 0, 0, 9, LOBBY_DIAMETER * 0.92);
@@ -182,7 +199,9 @@ export function makeBattleRoyaleLobbyForest() {
     new THREE.MeshStandardMaterial({ color: GRASS, roughness: 0.88, metalness: 0.02 })
   );
   ground.rotation.x = -Math.PI / 2;
+  ground.position.y = 0.06;
   ground.receiveShadow = true;
+  ground.renderOrder = 2;
   g.add(ground);
 
   const clearing = new THREE.Mesh(
@@ -194,6 +213,7 @@ export function makeBattleRoyaleLobbyForest() {
   g.add(clearing);
 
   buildTrails(g);
+  addLobbyHorizon(g);
 
   const rand = seededRandom(77102);
   for (let i = 0; i < 320; i++) {
@@ -245,11 +265,30 @@ export function makeBattleRoyaleLobbyForest() {
     jumpPads.push(pad.userData.jumpPad);
   }
 
-  g.position.set(LOBBY_WORLD.x, 0, LOBBY_WORLD.z);
+  g.position.set(LOBBY_WORLD.x, 0.06, LOBBY_WORLD.z);
   g.userData.jumpPads = jumpPads;
   g.userData.spawnLocal = { x: 0, z: 24 };
 
+  const sign = new THREE.Group();
+  const pole = mesh(new THREE.CylinderGeometry(0.12, 0.14, 3.2, 8), new THREE.MeshStandardMaterial({ color: 0x5a4030 }), [0, 1.6, 0]);
+  const board = mesh(new THREE.BoxGeometry(4.2, 1.1, 0.14), new THREE.MeshStandardMaterial({ color: 0x8b6914 }), [0, 3.35, 0]);
+  sign.add(pole, board);
+  sign.position.set(0, 0, 8);
+  sign.userData.lobbyProp = true;
+  g.add(sign);
+
   return g;
+}
+
+export function setLobbyCombatantsVisible(enemies, helpers, visible) {
+  for (const e of enemies || []) {
+    if (e?.group) e.group.visible = visible;
+    if (e?.hpBarEl) e.hpBarEl.style.display = visible ? "" : "none";
+  }
+  for (const h of helpers || []) {
+    if (h?.group) h.group.visible = visible;
+    if (h?.hpBarEl) h.hpBarEl.style.display = visible ? "" : "none";
+  }
 }
 
 /** Esconde o mapa principal enquanto o jogador está no lobby */

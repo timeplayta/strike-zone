@@ -32,7 +32,7 @@ async function loadGame() {
       throw new Error("Modelo Blockbench do jogador não carregou. Use Ctrl+Shift+R ou JOGAR.bat.");
     }
 
-    await import("./game.js?v=95");
+    await import("./game.js?v=96");
 
     if (typeof window.startStrikeZone !== "function") {
 

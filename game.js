@@ -61,7 +61,10 @@ import {
   LOBBY_RADIUS,
   LOBBY_WORLD,
   makeBattleRoyaleLobbyForest,
+  hideWorldForLobby,
+  restoreWorldAfterLobby,
   clearLobbyOtherPlayers,
+  setLobbyCombatantsVisible,
   updateLobbyPlayerPhysics,
   animateLobbyJumpPads,
 } from "./battle-royale-lobby.js";
@@ -889,50 +892,66 @@ function startBattleRoyaleLobby() {
     battleRoyaleDrop = null;
     return;
   }
-  const lobby = makeBattleRoyaleLobbyForest();
-  const spawn = lobby.userData.spawnLocal;
-  const startX = LOBBY_WORLD.x + spawn.x;
-  const startZ = LOBBY_WORLD.z + spawn.z;
-  const lobbyAvatar = makeDropAvatar();
-  lobbyAvatar.userData.lobbyAvatar = true;
-  lobbyAvatar.position.set(startX, 0, startZ);
-  lobbyAvatar.rotation.y = Math.PI;
-  scene.add(lobby);
-  scene.add(lobbyAvatar);
-  if (camera) {
-    camera.far = 2400;
-    camera.updateProjectionMatrix();
+  try {
+    const lobby = makeBattleRoyaleLobbyForest();
+    const spawn = lobby.userData.spawnLocal;
+    const startX = LOBBY_WORLD.x + spawn.x;
+    const startZ = LOBBY_WORLD.z + spawn.z;
+    const lobbyAvatar = makeDropAvatar();
+    lobbyAvatar.userData.lobbyAvatar = true;
+    lobbyAvatar.position.set(startX, 0.06, startZ);
+    lobbyAvatar.rotation.y = Math.PI;
+    scene.add(lobby);
+    scene.add(lobbyAvatar);
+    const hiddenWorld = hideWorldForLobby(scene, lobby, [lobbyAvatar]);
+    setLobbyCombatantsVisible(enemies, helpers, false);
+    document.body.classList.add("br-lobby-active");
+    if (camera) {
+      camera.far = 920;
+      camera.updateProjectionMatrix();
+    }
+    scene.background = new THREE.Color(0x7ec8ff);
+    if (scene.fog) {
+      scene.fog.color.set(0x9ad4ff);
+      scene.fog.near = 80;
+      scene.fog.far = 520;
+    }
+    battleRoyaleDrop = {
+      phase: "lobby",
+      lobby,
+      lobbyAvatar,
+      hiddenWorld,
+      jumpPads: lobby.userData.jumpPads,
+      otherAvatars: new Map(),
+      lobbyLeft: BR_LOBBY_SECONDS,
+      phaseStarted: performance.now(),
+      pos: new THREE.Vector3(startX, 0.06, startZ),
+      vel: new THREE.Vector3(),
+      velY: 0,
+      jumpY: 0,
+      grounded: true,
+      padCooldown: 0,
+    };
+    yaw = Math.PI;
+    pitch = -0.22;
+    applyBattleRoyaleThirdPersonCamera(battleRoyaleDrop.pos, { dist: 8.5, lookY: 1.35, baseY: battleRoyaleDrop.jumpY });
+    moveVel.x = 0;
+    moveVel.z = 0;
+    enemyMoveAllowedAt = Number.POSITIVE_INFINITY;
+    if (weaponView) hideAllWeapons(weaponView);
+    showOverlay("Lobby — mini floresta 500m • pule nas rodas e espere a queda");
+  } catch (err) {
+    console.error("Strike Zone: falha ao criar lobby BR", err);
+    battleRoyaleDrop = null;
+    showOverlay("Erro ao carregar lobby — iniciando queda direta");
+    startBattleRoyaleDrop();
   }
-  if (scene.fog) {
-    scene.fog.near = 90;
-    scene.fog.far = 1900;
-  }
-  battleRoyaleDrop = {
-    phase: "lobby",
-    lobby,
-    lobbyAvatar,
-    jumpPads: lobby.userData.jumpPads,
-    otherAvatars: new Map(),
-    lobbyLeft: BR_LOBBY_SECONDS,
-    phaseStarted: performance.now(),
-    pos: new THREE.Vector3(startX, 0, startZ),
-    vel: new THREE.Vector3(),
-    velY: 0,
-    jumpY: 0,
-    grounded: true,
-    padCooldown: 0,
-  };
-  yaw = Math.PI;
-  pitch = -0.22;
-  applyBattleRoyaleThirdPersonCamera(battleRoyaleDrop.pos, { dist: 8.5, lookY: 1.35, baseY: battleRoyaleDrop.jumpY });
-  moveVel.x = 0;
-  moveVel.z = 0;
-  enemyMoveAllowedAt = Number.POSITIVE_INFINITY;
-  if (weaponView) hideAllWeapons(weaponView);
-  showOverlay("Ilha Frontier — lobby na floresta • montanhas e mar ao redor");
 }
 
 function finishBattleRoyaleLobby() {
+  restoreWorldAfterLobby(battleRoyaleDrop?.hiddenWorld);
+  setLobbyCombatantsVisible(enemies, helpers, true);
+  document.body.classList.remove("br-lobby-active");
   clearLobbyOtherPlayers(battleRoyaleDrop, scene);
   if (battleRoyaleDrop?.lobby) scene.remove(battleRoyaleDrop.lobby);
   if (battleRoyaleDrop?.lobbyAvatar) scene.remove(battleRoyaleDrop.lobbyAvatar);
@@ -1063,7 +1082,7 @@ function updateBattleRoyaleDrop(dt) {
     d.lobbyLeft = Math.max(0, BR_LOBBY_SECONDS - (performance.now() - d.phaseStarted) / 1000);
     const left = Math.ceil(d.lobbyLeft);
     const obj = document.getElementById("objective");
-    if (obj) obj.textContent = `Ilha Frontier — lobby ${left}s • veja montanhas e vilas ao redor`;
+    if (obj) obj.textContent = `Lobby floresta — começa em ${left}s • pule nas rodas laranjas`;
     const timerEl = document.getElementById("timer");
     if (timerEl) timerEl.textContent = `Começa ${left}s`;
     const move = readBattleRoyaleMoveInput();
@@ -1081,7 +1100,7 @@ function updateBattleRoyaleDrop(dt) {
     }
     updateLobbyPlayerPhysics(d, dt, d.jumpPads, keys);
     if (d.lobbyAvatar) {
-      d.lobbyAvatar.position.set(d.pos.x, d.jumpY, d.pos.z);
+      d.lobbyAvatar.position.set(d.pos.x, 0.06 + d.jumpY, d.pos.z);
       d.lobbyAvatar.rotation.y = yaw;
     }
     applyBattleRoyaleThirdPersonCamera(d.pos, { dist: 8.5, lookY: 1.35, baseY: d.jumpY });
@@ -1304,9 +1323,9 @@ function startGame(config = {}) {
         document.getElementById("objective").textContent =
           "Sobreviva — Gosmento, Gigante e Bam-Bam estão no mapa • J = lanterna";
       } else if (mapData.openWorld) {
-        showOverlay("Battle Royale — mini floresta do lobby");
+        showOverlay("Battle Royale — lobby na mini floresta");
         document.getElementById("objective").textContent =
-          "Explore a floresta, pule nas rodas e espere o voo para a ilha";
+          "Floresta 500m • trilhas, carros e rodas pula-pula • espere a queda";
       } else {
         showOverlay(`ROUND ${round} — Inimigos entram em 3s`);
         document.getElementById("objective").textContent = isMobileMode()
