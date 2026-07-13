@@ -229,12 +229,101 @@ function drawFrontier(ctx) {
   runner(ctx, 310, 232, 0.7, "#1a2018", "rgba(255,255,255,0.2)");
 }
 
+function drawChess(ctx) {
+  sky(ctx, "#2a1810", "#5a3828");
+  ground(ctx, "#3a2818", H * 0.42);
+  // table
+  block(ctx, 120, 150, 400, 28, "#5a3a22");
+  block(ctx, 160, 178, 40, 90, "#4a3018");
+  block(ctx, 440, 178, 40, 90, "#4a3018");
+  // board
+  const ox = 200;
+  const oy = 70;
+  const s = 28;
+  for (let r = 0; r < 8; r++) {
+    for (let c = 0; c < 8; c++) {
+      ctx.fillStyle = (r + c) % 2 ? "#2a1810" : "#d8c4a0";
+      ctx.fillRect(ox + c * s, oy + r * s, s, s);
+    }
+  }
+  ctx.fillStyle = "#f0e8d8";
+  ctx.font = "22px serif";
+  ctx.fillText("♔", ox + 3.5 * s, oy + 7 * s - 4);
+  ctx.fillStyle = "#1a1010";
+  ctx.fillText("♚", ox + 3.5 * s, oy + 1 * s - 4);
+  ctx.fillStyle = "rgba(240,200,120,0.2)";
+  ctx.fillRect(0, 0, W, H);
+}
+
+function drawDama(ctx) {
+  sky(ctx, "#1a2218", "#3a4830");
+  ground(ctx, "#2a3220", H * 0.45);
+  block(ctx, 110, 155, 420, 26, "#4a3820");
+  const ox = 190;
+  const oy = 55;
+  const s = 30;
+  for (let r = 0; r < 8; r++) {
+    for (let c = 0; c < 8; c++) {
+      ctx.fillStyle = (r + c) % 2 ? "#1a2010" : "#c8b898";
+      ctx.fillRect(ox + c * s, oy + r * s, s, s);
+      if ((r + c) % 2 && r < 3) {
+        ctx.beginPath();
+        ctx.arc(ox + c * s + s / 2, oy + r * s + s / 2, 10, 0, Math.PI * 2);
+        ctx.fillStyle = "#222";
+        ctx.fill();
+      }
+      if ((r + c) % 2 && r > 4) {
+        ctx.beginPath();
+        ctx.arc(ox + c * s + s / 2, oy + r * s + s / 2, 10, 0, Math.PI * 2);
+        ctx.fillStyle = "#e8dcc8";
+        ctx.fill();
+      }
+    }
+  }
+}
+
+function drawSinuca(ctx) {
+  sky(ctx, "#0e1a14", "#1a3024");
+  ground(ctx, "#142018", H * 0.5);
+  // table
+  ctx.fillStyle = "#5a3218";
+  ctx.fillRect(70, 80, 500, 200);
+  ctx.fillStyle = "#147a45";
+  ctx.fillRect(90, 98, 460, 164);
+  // pockets
+  for (const [x, y] of [
+    [90, 98], [320, 96], [550, 98], [90, 262], [320, 264], [550, 262],
+  ]) {
+    ctx.beginPath();
+    ctx.arc(x, y, 14, 0, Math.PI * 2);
+    ctx.fillStyle = "#050505";
+    ctx.fill();
+  }
+  // balls
+  const cols = ["#f4f0e6", "#f0c020", "#1e5aa8", "#c02828", "#111"];
+  cols.forEach((col, i) => {
+    ctx.beginPath();
+    ctx.arc(280 + i * 22, 175, 11, 0, Math.PI * 2);
+    ctx.fillStyle = col;
+    ctx.fill();
+  });
+  ctx.strokeStyle = "#c4a574";
+  ctx.lineWidth = 5;
+  ctx.beginPath();
+  ctx.moveTo(160, 200);
+  ctx.lineTo(250, 178);
+  ctx.stroke();
+}
+
 const DRAWERS = {
   dust: drawDust,
   warehouse: drawWarehouse,
   horror: drawHorror,
   labyrinth: drawLabyrinth,
   frontier: drawFrontier,
+  chess: drawChess,
+  dama: drawDama,
+  sinuca: drawSinuca,
 };
 
 export function getMapCardArtUrl(mapId) {

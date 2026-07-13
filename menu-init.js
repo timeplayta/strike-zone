@@ -127,7 +127,12 @@
     horror: "Terror",
     labyrinth: "Fim das Trevas",
     frontier: "Ilha Frontier",
+    chess: "Xadrez",
+    dama: "Dama",
+    sinuca: "Sinuca",
   };
+
+  const TABLE_GAME_MAPS = new Set(["chess", "dama", "sinuca"]);
 
   function updateSelectedMapLabel() {
     const map = document.querySelector(".map-btn.selected")?.dataset?.map || "dust";
@@ -148,8 +153,9 @@
     const map = document.querySelector(".map-btn.selected")?.dataset?.map;
     const isLab = map === "labyrinth";
     const isFrontier = map === "frontier";
+    const isTable = TABLE_GAME_MAPS.has(map);
     document.querySelectorAll(".labyrinth-hide").forEach((el) => {
-      el.classList.toggle("hidden", isLab);
+      el.classList.toggle("hidden", isLab || isTable);
     });
     const botSlider = $("botCount");
     if (botSlider && isFrontier) botSlider.value = "100";
@@ -167,8 +173,18 @@
     const map = document.querySelector(".map-btn.selected")?.dataset?.map;
     const horror = map === "horror";
     const frontier = map === "frontier";
+    const table = TABLE_GAME_MAPS.has(map);
     const hint = $("menuHint");
     if (!hint) return;
+    if (table) {
+      hint.textContent =
+        map === "sinuca"
+          ? "Sinuca — arraste pra mirar, solte pra tacada · bots Fácil / Médio / Difícil / Hard"
+          : map === "dama"
+          ? "Dama — capturas obrigatórias · escolha o nível do bot na entrada"
+          : "Xadrez — você joga de brancas · escolha o nível do bot na entrada";
+      return;
+    }
     if (device === "mobile") {
       hint.textContent = frontier
         ? "Battle Royale — Ilha Frontier • 10 POIs • lobby no Mercado Central"
@@ -234,6 +250,24 @@
     if (location.protocol === "file:") {
       showLoadError("Pagina aberta pelo Explorer. Use JOGAR.bat na pasta do jogo.");
       return;
+    }
+    const map = document.querySelector(".map-btn.selected")?.dataset?.map;
+    if (TABLE_GAME_MAPS.has(map)) {
+      $("loadError")?.classList.add("hidden");
+      if (typeof window.openTableGames === "function") {
+        window.openTableGames(map);
+        return;
+      }
+      try {
+        await import("./table-games.js?v=1");
+        if (typeof window.openTableGames === "function") {
+          window.openTableGames(map);
+          return;
+        }
+      } catch (e) {
+        showLoadError(e?.message || "Falha ao abrir jogos de mesa.");
+        return;
+      }
     }
     if (typeof window.startStrikeZone === "function") {
       $("loadError")?.classList.add("hidden");

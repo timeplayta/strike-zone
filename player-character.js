@@ -14,7 +14,7 @@ import {
   waitForBlockbenchModel,
   fitBlockbenchModel,
 } from "./blockbench-model-loader.js";
-import { buildNpcWeapon, attachStylizedWeapon } from "./npc-weapon.js";
+import { buildNpcWeapon, attachStylizedWeapon, ensureHandGunPivot } from "./npc-weapon.js";
 
 const FACE_COLORS = {
   eyeWhite: 0xf4f4f8,
@@ -77,6 +77,7 @@ export function decorateBlockbenchFace(model) {
 
 const BLOCKBENCH_FULL_BODY = {
   soldier: { key: "player_hero", w: 1.05, h: 1.82 },
+  operator: { key: "operator", w: 1.05, h: 1.82 },
   neon_runner: { key: "player_neon_runner", w: 1.05, h: 1.82 },
   shadow: { key: "player_shadow", w: 1.02, h: 1.78 },
   trevas_horror: { key: "player_shadow", w: 1.08, h: 1.85 },
@@ -103,19 +104,14 @@ function attachWeaponRig(model, weaponType, shirt, withRifle) {
   const handR = model.getObjectByName("hand_r") || model.getObjectByName("handR");
   const anchor = handR || model;
 
-  let gunPivot = anchor.getObjectByName("gunPivot");
-  if (!gunPivot) {
+  let gunPivot = handR ? ensureHandGunPivot(anchor) : anchor.getObjectByName("gunPivot");
+  if (!gunPivot && !handR) {
     gunPivot = new THREE.Group();
     gunPivot.name = "gunPivot";
-    if (handR) {
-      gunPivot.position.set(0.04, -0.02, -0.04);
-      gunPivot.rotation.set(-0.12, 0, 0.08);
-    } else {
-      gunPivot.position.set(0.12, 0.92, -0.38);
-      gunPivot.rotation.set(-1.45, 0, 0.05);
-    }
+    gunPivot.position.set(0.12, 0.92, -0.38);
+    gunPivot.rotation.set(-1.45, 0, 0.05);
     anchor.add(gunPivot);
-  } else {
+  } else if (gunPivot) {
     gunPivot.clear();
   }
 

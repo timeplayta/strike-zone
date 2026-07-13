@@ -95,7 +95,7 @@ export function createHelper(index, mapKey = "dust") {
   const horror = mapKey === "horror";
   const faceProfile = HELPER_FACES[index] || HELPER_FACES[0];
   const body = buildPlayerCharacter({
-    characterSkin: "soldier",
+    characterSkin: "operator",
     scale: 1.04,
     withRifle: true,
     weaponType: index === 0 ? "m4" : "scar",

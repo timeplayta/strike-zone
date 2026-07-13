@@ -121,6 +121,15 @@ function initAdminPanel() {
   $("adminStartBtn")?.addEventListener("click", () => {
     const mapKey = $("adminMapSelect")?.value || "dust";
     syncAdminMapToMenu(mapKey);
+    const tableGames = new Set(["chess", "dama", "sinuca"]);
+    if (tableGames.has(mapKey)) {
+      if (typeof window.openTableGames === "function") {
+        window.openTableGames(mapKey);
+      } else {
+        import("./table-games.js?v=1").then(() => window.openTableGames?.(mapKey));
+      }
+      return;
+    }
     const mode = $("adminGameMode")?.value;
     if (mode && $("gameMode")) $("gameMode").value = mode === "escape" ? "tdm" : mode;
     window.__adminStartConfig = {

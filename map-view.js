@@ -1,6 +1,6 @@
 /** Tela cheia de mapas — abre pelo botão acima de JOGAR */
 
-import { getMapCardArtUrl } from "./map-card-art.js?v=72";
+import { getMapCardArtUrl } from "./map-card-art.js?v=73";
 
 const MAPS = [
   { id: "dust", category: "tiro", name: "Dust Alley", desc: "Deserto aberto" },
@@ -8,9 +8,12 @@ const MAPS = [
   { id: "horror", category: "terror", name: "Terror", desc: "Combate escuro", horror: true },
   { id: "labyrinth", category: "esconde-esconde", name: "Fim das Trevas", desc: "Labirinto de escape", horror: true },
   { id: "frontier", category: "tiro", name: "Ilha Frontier", desc: "Ilha 2km • 10 POIs • deserto, selva e costa • 100 bots" },
+  { id: "chess", category: "jogos-de-mesa", name: "Xadrez", desc: "Tabuleiro clássico · vs bot" },
+  { id: "dama", category: "jogos-de-mesa", name: "Dama", desc: "Damas 8×8 · capturas obrigatórias" },
+  { id: "sinuca", category: "jogos-de-mesa", name: "Sinuca", desc: "Mesa 8-ball · mira e tacada" },
 ];
 
-const CATEGORIES = ["tiro", "terror", "esconde-esconde"];
+const CATEGORIES = ["tiro", "terror", "esconde-esconde", "jogos-de-mesa"];
 
 let activeCategory = "tiro";
 
@@ -29,7 +32,7 @@ function categoryForMap(mapId) {
 function buildMapCards() {
   const grid = $("ffMapCardGrid");
   if (!grid) return;
-  if (grid.dataset.built === "3" && grid.children.length) return;
+  if (grid.dataset.built === "4" && grid.children.length) return;
   try {
     grid.innerHTML = MAPS.map((m) => {
       const art = getMapCardArtUrl(m.id);
@@ -47,7 +50,7 @@ function buildMapCards() {
         `</div>`
       );
     }).join("");
-    grid.dataset.built = "3";
+    grid.dataset.built = "4";
   } catch (err) {
     console.warn("[Strike Zone] Falha ao montar cards de mapa:", err);
     grid.dataset.built = "0";

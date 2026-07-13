@@ -40,7 +40,7 @@
       background: rgba(0,0,0,.25); color: rgba(255,255,255,.75); cursor: pointer; }
     .welcome-tab.active { background: rgba(232,192,96,.18); border-color: rgba(232,192,96,.45); color: #e8c060; }
   </style>
-  <link rel="stylesheet" href="/style.css?v=81" />
+  <link rel="stylesheet" href="/style.css?v=82" />
 
   <script>
 
@@ -349,6 +349,9 @@
           <option value="horror">Por onde você não deveria passar</option>
           <option value="labyrinth">O Labirinto</option>
           <option value="frontier">Ilha Frontier — 2000m</option>
+          <option value="chess">Xadrez (jogos de mesa)</option>
+          <option value="dama">Dama (jogos de mesa)</option>
+          <option value="sinuca">Sinuca (jogos de mesa)</option>
         </select>
         <label>Modo de partida</label>
         <select id="adminGameMode">
@@ -424,6 +427,9 @@
           <option value="horror">Por onde você não deveria passar</option>
           <option value="labyrinth">O Labirinto</option>
           <option value="frontier">Ilha Frontier — 2000m</option>
+          <option value="chess">Xadrez</option>
+          <option value="dama">Dama</option>
+          <option value="sinuca">Sinuca</option>
         </select>
         <div id="adminMapInfo" class="admin-map-info"></div>
         <button type="button" id="adminViewMapBtn" class="btn-primary">VER MAPA (ESPECTADOR)</button>
@@ -456,6 +462,7 @@
           <button type="button" class="ff-map-cat-btn ff-map-cat-tiro" data-category="tiro">tiro</button>
           <button type="button" class="ff-map-cat-btn ff-map-cat-terror" data-category="terror">terror</button>
           <button type="button" class="ff-map-cat-btn ff-map-cat-esconde-esconde" data-category="esconde-esconde">esconde-esconde</button>
+          <button type="button" class="ff-map-cat-btn ff-map-cat-jogos-de-mesa" data-category="jogos-de-mesa">jogos de mesa</button>
         </nav>
       </div>
     </div>
@@ -831,14 +838,15 @@
   }
   </script>
 
-  <script src="menu-init.js?v=99"></script>
+  <script src="menu-init.js?v=100"></script>
   <script type="module" src="admin-panel.js"></script>
   <script type="module" src="dev-chat.js"></script>
   <script type="module" src="arsenal-view.js"></script>
   <script type="module" src="account-hub.js"></script>
   <script type="module" src="character-customizer.js"></script>
   <script type="module" src="solo-view.js"></script>
-  <script type="module" src="map-view.js?v=80"></script>
+  <script type="module" src="map-view.js?v=81"></script>
+  <script type="module" src="table-games.js?v=1"></script>
 
   <!-- Modal de compra de moedas -->
   <div id="coinPackModal" class="coin-pack-modal hidden" role="dialog" aria-modal="true" aria-labelledby="coinPackModalTitle">
