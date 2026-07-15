@@ -11,7 +11,7 @@ import {
   waitForBlockbenchModel,
   fitBlockbenchModel,
 } from "./blockbench-model-loader.js";
-import { buildNpcWeapon, attachStylizedWeapon, ensureHandGunPivot } from "./npc-weapon.js";
+import { buildNpcWeapon, attachStylizedWeapon, ensureBlockbenchGunPivot } from "./npc-weapon.js";
 
 const viewers = new Map();
 
@@ -56,9 +56,7 @@ function applyPreviewWeaponSkins(charGroup) {
 
 function attachPreviewWeapon(model) {
   decorateBlockbenchFace(model);
-  const handR = model.getObjectByName("hand_r") || model.getObjectByName("handR");
-  const anchor = handR || model;
-  const gunPivot = ensureHandGunPivot(anchor);
+  const gunPivot = ensureBlockbenchGunPivot(model);
   attachStylizedWeapon({ gunPivot }, buildNpcWeapon("ak47", 0xd45a2a), "ak47");
 }
 
