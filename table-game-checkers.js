@@ -387,7 +387,7 @@ function scoreMoves(board, color, depth) {
   });
 }
 
-export function mountCheckersGame(root, { botTier, onExit, onEnd }) {
+export function mountCheckersGame(root, { botTier, onExit, onEnd, onBind, match }) {
   const tier = getBotTier(botTier);
   let board = setupBoard();
   let turn = "w";
@@ -395,6 +395,7 @@ export function mountCheckersGame(root, { botTier, onExit, onEnd }) {
   let highlights = [];
   let over = false;
   let botThinking = false;
+  let plyCount = 0;
 
   const wrap = document.createElement("div");
   wrap.className = "tg-board-wrap tg-dama-wrap";
@@ -419,6 +420,10 @@ export function mountCheckersGame(root, { botTier, onExit, onEnd }) {
 
   function setStatus(msg) {
     statusEl.textContent = msg;
+  }
+
+  function startClockForPlayer() {
+    match?.startPlayerClock?.(plyCount === 0);
   }
 
   function render() {
@@ -446,16 +451,22 @@ export function mountCheckersGame(root, { botTier, onExit, onEnd }) {
     }
   }
 
-  function endGame(winner) {
+  function endGame(winner, reason = "") {
+    if (over) return;
     over = true;
+    match?.endPlayerClock?.();
+    match?.setActionsEnabled?.(false);
     if (winner === "w") {
-      setStatus("Você venceu!");
+      setStatus(reason || "Você venceu!");
       playWin();
+    } else if (winner === "draw") {
+      setStatus(reason || "Empate.");
+      match?.pushChat?.("Mesa", reason || "Empate.", "system");
     } else {
-      setStatus("O bot venceu.");
+      setStatus(reason || "O bot venceu.");
       playLose();
     }
-    onEnd?.(winner);
+    onEnd?.(winner, reason);
   }
 
   function checkEnd(afterColor) {
@@ -468,7 +479,9 @@ export function mountCheckersGame(root, { botTier, onExit, onEnd }) {
   }
 
   function doMove(m) {
+    match?.endPlayerClock?.();
     board = applyMove(board, m);
+    plyCount += 1;
     if (m.captures?.length) playCapture();
     else playPiecePlace();
     selected = null;
@@ -480,9 +493,14 @@ export function mountCheckersGame(root, { botTier, onExit, onEnd }) {
   function botPlay() {
     if (over || turn !== "b") return;
     botThinking = true;
+    match?.setActionsEnabled?.(false);
     setStatus("Bot pensando...");
     playBotThink();
     setTimeout(() => {
+      if (over) {
+        botThinking = false;
+        return;
+      }
       const scored = scoreMoves(board, "b", tier.depth);
       const pick = pickMoveWithWisdom(scored, tier.id);
       if (!pick) {
@@ -493,8 +511,11 @@ export function mountCheckersGame(root, { botTier, onExit, onEnd }) {
       botThinking = false;
       if (cont && !over) {
         turn = "w";
+        match?.setActionsEnabled?.(true);
+        match?.resetDrawOffer?.();
         setStatus("Sua vez");
         render();
+        startClockForPlayer();
       }
     }, 400 + tier.depth * 180);
   }
@@ -532,13 +553,54 @@ export function mountCheckersGame(root, { botTier, onExit, onEnd }) {
     }
   }
 
+  function resign() {
+    if (over) return;
+    endGame("b", "Você desistiu.");
+    match?.pushChat?.("Mesa", "Vitória do bot por desistência.", "system");
+  }
+
+  function timeout(kind) {
+    if (over) return;
+    endGame(
+      "b",
+      kind === "first"
+        ? "Você perdeu — demorou mais de 1 min no 1º lance."
+        : "Você perdeu — offline (mais de 3 min sem jogar)."
+    );
+  }
+
+  function offerDraw() {
+    if (over || botThinking) {
+      match?.resetDrawOffer?.();
+      return;
+    }
+    const my = countPieces(board, "w");
+    const opp = countPieces(board, "b");
+    const accept = my <= opp + 1 || Math.random() < 0.2;
+    setTimeout(() => {
+      if (over) return;
+      if (accept) {
+        match?.pushChat?.("Bot", "Aceito o empate.", "bot");
+        match?.markDrawResolved?.(true);
+        endGame("draw", "Empate — por acordo.");
+      } else {
+        match?.pushChat?.("Bot", "Recuso o empate.", "bot");
+        match?.markDrawResolved?.(false);
+        setStatus("Bot recusou o empate.");
+      }
+    }, 500 + Math.random() * 800);
+  }
+
   boardEl.addEventListener("click", (e) => {
     const btn = e.target.closest(".tg-sq");
     if (!btn) return;
     onCell(+btn.dataset.r, +btn.dataset.c);
   });
 
-  wrap.querySelector("[data-exit]").addEventListener("click", () => onExit?.());
+  wrap.querySelector("[data-exit]").addEventListener("click", () => {
+    match?.stopClock?.();
+    onExit?.();
+  });
   wrap.querySelector("[data-restart]").addEventListener("click", () => {
     board = setupBoard();
     turn = "w";
@@ -546,11 +608,21 @@ export function mountCheckersGame(root, { botTier, onExit, onEnd }) {
     highlights = [];
     over = false;
     botThinking = false;
+    plyCount = 0;
+    match?.resetDrawOffer?.();
+    match?.setActionsEnabled?.(true);
     setStatus("Sua vez — peças claras");
     render();
+    startClockForPlayer();
   });
 
+  onBind?.({ resign, offerDraw, timeout });
   setStatus("Sua vez — peças claras");
   render();
-  return () => wrap.remove();
+  match?.setActionsEnabled?.(true);
+  startClockForPlayer();
+  return () => {
+    match?.stopClock?.();
+    wrap.remove();
+  };
 }

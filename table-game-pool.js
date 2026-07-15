@@ -43,7 +43,7 @@ function dist(a, b) {
   return Math.hypot(dx, dy);
 }
 
-export function mountPoolGame(root, { botTier, onExit, onEnd }) {
+export function mountPoolGame(root, { botTier, onExit, onEnd, onBind, match }) {
   const tier = getBotTier(botTier);
   const wrap = document.createElement("div");
   wrap.className = "tg-board-wrap tg-pool-wrap";
@@ -94,9 +94,24 @@ export function mountPoolGame(root, { botTier, onExit, onEnd }) {
   let pocketedThisShot = [];
   let raf = 0;
   let firstContact = null;
+  let shotCount = 0;
 
   function setStatus(msg) {
     statusEl.textContent = msg;
+  }
+
+  function startClockForPlayer() {
+    if (over || turn !== "player") return;
+    match?.startPlayerClock?.(shotCount === 0);
+  }
+
+  function finishGame(winner, reason = "") {
+    if (over) return;
+    over = true;
+    match?.endPlayerClock?.();
+    match?.setActionsEnabled?.(false);
+    if (reason) setStatus(reason);
+    onEnd?.(winner, reason);
   }
 
   function makeBall(id, x, y) {
@@ -315,6 +330,10 @@ export function mountPoolGame(root, { botTier, onExit, onEnd }) {
   function shoot(angle, strength) {
     const cue = alive(0);
     if (!cue || moving || over) return;
+    if (turn === "player") {
+      match?.endPlayerClock?.();
+      shotCount += 1;
+    }
     cue.vx = Math.cos(angle) * strength;
     cue.vy = Math.sin(angle) * strength;
     playCueStrike(strength / MAX_POWER);
@@ -373,6 +392,8 @@ export function mountPoolGame(root, { botTier, onExit, onEnd }) {
       const left = myGroup === "solid" ? solidsLeft() : myGroup === "stripe" ? stripesLeft() : 99;
       const legalWin = !!myGroup && left === 0 && !foul && !scratched;
       over = true;
+      match?.endPlayerClock?.();
+      match?.setActionsEnabled?.(false);
       if (shooter === "player") {
         if (legalWin) {
           setStatus("8 na caçapa — você venceu!");
@@ -435,8 +456,12 @@ export function mountPoolGame(root, { botTier, onExit, onEnd }) {
 
     if (turn === "player") {
       setStatus(foul ? `Falta! Sua vez. ${label}` : `Sua vez. ${label}`);
+      match?.setActionsEnabled?.(true);
+      match?.resetDrawOffer?.();
+      startClockForPlayer();
     } else {
       setStatus(`Vez do bot. ${label}`);
+      match?.setActionsEnabled?.(false);
       setTimeout(botShot, 600 + Math.random() * 500);
     }
   }
@@ -547,6 +572,7 @@ export function mountPoolGame(root, { botTier, onExit, onEnd }) {
   window.addEventListener("touchend", onUp);
 
   wrap.querySelector("[data-exit]").addEventListener("click", () => {
+    match?.stopClock?.();
     cancelAnimationFrame(raf);
     onExit?.();
   });
@@ -556,14 +582,61 @@ export function mountPoolGame(root, { botTier, onExit, onEnd }) {
     playerGroup = null;
     over = false;
     moving = false;
+    shotCount = 0;
+    match?.resetDrawOffer?.();
+    match?.setActionsEnabled?.(true);
     setStatus("Sua vez — arraste pra mirar e solte pra tacada");
+    startClockForPlayer();
+  });
+
+  onBind?.({
+    resign() {
+      if (over) return;
+      setStatus("Você desistiu.");
+      playLose();
+      finishGame("bot", "Você desistiu.");
+      match?.pushChat?.("Mesa", "Vitória do bot por desistência.", "system");
+    },
+    offerDraw() {
+      if (over || turn !== "player" || moving) {
+        match?.resetDrawOffer?.();
+        return;
+      }
+      const accept = Math.random() < 0.28;
+      setTimeout(() => {
+        if (over) return;
+        if (accept) {
+          match?.pushChat?.("Bot", "Aceito o empate.", "bot");
+          match?.markDrawResolved?.(true);
+          setStatus("Empate por acordo.");
+          finishGame("draw", "Empate — por acordo.");
+        } else {
+          match?.pushChat?.("Bot", "Recuso o empate.", "bot");
+          match?.markDrawResolved?.(false);
+          setStatus("Bot recusou o empate.");
+        }
+      }, 500 + Math.random() * 700);
+    },
+    timeout(kind) {
+      if (over) return;
+      playLose();
+      finishGame(
+        "bot",
+        kind === "first"
+          ? "Você perdeu — demorou mais de 1 min no 1º lance."
+          : "Você perdeu — offline (mais de 3 min sem jogar)."
+      );
+    },
   });
 
   rack();
   setStatus("Sua vez — arraste pra mirar e solte pra tacada");
+  match?.setActionsEnabled?.(true);
+  startClockForPlayer();
   raf = requestAnimationFrame(loop);
 
   return () => {
+    match?.stopClock?.();
     cancelAnimationFrame(raf);
     window.removeEventListener("mousemove", onMove);
     window.removeEventListener("mouseup", onUp);

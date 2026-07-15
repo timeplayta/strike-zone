@@ -240,10 +240,51 @@ function applyMove(board, m) {
   const next = cloneBoard(board);
   const piece = next[m.fr][m.fc];
   if (!piece) return next;
+  const captured = next[m.tr][m.tc];
+  const wasPawn = piece.t === "p";
   next[m.tr][m.tc] = piece;
   next[m.fr][m.fc] = null;
   if (piece.t === "p" && (m.tr === 0 || m.tr === 7)) next[m.tr][m.tc] = { t: "q", c: piece.c };
+  next._meta = { captured: !!captured, pawnMove: wasPawn };
   return next;
+}
+
+function positionKey(board, turn) {
+  let s = turn + "|";
+  for (let r = 0; r < 8; r++) {
+    for (let c = 0; c < 8; c++) {
+      const p = board[r][c];
+      s += p ? p.c + p.t : ".";
+    }
+  }
+  return s;
+}
+
+/** Empate por insuficiência de material (FIDE simplificado) */
+function insufficientMaterial(board) {
+  const minors = [];
+  for (let r = 0; r < 8; r++) {
+    for (let c = 0; c < 8; c++) {
+      const p = board[r][c];
+      if (!p || p.t === "k") continue;
+      if (p.t === "q" || p.t === "r" || p.t === "p") return false;
+      if (p.t === "b" || p.t === "n") minors.push({ t: p.t, c: p.c, sq: (r + c) % 2 });
+    }
+  }
+  if (minors.length === 0) return true; // K vs K
+  if (minors.length === 1) return true; // K+B ou K+N vs K
+  if (minors.length === 2) {
+    const [a, b] = minors;
+    // K+B vs K+B mesma cor de casa
+    if (a.t === "b" && b.t === "b" && a.c !== b.c && a.sq === b.sq) return true;
+  }
+  return false;
+}
+
+function countRepetitions(history, key) {
+  let n = 0;
+  for (const h of history) if (h === key) n++;
+  return n;
 }
 
 function legalMoves(board, color) {
@@ -333,7 +374,7 @@ function sqName(r, c) {
   return `${FILES[c]}${8 - r}`;
 }
 
-export function mountChessGame(root, { botTier, onExit, onEnd }) {
+export function mountChessGame(root, { botTier, onExit, onEnd, onBind, match }) {
   const tier = getBotTier(botTier);
   let board = setupBoard();
   let turn = "w";
@@ -345,6 +386,9 @@ export function mountChessGame(root, { botTier, onExit, onEnd }) {
   let botThinking = false;
   let lastFrom = null;
   let lastTo = null;
+  let halfmoveClock = 0;
+  let plyCount = 0;
+  let positionHistory = [positionKey(board, "w")];
 
   const wrap = document.createElement("div");
   wrap.className = "tg-board-wrap tg-chess-wrap";
@@ -370,6 +414,10 @@ export function mountChessGame(root, { botTier, onExit, onEnd }) {
   function setStatus(msg) {
     status = msg;
     statusEl.textContent = msg;
+  }
+
+  function startClockForPlayer() {
+    match?.startPlayerClock?.(plyCount === 0);
   }
 
   function render() {
@@ -413,26 +461,52 @@ export function mountChessGame(root, { botTier, onExit, onEnd }) {
     }
   }
 
-  function endGame(winner) {
+  function endGame(result, reason = "") {
+    if (over) return;
     over = true;
-    if (winner === "w") {
-      setStatus("Xeque-mate! Você venceu.");
+    match?.endPlayerClock?.();
+    match?.setActionsEnabled?.(false);
+    if (result === "w") {
+      setStatus(reason || "Xeque-mate! Você venceu.");
       playWin();
-    } else if (winner === "b") {
-      setStatus("Xeque-mate! O bot venceu.");
+    } else if (result === "b") {
+      setStatus(reason || "Xeque-mate! O bot venceu.");
       playLose();
     } else {
-      setStatus("Empate — afogamento.");
+      setStatus(reason || "Empate.");
+      match?.pushChat?.("Mesa", reason || "Empate.", "system");
     }
-    onEnd?.(winner);
+    onEnd?.(result, reason);
+  }
+
+  function checkAutomaticDraws(nextTurn) {
+    if (insufficientMaterial(board)) {
+      endGame("draw", "Empate — insuficiência de material.");
+      return true;
+    }
+    if (halfmoveClock >= 100) {
+      endGame("draw", "Empate — regra dos 50 movimentos.");
+      return true;
+    }
+    const key = positionKey(board, nextTurn);
+    if (countRepetitions(positionHistory, key) >= 3) {
+      endGame("draw", "Empate — repetição da mesma posição (3×).");
+      return true;
+    }
+    return false;
   }
 
   function afterMove(colorMoved) {
     const opp = colorMoved === "w" ? "b" : "w";
+    const key = positionKey(board, opp);
+    positionHistory.push(key);
+
+    if (checkAutomaticDraws(opp)) return false;
+
     const moves = legalMoves(board, opp);
     if (!moves.length) {
       if (isInCheck(board, opp)) endGame(colorMoved);
-      else endGame("draw");
+      else endGame("draw", "Empate — afogamento.");
       return false;
     }
     if (isInCheck(board, opp)) {
@@ -443,10 +517,16 @@ export function mountChessGame(root, { botTier, onExit, onEnd }) {
   }
 
   function doMove(m) {
+    match?.endPlayerClock?.();
+    const piece = board[m.fr][m.fc];
     const captured = !!board[m.tr][m.tc];
+    const pawnMove = piece?.t === "p";
     lastFrom = { r: m.fr, c: m.fc };
     lastTo = { r: m.tr, c: m.tc };
     board = applyMove(board, m);
+    if (pawnMove || captured) halfmoveClock = 0;
+    else halfmoveClock += 1;
+    plyCount += 1;
     if (captured) playCapture();
     else playPiecePlace(true);
     selected = null;
@@ -476,6 +556,7 @@ export function mountChessGame(root, { botTier, onExit, onEnd }) {
   function botPlay() {
     if (over || turn !== "b") return;
     botThinking = true;
+    match?.setActionsEnabled?.(false);
     setStatus("Bot pensando...");
     playBotThink();
     const delay = 350 + tier.depth * 220 + Math.random() * 400;
@@ -489,22 +570,27 @@ export function mountChessGame(root, { botTier, onExit, onEnd }) {
         const pick = pickMoveWithWisdom(scored, tier.id);
         if (!pick) {
           botThinking = false;
-          endGame("draw");
+          endGame("draw", "Empate — sem jogadas.");
           return;
         }
         const cont = doMove(pick);
         botThinking = false;
         if (cont && !over) {
           turn = "w";
+          match?.setActionsEnabled?.(true);
+          match?.resetDrawOffer?.();
           setStatus(isInCheck(board, "w") ? "Xeque! Sua vez." : "Sua vez");
           render();
+          startClockForPlayer();
         }
       } catch (err) {
         console.error(err);
         botThinking = false;
-        setStatus("Erro no bot — sua vez.");
         turn = "w";
+        match?.setActionsEnabled?.(true);
+        setStatus("Erro no bot — sua vez.");
         render();
+        startClockForPlayer();
       }
     }, delay);
   }
@@ -546,7 +632,6 @@ export function mountChessGame(root, { botTier, onExit, onEnd }) {
         }
         return;
       }
-      // clicou na própria peça → troca seleção
       if (p && p.c === "w") {
         selectPiece(r, c);
         return;
@@ -565,14 +650,47 @@ export function mountChessGame(root, { botTier, onExit, onEnd }) {
     }
   }
 
-  boardEl.addEventListener("click", (e) => {
-    const btn = e.target.closest(".tg-sq");
-    if (!btn) return;
-    onCell(+btn.dataset.r, +btn.dataset.c);
-  });
+  function resign() {
+    if (over) return;
+    endGame("b", "Você desistiu.");
+    match?.pushChat?.("Mesa", "Vitória do bot por desistência.", "system");
+  }
 
-  wrap.querySelector("[data-exit]").addEventListener("click", () => onExit?.());
-  wrap.querySelector("[data-restart]").addEventListener("click", () => {
+  function timeout(kind) {
+    if (over) return;
+    const msg = kind === "first"
+      ? "Você perdeu — demorou mais de 1 min no 1º lance."
+      : "Você perdeu — offline (mais de 3 min sem jogar).";
+    endGame("b", msg);
+  }
+
+  function offerDraw() {
+    if (over || botThinking) {
+      match?.resetDrawOffer?.();
+      return;
+    }
+    // Bot aceita se a posição não for claramente vantajosa pra ele
+    const evalW = evaluate(board, "w");
+    const accept =
+      evalW <= 80 || // igual ou pior pra brancas → bot (pretas) topa fácil
+      (evalW <= 220 && Math.random() < 0.45) ||
+      Math.random() < 0.12;
+
+    setTimeout(() => {
+      if (over) return;
+      if (accept) {
+        match?.pushChat?.("Bot", "Aceito o empate.", "bot");
+        match?.markDrawResolved?.(true);
+        endGame("draw", "Empate — por acordo.");
+      } else {
+        match?.pushChat?.("Bot", "Recuso o empate. Vamos jogar!", "bot");
+        match?.markDrawResolved?.(false);
+        setStatus("Bot recusou o empate.");
+      }
+    }, 600 + Math.random() * 900);
+  }
+
+  function resetMatch() {
     board = setupBoard();
     turn = "w";
     selected = null;
@@ -580,16 +698,46 @@ export function mountChessGame(root, { botTier, onExit, onEnd }) {
     selectedMoves = [];
     lastFrom = null;
     lastTo = null;
+    halfmoveClock = 0;
+    plyCount = 0;
+    positionHistory = [positionKey(board, "w")];
     over = false;
     botThinking = false;
+    match?.resetDrawOffer?.();
+    match?.setActionsEnabled?.(true);
     setStatus("Sua vez — jogue com as brancas");
     render();
+    startClockForPlayer();
+  }
+
+  boardEl.addEventListener("click", (e) => {
+    const btn = e.target.closest(".tg-sq");
+    if (!btn) return;
+    onCell(+btn.dataset.r, +btn.dataset.c);
+  });
+
+  wrap.querySelector("[data-exit]").addEventListener("click", () => {
+    match?.stopClock?.();
+    onExit?.();
+  });
+  wrap.querySelector("[data-restart]").addEventListener("click", () => {
+    match?.endPlayerClock?.();
+    resetMatch();
+  });
+
+  onBind?.({
+    resign,
+    offerDraw,
+    timeout,
   });
 
   setStatus(status);
   render();
+  match?.setActionsEnabled?.(true);
+  startClockForPlayer();
 
   return () => {
+    match?.stopClock?.();
     wrap.remove();
   };
 }

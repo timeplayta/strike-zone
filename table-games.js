@@ -2,12 +2,13 @@
  * Área Jogos de Mesa — lobby de dificuldade + shell imersivo
  */
 
-import { BOT_TIERS, getBotTier } from "./table-games-bots.js";
+import { BOT_TIERS } from "./table-games-bots.js";
 import {
   unlockTableAudio,
   startTableAmbience,
   stopTableAmbience,
 } from "./table-games-audio.js";
+import { mountMatchChrome } from "./table-games-match.js";
 import { mountChessGame } from "./table-game-chess.js";
 import { mountCheckersGame } from "./table-game-checkers.js";
 import { mountPoolGame } from "./table-game-pool.js";
@@ -42,7 +43,10 @@ export function isTableGameMap(mapId) {
 
 let shell = null;
 let cleanupGame = null;
+let cleanupChrome = null;
 let currentGameId = null;
+let matchChrome = null;
+let gameApi = null;
 
 function ensureShell() {
   if (shell) return shell;
@@ -108,11 +112,25 @@ function selectTier(id) {
   if (start) start.disabled = !id;
 }
 
+function tearDownMatch() {
+  if (cleanupGame) {
+    cleanupGame();
+    cleanupGame = null;
+  }
+  if (cleanupChrome) {
+    cleanupChrome();
+    cleanupChrome = null;
+  }
+  matchChrome = null;
+  gameApi = null;
+}
+
 function showLobby(gameId) {
   const game = TABLE_GAMES[gameId];
   if (!game) return;
   currentGameId = gameId;
   selectedTier = null;
+  tearDownMatch();
   const el = ensureShell();
   el.classList.remove("hidden");
   el.setAttribute("aria-hidden", "false");
@@ -133,18 +151,35 @@ function beginMatch() {
   const game = TABLE_GAMES[currentGameId];
   if (!game || !selectedTier) return;
   unlockTableAudio();
-  if (cleanupGame) {
-    cleanupGame();
-    cleanupGame = null;
-  }
+  tearDownMatch();
+
+  const matchEl = shell.querySelector("[data-match]");
   const mount = shell.querySelector("[data-mount]");
   mount.innerHTML = "";
   shell.querySelector("[data-lobby]").classList.add("hidden");
-  shell.querySelector("[data-match]").classList.remove("hidden");
+  matchEl.classList.remove("hidden");
+
+  matchChrome = mountMatchChrome(matchEl, {
+    onResign: () => gameApi?.resign?.(),
+    onOfferDraw: () => gameApi?.offerDraw?.(),
+    onTimeout: (kind) => gameApi?.timeout?.(kind),
+  });
+  cleanupChrome = () => {
+    matchChrome?.destroy();
+    matchChrome = null;
+  };
+
   cleanupGame = game.mount(mount, {
     botTier: selectedTier,
+    match: matchChrome,
     onExit: () => showLobby(currentGameId),
-    onEnd: () => {},
+    onEnd: () => {
+      matchChrome?.endPlayerClock();
+      matchChrome?.setActionsEnabled(false);
+    },
+    onBind(api) {
+      gameApi = api;
+    },
   });
 }
 
@@ -155,10 +190,7 @@ export function openTableGames(gameId) {
 }
 
 export function closeTableGames() {
-  if (cleanupGame) {
-    cleanupGame();
-    cleanupGame = null;
-  }
+  tearDownMatch();
   stopTableAmbience();
   if (shell) {
     shell.classList.add("hidden");
