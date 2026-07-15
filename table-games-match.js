@@ -1,5 +1,5 @@
 /**
- * Chrome da partida — timer, desistir/empate (canto da engrenagem) e chat
+ * Chrome da partida — timer, desistir/empate, chat recolhível (canto da engrenagem)
  */
 
 export const FIRST_MOVE_LIMIT_MS = 60_000;
@@ -32,44 +32,76 @@ export function mountMatchChrome(matchEl, handlers = {}) {
   let clockRaf = 0;
   let deadline = 0;
   let running = false;
-  let clockKind = "move"; // 'first' | 'move'
+  let clockKind = "move";
   let drawPending = false;
+  let chatOpen = false;
+  let unread = 0;
 
-  const bar = document.createElement("div");
-  bar.className = "tg-match-bar";
-  bar.innerHTML = `
-    <div class="tg-match-clock" data-clock title="Tempo da jogada">
-      <span class="tg-clock-label">Tempo</span>
-      <span class="tg-clock-value" data-clock-val>1:00</span>
+  const chrome = document.createElement("div");
+  chrome.className = "tg-match-chrome";
+  chrome.innerHTML = `
+    <div class="tg-match-bar">
+      <div class="tg-match-clock" data-clock title="Tempo da jogada">
+        <span class="tg-clock-label">Tempo</span>
+        <span class="tg-clock-value" data-clock-val>1:00</span>
+      </div>
+      <div class="tg-match-actions">
+        <button type="button" class="tg-match-action tg-action-resign" data-resign title="Desistir">🏳 Desistir</button>
+        <button type="button" class="tg-match-action tg-action-draw" data-draw title="Pedir empate">🤝 Empate</button>
+        <button type="button" class="tg-match-action tg-action-chat" data-chat-toggle title="Abrir/fechar chat" aria-expanded="false">
+          💬 Chat
+          <span class="tg-chat-badge hidden" data-chat-badge aria-hidden="true"></span>
+        </button>
+      </div>
     </div>
-    <div class="tg-match-actions">
-      <button type="button" class="tg-match-action tg-action-resign" data-resign title="Desistir">🏳 Desistir</button>
-      <button type="button" class="tg-match-action tg-action-draw" data-draw title="Pedir empate">🤝 Empate</button>
+    <div class="tg-chat hidden" data-chat>
+      <div class="tg-chat-head">
+        <span>Chat da mesa</span>
+        <button type="button" class="tg-chat-close" data-chat-close title="Fechar chat" aria-label="Fechar chat">✕</button>
+      </div>
+      <div class="tg-chat-log" data-chat-log aria-live="polite"></div>
+      <form class="tg-chat-form" data-chat-form>
+        <input type="text" class="tg-chat-input" data-chat-input maxlength="120" placeholder="Escreva…" autocomplete="off" />
+        <button type="submit" class="tg-btn tg-chat-send">Enviar</button>
+      </form>
     </div>
   `;
 
-  const chat = document.createElement("div");
-  chat.className = "tg-chat";
-  chat.innerHTML = `
-    <div class="tg-chat-log" data-chat-log aria-live="polite"></div>
-    <form class="tg-chat-form" data-chat-form>
-      <input type="text" class="tg-chat-input" data-chat-input maxlength="120" placeholder="Chat da mesa…" autocomplete="off" />
-      <button type="submit" class="tg-btn tg-chat-send">Enviar</button>
-    </form>
-  `;
+  matchEl.prepend(chrome);
 
-  matchEl.prepend(bar);
-  matchEl.appendChild(chat);
+  const clockEl = chrome.querySelector("[data-clock]");
+  const clockVal = chrome.querySelector("[data-clock-val]");
+  const resignBtn = chrome.querySelector("[data-resign]");
+  const drawBtn = chrome.querySelector("[data-draw]");
+  const chatToggle = chrome.querySelector("[data-chat-toggle]");
+  const chatBadge = chrome.querySelector("[data-chat-badge]");
+  const chat = chrome.querySelector("[data-chat]");
+  const logEl = chrome.querySelector("[data-chat-log]");
+  const form = chrome.querySelector("[data-chat-form]");
+  const input = chrome.querySelector("[data-chat-input]");
+  const chatClose = chrome.querySelector("[data-chat-close]");
 
-  const clockEl = bar.querySelector("[data-clock]");
-  const clockVal = bar.querySelector("[data-clock-val]");
-  const resignBtn = bar.querySelector("[data-resign]");
-  const drawBtn = bar.querySelector("[data-draw]");
-  const logEl = chat.querySelector("[data-chat-log]");
-  const form = chat.querySelector("[data-chat-form]");
-  const input = chat.querySelector("[data-chat-input]");
+  function updateBadge() {
+    const show = !chatOpen && unread > 0;
+    chatBadge.classList.toggle("hidden", !show);
+    chatBadge.textContent = show ? (unread > 9 ? "9+" : String(unread)) : "";
+    chatToggle.classList.toggle("has-unread", show);
+  }
 
-  function pushChat(who, text, kind = "") {
+  function setChatOpen(open) {
+    chatOpen = open;
+    chat.classList.toggle("hidden", !open);
+    chatToggle.setAttribute("aria-expanded", open ? "true" : "false");
+    chatToggle.classList.toggle("active", open);
+    if (open) {
+      unread = 0;
+      updateBadge();
+      logEl.scrollTop = logEl.scrollHeight;
+      input.focus();
+    }
+  }
+
+  function pushChat(who, text, kind = "", opts = {}) {
     if (destroyed || !text) return;
     const row = document.createElement("div");
     row.className = `tg-chat-row ${kind || who}`;
@@ -77,6 +109,12 @@ export function mountMatchChrome(matchEl, handlers = {}) {
     row.querySelector(".tg-chat-msg").textContent = text;
     logEl.appendChild(row);
     logEl.scrollTop = logEl.scrollHeight;
+
+    const countUnread = opts.countUnread !== false;
+    if (!chatOpen && countUnread && kind !== "player") {
+      unread += 1;
+      updateBadge();
+    }
   }
 
   function setActionsEnabled(on) {
@@ -98,9 +136,13 @@ export function mountMatchChrome(matchEl, handlers = {}) {
     if (left <= 0) {
       running = false;
       const kind = clockKind;
-      pushChat("Mesa", kind === "first"
-        ? "Tempo esgotado no 1º lance — derrota."
-        : "Jogador offline (3 min sem jogar) — derrota.", "system");
+      pushChat(
+        "Mesa",
+        kind === "first"
+          ? "Tempo esgotado no 1º lance — derrota."
+          : "Jogador offline (3 min sem jogar) — derrota.",
+        "system"
+      );
       handlers.onTimeout?.(kind);
       return;
     }
@@ -145,6 +187,9 @@ export function mountMatchChrome(matchEl, handlers = {}) {
     handlers.onOfferDraw?.();
   });
 
+  chatToggle.addEventListener("click", () => setChatOpen(!chatOpen));
+  chatClose.addEventListener("click", () => setChatOpen(false));
+
   form.addEventListener("submit", (e) => {
     e.preventDefault();
     const text = (input.value || "").trim();
@@ -157,7 +202,11 @@ export function mountMatchChrome(matchEl, handlers = {}) {
     }, 450 + Math.random() * 700);
   });
 
-  pushChat("Mesa", "Partida iniciada. 1º lance: 1 min · demais: 3 min.", "system");
+  // aviso inicial sem bolinha vermelha
+  pushChat("Mesa", "Partida iniciada. 1º lance: 1 min · demais: 3 min.", "system", {
+    countUnread: false,
+  });
+  setChatOpen(false);
 
   return {
     startPlayerClock,
@@ -179,8 +228,7 @@ export function mountMatchChrome(matchEl, handlers = {}) {
     destroy() {
       destroyed = true;
       stopClock();
-      bar.remove();
-      chat.remove();
+      chrome.remove();
     },
   };
 }

@@ -5343,31 +5343,55 @@ body.tg-open {
 }
 
 .tg-match {
-  width: min(960px, 98vw);
-  max-height: min(100dvh, 100%);
-  padding-top: 3.6rem;
-  padding-bottom: 0.5rem;
-  gap: 0.65rem;
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  max-height: 100dvh;
+  margin: 0;
+  padding: 0;
+  gap: 0;
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 .tg-match-mount {
   flex: 1 1 auto;
   min-height: 0;
-  overflow: auto;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem 0.5rem 0.5rem;
+  box-sizing: border-box;
+}
+
+.tg-match-chrome {
+  position: fixed;
+  top: max(0.55rem, env(safe-area-inset-top));
+  left: max(0.55rem, env(safe-area-inset-left));
+  z-index: 70;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.4rem;
+  max-width: min(320px, calc(100vw - 1.1rem));
+  pointer-events: none;
+}
+
+.tg-match-chrome > * {
+  pointer-events: auto;
 }
 
 .tg-match-bar {
-  position: fixed;
-  top: max(0.65rem, env(safe-area-inset-top));
-  left: max(0.65rem, env(safe-area-inset-left));
-  z-index: 70;
+  position: static;
+  top: auto;
+  left: auto;
+  z-index: auto;
   display: flex;
   align-items: center;
-  gap: 0.45rem;
+  gap: 0.4rem;
   flex-wrap: wrap;
-  max-width: calc(100vw - 1.3rem);
-  pointer-events: auto;
+  max-width: 100%;
 }
 
 .tg-match-clock {
@@ -5375,15 +5399,15 @@ body.tg-open {
   flex-direction: column;
   align-items: flex-start;
   justify-content: center;
-  min-width: 72px;
-  padding: 0.35rem 0.55rem;
+  min-width: 68px;
+  padding: 0.3rem 0.5rem;
   border-radius: 11px;
   border: 1px solid rgba(240, 160, 48, 0.45);
-  background: rgba(10, 14, 22, 0.88);
+  background: rgba(10, 14, 22, 0.9);
   color: #f0a030;
   box-shadow: 0 4px 18px rgba(0, 0, 0, 0.45);
   backdrop-filter: blur(6px);
-  opacity: 0.72;
+  opacity: 0.78;
 }
 
 .tg-match-clock.active {
@@ -5408,14 +5432,14 @@ body.tg-open {
 }
 
 .tg-clock-label {
-  font-size: 0.58rem;
+  font-size: 0.55rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   opacity: 0.75;
 }
 
 .tg-clock-value {
-  font-size: 1.05rem;
+  font-size: 1rem;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   line-height: 1.1;
@@ -5423,17 +5447,19 @@ body.tg-open {
 
 .tg-match-actions {
   display: flex;
-  gap: 0.35rem;
+  gap: 0.3rem;
+  flex-wrap: wrap;
 }
 
 .tg-match-action {
-  height: 42px;
-  padding: 0 0.75rem;
+  position: relative;
+  height: 40px;
+  padding: 0 0.65rem;
   border-radius: 11px;
   border: 1px solid rgba(240, 160, 48, 0.45);
-  background: rgba(10, 14, 22, 0.88);
+  background: rgba(10, 14, 22, 0.9);
   color: #f0d090;
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   font-weight: 700;
   cursor: pointer;
   box-shadow: 0 4px 18px rgba(0, 0, 0, 0.45);
@@ -5451,40 +5477,104 @@ body.tg-open {
   cursor: default;
 }
 
+.tg-match-action.active {
+  border-color: #f0a030;
+  background: rgba(40, 28, 14, 0.95);
+}
+
 .tg-action-resign {
   color: #ffb0a0;
   border-color: rgba(220, 90, 70, 0.45);
+}
+
+.tg-action-chat.has-unread {
+  border-color: rgba(240, 80, 70, 0.7);
+}
+
+.tg-chat-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 3px;
+  border-radius: 999px;
+  background: #e12424;
+  border: 2px solid #1a120c;
+  color: #fff;
+  font-size: 0.55rem;
+  font-weight: 800;
+  line-height: 10px;
+  text-align: center;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25);
+  pointer-events: none;
+}
+
+.tg-chat-badge.hidden {
+  display: none;
 }
 
 .tg-chat {
   flex: 0 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
-  width: 100%;
-  max-width: 640px;
-  margin: 0 auto;
-  padding: 0.55rem 0.65rem 0.75rem;
+  gap: 0.35rem;
+  width: min(300px, calc(100vw - 1.1rem));
+  margin: 0;
+  padding: 0.45rem 0.5rem 0.55rem;
   border-radius: 12px;
-  border: 1px solid rgba(180, 140, 60, 0.28);
-  background: rgba(8, 10, 16, 0.72);
-  backdrop-filter: blur(8px);
+  border: 1px solid rgba(180, 140, 60, 0.35);
+  background: rgba(8, 10, 16, 0.92);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+}
+
+.tg-chat.hidden {
+  display: none;
+}
+
+.tg-chat-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #c9a227;
+}
+
+.tg-chat-close {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #e8dcc4;
+  cursor: pointer;
+  font-size: 0.85rem;
+  line-height: 1;
+}
+
+.tg-chat-close:hover {
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .tg-chat-log {
-  height: min(18vh, 120px);
+  height: 110px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 0.28rem;
-  padding: 0.15rem 0.1rem;
-  font-size: 0.82rem;
+  gap: 0.25rem;
+  padding: 0.1rem;
+  font-size: 0.78rem;
   line-height: 1.35;
 }
 
 .tg-chat-row {
   display: flex;
-  gap: 0.4rem;
+  gap: 0.35rem;
   word-break: break-word;
 }
 
@@ -5504,19 +5594,19 @@ body.tg-open {
 
 .tg-chat-form {
   display: flex;
-  gap: 0.4rem;
+  gap: 0.35rem;
 }
 
 .tg-chat-input {
   flex: 1;
   min-width: 0;
-  height: 40px;
+  height: 36px;
   border-radius: 9px;
   border: 1px solid rgba(180, 140, 60, 0.35);
   background: rgba(0, 0, 0, 0.35);
   color: #fff6e4;
-  padding: 0 0.7rem;
-  font-size: 0.9rem;
+  padding: 0 0.6rem;
+  font-size: 0.85rem;
 }
 
 .tg-chat-input:focus {
@@ -5525,23 +5615,20 @@ body.tg-open {
 }
 
 .tg-chat-send {
-  height: 40px;
-  padding: 0 0.9rem;
+  height: 36px;
+  padding: 0 0.7rem;
+  font-size: 0.8rem;
 }
 
 @media (max-width: 640px) {
-  .tg-match {
-    padding-top: 4.4rem;
-  }
-
   .tg-match-action {
-    font-size: 0.72rem;
-    padding: 0 0.55rem;
-    height: 38px;
+    font-size: 0.7rem;
+    padding: 0 0.5rem;
+    height: 36px;
   }
 
   .tg-chat-log {
-    height: min(16vh, 96px);
+    height: 96px;
   }
 }
 
@@ -5666,8 +5753,42 @@ body.tg-open {
 .tg-board-wrap {
   display: flex;
   flex-direction: column;
-  gap: 0.85rem;
+  gap: 0.45rem;
   width: 100%;
+  max-height: 100%;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.tg-match .tg-board-hud {
+  text-align: center;
+  flex: 0 0 auto;
+  padding-top: 0.15rem;
+}
+
+.tg-match .tg-board-title {
+  font-size: 1.05rem;
+}
+
+.tg-match .tg-board-status {
+  margin-top: 0.1rem;
+  font-size: 0.88rem;
+  min-height: 1.15em;
+}
+
+.tg-match .tg-board-meta {
+  display: none;
+}
+
+.tg-match .tg-board-actions {
+  flex: 0 0 auto;
+  gap: 0.45rem;
+}
+
+.tg-match .tg-board-actions .tg-btn {
+  padding: 0.4rem 0.85rem;
+  font-size: 0.85rem;
 }
 
 .tg-board-hud {
@@ -5704,7 +5825,10 @@ body.tg-open {
 .tg-dama-stage {
   display: flex;
   justify-content: center;
-  padding: 0.5rem;
+  align-items: center;
+  padding: 0.15rem;
+  flex: 0 1 auto;
+  min-height: 0;
 }
 
 .tg-chess-board,
@@ -5712,10 +5836,11 @@ body.tg-open {
   display: grid;
   grid-template-columns: repeat(8, minmax(0, 1fr));
   grid-template-rows: repeat(8, minmax(0, 1fr));
-  width: min(92vw, 520px);
-  height: min(92vw, 520px);
-  max-width: 520px;
-  max-height: 520px;
+  --tg-board-size: min(92vw, 520px, calc(100dvh - 7.5rem));
+  width: var(--tg-board-size);
+  height: var(--tg-board-size);
+  max-width: var(--tg-board-size);
+  max-height: var(--tg-board-size);
   aspect-ratio: 1;
   border: 10px solid #5a3a22;
   border-radius: 6px;
@@ -5725,6 +5850,7 @@ body.tg-open {
     0 12px 40px rgba(0, 0, 0, 0.55),
     inset 0 0 0 2px #3a2414;
   background: #3a2414;
+  flex-shrink: 0;
 }
 
 /* Xadrez: tabuleiro mais vivo (verde / creme) */
