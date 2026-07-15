@@ -24,29 +24,17 @@ const PIECE_NAME = {
   k: "Rei",
 };
 
-/** Silhuetas SVG — legíveis em qualquer fonte/OS (unicode de xadrez vira emoji e some a cor) */
-const PIECE_SVG = {
-  k: `<path d="M20 6v3h-2.5V6h-3v3H12V6H9.5v3H7V6H4.5v4.5c0 1.2.7 2.2 1.8 2.7L5 16.5h14l-1.3-3.3c1.1-.5 1.8-1.5 1.8-2.7V6H20zM7 28h10l1.2-9.5H5.8L7 28zm-1.5 2.5h11L17 34H7l-.5-3.5z"/>`,
-  q: `<path d="M6 10l2.2 8h7.6L18 10l-2.5 4.5L12.8 8 10.5 14.5 8 10zm1.2 10L6.5 28h11l-.7-8H7.2zM6.2 30h11.6L18.5 34h-13l.7-4z"/>`,
-  r: `<path d="M7 8h2v3h2V8h2v3h2V8h2v5.5H7V8zm0 7h10l-.8 11H7.8L7 15zm.5 13h9L17 34H7l.5-6z"/>`,
-  b: `<path d="M12 6c1.8 0 3.2 1.6 2.9 3.4-.2 1.1-.9 1.9-1.4 2.6-.4.5-.5.9-.5 1.2 0 .8.6 1.3 1.4 1.8 1.5.9 3.1 2.2 3.1 4.5V22H6.5v-2.5c0-2.3 1.6-3.6 3.1-4.5.8-.5 1.4-1 1.4-1.8 0-.3-.1-.7-.5-1.2-.5-.7-1.2-1.5-1.4-2.6C8.8 7.6 10.2 6 12 6zm-4 18h8l.6 4H7.4L7.2 24zm-.4 6h8.4L16 34H8l-.4-4z"/>`,
-  n: `<path d="M16.5 9.5c.2-1.8-1-3.5-2.8-3.8-1.2-.2-2.3.3-3.1 1.2L7.5 11.5c-.8.9-.7 2.2.2 2.9l1.6 1.2c-1.2.6-2.3 1.8-2.8 3.3-.6 1.8.1 3.6 1.5 4.7L9 28h8.5l.8-4.2c1.2-1 1.9-2.5 1.9-4.1 0-2.2-1.2-3.9-2.7-5.1.5-.7.9-1.6 1-2.6l-2-.5zm-7.2 4.2l2.4-2.7c.4-.5 1.1-.7 1.7-.5.7.2 1.1.9 1 1.6l-.3 1.6-4.8 0zM8.2 30h9.2L18 34H7.5l.7-4z"/>`,
-  p: `<path d="M12 7.5c1.7 0 3 1.3 3 3s-1.3 3-3 3-3-1.3-3-3 1.3-3 3-3zm-2.8 7.5h5.6c1.4 0 2.5 1.2 2.3 2.6L16.5 23h-9l-.6-5.4c-.2-1.4.9-2.6 2.3-2.6zM8 25h8l.7 3H7.3L8 25zm-.6 5h9.2L17 34H7l.4-4z"/>`,
+/** Peças unicode + FE0E (força texto, evita emoji colorido no Android/iOS) */
+const PIECE_CHAR = {
+  w: { k: "♔", q: "♕", r: "♖", b: "♗", n: "♘", p: "♙" },
+  b: { k: "♚", q: "♛", r: "♜", b: "♝", n: "♞", p: "♟" },
 };
 
 function pieceGlyph(type, color) {
-  const path = PIECE_SVG[type] || PIECE_SVG.p;
-  /* Contraste alto no tabuleiro verde/creme — sem badge de letra (confunde no celular) */
-  const fill = color === "w" ? "#fff8ec" : "#14100c";
-  const stroke = color === "w" ? "#1a1208" : "#f0e2b8";
-  const accent = color === "w" ? "#c9a227" : "#e8c84a";
+  const ch = (PIECE_CHAR[color] && PIECE_CHAR[color][type]) || PIECE_CHAR.w.p;
   return `
     <span class="tg-chess-piece piece-${color}" data-type="${type}" aria-hidden="true">
-      <svg viewBox="0 0 24 36" width="100%" height="100%" focusable="false">
-        <ellipse cx="12" cy="33.2" rx="7.8" ry="1.7" fill="rgba(0,0,0,0.28)"/>
-        <g fill="${fill}" stroke="${stroke}" stroke-width="1.45" stroke-linejoin="round">${path}</g>
-        ${type === "k" || type === "q" ? `<circle cx="12" cy="5.2" r="1.45" fill="${accent}" stroke="${stroke}" stroke-width="0.85"/>` : ""}
-      </svg>
+      <span class="tg-chess-glyph">${ch}\uFE0E</span>
     </span>
   `;
 }
