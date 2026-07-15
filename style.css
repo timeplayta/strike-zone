@@ -4321,9 +4321,11 @@ body.ff-map-screen-open {
   flex-direction: row;
   flex-wrap: nowrap;
   align-items: flex-start;
-  justify-content: center;
+  /* flex-start: com center + overflow o começo some e não dá pra rolar até o Xadrez */
+  justify-content: flex-start;
   gap: clamp(0.65rem, 1.8vw, 1.1rem);
   padding: 0.15rem 0.5rem 1rem;
+  scroll-padding-inline: 0.5rem;
   scrollbar-width: thin;
   scrollbar-color: #f0a030 #101722;
 }

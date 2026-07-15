@@ -40,7 +40,7 @@ function categoryForMap(mapId) {
 function buildMapCards() {
   const grid = $("ffMapCardGrid");
   if (!grid) return;
-  if (grid.dataset.built === "5" && grid.children.length) return;
+  if (grid.dataset.built === "6" && grid.children.length) return;
   try {
     grid.innerHTML = MAPS.map((m) => {
       const art = getMapCardArtUrl(m.id);
@@ -58,7 +58,7 @@ function buildMapCards() {
         `</div>`
       );
     }).join("");
-    grid.dataset.built = "5";
+    grid.dataset.built = "6";
   } catch (err) {
     console.warn("[Strike Zone] Falha ao montar cards de mapa:", err);
     grid.dataset.built = "0";
@@ -73,9 +73,11 @@ function syncCategoryBar() {
 }
 
 function applyCategoryFilter() {
+  const grid = $("ffMapCardGrid");
   document.querySelectorAll("#ffMapCardGrid .ff-map-item").forEach((item) => {
     item.classList.toggle("hidden", item.dataset.category !== activeCategory);
   });
+  if (grid) grid.scrollLeft = 0;
   syncCategoryBar();
 }
 
