@@ -36,17 +36,17 @@ const PIECE_SVG = {
 
 function pieceGlyph(type, color) {
   const path = PIECE_SVG[type] || PIECE_SVG.p;
-  const fill = color === "w" ? "#f7f0de" : "#1c1410";
-  const stroke = color === "w" ? "#2a1c10" : "#e8d5a8";
-  const accent = color === "w" ? "#c9a227" : "#d4b45a";
+  /* Contraste alto no tabuleiro verde/creme — sem badge de letra (confunde no celular) */
+  const fill = color === "w" ? "#fff8ec" : "#14100c";
+  const stroke = color === "w" ? "#1a1208" : "#f0e2b8";
+  const accent = color === "w" ? "#c9a227" : "#e8c84a";
   return `
     <span class="tg-chess-piece piece-${color}" data-type="${type}" aria-hidden="true">
       <svg viewBox="0 0 24 36" width="100%" height="100%" focusable="false">
-        <ellipse cx="12" cy="33.2" rx="7.5" ry="1.6" fill="rgba(0,0,0,0.22)"/>
-        <g fill="${fill}" stroke="${stroke}" stroke-width="1.15" stroke-linejoin="round">${path}</g>
-        ${type === "k" || type === "q" ? `<circle cx="12" cy="5.2" r="1.35" fill="${accent}" stroke="${stroke}" stroke-width="0.7"/>` : ""}
+        <ellipse cx="12" cy="33.2" rx="7.8" ry="1.7" fill="rgba(0,0,0,0.28)"/>
+        <g fill="${fill}" stroke="${stroke}" stroke-width="1.45" stroke-linejoin="round">${path}</g>
+        ${type === "k" || type === "q" ? `<circle cx="12" cy="5.2" r="1.45" fill="${accent}" stroke="${stroke}" stroke-width="0.85"/>` : ""}
       </svg>
-      <span class="tg-chess-badge" title="${type}">${type.toUpperCase()}</span>
     </span>
   `;
 }
@@ -396,7 +396,7 @@ export function mountChessGame(root, { botTier, onExit, onEnd, onBind, match }) 
     <div class="tg-board-hud">
       <div class="tg-board-title">Xadrez</div>
       <div class="tg-board-status" data-status></div>
-      <div class="tg-board-meta">Bot: <strong>${tier.label}</strong> · K rei · Q rainha · R torre · B bispo · N cavalo · P peão</div>
+      <div class="tg-board-meta">Bot: <strong>${tier.label}</strong> · você joga de brancas</div>
     </div>
     <div class="tg-chess-stage">
       <div class="tg-chess-board" data-board role="grid" aria-label="Tabuleiro de xadrez"></div>

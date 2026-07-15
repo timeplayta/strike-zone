@@ -5581,6 +5581,14 @@ body.tg-open {
   flex-direction: column;
   gap: 1.25rem;
   padding: 1.5rem 1.25rem 1.75rem;
+  box-sizing: border-box;
+}
+
+.tg-lobby {
+  max-height: 100dvh;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .tg-match {
@@ -5706,6 +5714,9 @@ body.tg-open {
   box-shadow: 0 4px 18px rgba(0, 0, 0, 0.45);
   backdrop-filter: blur(6px);
   white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
 }
 
 .tg-match-action:hover:not(:disabled) {
@@ -6112,7 +6123,7 @@ body.tg-open {
   display: grid;
   grid-template-columns: repeat(8, minmax(0, 1fr));
   grid-template-rows: repeat(8, minmax(0, 1fr));
-  --tg-board-size: min(92vw, 520px, calc(100dvh - 7.5rem));
+  --tg-board-size: min(94vw, 560px, calc(100dvh - 6.5rem));
   width: var(--tg-board-size);
   height: var(--tg-board-size);
   max-width: var(--tg-board-size);
@@ -6160,6 +6171,8 @@ body.tg-open {
   justify-content: center;
   user-select: none;
   box-sizing: border-box;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .tg-sq.light {
@@ -6245,10 +6258,10 @@ body.tg-open {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 86%;
-  height: 86%;
+  width: 92%;
+  height: 92%;
   pointer-events: none;
-  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.35));
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.45));
   z-index: 1;
 }
 
@@ -6259,26 +6272,9 @@ body.tg-open {
   overflow: visible;
 }
 
+/* Badge de letra removido — silhueta SVG basta */
 .tg-chess-badge {
-  position: absolute;
-  left: 2%;
-  top: 2%;
-  min-width: 1.05em;
-  padding: 0.08em 0.22em;
-  border-radius: 0.3em;
-  font-size: clamp(0.55rem, 1.8vw, 0.72rem);
-  font-weight: 800;
-  line-height: 1.1;
-  letter-spacing: 0.02em;
-  background: rgba(20, 12, 6, 0.72);
-  color: #ffe9a8;
-  border: 1px solid rgba(255, 210, 100, 0.45);
-}
-
-.tg-chess-piece.piece-w .tg-chess-badge {
-  background: rgba(255, 248, 230, 0.92);
-  color: #5a3a10;
-  border-color: rgba(90, 60, 20, 0.35);
+  display: none !important;
 }
 
 .tg-coord {
@@ -6780,11 +6776,248 @@ body.tg-open {
 
   .tg-lobby {
     padding: 1rem 0.75rem 1.25rem;
+    gap: 0.85rem;
+  }
+
+  .tg-lobby-foot {
+    position: sticky;
+    bottom: 0;
+    z-index: 3;
+    margin-top: 0.25rem;
+    padding: 0.55rem 0 0.15rem;
+    background: linear-gradient(180deg, transparent, rgba(18, 12, 8, 0.96) 28%);
+  }
+
+  .tg-lobby-foot .tg-btn {
+    flex: 1 1 auto;
+    min-height: 44px;
   }
 
   .tg-playing-card {
     width: 52px;
     height: 76px;
+  }
+}
+
+/* Celular landscape / tela baixa: lobby compacto + partida com tabuleiro dominante */
+@media (max-height: 520px), ((orientation: landscape) and (max-width: 960px)) {
+  .tg-lobby {
+    width: min(980px, 98vw);
+    height: 100%;
+    max-height: 100dvh;
+    gap: 0.4rem;
+    padding: 0.45rem 0.7rem 0.5rem;
+    justify-content: flex-start;
+  }
+
+  .tg-eyebrow {
+    font-size: 0.58rem;
+    letter-spacing: 0.14em;
+  }
+
+  .tg-lobby-title {
+    font-size: clamp(1.15rem, 4.2vh, 1.55rem);
+    margin: 0.05rem 0 0.15rem;
+  }
+
+  .tg-lobby-desc {
+    font-size: 0.78rem;
+    line-height: 1.25;
+  }
+
+  .tg-diff-heading {
+    margin: 0 0 0.3rem;
+    font-size: 0.72rem;
+  }
+
+  .tg-diff-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.35rem;
+  }
+
+  .tg-diff-card {
+    padding: 0.4rem 0.45rem;
+    gap: 0.12rem;
+    border-radius: 9px;
+  }
+
+  .tg-diff-label {
+    font-size: 0.88rem;
+  }
+
+  .tg-diff-blurb {
+    font-size: 0.65rem;
+    line-height: 1.25;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .tg-lobby-foot {
+    position: sticky;
+    bottom: 0;
+    z-index: 3;
+    flex-wrap: nowrap;
+    gap: 0.45rem;
+    margin-top: auto;
+    padding: 0.4rem 0 0.1rem;
+    background: linear-gradient(180deg, transparent, rgba(18, 12, 8, 0.97) 35%);
+  }
+
+  .tg-lobby-foot .tg-btn {
+    flex: 1 1 0;
+    min-height: 40px;
+    padding: 0.45rem 0.7rem;
+    font-size: 0.85rem;
+  }
+
+  /* Chrome vira barra no fluxo — não cobre o tabuleiro */
+  .tg-match-chrome {
+    position: relative;
+    top: auto;
+    left: auto;
+    z-index: 5;
+    flex: 0 0 auto;
+    width: 100%;
+    max-width: none;
+    align-items: stretch;
+    padding: 0.2rem 0.35rem 0.15rem;
+    gap: 0.25rem;
+    box-sizing: border-box;
+  }
+
+  .tg-match-bar {
+    width: 100%;
+    justify-content: space-between;
+    flex-wrap: nowrap;
+    gap: 0.3rem;
+  }
+
+  .tg-match-clock {
+    min-width: 56px;
+    padding: 0.18rem 0.4rem;
+    border-radius: 8px;
+  }
+
+  .tg-clock-value {
+    font-size: 0.9rem;
+  }
+
+  .tg-match-actions {
+    flex-wrap: nowrap;
+    gap: 0.22rem;
+  }
+
+  .tg-match-action {
+    height: 32px;
+    min-width: 34px;
+    padding: 0 0.45rem;
+    font-size: 0.95rem;
+    border-radius: 8px;
+    justify-content: center;
+  }
+
+  .tg-action-label {
+    display: none;
+  }
+
+  .tg-chat {
+    width: min(340px, calc(100vw - 0.8rem));
+    position: absolute;
+    top: 100%;
+    left: 0.35rem;
+    z-index: 20;
+  }
+
+  .tg-chat-log {
+    height: 72px;
+  }
+
+  .tg-match-mount {
+    padding: 0.1rem 0.25rem 0.2rem;
+  }
+
+  .tg-match .tg-board-hud {
+    padding: 0;
+  }
+
+  .tg-match .tg-board-title {
+    display: none;
+  }
+
+  .tg-match .tg-board-status {
+    margin: 0;
+    font-size: 0.72rem;
+    min-height: 0;
+    line-height: 1.2;
+  }
+
+  .tg-board-wrap {
+    gap: 0.15rem;
+    height: 100%;
+    justify-content: space-between;
+  }
+
+  .tg-chess-stage,
+  .tg-dama-stage {
+    flex: 1 1 auto;
+    min-height: 0;
+    width: 100%;
+    padding: 0;
+  }
+
+  .tg-chess-board,
+  .tg-dama-board {
+    --tg-board-size: min(
+      calc(100dvh - 4.6rem),
+      calc(100vw - 0.6rem),
+      640px
+    );
+    border-width: 5px;
+    border-radius: 4px;
+  }
+
+  .tg-chess-board {
+    border-width: 6px;
+    border-radius: 6px;
+    box-shadow:
+      0 8px 24px rgba(0, 0, 0, 0.5),
+      inset 0 0 0 2px #c9a227,
+      inset 0 0 0 4px #3d2918;
+  }
+
+  .tg-chess-piece {
+    width: 96%;
+    height: 96%;
+  }
+
+  .tg-coord {
+    font-size: 0.42rem;
+    opacity: 0.55;
+  }
+
+  .tg-match .tg-board-actions {
+    gap: 0.35rem;
+  }
+
+  .tg-match .tg-board-actions .tg-btn {
+    padding: 0.28rem 0.7rem;
+    font-size: 0.72rem;
+    min-height: 32px;
+  }
+}
+
+@media (max-width: 720px) and (max-height: 520px),
+  ((orientation: landscape) and (max-width: 700px)) {
+  .tg-diff-blurb {
+    display: none;
+  }
+
+  .tg-diff-card {
+    align-items: center;
+    text-align: center;
+    padding: 0.5rem 0.35rem;
   }
 }
 

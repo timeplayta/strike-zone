@@ -124,13 +124,17 @@ export function mountMatchChrome(matchEl, handlers = {}) {
         <span class="tg-clock-value" data-clock-val>1:00</span>
       </div>
       <div class="tg-match-actions">
-        <button type="button" class="tg-match-action tg-action-resign" data-resign title="Desistir">🏳 Desistir</button>
-        <button type="button" class="tg-match-action tg-action-draw" data-draw title="Pedir empate">🤝 Empate</button>
-        <button type="button" class="tg-match-action tg-action-mic" data-mic-toggle title="Falar com o bot (microfone)" aria-pressed="false">
-          🎙 Mic
+        <button type="button" class="tg-match-action tg-action-resign" data-resign title="Desistir" aria-label="Desistir">
+          🏳 <span class="tg-action-label">Desistir</span>
         </button>
-        <button type="button" class="tg-match-action tg-action-chat" data-chat-toggle title="Abrir/fechar chat" aria-expanded="false">
-          💬 Chat
+        <button type="button" class="tg-match-action tg-action-draw" data-draw title="Pedir empate" aria-label="Empate">
+          🤝 <span class="tg-action-label">Empate</span>
+        </button>
+        <button type="button" class="tg-match-action tg-action-mic" data-mic-toggle title="Falar com o bot (microfone)" aria-pressed="false" aria-label="Microfone">
+          🎙 <span class="tg-action-label" data-mic-label>Mic</span>
+        </button>
+        <button type="button" class="tg-match-action tg-action-chat" data-chat-toggle title="Abrir/fechar chat" aria-expanded="false" aria-label="Chat">
+          💬 <span class="tg-action-label">Chat</span>
           <span class="tg-chat-badge hidden" data-chat-badge aria-hidden="true"></span>
         </button>
       </div>
@@ -175,7 +179,13 @@ export function mountMatchChrome(matchEl, handlers = {}) {
     micBtn.classList.toggle("active", micOn);
     micBtn.classList.toggle("tg-mic-live", micOn);
     micBtn.setAttribute("aria-pressed", micOn ? "true" : "false");
-    micBtn.textContent = micOn ? "🎙 Ouvindo…" : "🎙 Mic";
+    const micLabel = micBtn.querySelector("[data-mic-label]");
+    if (micLabel) {
+      micLabel.textContent = micOn ? "Ouvindo…" : "Mic";
+    } else {
+      micBtn.textContent = micOn ? "🎙 Ouvindo…" : "🎙 Mic";
+    }
+    micBtn.setAttribute("aria-label", micOn ? "Microfone ligado" : "Microfone");
     if (!voiceSupported) {
       setVoiceStatus("Sem reconhecimento neste navegador");
       micBtn.disabled = true;
