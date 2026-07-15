@@ -23,6 +23,7 @@ import {
   mountUnoGame,
   mountDominoGame,
 } from "./table-games-extra.js";
+import { getTableGameRules, renderRulesHtml } from "./table-games-rules.js";
 
 export const TABLE_GAMES = {
   chess: {
@@ -134,6 +135,10 @@ function ensureShell() {
         <h2 class="tg-diff-heading">Escolha o bot</h2>
         <div class="tg-diff-grid" data-diffs></div>
       </section>
+      <details class="tg-rules" data-rules-panel>
+        <summary class="tg-rules-summary">Como jogar · regras</summary>
+        <div class="tg-rules-body" data-rules></div>
+      </details>
       <footer class="tg-lobby-foot">
         <button type="button" class="tg-btn tg-btn-ghost" data-back>Voltar ao menu</button>
         <button type="button" class="tg-btn tg-btn-primary" data-start disabled>Entrar na partida</button>
@@ -207,6 +212,12 @@ function showLobby(gameId) {
   el.dataset.game = gameId;
   el.querySelector("[data-title]").textContent = game.name;
   el.querySelector("[data-desc]").textContent = game.desc;
+  const rulesEl = el.querySelector("[data-rules]");
+  if (rulesEl) {
+    rulesEl.innerHTML = renderRulesHtml(getTableGameRules(gameId));
+  }
+  const rulesPanel = el.querySelector("[data-rules-panel]");
+  if (rulesPanel) rulesPanel.open = false;
   el.querySelector("[data-lobby]").classList.remove("hidden");
   el.querySelector("[data-match]").classList.add("hidden");
   el.querySelectorAll("[data-tier]").forEach((b) => b.classList.remove("selected"));

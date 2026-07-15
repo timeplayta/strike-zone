@@ -6008,6 +6008,78 @@ body.tg-open {
   margin-top: 0.5rem;
 }
 
+.tg-rules {
+  border-radius: 12px;
+  border: 1px solid rgba(140, 110, 60, 0.35);
+  background: rgba(12, 10, 8, 0.72);
+  overflow: hidden;
+}
+
+.tg-rules-summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 0.7rem 0.9rem;
+  font-weight: 800;
+  font-size: 0.88rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #e8c84a;
+  user-select: none;
+}
+
+.tg-rules-summary::-webkit-details-marker {
+  display: none;
+}
+
+.tg-rules-summary::before {
+  content: "▸ ";
+  color: #c9a227;
+}
+
+.tg-rules[open] .tg-rules-summary::before {
+  content: "▾ ";
+}
+
+.tg-rules-body {
+  padding: 0 0.9rem 0.9rem;
+  color: #d8ccb4;
+  font-size: 0.86rem;
+  line-height: 1.4;
+  max-height: min(42vh, 320px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.tg-rules-goal,
+.tg-rules-end {
+  margin: 0 0 0.65rem;
+}
+
+.tg-rules-sub {
+  margin: 0.55rem 0 0.25rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #c9a227;
+}
+
+.tg-rules-list {
+  margin: 0 0 0.35rem;
+  padding-left: 1.1rem;
+}
+
+.tg-rules-list li {
+  margin: 0.2rem 0;
+}
+
+.tg-rules-ok li::marker {
+  color: #6ecf8a;
+}
+
+.tg-rules-no li::marker {
+  color: #ff7a6a;
+}
+
 .tg-btn {
   padding: 0.7rem 1.2rem;
   border-radius: 10px;
@@ -6125,34 +6197,35 @@ body.tg-open {
   display: grid;
   grid-template-columns: repeat(8, minmax(0, 1fr));
   grid-template-rows: repeat(8, minmax(0, 1fr));
-  --tg-board-size: min(94vw, 560px, calc(100dvh - 6.5rem));
+  --tg-board-size: min(96vw, 640px, calc(100dvh - 5.5rem));
   width: var(--tg-board-size);
   height: var(--tg-board-size);
   max-width: var(--tg-board-size);
   max-height: var(--tg-board-size);
   aspect-ratio: 1;
-  border: 10px solid #5a3a22;
-  border-radius: 6px;
+  border: 2px solid #312e2b;
+  border-radius: 4px;
   box-sizing: border-box;
   overflow: hidden;
-  box-shadow:
-    0 12px 40px rgba(0, 0, 0, 0.55),
-    inset 0 0 0 2px #3a2414;
-  background: #3a2414;
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.45);
+  background: #312e2b;
   flex-shrink: 0;
 }
 
-/* Xadrez: tabuleiro mais vivo (verde / creme) */
-.tg-chess-board {
-  border: 12px solid #3d2918;
-  border-radius: 10px;
+/* Xadrez estilo app — casas flat verde/creme, tabuleiro dominante */
+.tg-screen[data-game="chess"] .tg-bg {
   background:
-    radial-gradient(circle at 30% 20%, rgba(255, 220, 140, 0.18), transparent 45%),
-    linear-gradient(145deg, #4a3220, #2a1a10);
+    radial-gradient(ellipse at 50% 40%, rgba(80, 110, 70, 0.18), transparent 55%),
+    linear-gradient(180deg, #262421 0%, #1a1917 100%);
+}
+
+.tg-chess-board {
+  border: 0;
+  border-radius: 2px;
+  background: #312e2b;
   box-shadow:
-    0 16px 48px rgba(0, 0, 0, 0.6),
-    inset 0 0 0 3px #c9a227,
-    inset 0 0 0 6px #3d2918;
+    0 0 0 3px #312e2b,
+    0 14px 40px rgba(0, 0, 0, 0.55);
 }
 
 .tg-sq {
@@ -6186,11 +6259,11 @@ body.tg-open {
 }
 
 .tg-chess-board .tg-sq.light {
-  background: linear-gradient(145deg, #f3e2b8 0%, #e4c988 100%);
+  background: #eeeed2;
 }
 
 .tg-chess-board .tg-sq.dark {
-  background: linear-gradient(145deg, #4f8f5a 0%, #2f6a40 55%, #245234 100%);
+  background: #769656;
 }
 
 .tg-dama-board .tg-sq.light {
@@ -6208,13 +6281,13 @@ body.tg-open {
 }
 
 .tg-chess-board .tg-sq.selected {
-  outline-color: #ffe566;
-  box-shadow: inset 0 0 0 999px rgba(255, 220, 60, 0.28);
+  outline: none;
+  box-shadow: inset 0 0 0 999px rgba(20, 85, 30, 0.55);
 }
 
 .tg-chess-board .tg-sq.last-from,
 .tg-chess-board .tg-sq.last-to {
-  box-shadow: inset 0 0 0 999px rgba(255, 200, 80, 0.22);
+  box-shadow: inset 0 0 0 999px rgba(235, 210, 80, 0.55);
 }
 
 .tg-sq.move::after,
@@ -6229,8 +6302,10 @@ body.tg-open {
 }
 
 .tg-chess-board .tg-sq.move::after {
-  background: rgba(30, 90, 220, 0.55);
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.35);
+  width: 30%;
+  height: 30%;
+  background: rgba(0, 0, 0, 0.22);
+  box-shadow: none;
 }
 
 .tg-sq.capture::after {
@@ -6241,8 +6316,9 @@ body.tg-open {
 }
 
 .tg-chess-board .tg-sq.capture::after {
-  border-color: rgba(255, 70, 50, 0.9);
-  box-shadow: inset 0 0 0 999px rgba(255, 60, 40, 0.12);
+  border: 5px solid rgba(0, 0, 0, 0.22);
+  box-shadow: none;
+  background: transparent;
 }
 
 .tg-sq.piece-w {
@@ -6269,7 +6345,7 @@ body.tg-open {
 .tg-chess-glyph {
   display: block;
   font-family: "Segoe UI Symbol", "Apple Symbols", "Noto Sans Symbols 2", "Noto Sans Symbols", "DejaVu Sans", "FreeSerif", serif;
-  font-size: clamp(1.55rem, 9.5vmin, 3.1rem);
+  font-size: clamp(1.7rem, 10.5vmin, 3.4rem);
   line-height: 1;
   font-weight: 400;
   -webkit-font-smoothing: antialiased;
@@ -6278,21 +6354,21 @@ body.tg-open {
 }
 
 .tg-chess-piece.piece-w .tg-chess-glyph {
-  color: #fffaf0;
-  -webkit-text-stroke: 1.15px #1a1208;
+  color: #f8f8f8;
+  -webkit-text-stroke: 1.2px #1a1a1a;
   paint-order: stroke fill;
   text-shadow:
-    0 1px 0 #1a1208,
-    0 2px 3px rgba(0, 0, 0, 0.45);
+    0 1px 0 #111,
+    0 2px 4px rgba(0, 0, 0, 0.35);
 }
 
 .tg-chess-piece.piece-b .tg-chess-glyph {
-  color: #14100c;
-  -webkit-text-stroke: 1px #f0e2b8;
+  color: #1a1a1a;
+  -webkit-text-stroke: 0.9px #f5f5f5;
   paint-order: stroke fill;
   text-shadow:
-    0 0 1px #f0e2b8,
-    0 2px 3px rgba(0, 0, 0, 0.4);
+    0 0 1px #fff,
+    0 2px 3px rgba(0, 0, 0, 0.35);
 }
 
 /* Badge de letra removido — silhueta unicode basta */
@@ -6321,11 +6397,11 @@ body.tg-open {
 }
 
 .tg-chess-board .tg-sq.light .tg-coord {
-  color: #3d6b45;
+  color: #769656;
 }
 
 .tg-chess-board .tg-sq.dark .tg-coord {
-  color: #efe0b0;
+  color: #eeeed2;
 }
 
 .tg-disc {
@@ -6958,11 +7034,18 @@ body.tg-open {
   }
 
   .tg-match-mount {
-    padding: 0.1rem 0.25rem 0.2rem;
+    padding: 0;
   }
 
   .tg-match .tg-board-hud {
-    padding: 0;
+    padding: 0 0.25rem;
+    position: absolute;
+    left: 50%;
+    top: 0.15rem;
+    transform: translateX(-50%);
+    z-index: 4;
+    pointer-events: none;
+    max-width: 55%;
   }
 
   .tg-match .tg-board-title {
@@ -6971,15 +7054,20 @@ body.tg-open {
 
   .tg-match .tg-board-status {
     margin: 0;
-    font-size: 0.72rem;
+    font-size: 0.68rem;
     min-height: 0;
-    line-height: 1.2;
+    line-height: 1.15;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .tg-board-wrap {
-    gap: 0.15rem;
+    gap: 0.1rem;
     height: 100%;
-    justify-content: space-between;
+    justify-content: center;
+    position: relative;
   }
 
   .tg-chess-stage,
@@ -6993,21 +7081,18 @@ body.tg-open {
   .tg-chess-board,
   .tg-dama-board {
     --tg-board-size: min(
-      calc(100dvh - 4.6rem),
-      calc(100vw - 0.6rem),
-      640px
+      calc(100dvh - 3.1rem),
+      calc(100vw - 0.35rem),
+      720px
     );
-    border-width: 5px;
-    border-radius: 4px;
+    border-width: 0;
+    border-radius: 2px;
   }
 
   .tg-chess-board {
-    border-width: 6px;
-    border-radius: 6px;
     box-shadow:
-      0 8px 24px rgba(0, 0, 0, 0.5),
-      inset 0 0 0 2px #c9a227,
-      inset 0 0 0 4px #3d2918;
+      0 0 0 2px #312e2b,
+      0 8px 24px rgba(0, 0, 0, 0.5);
   }
 
   .tg-chess-piece {
@@ -7016,22 +7101,60 @@ body.tg-open {
   }
 
   .tg-chess-glyph {
-    font-size: clamp(1.35rem, 11vmin, 2.6rem);
+    font-size: clamp(1.55rem, 12.5vmin, 3rem);
   }
 
   .tg-coord {
-    font-size: 0.42rem;
-    opacity: 0.55;
+    font-size: 0.4rem;
+    opacity: 0.65;
   }
 
   .tg-match .tg-board-actions {
-    gap: 0.35rem;
+    gap: 0.3rem;
+    position: absolute;
+    right: 0.35rem;
+    bottom: 0.2rem;
+    z-index: 4;
   }
 
   .tg-match .tg-board-actions .tg-btn {
-    padding: 0.28rem 0.7rem;
-    font-size: 0.72rem;
-    min-height: 32px;
+    padding: 0.22rem 0.55rem;
+    font-size: 0.68rem;
+    min-height: 28px;
+    opacity: 0.92;
+  }
+
+  .tg-screen[data-game="chess"] .tg-match-chrome {
+    position: absolute;
+    top: 0.15rem;
+    left: 0.25rem;
+    right: 0.25rem;
+    width: auto;
+    max-width: none;
+    padding: 0;
+    z-index: 6;
+  }
+
+  .tg-screen[data-game="chess"] .tg-match-mount {
+    padding: 0;
+  }
+
+  .tg-screen[data-game="chess"] .tg-chess-board {
+    --tg-board-size: min(calc(100dvh - 0.5rem), calc(100vw - 0.35rem));
+  }
+
+  .tg-screen[data-game="chess"] .tg-match .tg-board-actions {
+    bottom: 0.35rem;
+  }
+  .tg-rules-body {
+    max-height: min(28vh, 160px);
+    font-size: 0.78rem;
+    padding: 0 0.7rem 0.65rem;
+  }
+
+  .tg-rules-summary {
+    padding: 0.45rem 0.7rem;
+    font-size: 0.75rem;
   }
 }
 
