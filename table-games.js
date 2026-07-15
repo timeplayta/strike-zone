@@ -186,6 +186,9 @@ function beginMatch() {
 export function openTableGames(gameId) {
   if (!TABLE_GAMES[gameId]) return false;
   showLobby(gameId);
+  try {
+    window.__strikeZoneOnMatchStart?.({ mapKey: gameId, gameMode: "table" });
+  } catch { /* tutorial opcional */ }
   return true;
 }
 
@@ -201,6 +204,9 @@ export function closeTableGames() {
   document.body.classList.remove("tg-open");
   const menu = document.getElementById("menu");
   if (menu) menu.classList.remove("hidden");
+  try {
+    window.__strikeZoneOnTableGamesClose?.();
+  } catch { /* tutorial opcional */ }
 }
 
 window.openTableGames = openTableGames;

@@ -277,7 +277,7 @@
     const st = $("loadStatus");
     if (st) st.textContent = "Carregando... aguarde";
     try {
-      await import("./game.js?v=98");
+      await import("./game.js?v=99");
       if (typeof window.startStrikeZone === "function") {
         window.__strikeZoneReady = true;
         $("loadError")?.classList.add("hidden");
@@ -331,6 +331,10 @@
       const hub = await import("./account-hub.js");
       hub.mountAccountFab?.();
     } catch { /* optional */ }
+    try {
+      const tut = await import("./tutorial.js");
+      tut.maybeStartTutorial?.();
+    } catch { /* tutorial opcional */ }
   }
 
   function initWelcome() {

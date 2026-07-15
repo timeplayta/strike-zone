@@ -73,7 +73,7 @@ async function runFastPreload(report) {
   await preloadPlayerCharacterModels();
 
   report(55, "Motor do jogo…");
-  await import("./game.js?v=98");
+  await import("./game.js?v=99");
 
   if (typeof window.startStrikeZone !== "function") {
     throw new Error("game.js não definiu startStrikeZone");
@@ -147,7 +147,7 @@ export async function runGamePreload(onProgress) {
   }
 
   report(92, "Motor do jogo (Three.js)…");
-  await import("./game.js?v=98");
+  await import("./game.js?v=99");
 
   if (typeof window.startStrikeZone !== "function") {
     throw new Error("game.js não definiu startStrikeZone");

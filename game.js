@@ -1448,6 +1448,10 @@ function startGame(config = {}) {
       requestPointerLockIfAllowed();
     });
 
+    try {
+      window.__strikeZoneOnMatchStart?.({ mapKey: currentMapKey, gameMode });
+    } catch { /* tutorial opcional */ }
+
     if (adminSpectator && weaponView) hideAllWeapons(weaponView);
   } catch (err) {
     console.error(err);
@@ -4352,6 +4356,10 @@ function showEndScreen(won) {
 
   document.getElementById("endStats").textContent =
     `${playerName} • Round ${round} • Modo ${mapData?.openWorld ? "Battle Royale" : gameMode === "defuse" ? "Desarmar" : "Eliminação"}`;
+
+  try {
+    window.__strikeZoneOnMatchEnd?.(won);
+  } catch { /* tutorial opcional */ }
 }
 
 function updateHUD() {

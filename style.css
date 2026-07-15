@@ -6108,3 +6108,179 @@ body.tg-open {
   }
 }
 
+/* ——— Tutorial interativo (spotlight + chat) ——— */
+.tutorial-root {
+  position: fixed;
+  inset: 0;
+  z-index: 9600;
+  pointer-events: none;
+}
+.tutorial-root.hidden { display: none !important; }
+
+.tutorial-hole {
+  position: fixed;
+  border-radius: 14px;
+  border: 2px solid rgba(232, 192, 96, 0.95);
+  box-shadow:
+    0 0 0 9999px rgba(0, 0, 0, 0.48),
+    0 0 24px rgba(232, 192, 96, 0.35),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  pointer-events: none;
+  z-index: 9601;
+  transition: top 0.28s ease, left 0.28s ease, width 0.28s ease, height 0.28s ease;
+}
+.tutorial-hole.hidden { display: none !important; }
+
+body.tutorial-active .tutorial-spotlight {
+  position: relative;
+  z-index: 9602 !important;
+  filter: brightness(1.12);
+}
+
+.tutorial-arrow {
+  position: fixed;
+  z-index: 9603;
+  width: 36px;
+  height: 36px;
+  pointer-events: none;
+  animation: tutorial-arrow-bounce 0.9s ease-in-out infinite;
+}
+.tutorial-arrow.hidden { display: none !important; }
+.tutorial-arrow-tip {
+  display: block;
+  width: 0;
+  height: 0;
+  margin: 0 auto;
+  border-left: 14px solid transparent;
+  border-right: 14px solid transparent;
+  border-bottom: 22px solid #e8c060;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.55));
+}
+@keyframes tutorial-arrow-bounce {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 8px; }
+}
+
+.tutorial-chat {
+  position: fixed;
+  z-index: 9610;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  max-width: min(420px, calc(100vw - 24px));
+  padding: 12px 14px;
+  background: linear-gradient(165deg, #1e2a3a 0%, #121820 100%);
+  border: 1px solid rgba(232, 192, 96, 0.45);
+  border-radius: 14px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55);
+  pointer-events: auto;
+  color: #e8eaef;
+}
+.tutorial-chat.hidden { display: none !important; }
+.tutorial-chat-bottom {
+  left: 50%;
+  bottom: max(18px, env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+}
+.tutorial-chat-center {
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+.tutorial-chat-match {
+  display: none !important;
+}
+.tutorial-chat-face {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: rgba(232, 192, 96, 0.15);
+  font-size: 1.35rem;
+}
+.tutorial-chat-main { flex: 1; min-width: 0; }
+.tutorial-chat-text {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  color: #e8eaef;
+}
+.tutorial-chat-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+.tutorial-btn {
+  appearance: none;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(0, 0, 0, 0.35);
+  color: #e8eaef;
+  font-weight: 600;
+  font-size: 0.88rem;
+  padding: 0.45rem 0.9rem;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.tutorial-btn:hover { filter: brightness(1.1); }
+.tutorial-btn-primary {
+  background: linear-gradient(180deg, #e8a030, #c07818);
+  border-color: transparent;
+  color: #111;
+}
+.tutorial-skip {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 0.72rem;
+  cursor: pointer;
+  padding: 4px 6px;
+}
+.tutorial-skip:hover { color: rgba(255, 255, 255, 0.75); }
+.tutorial-skip.hidden { display: none !important; }
+
+.tutorial-match-tip {
+  position: fixed;
+  left: 50%;
+  top: max(12px, env(safe-area-inset-top));
+  transform: translateX(-50%);
+  z-index: 9610;
+  max-width: min(520px, calc(100vw - 20px));
+  padding: 10px 14px;
+  background: rgba(12, 16, 22, 0.88);
+  border: 1px solid rgba(232, 192, 96, 0.4);
+  border-radius: 10px;
+  color: #f0e6c8;
+  font-size: 0.88rem;
+  line-height: 1.35;
+  text-align: center;
+  pointer-events: none;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+}
+.tutorial-match-tip.hidden { display: none !important; }
+
+body.tutorial-active.game-active .tutorial-hole,
+body.tutorial-active.game-active .tutorial-arrow {
+  display: none !important;
+}
+
+@media (max-width: 720px) {
+  .tutorial-chat {
+    max-width: calc(100vw - 16px);
+    padding: 10px 12px;
+  }
+  .tutorial-chat-text { font-size: 0.88rem; }
+  .tutorial-arrow { width: 28px; height: 28px; }
+  .tutorial-arrow-tip {
+    border-left-width: 11px;
+    border-right-width: 11px;
+    border-bottom-width: 16px;
+  }
+}
+
