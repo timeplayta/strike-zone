@@ -1,4 +1,4 @@
-const CACHE = "strike-zone-v116";
+const CACHE = "strike-zone-v117";
 const ASSETS = [
   "/",
   "/index.html",
@@ -65,9 +65,12 @@ const ASSETS = [
   "/table-games-audio.js",
   "/table-games-bots.js",
   "/table-games-match.js",
+  "/table-game-salon.js",
   "/table-game-chess.js",
   "/table-game-checkers.js",
   "/table-game-pool.js",
+  "/table-game-truco.js",
+  "/table-games-extra.js",
   "/bot-difficulty.js",
   "/stylized-character.js",
   "/character-animation.js",

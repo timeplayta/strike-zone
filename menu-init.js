@@ -130,9 +130,29 @@
     chess: "Xadrez",
     dama: "Dama",
     sinuca: "Sinuca",
+    truco: "Truco",
+    domino: "Dominó",
+    lig4: "Lig 4",
+    velha: "Jogo da Velha",
+    blackjack: "Blackjack",
+    poker: "Poker",
+    memoria: "Memória",
+    uno: "Uno",
   };
 
-  const TABLE_GAME_MAPS = new Set(["chess", "dama", "sinuca"]);
+  const TABLE_GAME_MAPS = new Set([
+    "chess",
+    "dama",
+    "sinuca",
+    "truco",
+    "domino",
+    "lig4",
+    "velha",
+    "blackjack",
+    "poker",
+    "memoria",
+    "uno",
+  ]);
 
   function updateSelectedMapLabel() {
     const map = document.querySelector(".map-btn.selected")?.dataset?.map || "dust";
@@ -178,11 +198,7 @@
     if (!hint) return;
     if (table) {
       hint.textContent =
-        map === "sinuca"
-          ? "Sinuca — arraste pra mirar, solte pra tacada · bots Fácil / Médio / Difícil / Hard"
-          : map === "dama"
-          ? "Dama — capturas obrigatórias · escolha o nível do bot na entrada"
-          : "Xadrez — você joga de brancas · escolha o nível do bot na entrada";
+        "Jogos de mesa — escolha o bot · contagem 1 2 3 · sons e falas na partida";
       return;
     }
     if (device === "mobile") {

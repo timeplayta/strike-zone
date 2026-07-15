@@ -7,11 +7,22 @@ import {
   unlockTableAudio,
   startTableAmbience,
   stopTableAmbience,
+  announceMatchStart,
 } from "./table-games-audio.js";
 import { mountMatchChrome } from "./table-games-match.js";
 import { mountChessGame } from "./table-game-chess.js";
 import { mountCheckersGame } from "./table-game-checkers.js";
 import { mountPoolGame } from "./table-game-pool.js";
+import { mountTrucoGame } from "./table-game-truco.js";
+import {
+  mountTicTacToeGame,
+  mountConnect4Game,
+  mountMemoryGame,
+  mountBlackjackGame,
+  mountPokerGame,
+  mountUnoGame,
+  mountDominoGame,
+} from "./table-games-extra.js";
 
 export const TABLE_GAMES = {
   chess: {
@@ -34,6 +45,62 @@ export const TABLE_GAMES = {
     desc: "Mesa verde · 8-ball · mira com o mouse",
     ambience: "pool",
     mount: mountPoolGame,
+  },
+  truco: {
+    id: "truco",
+    name: "Truco",
+    desc: "Paulista · manilha · truco até 12 pontos",
+    ambience: "cards",
+    mount: mountTrucoGame,
+  },
+  domino: {
+    id: "domino",
+    name: "Dominó",
+    desc: "Duplo-6 · encaixe nas pontas",
+    ambience: "salon",
+    mount: mountDominoGame,
+  },
+  lig4: {
+    id: "lig4",
+    name: "Lig 4",
+    desc: "Quatro em linha · vs bot",
+    ambience: "salon",
+    mount: mountConnect4Game,
+  },
+  velha: {
+    id: "velha",
+    name: "Jogo da Velha",
+    desc: "3×3 clássico",
+    ambience: "salon",
+    mount: mountTicTacToeGame,
+  },
+  blackjack: {
+    id: "blackjack",
+    name: "Blackjack",
+    desc: "21 · vs dealer",
+    ambience: "cards",
+    mount: mountBlackjackGame,
+  },
+  poker: {
+    id: "poker",
+    name: "Poker",
+    desc: "5 cartas · heads-up com fichas",
+    ambience: "cards",
+    mount: mountPokerGame,
+  },
+  memoria: {
+    id: "memoria",
+    name: "Memória",
+    desc: "Ache os pares · vs bot",
+    ambience: "salon",
+    mount: mountMemoryGame,
+  },
+  uno: {
+    id: "uno",
+    name: "Uno",
+    desc: "Combine cor ou número · 1v1",
+    ambience: "cards",
+    mount: mountUnoGame,
   },
 };
 
@@ -73,6 +140,9 @@ function ensureShell() {
       </footer>
     </div>
     <div class="tg-match hidden" data-match>
+      <div class="tg-countdown hidden" data-countdown aria-live="assertive">
+        <span data-countdown-num>3</span>
+      </div>
       <div class="tg-match-mount" data-mount></div>
     </div>
   `;
@@ -147,7 +217,27 @@ function showLobby(gameId) {
   startTableAmbience(game.ambience);
 }
 
-function beginMatch() {
+async function runCountdown(gameName) {
+  const cd = shell.querySelector("[data-countdown]");
+  const num = shell.querySelector("[data-countdown-num]");
+  if (!cd || !num) {
+    await announceMatchStart(gameName);
+    return;
+  }
+  cd.classList.remove("hidden");
+  const steps = ["1", "2", "3", "COMEÇOU!"];
+  for (const s of steps) {
+    num.textContent = s;
+    num.classList.remove("pop");
+    void num.offsetWidth;
+    num.classList.add("pop");
+    await new Promise((r) => setTimeout(r, s === "COMEÇOU!" ? 700 : 550));
+  }
+  await announceMatchStart(gameName);
+  cd.classList.add("hidden");
+}
+
+async function beginMatch() {
   const game = TABLE_GAMES[currentGameId];
   if (!game || !selectedTier) return;
   unlockTableAudio();
@@ -158,6 +248,8 @@ function beginMatch() {
   mount.innerHTML = "";
   shell.querySelector("[data-lobby]").classList.add("hidden");
   matchEl.classList.remove("hidden");
+
+  await runCountdown(game.name);
 
   matchChrome = mountMatchChrome(matchEl, {
     onResign: () => gameApi?.resign?.(),
@@ -188,7 +280,9 @@ export function openTableGames(gameId) {
   showLobby(gameId);
   try {
     window.__strikeZoneOnMatchStart?.({ mapKey: gameId, gameMode: "table" });
-  } catch { /* tutorial opcional */ }
+  } catch {
+    /* tutorial opcional */
+  }
   return true;
 }
 
@@ -206,7 +300,9 @@ export function closeTableGames() {
   if (menu) menu.classList.remove("hidden");
   try {
     window.__strikeZoneOnTableGamesClose?.();
-  } catch { /* tutorial opcional */ }
+  } catch {
+    /* tutorial opcional */
+  }
 }
 
 window.openTableGames = openTableGames;

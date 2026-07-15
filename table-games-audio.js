@@ -1,4 +1,4 @@
-/** Sons sintéticos imersivos para jogos de mesa (Web Audio API) */
+/** Sons + falas sintéticas para jogos de mesa */
 
 let audioCtx = null;
 
@@ -57,38 +57,84 @@ function noiseBurst(dur, vol, lowpass = 1800) {
 export function unlockTableAudio() {
   try {
     getCtx();
+    if (typeof speechSynthesis !== "undefined") speechSynthesis.getVoices?.();
   } catch {
     /* ignore */
   }
 }
 
-/** Peça de madeira batendo no tabuleiro */
+export function speakLine(text, opts = {}) {
+  return new Promise((resolve) => {
+    try {
+      if (typeof speechSynthesis === "undefined") {
+        resolve(false);
+        return;
+      }
+      const u = new SpeechSynthesisUtterance(String(text));
+      u.lang = opts.lang || "pt-BR";
+      u.rate = opts.rate ?? 1.05;
+      u.pitch = opts.pitch ?? 1.08;
+      u.volume = opts.volume ?? 0.95;
+      const voices = speechSynthesis.getVoices?.() || [];
+      const pt =
+        voices.find((v) => /pt(-|_)?BR/i.test(v.lang)) || voices.find((v) => /^pt/i.test(v.lang));
+      if (pt) u.voice = pt;
+      let done = false;
+      const finish = (ok) => {
+        if (done) return;
+        done = true;
+        resolve(ok);
+      };
+      u.onend = () => finish(true);
+      u.onerror = () => finish(false);
+      speechSynthesis.speak(u);
+      setTimeout(() => finish(true), Math.min(5000, 500 + String(text).length * 70));
+    } catch {
+      resolve(false);
+    }
+  });
+}
+
+/** Contagem 1, 2, 3… Começou! */
+export async function announceMatchStart(gameName = "") {
+  unlockTableAudio();
+  tone(320, 0.08, "triangle", 0.06);
+  await speakLine("Um", { rate: 1.15 });
+  tone(380, 0.08, "triangle", 0.07);
+  await speakLine("Dois", { rate: 1.15 });
+  tone(440, 0.08, "triangle", 0.08);
+  await speakLine("Três", { rate: 1.15 });
+  playWinShort();
+  const line = gameName ? `Começou! ${gameName}!` : "Começou!";
+  await speakLine(line, { rate: 1.08, pitch: 1.12 });
+}
+
+export function playWinShort() {
+  [523, 659, 784].forEach((f, i) => tone(f, 0.12, "triangle", 0.08, i * 0.07));
+}
+
 export function playPiecePlace(heavy = false) {
   noiseBurst(heavy ? 0.08 : 0.05, heavy ? 0.22 : 0.14, heavy ? 900 : 1400);
   tone(heavy ? 180 : 240, 0.06, "triangle", heavy ? 0.08 : 0.05);
 }
 
-/** Captura / captura em dama */
 export function playCapture() {
   noiseBurst(0.1, 0.2, 1200);
   tone(320, 0.08, "square", 0.06);
   tone(160, 0.12, "triangle", 0.08, 0.04);
 }
 
-/** Movimento inválido */
 export function playIllegal() {
   tone(140, 0.12, "sawtooth", 0.05);
   tone(110, 0.1, "sawtooth", 0.04, 0.06);
 }
 
-/** Xeque */
 export function playCheck() {
   tone(520, 0.08, "sine", 0.07);
   tone(660, 0.1, "sine", 0.08, 0.07);
   tone(880, 0.14, "triangle", 0.06, 0.14);
 }
 
-/** Vitória / derrota */
 export function playWin() {
   [392, 494, 587, 784].forEach((f, i) => tone(f, 0.18, "triangle", 0.09, i * 0.1));
 }
@@ -97,7 +143,6 @@ export function playLose() {
   [330, 277, 220, 165].forEach((f, i) => tone(f, 0.22, "triangle", 0.08, i * 0.12));
 }
 
-/** Ambiente de salão — loop leve */
 let ambienceNodes = null;
 
 export function startTableAmbience(kind = "salon") {
@@ -105,12 +150,12 @@ export function startTableAmbience(kind = "salon") {
   try {
     const ctx = getCtx();
     const master = ctx.createGain();
-    master.gain.value = kind === "pool" ? 0.035 : 0.028;
+    master.gain.value = kind === "pool" ? 0.035 : kind === "cards" ? 0.03 : 0.028;
     master.connect(ctx.destination);
 
     const hum = ctx.createOscillator();
     hum.type = "sine";
-    hum.frequency.value = kind === "pool" ? 55 : 72;
+    hum.frequency.value = kind === "pool" ? 55 : kind === "cards" ? 68 : 72;
     const humG = ctx.createGain();
     humG.gain.value = 0.55;
     hum.connect(humG);
@@ -126,7 +171,7 @@ export function startTableAmbience(kind = "salon") {
     noise.loop = true;
     const nf = ctx.createBiquadFilter();
     nf.type = "bandpass";
-    nf.frequency.value = kind === "pool" ? 400 : 900;
+    nf.frequency.value = kind === "pool" ? 400 : kind === "cards" ? 1200 : 900;
     nf.Q.value = 0.6;
     const ng = ctx.createGain();
     ng.gain.value = 0.35;
@@ -153,7 +198,6 @@ export function stopTableAmbience() {
   ambienceNodes = null;
 }
 
-/** Tacada / bola batendo */
 export function playCueStrike(power = 0.5) {
   const p = Math.max(0.15, Math.min(1, power));
   noiseBurst(0.06 + p * 0.06, 0.18 + p * 0.25, 2200);
@@ -179,4 +223,47 @@ export function playPocket() {
 
 export function playBotThink() {
   tone(260, 0.05, "sine", 0.03);
+}
+
+/** Carta batendo / sendo dada */
+export function playCardDeal() {
+  noiseBurst(0.035, 0.12, 3200);
+  tone(520, 0.03, "triangle", 0.04);
+}
+
+export function playCardPlay() {
+  noiseBurst(0.05, 0.16, 2400);
+  tone(280, 0.05, "triangle", 0.06);
+}
+
+export function playCardShuffle() {
+  for (let i = 0; i < 5; i++) {
+    setTimeout(() => noiseBurst(0.04, 0.1, 2800 + i * 100), i * 45);
+  }
+}
+
+export async function announceDealing() {
+  playCardShuffle();
+  await speakLine("Cartas sendo dadas!", { rate: 1.1 });
+}
+
+export function playDominoPlace() {
+  noiseBurst(0.07, 0.18, 1100);
+  tone(200, 0.06, "triangle", 0.07);
+}
+
+export function playChip() {
+  tone(880, 0.04, "sine", 0.05);
+  tone(660, 0.05, "triangle", 0.04, 0.03);
+}
+
+export function playTrucoCall() {
+  tone(300, 0.1, "sawtooth", 0.08);
+  tone(450, 0.12, "square", 0.07, 0.08);
+  speakLine("Truco!", { rate: 1.2, pitch: 1.15 });
+}
+
+export function playFlip() {
+  noiseBurst(0.04, 0.14, 2600);
+  tone(400, 0.05, "triangle", 0.05);
 }

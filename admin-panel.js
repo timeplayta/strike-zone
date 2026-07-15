@@ -121,7 +121,19 @@ function initAdminPanel() {
   $("adminStartBtn")?.addEventListener("click", () => {
     const mapKey = $("adminMapSelect")?.value || "dust";
     syncAdminMapToMenu(mapKey);
-    const tableGames = new Set(["chess", "dama", "sinuca"]);
+    const tableGames = new Set([
+      "chess",
+      "dama",
+      "sinuca",
+      "truco",
+      "domino",
+      "lig4",
+      "velha",
+      "blackjack",
+      "poker",
+      "memoria",
+      "uno",
+    ]);
     if (tableGames.has(mapKey)) {
       if (typeof window.openTableGames === "function") {
         window.openTableGames(mapKey);

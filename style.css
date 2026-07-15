@@ -6374,6 +6374,405 @@ body.tg-open {
   transition: width 0.05s linear;
 }
 
+/* Contagem 1 2 3 Começou */
+.tg-countdown {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(8, 6, 10, 0.72);
+  pointer-events: none;
+}
+
+.tg-countdown.hidden {
+  display: none;
+}
+
+.tg-countdown span {
+  font-size: clamp(3rem, 14vw, 6rem);
+  font-weight: 900;
+  color: #fff6e4;
+  text-shadow: 0 8px 32px rgba(232, 120, 90, 0.55);
+  letter-spacing: 0.04em;
+}
+
+.tg-countdown span.pop {
+  animation: tgCountPop 0.45s ease;
+}
+
+@keyframes tgCountPop {
+  0% { transform: scale(0.4); opacity: 0; }
+  60% { transform: scale(1.12); opacity: 1; }
+  100% { transform: scale(1); }
+}
+
+/* Mesa salão coral / teal */
+.tg-salon {
+  width: min(960px, 96vw);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding: 0.5rem 0.35rem 1rem;
+}
+
+.tg-salon-badge {
+  align-self: flex-start;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #e8785a, #c45a3a);
+  color: #fff8f0;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.tg-salon-teal .tg-salon-badge {
+  background: linear-gradient(90deg, #2aaa88, #1a7a68);
+}
+
+.tg-salon-score {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.55rem 0.9rem;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #4a5568, #2a323e);
+  color: #e8eef6;
+  font-size: 0.82rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+}
+
+.tg-salon-totals {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 800;
+}
+
+.tg-salon-totals .you { color: #5ad0ff; }
+.tg-salon-totals .bot { color: #ff6a6a; }
+
+.tg-salon-table {
+  position: relative;
+  min-height: 280px;
+  padding: 1rem 0.75rem 1.25rem;
+  border-radius: 28px;
+  background:
+    radial-gradient(ellipse at 30% 20%, rgba(255, 160, 120, 0.35), transparent 50%),
+    linear-gradient(160deg, #c45a3a 0%, #a04030 45%, #7a2e24 100%);
+  box-shadow:
+    inset 0 0 0 6px rgba(255, 220, 180, 0.18),
+    0 16px 40px rgba(0, 0, 0, 0.45);
+}
+
+.tg-salon-teal .tg-salon-table {
+  background:
+    radial-gradient(ellipse at 70% 30%, rgba(120, 255, 210, 0.28), transparent 50%),
+    linear-gradient(160deg, #1a8a72 0%, #146858 50%, #0e4a40 100%);
+}
+
+.tg-salon-mat {
+  margin: 0.5rem auto;
+  width: min(92%, 520px);
+  min-height: 160px;
+  border-radius: 18px;
+  background: #fff6ec;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem;
+}
+
+.tg-salon-center {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: center;
+  justify-content: center;
+  max-width: 100%;
+}
+
+.tg-salon-seat {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0.25rem 0.5rem;
+}
+
+.tg-salon-seat.top { justify-content: center; }
+.tg-salon-seat.bottom { justify-content: center; margin-top: 0.35rem; }
+
+.tg-salon-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  color: #fff;
+}
+
+.tg-salon-avatar.you { background: #2a7ab8; }
+.tg-salon-avatar.bot { background: #b83838; }
+
+.tg-salon-name {
+  padding: 0.25rem 0.55rem;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.tg-salon-name.you { background: rgba(42, 122, 184, 0.92); }
+.tg-salon-name.bot { background: rgba(184, 56, 56, 0.92); }
+
+.tg-salon-prop {
+  position: absolute;
+  right: 1rem;
+  top: 40%;
+  font-size: 1.8rem;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.35));
+}
+
+.tg-salon-status {
+  text-align: center;
+  color: #e8d4a8;
+  min-height: 1.4em;
+  margin: 0;
+}
+
+.tg-salon-hand,
+.tg-salon-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  justify-content: center;
+  align-items: center;
+}
+
+.tg-btn-truco {
+  background: linear-gradient(180deg, #e8785a, #a03020) !important;
+  border-color: #ffb090 !important;
+  color: #fff !important;
+  font-size: 1.1rem !important;
+  padding: 0.75rem 1.6rem !important;
+  letter-spacing: 0.06em;
+}
+
+.tg-playing-card {
+  position: relative;
+  width: 64px;
+  height: 92px;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  background: #fffaf4;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+  cursor: default;
+  font-family: Georgia, "Times New Roman", serif;
+  color: #1a1a22;
+}
+
+.tg-playing-card.small {
+  width: 48px;
+  height: 70px;
+  font-size: 0.85em;
+}
+
+.tg-playing-card.red { color: #c02828; }
+
+.tg-playing-card.playable {
+  cursor: pointer;
+  transform: translateY(-4px);
+  box-shadow: 0 8px 16px rgba(232, 120, 90, 0.35);
+}
+
+.tg-playing-card.playable:hover {
+  transform: translateY(-8px);
+}
+
+.tg-playing-card.back {
+  background: linear-gradient(145deg, #2a4a7a, #1a2a48);
+}
+
+.tg-card-back-pattern {
+  display: block;
+  width: 70%;
+  height: 70%;
+  margin: 15%;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-radius: 4px;
+}
+
+.tg-card-rank {
+  position: absolute;
+  top: 4px;
+  left: 6px;
+  font-weight: 800;
+  font-size: 0.95rem;
+}
+
+.tg-card-suit {
+  position: absolute;
+  top: 18px;
+  left: 6px;
+  font-size: 0.85rem;
+}
+
+.tg-card-suit.big {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  opacity: 0.9;
+}
+
+.tg-vira-tag {
+  width: 100%;
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #8a3020;
+}
+
+.tg-ttt {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.4rem;
+  width: min(92vw, 300px);
+  margin: 0.5rem auto;
+}
+
+.tg-ttt-cell {
+  aspect-ratio: 1;
+  border: none;
+  border-radius: 12px;
+  background: #2a2218;
+  color: #f0e0c0;
+  font-size: 2rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.tg-ttt-cell:disabled { opacity: 0.85; cursor: default; }
+
+.tg-c4 {
+  display: flex;
+  gap: 0.25rem;
+  justify-content: center;
+  padding: 0.5rem;
+  background: #1a4a7a;
+  border-radius: 14px;
+  width: fit-content;
+  margin: 0 auto;
+}
+
+.tg-c4-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  border: none;
+  background: transparent;
+  padding: 0.15rem;
+  cursor: pointer;
+}
+
+.tg-c4-cell {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #0e2848;
+  display: block;
+}
+
+.tg-c4-cell.p1 { background: #e04040; }
+.tg-c4-cell.p2 { background: #f0c020; }
+
+.tg-memory-grid {
+  display: grid !important;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.4rem;
+  width: 100%;
+}
+
+.tg-mem-card {
+  aspect-ratio: 1;
+  border: none;
+  border-radius: 10px;
+  background: #c45a3a;
+  color: #fff;
+  font-size: 1.4rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.tg-mem-card.open { background: #fff6ec; color: #301810; }
+.tg-mem-card.done { background: #8a8868; opacity: 0.55; }
+
+.tg-uno-card {
+  width: 54px;
+  height: 78px;
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  font-weight: 900;
+  font-size: 1rem;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.tg-uno-card.playable {
+  cursor: pointer;
+  outline: 2px solid #fff;
+  transform: translateY(-4px);
+}
+
+.tg-domino {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.15rem;
+  width: 42px;
+  height: 78px;
+  border-radius: 6px;
+  border: 1px solid #bbb;
+  background: #f4efe4;
+  color: #1a1a1a;
+  font-weight: 800;
+  cursor: default;
+}
+
+.tg-domino i {
+  display: block;
+  width: 70%;
+  height: 2px;
+  background: #333;
+}
+
+.tg-domino.playable {
+  cursor: pointer;
+  box-shadow: 0 0 0 2px #e8785a;
+}
+
+.tg-domino-chain {
+  gap: 0.25rem !important;
+}
+
+.tg-screen[data-game="truco"] .tg-bg,
+.tg-screen[data-game="blackjack"] .tg-bg,
+.tg-screen[data-game="poker"] .tg-bg {
+  background:
+    radial-gradient(ellipse at 40% 30%, rgba(232, 120, 90, 0.28), transparent 55%),
+    linear-gradient(165deg, #1a100c 0%, #2a1812 50%, #12100e 100%);
+}
+
 @media (max-width: 720px) {
   .tg-diff-grid {
     grid-template-columns: 1fr 1fr;
@@ -6381,6 +6780,11 @@ body.tg-open {
 
   .tg-lobby {
     padding: 1rem 0.75rem 1.25rem;
+  }
+
+  .tg-playing-card {
+    width: 52px;
+    height: 76px;
   }
 }
 

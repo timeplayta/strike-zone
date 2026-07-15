@@ -315,6 +315,106 @@ function drawSinuca(ctx) {
   ctx.stroke();
 }
 
+function drawCardTable(ctx, title, accent) {
+  sky(ctx, "#1a1020", accent);
+  ground(ctx, "#142018", H * 0.55);
+  ctx.fillStyle = accent;
+  roundRect(ctx, 90, 70, 460, 220, 28);
+  ctx.fill();
+  ctx.fillStyle = "#fff8f0";
+  roundRect(ctx, 130, 100, 380, 160, 18);
+  ctx.fill();
+  ctx.fillStyle = "#c02828";
+  ctx.font = "bold 42px sans-serif";
+  ctx.fillText("A♥", 200, 200);
+  ctx.fillStyle = "#1a1a22";
+  ctx.fillText("K♠", 320, 200);
+  ctx.fillStyle = "#fff";
+  ctx.font = "bold 28px sans-serif";
+  ctx.fillText(title, 160, 60);
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+function drawTruco(ctx) {
+  drawCardTable(ctx, "TRUCO", "#c45a3a");
+}
+function drawDomino(ctx) {
+  sky(ctx, "#102018", "#1a5a48");
+  ground(ctx, "#143028", H * 0.5);
+  ctx.fillStyle = "#f0e8d8";
+  for (let i = 0; i < 4; i++) {
+    ctx.fillRect(160 + i * 70, 140, 50, 90);
+    ctx.fillStyle = "#222";
+    ctx.fillRect(170 + i * 70, 180, 30, 4);
+    ctx.fillStyle = "#f0e8d8";
+  }
+}
+function drawLig4(ctx) {
+  sky(ctx, "#101828", "#1a4060");
+  ctx.fillStyle = "#1e5a9a";
+  ctx.fillRect(140, 80, 360, 220);
+  for (let r = 0; r < 5; r++)
+    for (let c = 0; c < 6; c++) {
+      ctx.beginPath();
+      ctx.arc(175 + c * 52, 110 + r * 38, 14, 0, Math.PI * 2);
+      ctx.fillStyle = (r + c) % 3 === 0 ? "#e04040" : "#f0c020";
+      ctx.fill();
+    }
+}
+function drawVelha(ctx) {
+  sky(ctx, "#181410", "#3a3020");
+  ctx.strokeStyle = "#e8d4a8";
+  ctx.lineWidth = 8;
+  ctx.strokeRect(180, 70, 280, 220);
+  ctx.beginPath();
+  ctx.moveTo(273, 70);
+  ctx.lineTo(273, 290);
+  ctx.moveTo(366, 70);
+  ctx.lineTo(366, 290);
+  ctx.moveTo(180, 143);
+  ctx.lineTo(460, 143);
+  ctx.moveTo(180, 216);
+  ctx.lineTo(460, 216);
+  ctx.stroke();
+  ctx.fillStyle = "#e8785a";
+  ctx.font = "bold 48px sans-serif";
+  ctx.fillText("X", 210, 130);
+  ctx.fillText("O", 400, 270);
+}
+function drawBlackjack(ctx) {
+  drawCardTable(ctx, "21", "#2a6a4a");
+}
+function drawPoker(ctx) {
+  drawCardTable(ctx, "POKER", "#6a2a4a");
+}
+function drawMemoria(ctx) {
+  sky(ctx, "#201018", "#5a2840");
+  for (let i = 0; i < 8; i++) {
+    ctx.fillStyle = i % 2 ? "#e8785a" : "#f0e0c0";
+    ctx.fillRect(140 + (i % 4) * 90, 90 + Math.floor(i / 4) * 100, 70, 80);
+  }
+}
+function drawUno(ctx) {
+  sky(ctx, "#101018", "#301848");
+  const cols = ["#e04040", "#2aaa55", "#3380e0", "#e0c020"];
+  cols.forEach((c, i) => {
+    ctx.fillStyle = c;
+    ctx.beginPath();
+    ctx.roundRect?.(180 + i * 70, 120, 55, 90, 8);
+    if (!ctx.roundRect) ctx.fillRect(180 + i * 70, 120, 55, 90);
+    else ctx.fill();
+  });
+}
+
 const DRAWERS = {
   dust: drawDust,
   warehouse: drawWarehouse,
@@ -324,6 +424,14 @@ const DRAWERS = {
   chess: drawChess,
   dama: drawDama,
   sinuca: drawSinuca,
+  truco: drawTruco,
+  domino: drawDomino,
+  lig4: drawLig4,
+  velha: drawVelha,
+  blackjack: drawBlackjack,
+  poker: drawPoker,
+  memoria: drawMemoria,
+  uno: drawUno,
 };
 
 export function getMapCardArtUrl(mapId) {

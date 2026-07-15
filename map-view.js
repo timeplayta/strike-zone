@@ -1,6 +1,6 @@
 /** Tela cheia de mapas — abre pelo botão acima de JOGAR */
 
-import { getMapCardArtUrl } from "./map-card-art.js?v=73";
+import { getMapCardArtUrl } from "./map-card-art.js?v=74";
 
 const MAPS = [
   { id: "dust", category: "tiro", name: "Dust Alley", desc: "Deserto aberto" },
@@ -11,6 +11,14 @@ const MAPS = [
   { id: "chess", category: "jogos-de-mesa", name: "Xadrez", desc: "Tabuleiro clássico · vs bot" },
   { id: "dama", category: "jogos-de-mesa", name: "Dama", desc: "Damas 8×8 · capturas obrigatórias" },
   { id: "sinuca", category: "jogos-de-mesa", name: "Sinuca", desc: "Mesa 8-ball · mira e tacada" },
+  { id: "truco", category: "jogos-de-mesa", name: "Truco", desc: "Paulista · manilha · até 12" },
+  { id: "domino", category: "jogos-de-mesa", name: "Dominó", desc: "Duplo-6 · vs bot" },
+  { id: "lig4", category: "jogos-de-mesa", name: "Lig 4", desc: "Quatro em linha" },
+  { id: "velha", category: "jogos-de-mesa", name: "Jogo da Velha", desc: "3×3 clássico" },
+  { id: "blackjack", category: "jogos-de-mesa", name: "Blackjack", desc: "21 · vs dealer" },
+  { id: "poker", category: "jogos-de-mesa", name: "Poker", desc: "5 cartas · heads-up" },
+  { id: "memoria", category: "jogos-de-mesa", name: "Memória", desc: "Ache os pares" },
+  { id: "uno", category: "jogos-de-mesa", name: "Uno", desc: "Cor ou número · 1v1" },
 ];
 
 const CATEGORIES = ["tiro", "terror", "esconde-esconde", "jogos-de-mesa"];
@@ -32,7 +40,7 @@ function categoryForMap(mapId) {
 function buildMapCards() {
   const grid = $("ffMapCardGrid");
   if (!grid) return;
-  if (grid.dataset.built === "4" && grid.children.length) return;
+  if (grid.dataset.built === "5" && grid.children.length) return;
   try {
     grid.innerHTML = MAPS.map((m) => {
       const art = getMapCardArtUrl(m.id);
@@ -50,7 +58,7 @@ function buildMapCards() {
         `</div>`
       );
     }).join("");
-    grid.dataset.built = "4";
+    grid.dataset.built = "5";
   } catch (err) {
     console.warn("[Strike Zone] Falha ao montar cards de mapa:", err);
     grid.dataset.built = "0";
