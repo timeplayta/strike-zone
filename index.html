@@ -218,6 +218,35 @@
               <input type="checkbox" id="useBotDifficulty" checked class="visually-hidden" tabindex="-1" aria-hidden="true" />
             </div>
           </details>
+          <details class="ff-details" id="ffSocialOptions">
+            <summary class="ff-details-summary">Amigos e voz</summary>
+            <div class="ff-details-body social-options-body">
+              <div class="social-voice-block">
+                <label class="ally-check-row" for="optionsVoiceChatToggle">
+                  <input type="checkbox" id="optionsVoiceChatToggle" />
+                  <span>Conversas por voz (18+)</span>
+                </label>
+                <p id="optionsVoiceChatLock" class="social-lock-note">Bloqueado para menores de 18 anos. A idade vem do cadastro.</p>
+                <p id="optionsVoiceChatStatus" class="social-status-note">Desligado</p>
+              </div>
+              <div class="social-friends-block">
+                <div class="social-friends-head">
+                  <strong>Amigos</strong>
+                  <span id="optionsFriendsCount" class="friends-count-pill">0</span>
+                </div>
+                <p class="social-hint">Busque pelo nome (parecido também) ou pelo ID único SZ-XXXXXX.</p>
+                <div class="friends-search-row">
+                  <input type="text" id="optionsFriendsSearchInput" maxlength="32" placeholder="Nome ou ID SZ-…" autocomplete="off" />
+                  <button type="button" id="optionsFriendsSearchBtn" class="btn-primary friends-search-btn">Buscar</button>
+                </div>
+                <p id="optionsFriendsSearchStatus" class="social-status-note"></p>
+                <div id="optionsFriendsSearchResults" class="friends-list friends-search-list"></div>
+                <label class="hub-section-label">Sua lista</label>
+                <div id="optionsFriendsList" class="friends-list"></div>
+                <button type="button" id="openFriendsBtn" class="friends-open-full-btn">Abrir painel de amigos</button>
+              </div>
+            </div>
+          </details>
         </div>
       </div>
       <button type="button" id="ffOptionsBtn" class="ff-options-btn ff-options-corner" title="Opções">
@@ -493,13 +522,47 @@
         <div class="account-field"><span class="account-label">Moedas</span><span id="accountCoinsDisplay">0 🪙</span></div>
         <div class="account-field"><span class="account-label">Abates</span><span id="accountKillsDisplay">0</span></div>
       </div>
+      <label class="hub-section-label">Foto do perfil</label>
+      <div class="account-photo-row">
+        <div class="account-photo-preview-wrap">
+          <img id="accountPhotoPreview" class="account-photo-preview hidden" alt="Sua foto" />
+          <span id="accountPhotoEmpty" class="account-photo-empty">Sem foto</span>
+        </div>
+        <div class="account-photo-actions">
+          <label class="account-photo-btn" for="accountPhotoCameraInput">Tirar foto</label>
+          <input type="file" id="accountPhotoCameraInput" class="visually-hidden" accept="image/*" capture="user" />
+          <label class="account-photo-btn" for="accountPhotoInput">Escolher arquivo</label>
+          <input type="file" id="accountPhotoInput" class="visually-hidden" accept="image/png,image/jpeg,image/webp" />
+          <button type="button" id="accountPhotoRemoveBtn" class="account-photo-btn account-photo-btn-danger">Remover</button>
+          <p id="accountPhotoStatus" class="social-status-note"></p>
+        </div>
+      </div>
       <label class="hub-section-label">Ícone do perfil</label>
-      <div class="avatar-grid">
+      <div class="avatar-grid avatar-grid-5">
         <button type="button" class="avatar-pick" data-avatar="dog" title="Cachorro"><span>🐕</span><small>Cachorro</small></button>
         <button type="button" class="avatar-pick" data-avatar="cat" title="Gato"><span>🐈</span><small>Gato</small></button>
         <button type="button" class="avatar-pick selected" data-avatar="soldier" title="Meu personagem"><span>🎖</span><small>Meu boneco</small></button>
         <button type="button" class="avatar-pick" data-avatar="enemy" title="Inimigo"><span>☠</span><small>Inimigo</small></button>
+        <button type="button" class="avatar-pick" data-avatar="photo" title="Minha foto" disabled><span>📷</span><small>Minha foto</small></button>
       </div>
+      <label class="hub-section-label">Conversas por voz</label>
+      <div class="social-voice-block account-voice-block">
+        <label class="ally-check-row" for="voiceChatToggle">
+          <input type="checkbox" id="voiceChatToggle" />
+          <span>Ativar voz com amigos (18+)</span>
+        </label>
+        <p id="voiceChatLockNote" class="social-lock-note">Só maiores de 18 anos. Menores ficam bloqueados.</p>
+        <p id="voiceChatStatus" class="social-status-note">Desligado</p>
+      </div>
+      <label class="hub-section-label">Amigos <span id="friendsCountLabel" class="friends-count-pill">0</span></label>
+      <p class="social-hint">Digite o nome (aceita parecido) ou o ID único SZ-XXXXXX.</p>
+      <div class="friends-search-row">
+        <input type="text" id="friendsSearchInput" maxlength="32" placeholder="Nome ou ID SZ-…" autocomplete="off" />
+        <button type="button" id="friendsSearchBtn" class="btn-primary friends-search-btn">Buscar</button>
+      </div>
+      <p id="friendsSearchStatus" class="social-status-note"></p>
+      <div id="friendsSearchResults" class="friends-list friends-search-list"></div>
+      <div id="friendsList" class="friends-list"></div>
       <div class="account-preview-row">
         <div class="account-preview-box">
           <span class="account-preview-title">Seu personagem</span>
@@ -510,6 +573,26 @@
           <canvas id="accountEnemyCanvas" width="280" height="200"></canvas>
         </div>
       </div>
+    </div>
+  </div>
+
+  <div id="friendsModal" class="hub-modal hidden" aria-hidden="true">
+    <div class="hub-modal-backdrop" id="friendsModalBackdrop"></div>
+    <div class="hub-modal-panel hub-panel-friends">
+      <div class="hub-header">
+        <span class="hub-badge">A</span>
+        <span>Amigos</span>
+        <button type="button" id="closeFriendsBtn" class="shop-close" aria-label="Fechar">✕</button>
+      </div>
+      <p class="hub-sub">Busque pelo nome (parecido também) ou pelo ID único SZ-XXXXXX.</p>
+      <div class="friends-search-row">
+        <input type="text" id="friendsModalSearchInput" maxlength="32" placeholder="Nome ou ID SZ-…" autocomplete="off" />
+        <button type="button" id="friendsModalSearchBtn" class="btn-primary friends-search-btn">Buscar</button>
+      </div>
+      <p id="friendsModalSearchStatus" class="social-status-note"></p>
+      <div id="friendsModalSearchResults" class="friends-list friends-search-list"></div>
+      <label class="hub-section-label">Sua lista</label>
+      <div id="friendsModalList" class="friends-list"></div>
     </div>
   </div>
 
@@ -646,6 +729,7 @@
     <div class="in-game-menu-layout">
       <nav class="in-game-menu-nav" aria-label="Seções">
         <button type="button" class="in-game-menu-nav-btn selected" data-ingame-tab="hud">Configurações</button>
+        <button type="button" class="in-game-menu-nav-btn" data-ingame-tab="voice">Voz</button>
         <button type="button" class="in-game-menu-nav-btn in-game-menu-nav-leave" data-ingame-tab="leave">Sair da partida</button>
       </nav>
       <div class="in-game-menu-main">
@@ -677,6 +761,15 @@
           </label>
           <p class="in-game-hud-note">Botões de armas valem no modo celular.</p>
           <button type="button" id="hudResetBtn" class="in-game-hud-reset">Restaurar padrão</button>
+        </div>
+        <div id="inGameTabVoice" class="in-game-tab-panel hidden">
+          <p class="in-game-menu-desc">Chat de voz com amigos. Só libera se sua conta tiver 18 anos ou mais.</p>
+          <label class="ally-check-row" for="inGameVoiceChatToggle">
+            <input type="checkbox" id="inGameVoiceChatToggle" />
+            <span>Ativar conversas por voz</span>
+          </label>
+          <p id="inGameVoiceChatLock" class="social-lock-note">Bloqueado — menores de 18 anos.</p>
+          <p id="inGameVoiceChatStatus" class="social-status-note">Desligado</p>
         </div>
         <div id="inGameTabLeave" class="in-game-tab-panel hidden">
           <p class="in-game-leave-text">Você vai sair da partida agora. Seu personagem será morto e a partida encerra para você.</p>
@@ -843,6 +936,7 @@
   <script type="module" src="dev-chat.js"></script>
   <script type="module" src="arsenal-view.js"></script>
   <script type="module" src="account-hub.js"></script>
+  <script type="module" src="friends-social.js"></script>
   <script type="module" src="character-customizer.js"></script>
   <script type="module" src="solo-view.js"></script>
   <script type="module" src="map-view.js?v=81"></script>
@@ -869,10 +963,10 @@
     </div>
   </div>
 
-  <script type="module" src="in-game-menu.js?v=2"></script>
+  <script type="module" src="in-game-menu.js?v=3"></script>
   <script type="module" src="game-loader.js?v=104"></script>
   <script type="module">
-    import { bindShopUI } from "./player-account.js?v=78";
+    import { bindShopUI } from "./player-account.js?v=79";
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", bindShopUI);
     else bindShopUI();
   </script>

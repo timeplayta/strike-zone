@@ -162,6 +162,28 @@ export async function savePlayerLoadout(name, loadout) {
   }
 }
 
+export function isSessionAdult() {
+  const account = cachedAccount || getSavedSession()?.account;
+  if (!account) return false;
+  if (account.isAdult === true) return true;
+  if (account.isAdult === false) return false;
+  const age = typeof account.age === "number" ? account.age : null;
+  return age != null && age >= 18;
+}
+
+export function getProfilePhotoUrl() {
+  return cachedAccount?.profilePhoto || getSavedSession()?.account?.profilePhoto || null;
+}
+
+export function getCachedFriends() {
+  return cachedAccount?.friends || getSavedSession()?.account?.friends || [];
+}
+
+export function isVoiceChatEnabled() {
+  const account = cachedAccount || getSavedSession()?.account;
+  return !!(account?.voiceChatEnabled && isSessionAdult());
+}
+
 export async function saveAvatarChoice(name, avatar) {
   if (!getAccountId() || !sessionToken) return { ok: false };
   try {
@@ -171,10 +193,119 @@ export async function saveAvatarChoice(name, avatar) {
       saveSession(cachedName, sessionToken, data.account);
       return { ok: true };
     }
+    return { ok: false, msg: data.error || "Erro ao salvar" };
   } catch { /* offline */ }
   cachedAccount.avatar = avatar;
   saveSession(cachedName, sessionToken, cachedAccount);
   return { ok: true };
+}
+
+export async function uploadProfilePhoto(imageDataUrl) {
+  if (!getAccountId() || !sessionToken) return { ok: false, msg: "Faça login" };
+  try {
+    const { ok, data } = await apiPost("/api/account/photo", authBody({ imageDataUrl }));
+    if (ok && data.ok) {
+      saveSession(cachedName, sessionToken, data.account);
+      return { ok: true, account: data.account };
+    }
+    return { ok: false, msg: data.error || "Erro ao enviar foto" };
+  } catch {
+    return { ok: false, msg: "Sem conexão com o servidor" };
+  }
+}
+
+export async function removeProfilePhoto() {
+  if (!getAccountId() || !sessionToken) return { ok: false, msg: "Faça login" };
+  try {
+    const { ok, data } = await apiPost("/api/account/photo/remove", authBody());
+    if (ok && data.ok) {
+      saveSession(cachedName, sessionToken, data.account);
+      return { ok: true, account: data.account };
+    }
+    return { ok: false, msg: data.error || "Erro ao remover foto" };
+  } catch {
+    return { ok: false, msg: "Sem conexão com o servidor" };
+  }
+}
+
+export async function setVoiceChatEnabled(enabled) {
+  if (!getAccountId() || !sessionToken) return { ok: false, msg: "Faça login" };
+  if (enabled && !isSessionAdult()) {
+    return { ok: false, msg: "Conversas por voz só para maiores de 18 anos" };
+  }
+  try {
+    const { ok, data } = await apiPost("/api/account/profile", authBody({ voiceChatEnabled: !!enabled }));
+    if (ok && data.ok) {
+      saveSession(cachedName, sessionToken, data.account);
+      return { ok: true, account: data.account };
+    }
+    return { ok: false, msg: data.error || "Erro ao salvar" };
+  } catch {
+    return { ok: false, msg: "Sem conexão com o servidor" };
+  }
+}
+
+export async function searchPlayers(query) {
+  const q = String(query || "").trim();
+  if (!q) return { ok: true, results: [] };
+  try {
+    const exclude = getPlayerId() || "";
+    const res = await fetch(
+      `/api/account/search?q=${encodeURIComponent(q)}&exclude=${encodeURIComponent(exclude)}`
+    );
+    const data = await res.json();
+    return { ok: !!data.ok, results: data.results || [], msg: data.error };
+  } catch {
+    return { ok: false, results: [], msg: "Sem conexão" };
+  }
+}
+
+export async function addFriendByPlayerId(playerId) {
+  if (!getAccountId() || !sessionToken) return { ok: false, msg: "Faça login" };
+  try {
+    const { ok, data } = await apiPost("/api/account/friends/add", authBody({ playerId }));
+    if (ok && data.ok) {
+      saveSession(cachedName, sessionToken, data.account);
+      return { ok: true, account: data.account, friend: data.friend };
+    }
+    return { ok: false, msg: data.error || "Não foi possível adicionar" };
+  } catch {
+    return { ok: false, msg: "Sem conexão com o servidor" };
+  }
+}
+
+export async function removeFriendByPlayerId(playerId) {
+  if (!getAccountId() || !sessionToken) return { ok: false, msg: "Faça login" };
+  try {
+    const { ok, data } = await apiPost("/api/account/friends/remove", authBody({ playerId }));
+    if (ok && data.ok) {
+      saveSession(cachedName, sessionToken, data.account);
+      return { ok: true, account: data.account };
+    }
+    return { ok: false, msg: data.error || "Não foi possível remover" };
+  } catch {
+    return { ok: false, msg: "Sem conexão com o servidor" };
+  }
+}
+
+export async function refreshFriendsList() {
+  if (!getAccountId() || !sessionToken) return { ok: false, friends: [] };
+  try {
+    const res = await fetch(
+      `/api/account/friends?accountId=${encodeURIComponent(getAccountId())}&token=${encodeURIComponent(sessionToken)}`
+    );
+    const data = await res.json();
+    if (data.ok) {
+      if (cachedAccount) {
+        cachedAccount.friends = data.friends || [];
+        saveSession(cachedName, sessionToken, cachedAccount);
+      }
+      return { ok: true, friends: data.friends || [] };
+    }
+    return { ok: false, friends: [], msg: data.error };
+  } catch {
+    return { ok: false, friends: getCachedFriends(), msg: "Sem conexão" };
+  }
 }
 
 async function apiPost(path, body) {

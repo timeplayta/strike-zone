@@ -394,7 +394,7 @@ function applyAdminFlag(p, password) {
 
 function migrateDb(db) {
   if (!db.players) db.players = {};
-  let changed = db._version < 4;
+  let changed = (db._version || 0) < 5;
 
   const newPlayers = {};
   for (const [oldKey, p] of Object.entries(db.players)) {
@@ -415,10 +415,13 @@ function migrateDb(db) {
       if (born !== p.birthDate) { p.birthDate = born; changed = true; }
     }
     if (!p.birthdayRewards) { p.birthdayRewards = {}; changed = true; }
+    if (!Array.isArray(p.friends)) { p.friends = []; changed = true; }
+    if (p.profilePhoto === undefined) { p.profilePhoto = null; changed = true; }
+    if (p.voiceChatEnabled === undefined) { p.voiceChatEnabled = false; changed = true; }
     newPlayers[p.id] = p;
   }
   db.players = newPlayers;
-  db._version = 4;
+  db._version = 5;
   if (changed) writeDb(db);
   return db;
 }
@@ -531,6 +534,99 @@ function findPlayersByName(name) {
   return Object.values(db.players).filter((p) => normalizeName(p.name).toLowerCase() === n);
 }
 
+function foldName(s) {
+  return String(s || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+}
+
+function nameSimilarity(a, b) {
+  const x = foldName(a);
+  const y = foldName(b);
+  if (!x || !y) return 0;
+  if (x === y) return 100;
+  if (x.startsWith(y) || y.startsWith(x)) return 85;
+  if (x.includes(y) || y.includes(x)) return 70;
+  const shorter = x.length <= y.length ? x : y;
+  const longer = x.length > y.length ? x : y;
+  let hits = 0;
+  for (let i = 0; i < shorter.length; i++) {
+    if (longer.includes(shorter[i])) hits++;
+  }
+  const ratio = hits / Math.max(longer.length, 1);
+  if (ratio >= 0.72 && Math.abs(x.length - y.length) <= 3) return 45;
+  return 0;
+}
+
+function isAdult(p) {
+  if (!p) return false;
+  const byBirth = p.birthDate ? ageFromBirthDate(p.birthDate) : null;
+  const age = byBirth != null ? byBirth : (typeof p.age === "number" ? p.age : null);
+  return age != null && age >= 18;
+}
+
+function profilePhotoUrl(p) {
+  if (!p?.profilePhoto || !p?.playerId) return null;
+  return `/api/account/photo?playerId=${encodeURIComponent(p.playerId)}`;
+}
+
+function publicProfile(p) {
+  if (!p) return null;
+  return {
+    playerId: p.playerId,
+    name: p.name,
+    avatar: p.avatar || "soldier",
+    profilePhoto: profilePhotoUrl(p),
+    characterSkin: p.characterSkin || "soldier",
+    kills: p.kills || 0,
+    voiceChatEnabled: !!(p.voiceChatEnabled && isAdult(p)),
+    isAdult: isAdult(p),
+  };
+}
+
+function searchPlayers(query, excludePlayerId = "", limit = 20) {
+  const q = String(query || "").trim();
+  if (!q || q.length < 1) return [];
+  const pid = normalizePlayerId(q);
+  const db = readDb();
+  const all = Object.values(db.players);
+  const exclude = normalizePlayerId(excludePlayerId);
+
+  if (pid.startsWith("SZ-") && pid.length >= 5) {
+    const exact = all.find((p) => normalizePlayerId(p.playerId) === pid);
+    if (!exact) return [];
+    if (exclude && normalizePlayerId(exact.playerId) === exclude) return [];
+    return [publicProfile(exact)];
+  }
+
+  const scored = [];
+  for (const p of all) {
+    if (exclude && normalizePlayerId(p.playerId) === exclude) continue;
+    const score = nameSimilarity(p.name, q);
+    if (score > 0) scored.push({ score, p });
+  }
+  scored.sort((a, b) => b.score - a.score || String(a.p.name).localeCompare(String(b.p.name)));
+  return scored.slice(0, limit).map((row) => publicProfile(row.p));
+}
+
+const PROFILE_PHOTOS_DIR = path.join(__dirname, "data", "profile-photos");
+const MAX_PROFILE_PHOTO_BYTES = 2.2 * 1024 * 1024;
+
+function ensureProfilePhotosDir() {
+  fs.mkdirSync(PROFILE_PHOTOS_DIR, { recursive: true });
+}
+
+function resolveProfilePhotoPath(p) {
+  if (!p?.profilePhoto) return null;
+  const base = path.basename(String(p.profilePhoto));
+  if (!/^SZ-[A-Z0-9]+\.(jpg|jpeg|png|webp)$/i.test(base)) return null;
+  const full = path.join(PROFILE_PHOTOS_DIR, base);
+  if (!full.startsWith(PROFILE_PHOTOS_DIR)) return null;
+  return fs.existsSync(full) ? full : null;
+}
+
 function savePlayer(p) {
   const db = readDb();
   db.players[p.id] = p;
@@ -554,6 +650,9 @@ function defaultPlayer(name, age = null, email = "", birthDate = "") {
     outfitId: null,
     loadout: null,
     birthdayRewards: {},
+    friends: [],
+    profilePhoto: null,
+    voiceChatEnabled: false,
     passwordSalt: null,
     passwordHash: null,
     oauthProviders: {},
@@ -564,6 +663,16 @@ function defaultPlayer(name, age = null, email = "", birthDate = "") {
   };
 }
 
+function listFriendProfiles(p) {
+  const ids = Array.isArray(p?.friends) ? p.friends : [];
+  const out = [];
+  for (const id of ids) {
+    const friend = getPlayerByPlayerId(id);
+    if (friend) out.push(publicProfile(friend));
+  }
+  return out;
+}
+
 function exportAccount(p) {
   grantBirthdayReward(p);
   const isAdmin = isAdminPlayer(p);
@@ -571,6 +680,7 @@ function exportAccount(p) {
     p.isAdmin = isAdmin;
     savePlayer(p);
   }
+  const adult = isAdult(p);
   return {
     id: p.id,
     playerId: p.playerId,
@@ -584,11 +694,15 @@ function exportAccount(p) {
     kills: p.kills || 0,
     hasPassword: !!(p.passwordHash && p.passwordSalt),
     isAdmin,
+    isAdult: adult,
     avatar: p.avatar || "soldier",
     characterSkin: p.characterSkin || "soldier",
     outfitId: p.outfitId || null,
     loadout: p.loadout || null,
     birthdayMessage: p.birthdayMessage || "",
+    profilePhoto: profilePhotoUrl(p),
+    friends: listFriendProfiles(p),
+    voiceChatEnabled: !!(p.voiceChatEnabled && adult),
   };
 }
 
@@ -865,7 +979,10 @@ function equipSkin(accountId, token, itemId) {
 function saveProfile(accountId, token, data) {
   const p = authPlayer(accountId, token);
   if (!p) return { ok: false, error: "Não autorizado" };
-  if (data.avatar && ["dog", "cat", "soldier", "enemy"].includes(data.avatar)) {
+  if (data.avatar && ["dog", "cat", "soldier", "enemy", "photo"].includes(data.avatar)) {
+    if (data.avatar === "photo" && !p.profilePhoto) {
+      return { ok: false, error: "Envie uma foto antes de usar esse ícone" };
+    }
     p.avatar = data.avatar;
   }
   if (data.characterSkin) {
@@ -876,8 +993,94 @@ function saveProfile(accountId, token, data) {
     p.loadout = sanitizeLoadoutForPlayer(p, data.loadout);
     p.outfitId = p.loadout.outfitId || null;
   }
+  if (typeof data.voiceChatEnabled === "boolean") {
+    if (data.voiceChatEnabled && !isAdult(p)) {
+      return { ok: false, error: "Conversas por voz só para maiores de 18 anos" };
+    }
+    p.voiceChatEnabled = data.voiceChatEnabled;
+  }
   savePlayer(p);
   return { ok: true, account: exportAccount(p) };
+}
+
+function saveProfilePhoto(accountId, token, imageDataUrl) {
+  const p = authPlayer(accountId, token);
+  if (!p) return { ok: false, error: "Não autorizado" };
+  const raw = String(imageDataUrl || "");
+  const m = /^data:(image\/(?:png|jpeg|jpg|webp));base64,(.+)$/i.exec(raw);
+  if (!m) return { ok: false, error: "Formato de imagem não aceito (use JPG, PNG ou WebP)" };
+  const buf = Buffer.from(m[2], "base64");
+  if (!buf.length) return { ok: false, error: "Imagem inválida" };
+  if (buf.length > MAX_PROFILE_PHOTO_BYTES) return { ok: false, error: "Imagem grande demais (máx. ~2 MB)" };
+
+  ensureProfilePhotosDir();
+  const ext = m[1].includes("png") ? "png" : m[1].includes("webp") ? "webp" : "jpg";
+  const fileName = `${normalizePlayerId(p.playerId)}.${ext}`;
+  const full = path.join(PROFILE_PHOTOS_DIR, fileName);
+
+  // Remove foto antiga com outra extensão
+  for (const oldExt of ["jpg", "jpeg", "png", "webp"]) {
+    const old = path.join(PROFILE_PHOTOS_DIR, `${normalizePlayerId(p.playerId)}.${oldExt}`);
+    if (old !== full && fs.existsSync(old)) {
+      try { fs.unlinkSync(old); } catch { /* ignore */ }
+    }
+  }
+
+  fs.writeFileSync(full, buf);
+  p.profilePhoto = fileName;
+  p.avatar = "photo";
+  savePlayer(p);
+  return { ok: true, account: exportAccount(p) };
+}
+
+function removeProfilePhoto(accountId, token) {
+  const p = authPlayer(accountId, token);
+  if (!p) return { ok: false, error: "Não autorizado" };
+  const existing = resolveProfilePhotoPath(p);
+  if (existing) {
+    try { fs.unlinkSync(existing); } catch { /* ignore */ }
+  }
+  p.profilePhoto = null;
+  if (p.avatar === "photo") p.avatar = "soldier";
+  savePlayer(p);
+  return { ok: true, account: exportAccount(p) };
+}
+
+function addFriend(accountId, token, targetPlayerId) {
+  const p = authPlayer(accountId, token);
+  if (!p) return { ok: false, error: "Não autorizado" };
+  const targetId = normalizePlayerId(targetPlayerId);
+  if (!targetId.startsWith("SZ-")) return { ok: false, error: "ID inválido. Use o ID SZ-XXXXXX" };
+  if (normalizePlayerId(p.playerId) === targetId) {
+    return { ok: false, error: "Você não pode se adicionar" };
+  }
+  const friend = getPlayerByPlayerId(targetId);
+  if (!friend) return { ok: false, error: "Jogador não encontrado" };
+  p.friends = Array.isArray(p.friends) ? p.friends : [];
+  if (p.friends.some((id) => normalizePlayerId(id) === targetId)) {
+    return { ok: false, error: "Já está na sua lista de amigos" };
+  }
+  if (p.friends.length >= 80) return { ok: false, error: "Lista de amigos cheia (máx. 80)" };
+  p.friends.push(friend.playerId);
+  savePlayer(p);
+  return { ok: true, account: exportAccount(p), friend: publicProfile(friend) };
+}
+
+function removeFriend(accountId, token, targetPlayerId) {
+  const p = authPlayer(accountId, token);
+  if (!p) return { ok: false, error: "Não autorizado" };
+  const targetId = normalizePlayerId(targetPlayerId);
+  p.friends = (Array.isArray(p.friends) ? p.friends : []).filter(
+    (id) => normalizePlayerId(id) !== targetId
+  );
+  savePlayer(p);
+  return { ok: true, account: exportAccount(p) };
+}
+
+function getFriends(accountId, token) {
+  const p = authPlayer(accountId, token);
+  if (!p) return { ok: false, error: "Não autorizado" };
+  return { ok: true, friends: listFriendProfiles(p) };
 }
 
 function parseBody(req) {
@@ -893,6 +1096,21 @@ function parseBody(req) {
     });
     req.on("error", reject);
   });
+}
+
+function sendPhotoFile(res, filePath) {
+  const ext = path.extname(filePath).toLowerCase();
+  const mime =
+    ext === ".png" ? "image/png" :
+    ext === ".webp" ? "image/webp" :
+    "image/jpeg";
+  const data = fs.readFileSync(filePath);
+  res.writeHead(200, {
+    "Content-Type": mime,
+    "Cache-Control": "public, max-age=300",
+    "Access-Control-Allow-Origin": "*",
+  });
+  res.end(data);
 }
 
 async function handleAccountApi(req, res, pathname) {
@@ -959,6 +1177,62 @@ async function handleAccountApi(req, res, pathname) {
     const body = await parseBody(req);
     const r = saveProfile(body.accountId || body.id, body.token, body);
     res.writeHead(r.ok ? 200 : 401, { "Content-Type": "application/json" });
+    return res.end(JSON.stringify(r));
+  }
+
+  if (pathname === "/api/account/photo" && req.method === "POST") {
+    const body = await parseBody(req);
+    const r = saveProfilePhoto(body.accountId || body.id, body.token, body.imageDataUrl);
+    res.writeHead(r.ok ? 200 : 400, { "Content-Type": "application/json" });
+    return res.end(JSON.stringify(r));
+  }
+
+  if (pathname === "/api/account/photo/remove" && req.method === "POST") {
+    const body = await parseBody(req);
+    const r = removeProfilePhoto(body.accountId || body.id, body.token);
+    res.writeHead(r.ok ? 200 : 401, { "Content-Type": "application/json" });
+    return res.end(JSON.stringify(r));
+  }
+
+  if (pathname === "/api/account/photo" && req.method === "GET") {
+    const url = new URL(req.url, "http://localhost");
+    const playerId = normalizePlayerId(url.searchParams.get("playerId"));
+    const p = getPlayerByPlayerId(playerId);
+    const filePath = resolveProfilePhotoPath(p);
+    if (!filePath) {
+      res.writeHead(404, { "Content-Type": "application/json" });
+      return res.end(JSON.stringify({ error: "Foto não encontrada" }));
+    }
+    return sendPhotoFile(res, filePath);
+  }
+
+  if (pathname === "/api/account/search" && req.method === "GET") {
+    const url = new URL(req.url, "http://localhost");
+    const q = url.searchParams.get("q") || "";
+    const exclude = url.searchParams.get("exclude") || "";
+    const results = searchPlayers(q, exclude, 20);
+    res.writeHead(200, { "Content-Type": "application/json", "Cache-Control": "no-cache" });
+    return res.end(JSON.stringify({ ok: true, results }));
+  }
+
+  if (pathname === "/api/account/friends" && req.method === "GET") {
+    const url = new URL(req.url, "http://localhost");
+    const r = getFriends(url.searchParams.get("accountId"), url.searchParams.get("token"));
+    res.writeHead(r.ok ? 200 : 401, { "Content-Type": "application/json" });
+    return res.end(JSON.stringify(r));
+  }
+
+  if (pathname === "/api/account/friends/add" && req.method === "POST") {
+    const body = await parseBody(req);
+    const r = addFriend(body.accountId || body.id, body.token, body.playerId || body.targetPlayerId);
+    res.writeHead(r.ok ? 200 : 400, { "Content-Type": "application/json" });
+    return res.end(JSON.stringify(r));
+  }
+
+  if (pathname === "/api/account/friends/remove" && req.method === "POST") {
+    const body = await parseBody(req);
+    const r = removeFriend(body.accountId || body.id, body.token, body.playerId || body.targetPlayerId);
+    res.writeHead(r.ok ? 200 : 400, { "Content-Type": "application/json" });
     return res.end(JSON.stringify(r));
   }
 

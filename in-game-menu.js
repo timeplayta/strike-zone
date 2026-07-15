@@ -98,9 +98,16 @@ function setActiveTab(tab) {
     btn.classList.toggle("selected", btn.dataset.ingameTab === tab);
   });
   $("inGameTabHud")?.classList.toggle("hidden", tab !== "hud");
+  $("inGameTabVoice")?.classList.toggle("hidden", tab !== "voice");
   $("inGameTabLeave")?.classList.toggle("hidden", tab !== "leave");
   const title = $("inGameMenuTitle");
-  if (title) title.textContent = tab === "leave" ? "Sair da partida" : "Configurações";
+  if (title) {
+    title.textContent =
+      tab === "leave" ? "Sair da partida" : tab === "voice" ? "Conversas por voz" : "Configurações";
+  }
+  if (tab === "voice") {
+    window.dispatchEvent(new CustomEvent("strikezone-account-refresh"));
+  }
 }
 
 export function openInGameMenu() {

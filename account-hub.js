@@ -7,6 +7,7 @@ import {
   getCharacterSkin,
   saveAvatarChoice,
   getSavedSession,
+  getProfilePhotoUrl,
 } from "./player-account.js";
 import { normalizeLoadout, DEFAULT_LOADOUT } from "./character-loadout.js";
 import {
@@ -92,13 +93,21 @@ function refreshAccountPanel(name) {
     btn.classList.toggle("selected", btn.dataset.avatar === avatar);
   });
 
-  const loadout = normalizeLoadout(window.__playerLoadout || DEFAULT_LOADOUT);
+  const photoUrl = getProfilePhotoUrl() || account.profilePhoto;
+  const photoPick = document.querySelector('.avatar-pick[data-avatar="photo"]');
+  if (photoPick) {
+    photoPick.disabled = !photoUrl;
+    photoPick.classList.toggle("disabled", !photoUrl);
+  }
+
   if (viewersMounted) {
     updateViewerCharacterSkin("accountPlayerCanvas", characterSkin);
   }
   if (fabPortraitMounted) {
     updateViewerCharacterSkin("accountFabCanvas", characterSkin);
   }
+
+  window.dispatchEvent(new CustomEvent("strikezone-account-refresh"));
 }
 
 function openModal() {
@@ -124,6 +133,10 @@ function closeModal() {
 async function pickAvatar(id) {
   const name = getLoggedInName();
   if (!name) return;
+  if (id === "photo" && !getProfilePhotoUrl()) {
+    alert("Tire ou envie uma foto primeiro.");
+    return;
+  }
   await saveAvatarChoice(name, id);
   document.querySelectorAll(".avatar-pick").forEach((btn) => {
     btn.classList.toggle("selected", btn.dataset.avatar === id);
