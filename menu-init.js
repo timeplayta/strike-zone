@@ -259,7 +259,7 @@
         return;
       }
       try {
-        await import("./table-games.js?v=1");
+        await import("./table-games.js?v=2");
         if (typeof window.openTableGames === "function") {
           window.openTableGames(map);
           return;
@@ -277,7 +277,7 @@
     const st = $("loadStatus");
     if (st) st.textContent = "Carregando... aguarde";
     try {
-      await import("./game.js?v=95");
+      await import("./game.js?v=98");
       if (typeof window.startStrikeZone === "function") {
         window.__strikeZoneReady = true;
         $("loadError")?.classList.add("hidden");

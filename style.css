@@ -304,7 +304,7 @@ body.boot-active #welcomeScreen {
   display: flex;
 }
 
-/* Menu: cabe na tela sem rolagem longa */
+/* Menu: cabe na tela; fim/morte podem rolar no celular */
 #menu.screen.active,
 #endScreen.screen.active,
 #deathScreen.screen.active {
@@ -316,6 +316,17 @@ body.boot-active #welcomeScreen {
   overscroll-behavior: none;
   touch-action: manipulation;
   padding: 0.5rem 0.75rem 0.75rem;
+}
+
+#endScreen.screen.active,
+#deathScreen.screen.active {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  max-height: 100dvh;
+  height: 100%;
+  padding-bottom: max(1.25rem, env(safe-area-inset-bottom, 0px));
+  touch-action: pan-y;
 }
 
 #menu.screen.active::-webkit-scrollbar,
@@ -1889,9 +1900,10 @@ body.mode-mobile .killfeed {
 
 @media (max-width: 640px) {
   #menu.screen.active,
-  #endScreen.screen.active {
+  #endScreen.screen.active,
+  #deathScreen.screen.active {
     overflow-y: auto;
-    padding: 0.5rem 0.5rem 1rem;
+    padding: 0.5rem 0.5rem 1.25rem;
   }
 
   .menu-card {
@@ -1917,6 +1929,63 @@ body.mode-mobile .killfeed {
   body.mode-desktop .npc-select .npc-btn {
     flex: 1 1 auto;
     min-width: 0;
+  }
+}
+
+/* Mobile / landscape baixo: tela de abates e morte usáveis */
+body.mode-mobile #endScreen.screen.active,
+body.mode-mobile #deathScreen.screen.active {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  justify-content: flex-start;
+  padding: 0.75rem 0.65rem max(1.5rem, env(safe-area-inset-bottom, 0px));
+}
+
+body.mode-mobile .end-card,
+body.mode-mobile .death-card {
+  width: min(96vw, 520px);
+  max-width: 96vw;
+  max-height: none;
+  margin: 0.35rem auto 1rem;
+  padding: 1.15rem 1rem 1.35rem;
+}
+
+body.mode-mobile .end-badge {
+  font-size: 2.75rem;
+}
+
+body.mode-mobile .end-stats-grid {
+  gap: 0.5rem;
+}
+
+body.mode-mobile #endScreen .btn-primary,
+body.mode-mobile #endScreen .btn-secondary,
+body.mode-mobile #deathScreen .btn-primary,
+body.mode-mobile #deathScreen .btn-secondary {
+  width: 100%;
+  min-height: 48px;
+  font-size: 1rem;
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+}
+
+body.mode-mobile #endScreen .btn-secondary,
+body.mode-mobile #deathScreen .btn-secondary {
+  margin-top: 0.35rem;
+}
+
+@media (max-height: 520px) {
+  #endScreen.screen.active,
+  #deathScreen.screen.active {
+    overflow-y: auto;
+    justify-content: flex-start;
+  }
+
+  .end-card,
+  .death-card {
+    max-height: none;
+    margin-bottom: 1rem;
   }
 }
 
@@ -2335,10 +2404,21 @@ body.mode-mobile .flashlight-hud {
 #deathScreen.screen.active {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   padding: 1.5rem;
   z-index: 350;
   pointer-events: auto;
+  overflow-y: auto;
+}
+
+.end-card {
+  text-align: center;
+  max-width: 440px;
+  width: 100%;
+  max-height: min(92dvh, 680px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  animation: cinematicFadeIn 0.5s ease;
 }
 
 .death-card {
@@ -2346,6 +2426,10 @@ body.mode-mobile .flashlight-hud {
   border-color: rgba(200, 60, 60, 0.45);
   background: linear-gradient(160deg, #2a1820 0%, #141018 100%);
   max-width: 400px;
+  width: 100%;
+  max-height: min(92dvh, 640px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .death-icon {
@@ -2358,13 +2442,6 @@ body.mode-mobile .flashlight-hud {
   flex-direction: column;
   gap: 0.65rem;
   margin-top: 1.25rem;
-}
-
-/* Tela final vitória / derrota */
-.end-card {
-  text-align: center;
-  max-width: 440px;
-  animation: cinematicFadeIn 0.5s ease;
 }
 
 .end-card.end-win {
@@ -5442,6 +5519,19 @@ body.tg-open {
   background: #3a2414;
 }
 
+/* Xadrez: tabuleiro mais vivo (verde / creme) */
+.tg-chess-board {
+  border: 12px solid #3d2918;
+  border-radius: 10px;
+  background:
+    radial-gradient(circle at 30% 20%, rgba(255, 220, 140, 0.18), transparent 45%),
+    linear-gradient(145deg, #4a3220, #2a1a10);
+  box-shadow:
+    0 16px 48px rgba(0, 0, 0, 0.6),
+    inset 0 0 0 3px #c9a227,
+    inset 0 0 0 6px #3d2918;
+}
+
 .tg-sq {
   position: relative;
   border: none;
@@ -5470,6 +5560,14 @@ body.tg-open {
   background: #5a3a22;
 }
 
+.tg-chess-board .tg-sq.light {
+  background: linear-gradient(145deg, #f3e2b8 0%, #e4c988 100%);
+}
+
+.tg-chess-board .tg-sq.dark {
+  background: linear-gradient(145deg, #4f8f5a 0%, #2f6a40 55%, #245234 100%);
+}
+
 .tg-dama-board .tg-sq.light {
   background: #c8b898;
 }
@@ -5484,6 +5582,16 @@ body.tg-open {
   z-index: 1;
 }
 
+.tg-chess-board .tg-sq.selected {
+  outline-color: #ffe566;
+  box-shadow: inset 0 0 0 999px rgba(255, 220, 60, 0.28);
+}
+
+.tg-chess-board .tg-sq.last-from,
+.tg-chess-board .tg-sq.last-to {
+  box-shadow: inset 0 0 0 999px rgba(255, 200, 80, 0.22);
+}
+
 .tg-sq.move::after,
 .tg-sq.capture::after {
   content: "";
@@ -5495,11 +5603,21 @@ body.tg-open {
   pointer-events: none;
 }
 
+.tg-chess-board .tg-sq.move::after {
+  background: rgba(30, 90, 220, 0.55);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.35);
+}
+
 .tg-sq.capture::after {
   width: 72%;
   height: 72%;
   background: transparent;
   border: 3px solid rgba(220, 60, 50, 0.7);
+}
+
+.tg-chess-board .tg-sq.capture::after {
+  border-color: rgba(255, 70, 50, 0.9);
+  box-shadow: inset 0 0 0 999px rgba(255, 60, 40, 0.12);
 }
 
 .tg-sq.piece-w {
@@ -5510,6 +5628,75 @@ body.tg-open {
 .tg-sq.piece-b {
   color: #1a1210;
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.tg-chess-piece {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 86%;
+  height: 86%;
+  pointer-events: none;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.35));
+  z-index: 1;
+}
+
+.tg-chess-piece svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.tg-chess-badge {
+  position: absolute;
+  left: 2%;
+  top: 2%;
+  min-width: 1.05em;
+  padding: 0.08em 0.22em;
+  border-radius: 0.3em;
+  font-size: clamp(0.55rem, 1.8vw, 0.72rem);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: 0.02em;
+  background: rgba(20, 12, 6, 0.72);
+  color: #ffe9a8;
+  border: 1px solid rgba(255, 210, 100, 0.45);
+}
+
+.tg-chess-piece.piece-w .tg-chess-badge {
+  background: rgba(255, 248, 230, 0.92);
+  color: #5a3a10;
+  border-color: rgba(90, 60, 20, 0.35);
+}
+
+.tg-coord {
+  position: absolute;
+  font-size: clamp(0.45rem, 1.4vw, 0.62rem);
+  font-weight: 700;
+  line-height: 1;
+  pointer-events: none;
+  opacity: 0.75;
+  z-index: 2;
+}
+
+.tg-coord.file {
+  right: 3px;
+  bottom: 2px;
+}
+
+.tg-coord.rank {
+  left: 3px;
+  top: 2px;
+}
+
+.tg-chess-board .tg-sq.light .tg-coord {
+  color: #3d6b45;
+}
+
+.tg-chess-board .tg-sq.dark .tg-coord {
+  color: #efe0b0;
 }
 
 .tg-disc {
