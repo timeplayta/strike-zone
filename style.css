@@ -5723,6 +5723,19 @@ body.tg-open {
   background: rgba(40, 28, 14, 0.95);
 }
 
+.tg-action-mic.tg-mic-live,
+.tg-action-mic.active {
+  border-color: rgba(80, 200, 120, 0.75);
+  color: #9eebc0;
+  background: rgba(16, 40, 28, 0.95);
+  animation: tg-mic-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes tg-mic-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(80, 200, 120, 0.35); }
+  50% { box-shadow: 0 0 0 6px rgba(80, 200, 120, 0); }
+}
+
 .tg-action-resign {
   color: #ffb0a0;
   border-color: rgba(220, 90, 70, 0.45);
@@ -5784,6 +5797,28 @@ body.tg-open {
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: #c9a227;
+}
+
+.tg-voice-status {
+  flex: 1;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: #9eebc0;
+  text-align: right;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tg-voice-hint {
+  margin: 0;
+  font-size: 0.68rem;
+  line-height: 1.3;
+  color: rgba(200, 210, 220, 0.62);
+  font-weight: 500;
 }
 
 .tg-chat-close {

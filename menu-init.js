@@ -259,7 +259,7 @@
         return;
       }
       try {
-        await import("./table-games.js?v=4");
+        await import("./table-games.js?v=6");
         if (typeof window.openTableGames === "function") {
           window.openTableGames(map);
           return;

@@ -1,6 +1,8 @@
 /**
- * Chrome da partida — timer, desistir/empate, chat recolhível (canto da engrenagem)
+ * Chrome da partida — timer, desistir/empate, chat + voz com o bot
  */
+
+import { isSessionAdult } from "./player-account.js";
 
 export const FIRST_MOVE_LIMIT_MS = 60_000;
 export const MOVE_LIMIT_MS = 180_000;
@@ -14,6 +16,10 @@ const BOT_CHAT_REPLIES = [
   "gg se continuar assim.",
   "Calma, ainda tem jogo.",
   "Mandou bem.",
+  "Tô ouvindo. Joga com calma.",
+  "Pode falar — eu respondo por aqui.",
+  "Boa conversa. Agora é minha vez de pensar.",
+  "Heh, gostei dessa.",
 ];
 
 function formatMs(ms) {
@@ -21,6 +27,55 @@ function formatMs(ms) {
   const m = Math.floor(s / 60);
   const r = s % 60;
   return `${m}:${String(r).padStart(2, "0")}`;
+}
+
+function pickBotReply(playerText = "") {
+  const t = playerText.toLowerCase();
+  if (/oi|olá|ola|e a[ií]|fala|hey|hello/.test(t)) {
+    return "E aí! Bora jogar — pode falar no mic ou escrever.";
+  }
+  if (/obrigad|valeu|thanks/.test(t)) return "Por nada! Foco no tabuleiro.";
+  if (/ganhei|ganhar|win|gg/.test(t)) return "Ainda não acabou… pressão!";
+  if (/perdi|lose|aff|nossa/.test(t)) return "Calma, ainda tem jogo.";
+  if (/ajuda|dica|help/.test(t)) return "Dica de bot: respira e olha o centro do tabuleiro.";
+  if (/burro|lixo|idiota|ot[aá]rio|merda|porra/.test(t)) {
+    return "Ei, respeito na mesa. Joga limpo.";
+  }
+  if (/voz|mic|microfone|ouvindo/.test(t)) {
+    return "Tô no modo voz+texto. Se a fala falhar, eu escrevo aqui.";
+  }
+  return BOT_CHAT_REPLIES[Math.floor(Math.random() * BOT_CHAT_REPLIES.length)];
+}
+
+function getSpeechRecognition() {
+  return window.SpeechRecognition || window.webkitSpeechRecognition || null;
+}
+
+function speakBotLine(text) {
+  try {
+    if (typeof speechSynthesis === "undefined") return false;
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = "pt-BR";
+    u.rate = 1.02;
+    u.pitch = 1.05;
+    u.volume = 0.92;
+    const voices = speechSynthesis.getVoices?.() || [];
+    const pt = voices.find((v) => /pt(-|_)?BR/i.test(v.lang)) || voices.find((v) => /^pt/i.test(v.lang));
+    if (pt) u.voice = pt;
+    speechSynthesis.speak(u);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function stopBotSpeech() {
+  try {
+    speechSynthesis?.cancel?.();
+  } catch {
+    /* ignore */
+  }
 }
 
 /**
@@ -36,6 +91,10 @@ export function mountMatchChrome(matchEl, handlers = {}) {
   let drawPending = false;
   let chatOpen = false;
   let unread = 0;
+  let micOn = false;
+  let micStream = null;
+  let recognition = null;
+  let voiceSupported = !!getSpeechRecognition();
 
   const chrome = document.createElement("div");
   chrome.className = "tg-match-chrome";
@@ -48,6 +107,9 @@ export function mountMatchChrome(matchEl, handlers = {}) {
       <div class="tg-match-actions">
         <button type="button" class="tg-match-action tg-action-resign" data-resign title="Desistir">🏳 Desistir</button>
         <button type="button" class="tg-match-action tg-action-draw" data-draw title="Pedir empate">🤝 Empate</button>
+        <button type="button" class="tg-match-action tg-action-mic" data-mic-toggle title="Falar com o bot (microfone)" aria-pressed="false">
+          🎙 Mic
+        </button>
         <button type="button" class="tg-match-action tg-action-chat" data-chat-toggle title="Abrir/fechar chat" aria-expanded="false">
           💬 Chat
           <span class="tg-chat-badge hidden" data-chat-badge aria-hidden="true"></span>
@@ -57,9 +119,11 @@ export function mountMatchChrome(matchEl, handlers = {}) {
     <div class="tg-chat hidden" data-chat>
       <div class="tg-chat-head">
         <span>Chat da mesa</span>
+        <span class="tg-voice-status" data-voice-status></span>
         <button type="button" class="tg-chat-close" data-chat-close title="Fechar chat" aria-label="Fechar chat">✕</button>
       </div>
       <div class="tg-chat-log" data-chat-log aria-live="polite"></div>
+      <p class="tg-voice-hint" data-voice-hint>Liga o Mic pra falar com o bot. Se a voz falhar, escreve aqui.</p>
       <form class="tg-chat-form" data-chat-form>
         <input type="text" class="tg-chat-input" data-chat-input maxlength="120" placeholder="Escreva…" autocomplete="off" />
         <button type="submit" class="tg-btn tg-chat-send">Enviar</button>
@@ -73,6 +137,7 @@ export function mountMatchChrome(matchEl, handlers = {}) {
   const clockVal = chrome.querySelector("[data-clock-val]");
   const resignBtn = chrome.querySelector("[data-resign]");
   const drawBtn = chrome.querySelector("[data-draw]");
+  const micBtn = chrome.querySelector("[data-mic-toggle]");
   const chatToggle = chrome.querySelector("[data-chat-toggle]");
   const chatBadge = chrome.querySelector("[data-chat-badge]");
   const chat = chrome.querySelector("[data-chat]");
@@ -80,6 +145,181 @@ export function mountMatchChrome(matchEl, handlers = {}) {
   const form = chrome.querySelector("[data-chat-form]");
   const input = chrome.querySelector("[data-chat-input]");
   const chatClose = chrome.querySelector("[data-chat-close]");
+  const voiceStatus = chrome.querySelector("[data-voice-status]");
+  const voiceHint = chrome.querySelector("[data-voice-hint]");
+
+  function setVoiceStatus(text) {
+    if (voiceStatus) voiceStatus.textContent = text || "";
+  }
+
+  function updateMicUi() {
+    micBtn.classList.toggle("active", micOn);
+    micBtn.classList.toggle("tg-mic-live", micOn);
+    micBtn.setAttribute("aria-pressed", micOn ? "true" : "false");
+    micBtn.textContent = micOn ? "🎙 Ouvindo…" : "🎙 Mic";
+    if (!voiceSupported) {
+      setVoiceStatus("Voz do jogador: só texto neste navegador");
+    } else if (micOn) {
+      setVoiceStatus("Mic ligado — fala com o bot");
+    } else {
+      setVoiceStatus("");
+    }
+  }
+
+  function stopMicTracks() {
+    if (micStream) {
+      micStream.getTracks().forEach((t) => t.stop());
+      micStream = null;
+    }
+  }
+
+  function stopRecognition() {
+    if (!recognition) return;
+    try {
+      recognition.onresult = null;
+      recognition.onerror = null;
+      recognition.onend = null;
+      recognition.stop();
+    } catch {
+      /* ignore */
+    }
+    recognition = null;
+  }
+
+  function stopVoice() {
+    micOn = false;
+    stopRecognition();
+    stopMicTracks();
+    updateMicUi();
+  }
+
+  function botRespond(playerText) {
+    const reply = pickBotReply(playerText);
+    const spoke = speakBotLine(reply);
+    pushChat("Bot", spoke ? reply : `${reply} (só texto — voz indisponível)`, "bot");
+  }
+
+  function handlePlayerUtterance(text) {
+    const clean = (text || "").trim();
+    if (!clean || destroyed) return;
+    pushChat("Você", clean, "player");
+    setTimeout(() => {
+      if (!destroyed) botRespond(clean);
+    }, 400 + Math.random() * 500);
+  }
+
+  async function startVoice() {
+    if (destroyed || micOn) return;
+
+    if (!isSessionAdult()) {
+      alert("Chat de voz na mesa é só pra maiores de 18 anos.");
+      return;
+    }
+
+    if (!navigator.mediaDevices?.getUserMedia) {
+      pushChat("Mesa", "Microfone indisponível neste dispositivo. Usa o chat de texto.", "system");
+      setChatOpen(true);
+      return;
+    }
+
+    try {
+      micStream = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: true, noiseSuppression: true },
+        video: false,
+      });
+    } catch {
+      pushChat("Mesa", "Permissão de microfone negada. Pode escrever no chat.", "system");
+      setChatOpen(true);
+      return;
+    }
+
+    const SR = getSpeechRecognition();
+    if (!SR) {
+      micOn = true;
+      voiceSupported = false;
+      updateMicUi();
+      setChatOpen(true);
+      pushChat(
+        "Mesa",
+        "Mic ligado, mas este navegador não transcreve fala. O áudio fica local — escreve pro bot responder. Chrome/Edge costumam funcionar melhor.",
+        "system"
+      );
+      return;
+    }
+
+    recognition = new SR();
+    recognition.lang = "pt-BR";
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.maxAlternatives = 1;
+
+    let interimBuf = "";
+
+    recognition.onresult = (event) => {
+      let finalChunk = "";
+      interimBuf = "";
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const res = event.results[i];
+        const say = res[0]?.transcript || "";
+        if (res.isFinal) finalChunk += say;
+        else interimBuf += say;
+      }
+      if (interimBuf) setVoiceStatus(`Ouvindo: ${interimBuf.trim().slice(0, 42)}…`);
+      if (finalChunk.trim()) {
+        setVoiceStatus("Mic ligado — fala com o bot");
+        handlePlayerUtterance(finalChunk);
+      }
+    };
+
+    recognition.onerror = (ev) => {
+      if (destroyed || !micOn) return;
+      const err = ev?.error || "";
+      if (err === "not-allowed") {
+        pushChat("Mesa", "Microfone bloqueado. Usa o texto.", "system");
+        stopVoice();
+        setChatOpen(true);
+        return;
+      }
+      if (err === "no-speech" || err === "aborted") return;
+      setVoiceStatus("Voz falhou — pode escrever");
+    };
+
+    recognition.onend = () => {
+      if (destroyed || !micOn) return;
+      // Reinicia enquanto o mic estiver ligado
+      try {
+        recognition.start();
+      } catch {
+        /* ignore */
+      }
+    };
+
+    try {
+      recognition.start();
+    } catch {
+      pushChat("Mesa", "Não deu pra iniciar reconhecimento de voz. Usa o texto.", "system");
+      stopVoice();
+      setChatOpen(true);
+      return;
+    }
+
+    micOn = true;
+    voiceSupported = true;
+    updateMicUi();
+    setChatOpen(true);
+    pushChat("Mesa", "Mic ligado. Fala com o bot — ele responde em voz e texto.", "system", {
+      countUnread: false,
+    });
+  }
+
+  async function toggleMic() {
+    if (micOn) {
+      stopVoice();
+      pushChat("Mesa", "Mic desligado.", "system", { countUnread: false });
+      return;
+    }
+    await startVoice();
+  }
 
   function updateBadge() {
     const show = !chatOpen && unread > 0;
@@ -97,7 +337,7 @@ export function mountMatchChrome(matchEl, handlers = {}) {
       unread = 0;
       updateBadge();
       logEl.scrollTop = logEl.scrollHeight;
-      input.focus();
+      if (!micOn) input.focus();
     }
   }
 
@@ -187,6 +427,10 @@ export function mountMatchChrome(matchEl, handlers = {}) {
     handlers.onOfferDraw?.();
   });
 
+  micBtn.addEventListener("click", () => {
+    toggleMic();
+  });
+
   chatToggle.addEventListener("click", () => setChatOpen(!chatOpen));
   chatClose.addEventListener("click", () => setChatOpen(false));
 
@@ -195,18 +439,27 @@ export function mountMatchChrome(matchEl, handlers = {}) {
     const text = (input.value || "").trim();
     if (!text) return;
     input.value = "";
-    pushChat("Você", text, "player");
-    const reply = BOT_CHAT_REPLIES[Math.floor(Math.random() * BOT_CHAT_REPLIES.length)];
-    setTimeout(() => {
-      if (!destroyed) pushChat("Bot", reply, "bot");
-    }, 450 + Math.random() * 700);
+    handlePlayerUtterance(text);
   });
 
-  // aviso inicial sem bolinha vermelha
-  pushChat("Mesa", "Partida iniciada. 1º lance: 1 min · demais: 3 min.", "system", {
+  // Preload voices (Chrome)
+  try {
+    speechSynthesis?.getVoices?.();
+    speechSynthesis?.addEventListener?.("voiceschanged", () => speechSynthesis.getVoices());
+  } catch {
+    /* ignore */
+  }
+
+  if (!voiceSupported) {
+    voiceHint.textContent =
+      "Este navegador pode não transcrever voz. O Mic ainda pede permissão; use o texto se precisar.";
+  }
+
+  pushChat("Mesa", "Partida iniciada. 1º lance: 1 min · demais: 3 min. Mic = falar com o bot.", "system", {
     countUnread: false,
   });
   setChatOpen(false);
+  updateMicUi();
 
   return {
     startPlayerClock,
@@ -227,6 +480,8 @@ export function mountMatchChrome(matchEl, handlers = {}) {
     },
     destroy() {
       destroyed = true;
+      stopVoice();
+      stopBotSpeech();
       stopClock();
       chrome.remove();
     },
