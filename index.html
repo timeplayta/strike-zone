@@ -40,7 +40,7 @@
       background: rgba(0,0,0,.25); color: rgba(255,255,255,.75); cursor: pointer; }
     .welcome-tab.active { background: rgba(232,192,96,.18); border-color: rgba(232,192,96,.45); color: #e8c060; }
   </style>
-  <link rel="stylesheet" href="/style.css?v=86" />
+  <link rel="stylesheet" href="/style.css?v=87" />
 
   <script>
 
@@ -645,12 +645,12 @@
   <div id="inGameMenu" class="in-game-menu hidden" aria-hidden="true" role="dialog" aria-label="Opções da partida">
     <div class="in-game-menu-layout">
       <nav class="in-game-menu-nav" aria-label="Seções">
-        <button type="button" class="in-game-menu-nav-btn selected" data-ingame-tab="hud">HUD</button>
+        <button type="button" class="in-game-menu-nav-btn selected" data-ingame-tab="hud">Configurações</button>
         <button type="button" class="in-game-menu-nav-btn in-game-menu-nav-leave" data-ingame-tab="leave">Sair da partida</button>
       </nav>
       <div class="in-game-menu-main">
         <header class="in-game-menu-head">
-          <h2 id="inGameMenuTitle" class="in-game-menu-title">HUD</h2>
+          <h2 id="inGameMenuTitle" class="in-game-menu-title">Configurações</h2>
           <button type="button" id="inGameMenuCloseBtn" class="shop-close" aria-label="Fechar">✕</button>
         </header>
         <div id="inGameTabHud" class="in-game-tab-panel">
@@ -868,7 +868,7 @@
     </div>
   </div>
 
-  <script type="module" src="in-game-menu.js?v=1"></script>
+  <script type="module" src="in-game-menu.js?v=2"></script>
   <script type="module" src="game-loader.js?v=103"></script>
   <script type="module">
     import { bindShopUI } from "./player-account.js?v=78";

@@ -5062,7 +5062,7 @@ body.jumpscare-active {
   position: fixed;
   top: max(0.65rem, env(safe-area-inset-top));
   left: max(0.65rem, env(safe-area-inset-left));
-  z-index: 56;
+  z-index: 360;
   width: 42px;
   height: 42px;
   border-radius: 11px;
@@ -5075,6 +5075,11 @@ body.jumpscare-active {
   pointer-events: auto;
   box-shadow: 0 4px 18px rgba(0, 0, 0, 0.45);
   backdrop-filter: blur(6px);
+}
+
+body.death-screen-active .in-game-menu-btn,
+body.round-weapon-pick-active .in-game-menu-btn {
+  z-index: 360;
 }
 
 .in-game-menu-btn:hover {

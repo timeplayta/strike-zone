@@ -80,8 +80,6 @@ function resetHudSettings() {
 
 function canShowGear() {
   if (!document.body.classList.contains("game-active")) return false;
-  if (document.body.classList.contains("death-screen-active")) return false;
-  if (document.body.classList.contains("round-weapon-pick-active")) return false;
   const jumpscare = $("jumpscareOverlay");
   if (jumpscare && !jumpscare.classList.contains("hidden")) return false;
   return true;
@@ -102,7 +100,7 @@ function setActiveTab(tab) {
   $("inGameTabHud")?.classList.toggle("hidden", tab !== "hud");
   $("inGameTabLeave")?.classList.toggle("hidden", tab !== "leave");
   const title = $("inGameMenuTitle");
-  if (title) title.textContent = tab === "leave" ? "Sair da partida" : "HUD";
+  if (title) title.textContent = tab === "leave" ? "Sair da partida" : "Configurações";
 }
 
 export function openInGameMenu() {
@@ -186,7 +184,13 @@ function initInGameMenu() {
 
   const observer = new MutationObserver(syncGearButton);
   observer.observe(document.body, { attributes: true, attributeFilter: ["class"] });
+  window.addEventListener("strikezone-match-state", syncGearButton);
   syncGearButton();
+}
+
+export function notifyMatchStateChange() {
+  syncGearButton();
+  window.dispatchEvent(new CustomEvent("strikezone-match-state"));
 }
 
 window.openInGameMenu = openInGameMenu;

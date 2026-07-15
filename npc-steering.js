@@ -11,7 +11,7 @@ export function pathClear(x0, z0, x1, z1, collidesFn, who = "npc", steps = 10) {
 }
 
 /** Escolhe direção livre mais alinhada ao alvo (steering) */
-export function steerDirection(ex, ez, tx, tz, collidesFn, who = "npc", radius = 0.42) {
+export function steerDirection(ex, ez, tx, tz, collidesFn, who = "npc", radius = 0.42, probeCount = 20) {
   const dx = tx - ex;
   const dz = tz - ez;
   const dist = Math.hypot(dx, dz) || 1;
@@ -19,9 +19,10 @@ export function steerDirection(ex, ez, tx, tz, collidesFn, who = "npc", radius =
 
   let bestAngle = desired;
   let bestScore = -999;
+  const n = Math.max(8, probeCount | 0);
 
-  for (let i = 0; i < 20; i++) {
-    const ang = (i / 20) * Math.PI * 2;
+  for (let i = 0; i < n; i++) {
+    const ang = (i / n) * Math.PI * 2;
     const probe = 1.4;
     const nx = ex + Math.sin(ang) * probe;
     const nz = ez + Math.cos(ang) * probe;
@@ -125,7 +126,8 @@ export function applyNpcSteering(entity, tx, tz, maxSpeed, dt, collidesFn, who =
 
   const ex = mesh.position.x;
   const ez = mesh.position.z;
-  const dir = steerDirection(ex, ez, tx, tz, collidesFn, who);
+  const mobile = typeof document !== "undefined" && document.body.classList.contains("mode-mobile");
+  const dir = steerDirection(ex, ez, tx, tz, collidesFn, who, 0.42, mobile ? 8 : 20);
   const r = 0.42;
   const accel = Math.min(1, dt * 16);
 

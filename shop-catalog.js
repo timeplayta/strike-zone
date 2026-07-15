@@ -104,6 +104,7 @@ export const SHOP_OUTFITS = OUTFIT_SETS.map((o) => ({
 }));
 
 const LOADOUT_SLOT_PRICE = {
+  hair: 28,
   helmet: 35,
   shirt: 40,
   pants: 38,

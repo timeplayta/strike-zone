@@ -60,7 +60,11 @@ export function buildWorldDecor(scene, mapData, wallMeshes = []) {
     scene.add(createTableSet(t.x, t.z, t.rot, mapData.woodColor));
   }
 
-  buildMapProps(scene, mapData.props, mapData.propTint);
+  const mobile = typeof document !== "undefined" && document.body.classList.contains("mode-mobile");
+  const props = (mapData.props || [])
+    .filter((p) => !(mobile && p.type === "cold_building"))
+    .map((p) => (mobile && p.type === "cold_building" ? { ...p, floors: 2 } : p));
+  buildMapProps(scene, props, mapData.propTint);
 
   // quadros coloridos nas paredes
   const paintings = [

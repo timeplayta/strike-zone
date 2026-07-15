@@ -84,10 +84,10 @@ function addAmongLoadout(group, loadout, bodyMat) {
     return;
   }
   if (helmet.style) {
-    const shell = new THREE.Mesh(new THREE.SphereGeometry(0.34, 20, 14, 0, Math.PI * 2, 0, Math.PI * 0.62), helmetMat);
-    shell.position.set(0, 1.42, 0.02);
-    const rim = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 0.05, 20), helmetMat);
-    rim.position.set(0, 1.29, 0.02);
+    const shell = new THREE.Mesh(new THREE.SphereGeometry(0.3, 20, 14, 0, Math.PI * 2, 0, Math.PI * 0.62), helmetMat);
+    shell.position.set(0, 1.38, 0.02);
+    const rim = new THREE.Mesh(new THREE.CylinderGeometry(0.31, 0.31, 0.045, 20), helmetMat);
+    rim.position.set(0, 1.26, 0.02);
     group.add(shell, rim);
   }
 }

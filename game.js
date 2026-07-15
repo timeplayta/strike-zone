@@ -85,6 +85,10 @@ import {
   ENABLE_ANTIALIAS,
   ENEMY_LABEL_FRAME_SKIP,
   BLOOD_SPRAY_MUL,
+  MOBILE_MAX_BOTS,
+  MOBILE_LOS_FRAME_SKIP,
+  getRendererPowerPreference,
+  shouldUseHeavyMapTextures,
 } from "./perf-config.js";
 import { WEAPONS, calcWeaponDamage, getPrimaryWeapon, refillWeaponToMax } from "./weapons-data.js";
 import { ownsWeapon, getAccountForUnlocks, getSecondaryWeaponId, isPremiumWeapon } from "./weapon-unlocks.js";
@@ -1318,6 +1322,9 @@ function startGame(config = {}) {
       const requestedBots = parseInt(document.getElementById("botCount")?.value || "10", 10);
       const maxBots = mapData.maxBots || 20;
       botCount = mapData.defaultBotCount || Math.min(maxBots, Math.max(1, requestedBots));
+      if (isMobileMode() && !mapData.openWorld && mapData.mode !== "labyrinth") {
+        botCount = Math.min(botCount, MOBILE_MAX_BOTS);
+      }
       gameMode = document.getElementById("gameMode").value;
       if (mapData.openWorld) {
         wantHelpers = false;
@@ -1370,6 +1377,7 @@ function startGame(config = {}) {
     hud.classList.remove("hidden");
     applyPlayModeUI();
     document.body.classList.add("game-active");
+    notifyInGameMenuState();
 
     initThree();
     if (camera && mapData.openWorld) {
@@ -1530,8 +1538,8 @@ function applyMapAtmosphere() {
     scene.background = new THREE.Color(mapData.sky).multiplyScalar(0.55);
     scene.fog = new THREE.Fog(
       new THREE.Color(mapData.fog).multiplyScalar(0.65).getHex(),
-      12,
-      48
+      isMobileMode() ? 8 : 12,
+      isMobileMode() ? 32 : 48
     );
   }
   if (adminHorrorFullLight && isDarkMap(mapData)) {
@@ -1677,7 +1685,7 @@ function initThree() {
   renderer = new THREE.WebGLRenderer({
     canvas,
     antialias: ENABLE_ANTIALIAS,
-    powerPreference: LOW_GRAPHICS ? "low-power" : "high-performance",
+    powerPreference: getRendererPowerPreference(isMobileMode()),
     alpha: false,
   });
   // Alguns drivers WebGL no Windows retornam null nos logs de shader; o Three.js tenta usar trim() e trava o render.
@@ -1917,7 +1925,9 @@ function buildMap() {
   exitZone = null;
   applyMapAtmosphere();
 
-  const { floorMat, wallMat, accentMat } = createMapMaterials(mapData, currentMapKey);
+  const { floorMat, wallMat, accentMat } = createMapMaterials(mapData, currentMapKey, {
+    lightTextures: !shouldUseHeavyMapTextures(isMobileMode(), currentMapKey),
+  });
   const floorW = mapData.floorW || 52 * mapData.scale;
   const floorH = mapData.floorH || 48 * mapData.scale;
 
@@ -3404,13 +3414,27 @@ function finishMatchFromDeath() {
   endMatch("t", { skipCinematic: true });
 }
 
-function leaveMatchFromMenu() {
-  if (matchOver) return;
+function notifyInGameMenuState() {
+  window.dispatchEvent(new CustomEvent("strikezone-match-state"));
+}
+
+function closeInGameMenuIfOpen() {
   window.__strikeInGameMenuOpen = false;
   document.body.classList.remove("in-game-menu-open", "show-cursor");
+  window.closeInGameMenu?.();
+}
 
-  if (adminSpectator || adminPreviewMode) {
+function leaveMatchFromMenu() {
+  if (matchOver) return;
+  closeInGameMenuIfOpen();
+
+  if (adminSpectator || adminPreviewMode || adminLiveSpectator) {
     adminExitToMenu();
+    return;
+  }
+
+  if (player.dead && deathScreen?.classList.contains("active")) {
+    finishMatchFromDeath();
     return;
   }
 
@@ -3838,15 +3862,37 @@ function updateHelpers(dt) {
   }
 }
 
+const _losOrigin = new THREE.Vector3();
+const _losTarget = new THREE.Vector3();
+const _losDir = new THREE.Vector3();
+const _losRay = new THREE.Raycaster();
+let losFrameCounter = 0;
+const losCache = new WeakMap();
+
 function hasLineOfSight(from, to) {
-  const origin = new THREE.Vector3(from.x, 1.4, from.z);
-  const target = new THREE.Vector3(to.x, 1.4, to.z);
-  const dir = new THREE.Vector3().subVectors(target, origin).normalize();
-  const ray = new THREE.Raycaster(origin, dir, 0, origin.distanceTo(target));
-  if (ray.intersectObjects(wallMeshCache, false).length > 0) return false;
-  // porta fechada bloqueia a visão para dentro/fora da sala do chefão
-  if (!doorOpen && doorHitMeshes.length && ray.intersectObjects(doorHitMeshes, false).length > 0) return false;
-  return true;
+  const mobile = typeof isMobileMode === "function" && isMobileMode();
+  if (mobile) {
+    losFrameCounter++;
+    const key = from;
+    const cached = losCache.get(key);
+    if (cached && losFrameCounter - cached.frame < MOBILE_LOS_FRAME_SKIP) {
+      return cached.value;
+    }
+  }
+  _losOrigin.set(from.x, 1.4, from.z);
+  _losTarget.set(to.x, 1.4, to.z);
+  _losDir.subVectors(_losTarget, _losOrigin).normalize();
+  const dist = _losOrigin.distanceTo(_losTarget);
+  _losRay.set(_losOrigin, _losDir);
+  _losRay.near = 0;
+  _losRay.far = dist;
+  let visible = true;
+  if (_losRay.intersectObjects(wallMeshCache, false).length > 0) visible = false;
+  else if (!doorOpen && doorHitMeshes.length && _losRay.intersectObjects(doorHitMeshes, false).length > 0) {
+    visible = false;
+  }
+  if (mobile) losCache.set(key, { frame: losFrameCounter, value: visible });
+  return visible;
 }
 
 function moveNpc(e, tx, tz, speed, dt) {
@@ -4265,8 +4311,10 @@ function endMatch(winner, opts = {}) {
 function showEndScreen(won) {
   inCinematic = false;
   hideCinematicUI(cinematicEl);
+  closeInGameMenuIfOpen();
   mobileControls?.hide();
   document.body.classList.remove("game-active");
+  notifyInGameMenuState();
   deathScreen?.classList.add("hidden");
   deathScreen?.classList.remove("active");
 
@@ -4629,6 +4677,7 @@ function onAdminWheel(e) {
 }
 
 function adminExitToMenu() {
+  closeInGameMenuIfOpen();
   adminSpectator = false;
   adminNoclip = false;
   adminCharPreviewFly = false;
@@ -4653,6 +4702,7 @@ function adminExitToMenu() {
   menu?.classList.remove("hidden");
   menu?.classList.add("active");
   document.body.classList.remove("game-active");
+  notifyInGameMenuState();
   updateAdminHud();
   if (typeof window.showAdminForAccount === "function") {
     import("./player-account.js").then((m) => {
@@ -4692,6 +4742,7 @@ function startCharacterPreviewSession(config) {
     deathScreen?.classList.add("hidden");
     hud?.classList.add("hidden");
     document.body.classList.add("game-active");
+    notifyInGameMenuState();
 
     initThree();
     applyMapAtmosphere();

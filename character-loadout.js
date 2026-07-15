@@ -1,8 +1,9 @@
 /** Catálogo de peças — estilos neon e tático */
 
-export const SLOT_ORDER = ["helmet", "shirt", "pants", "gloves", "shoes"];
+export const SLOT_ORDER = ["hair", "helmet", "shirt", "pants", "gloves", "shoes"];
 
 export const SLOT_META = {
+  hair: { label: "Cabelo", icon: "💇", step: 0 },
   helmet: { label: "Capacete", icon: "⛑", step: 1 },
   shirt: { label: "Camisa / Blusa", icon: "👕", step: 2 },
   pants: { label: "Calça", icon: "👖", step: 3 },
@@ -29,6 +30,17 @@ const PRESET = (id, name, color, style, theme, neon = false) => ({
 });
 
 export const SLOT_PRESETS = {
+  hair: [
+    PRESET("ff_hair_short", "Curto Castanho", 0x3a2414, "short", "starter"),
+    PRESET("ff_hair_fade", "Fade Preto", 0x141018, "fade", "starter"),
+    PRESET("ff_hair_spike", "Spike Escuro", 0x1a1008, "spike", "ff"),
+    PRESET("ff_hair_slick", "Slick Preto", 0x0e0c10, "slick", "ff"),
+    PRESET("ff_hair_curly", "Cacheado Marrom", 0x4a2a14, "curly", "ff"),
+    PRESET("a8_hair_neon", "Neon Cyan", 0x22e8ff, "spike", "a8", true),
+    PRESET("a8_hair_pink", "Neon Rosa", 0xff44aa, "slick", "a8", true),
+    PRESET("ff_hair_blonde", "Loiro Militar", 0xc8a858, "short", "ff"),
+    PRESET("ff_hair_red", "Ruivo Street", 0x8a2818, "fade", "starter"),
+  ],
   helmet: [
     PRESET("ff_helmet_blue", "Tático Azul", 0x2a4a7a, "helmet", "ff"),
     PRESET("ff_helmet_black", "Operador Preto", 0x1a1a22, "helmet", "ff"),
@@ -102,6 +114,7 @@ export const SLOT_PRESETS = {
 
 export const DEFAULT_LOADOUT = {
   skin: 0xc4956a,
+  hair: { presetId: "ff_hair_short", color: 0x3a2414, style: "short", neon: false },
   helmet: { presetId: "ff_helmet_blue", color: 0x2a4a7a, style: "helmet", neon: false },
   shirt: { presetId: "ff_ct_blue", color: 0x2266aa, style: "combat", neon: false },
   pants: { presetId: "ff_black_ops", color: 0x1a1a22, style: "cargo", neon: false },
@@ -194,6 +207,7 @@ export function normalizeLoadout(raw) {
 export function loadoutToBuildOpts(loadout) {
   const L = normalizeLoadout(loadout);
   const h = L.helmet;
+  const hair = L.hair || DEFAULT_LOADOUT.hair;
   const useHelmet = h.style === "helmet" || h.style === "tactical";
   const useCap = h.style === "cap";
   const useMask = h.style === "mask";
@@ -206,6 +220,9 @@ export function loadoutToBuildOpts(loadout) {
     gloves: L.gloves.color,
     shoes: L.shoes.color,
     skin: L.skin,
+    hairColor: hair.color,
+    hairStyle: hair.style || "short",
+    hairNeon: !!hair.neon,
     helmet: useHelmet,
     helmetColor: h.color,
     capColor: h.color,
@@ -217,6 +234,8 @@ export function loadoutToBuildOpts(loadout) {
       maskAccent: h.neon ? h.color : 0xcc2233,
       helmetFace: useHelmet,
       eyeColor: 0xaaccff,
+      hairColor: hair.color,
+      hairStyle: hair.style || "short",
     },
     shirtNeon: L.shirt.neon ? L.shirt.color : null,
     pantsNeon: L.pants.neon ? L.pants.color : null,

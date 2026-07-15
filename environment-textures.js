@@ -419,12 +419,13 @@ function proceduralMapMaterials(mapData, mapKey) {
   return { floorMat, wallMat, accentMat, floorMap, wallMap };
 }
 
-export function createMapMaterials(mapData, mapKey) {
+export function createMapMaterials(mapData, mapKey, opts = {}) {
   if (mapKey === "labyrinth") {
     const diamond = labyrinthDiamondCache ? labyrinthDiamondMaterials() : null;
     if (diamond) return diamond;
   }
-  if (mapKey === "dust" && dustBricksCache) {
+  // Mobile: Dust/Cold Storage usam procedural (sem PBR 1K) pra não travar
+  if (!opts.lightTextures && mapKey === "dust" && dustBricksCache) {
     const bricks = dustBricksMaterials();
     if (bricks) return bricks;
   }
