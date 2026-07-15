@@ -6270,6 +6270,123 @@ body.tutorial-active.game-active .tutorial-arrow {
   display: none !important;
 }
 
+.tutorial-error-link {
+  position: fixed;
+  left: max(12px, env(safe-area-inset-left));
+  bottom: max(12px, env(safe-area-inset-bottom));
+  z-index: 9615;
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: rgba(200, 210, 220, 0.55);
+  font-size: 0.78rem;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  padding: 6px 8px;
+  pointer-events: auto;
+}
+.tutorial-error-link:hover {
+  color: rgba(232, 192, 96, 0.9);
+}
+
+.tutorial-report-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 9700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  pointer-events: auto;
+}
+.tutorial-report-modal.hidden { display: none !important; }
+.tutorial-report-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+}
+.tutorial-report-panel {
+  position: relative;
+  width: min(420px, 96vw);
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 16px;
+  background: linear-gradient(165deg, #1e2a3a, #121820);
+  border: 1px solid rgba(232, 192, 96, 0.4);
+  border-radius: 14px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.55);
+}
+.tutorial-report-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.tutorial-report-head strong { flex: 1; font-size: 1rem; }
+.tutorial-report-sub {
+  margin: 0 0 12px;
+  font-size: 0.85rem;
+  color: rgba(220, 228, 236, 0.75);
+  line-height: 1.35;
+}
+.tutorial-report-label {
+  display: block;
+  margin: 10px 0 4px;
+  font-size: 0.8rem;
+  color: rgba(232, 192, 96, 0.85);
+}
+.tutorial-report-text {
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+  min-height: 88px;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(0, 0, 0, 0.35);
+  color: #e8eaef;
+  font: inherit;
+}
+.tutorial-report-file {
+  width: 100%;
+  font-size: 0.8rem;
+  color: #c8d0d8;
+}
+.tutorial-report-hint {
+  margin: 6px 0 0;
+  font-size: 0.78rem;
+  color: rgba(255, 160, 120, 0.9);
+}
+.tutorial-report-preview-wrap {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+}
+.tutorial-report-preview-wrap.hidden { display: none !important; }
+.tutorial-report-preview {
+  max-width: 100%;
+  max-height: 160px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+.tutorial-report-status {
+  min-height: 1.2em;
+  margin: 10px 0 0;
+  font-size: 0.82rem;
+  color: #c8d0d8;
+}
+.tutorial-report-status.ok { color: #7dcea0; }
+.tutorial-report-status.err { color: #f5a89a; }
+.tutorial-report-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
 @media (max-width: 720px) {
   .tutorial-chat {
     max-width: calc(100vw - 16px);
@@ -6281,6 +6398,10 @@ body.tutorial-active.game-active .tutorial-arrow {
     border-left-width: 11px;
     border-right-width: 11px;
     border-bottom-width: 16px;
+  }
+  .tutorial-error-link {
+    bottom: max(8px, env(safe-area-inset-bottom));
+    font-size: 0.72rem;
   }
 }
 

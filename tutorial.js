@@ -61,6 +61,10 @@ let matchStarted = false;
 let resizeObs = null;
 let rafHole = 0;
 let listenersBound = false;
+let uiWatchTimer = 0;
+let reportImageDataUrl = null;
+let reportBusy = false;
+let hooksInstalled = false;
 
 function $(id) {
   return document.getElementById(id);
@@ -96,6 +100,10 @@ function markDone() {
 
 function ensureRoot() {
   let root = $("tutorialRoot");
+  if (root && !$("tutorialReportModal")) {
+    root.remove();
+    root = null;
+  }
   if (root) return root;
 
   root = document.createElement("div");
@@ -115,7 +123,32 @@ function ensureRoot() {
       </div>
       <button type="button" id="tutorialSkipBtn" class="tutorial-skip" title="Pular tutorial">Pular</button>
     </div>
+    <button type="button" id="tutorialErrorLink" class="tutorial-error-link">algum erro?</button>
     <div id="tutorialMatchTip" class="tutorial-match-tip hidden" aria-live="polite"></div>
+    <div id="tutorialReportModal" class="tutorial-report-modal hidden" aria-hidden="true">
+      <div class="tutorial-report-backdrop" data-report-close="1"></div>
+      <div class="tutorial-report-panel" role="dialog" aria-labelledby="tutorialReportTitle">
+        <div class="tutorial-report-head">
+          <strong id="tutorialReportTitle">Reportar erro no tutorial</strong>
+          <button type="button" class="shop-close" data-report-close="1" aria-label="Fechar">✕</button>
+        </div>
+        <p class="tutorial-report-sub">Conta o que travou ou ficou estranho. Dá pra anexar um print (sem QR code).</p>
+        <label class="tutorial-report-label" for="tutorialReportText">O que aconteceu?</label>
+        <textarea id="tutorialReportText" class="tutorial-report-text" rows="4" maxlength="1200" placeholder="Ex: abri os mapas e o tutorial não avançou..."></textarea>
+        <label class="tutorial-report-label" for="tutorialReportImage">Print do erro (opcional)</label>
+        <input type="file" id="tutorialReportImage" class="tutorial-report-file" accept="image/png,image/jpeg,image/webp,image/gif" />
+        <p id="tutorialReportImgHint" class="tutorial-report-hint"></p>
+        <div id="tutorialReportPreviewWrap" class="tutorial-report-preview-wrap hidden">
+          <img id="tutorialReportPreview" class="tutorial-report-preview" alt="Prévia" />
+          <button type="button" id="tutorialReportClearImg" class="tutorial-btn">Remover imagem</button>
+        </div>
+        <p id="tutorialReportStatus" class="tutorial-report-status"></p>
+        <div class="tutorial-report-actions">
+          <button type="button" id="tutorialReportSend" class="tutorial-btn tutorial-btn-primary">Enviar</button>
+          <button type="button" class="tutorial-btn" data-report-close="1">Cancelar</button>
+        </div>
+      </div>
+    </div>
   `;
   document.body.appendChild(root);
 
@@ -124,6 +157,14 @@ function ensureRoot() {
     e.stopPropagation();
     finishTutorial(true);
   });
+
+  $("tutorialErrorLink")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    openReportModal();
+  });
+
+  bindReportModal(root);
 
   root.addEventListener("click", (e) => e.stopPropagation());
   root.addEventListener("mousedown", (e) => e.stopPropagation());
@@ -547,9 +588,11 @@ function finishTutorial(skipped) {
   allowedSelectors = [];
   const tip = $("tutorialMatchTip");
   tip?.classList.add("hidden");
+  closeReportModal();
   showRoot(false);
   document.body.removeAttribute("data-tutorial-phase");
   resetMenuChrome();
+  stopUiWatch();
   if (resizeObs) {
     window.removeEventListener("resize", scheduleHole);
     window.removeEventListener("scroll", scheduleHole, true);
@@ -558,6 +601,108 @@ function finishTutorial(skipped) {
   if (skipped) {
     /* silencioso */
   }
+}
+
+function isMapsOpen() {
+  const el = $("ffMapFullscreen");
+  return !!el && !el.classList.contains("hidden");
+}
+
+function isAccountOpen() {
+  const el = $("accountModal");
+  return !!el && !el.classList.contains("hidden");
+}
+
+function isOptionsOpen() {
+  const el = $("ffGameOptionsPanel");
+  return !!el && !el.classList.contains("hidden");
+}
+
+function isHubOpen(panel) {
+  const el = $(panel);
+  return !!el && !el.classList.contains("hidden") && el.classList.contains("active");
+}
+
+/** Avança se a UI já abriu — cobre stopPropagation dos botões do hub/mapas */
+function syncUiPhase() {
+  if (!active) return;
+
+  if (phase === PHASE.ACCOUNT_CLICK && isAccountOpen()) {
+    goAccountExplain();
+    return;
+  }
+  if (phase === PHASE.OPTIONS_CLICK && isOptionsOpen()) {
+    goOptionsExplain();
+    return;
+  }
+  if (phase === PHASE.ARSENAL_CLICK && isHubOpen("ffHubPanelArsenal")) {
+    goArsenalExplain();
+    return;
+  }
+  if (phase === PHASE.SHOP_CLICK && isHubOpen("ffHubPanelShop")) {
+    goShopExplain();
+    return;
+  }
+  if (phase === PHASE.MAPS_CLICK && isMapsOpen()) {
+    goMapsTour(0);
+  }
+}
+
+function startUiWatch() {
+  stopUiWatch();
+  uiWatchTimer = window.setInterval(syncUiPhase, 220);
+}
+
+function stopUiWatch() {
+  if (uiWatchTimer) {
+    clearInterval(uiWatchTimer);
+    uiWatchTimer = 0;
+  }
+}
+
+function installMenuHooks() {
+  if (hooksInstalled) return;
+  hooksInstalled = true;
+
+  const wrap = (key, after) => {
+    const prev = window[key];
+    if (typeof prev !== "function") return false;
+    if (prev.__szTutorialHook) return true;
+    const hooked = function (...args) {
+      const result = prev.apply(this, args);
+      try {
+        after?.(args, result);
+      } catch {
+        /* ignore */
+      }
+      return result;
+    };
+    hooked.__szTutorialHook = true;
+    window[key] = hooked;
+    return true;
+  };
+
+  const tryHook = () => {
+    wrap("openMapFullscreen", () => {
+      if (active && phase === PHASE.MAPS_CLICK) {
+        setTimeout(() => {
+          if (phase === PHASE.MAPS_CLICK && isMapsOpen()) goMapsTour(0);
+        }, 40);
+      }
+    });
+    wrap("strikeZoneSelectMap", () => {
+      if (active && phase === PHASE.MAPS_PICK) {
+        setTimeout(() => {
+          if (phase === PHASE.MAPS_PICK) goStartClick();
+        }, 80);
+      }
+    });
+  };
+
+  tryHook();
+  // map-view / menu-init podem carregar depois
+  setTimeout(tryHook, 400);
+  setTimeout(tryHook, 1200);
 }
 
 function onGatePointer(e) {
@@ -590,39 +735,294 @@ function onGateClick(e) {
   onGatePointer(e);
 }
 
-function onDocClick(e) {
+/** Capture: roda ANTES do stopPropagation dos botões de mapa/hub */
+function onAdvanceCapture(e) {
   if (!active) return;
   const t = e.target;
 
   if (phase === PHASE.ACCOUNT_CLICK && t.closest?.("#openAccountBtn")) {
-    setTimeout(() => goAccountExplain(), 120);
+    setTimeout(() => {
+      if (phase === PHASE.ACCOUNT_CLICK) syncUiPhase();
+    }, 80);
     return;
   }
   if (phase === PHASE.OPTIONS_CLICK && t.closest?.("#ffOptionsBtn")) {
     setTimeout(() => {
-      if (!$("ffGameOptionsPanel")?.classList.contains("hidden")) goOptionsExplain();
+      if (phase === PHASE.OPTIONS_CLICK) syncUiPhase();
     }, 80);
     return;
   }
   if (phase === PHASE.ARSENAL_CLICK && t.closest?.("#openArsenalBtn")) {
-    setTimeout(() => goArsenalExplain(), 120);
+    setTimeout(() => {
+      if (phase === PHASE.ARSENAL_CLICK) syncUiPhase();
+    }, 80);
     return;
   }
   if (phase === PHASE.SHOP_CLICK && t.closest?.("#openSoloBtn")) {
-    setTimeout(() => goShopExplain(), 120);
+    setTimeout(() => {
+      if (phase === PHASE.SHOP_CLICK) syncUiPhase();
+    }, 80);
     return;
   }
   if (phase === PHASE.MAPS_CLICK && t.closest?.("#ffMapPickerBtn")) {
-    setTimeout(() => goMapsTour(0), 160);
+    setTimeout(() => {
+      if (phase === PHASE.MAPS_CLICK) {
+        if (isMapsOpen()) goMapsTour(0);
+        else syncUiPhase();
+      }
+    }, 60);
     return;
   }
-  if (phase === PHASE.MAPS_PICK && t.closest?.("#ffMapCardGrid .map-btn")) {
-    setTimeout(() => goStartClick(), 200);
+  if (phase === PHASE.MAPS_PICK && t.closest?.("#ffMapCardGrid .map-btn, .map-btn[data-map]")) {
+    setTimeout(() => {
+      if (phase === PHASE.MAPS_PICK) goStartClick();
+    }, 100);
     return;
   }
   if (phase === PHASE.START_CLICK && t.closest?.("#startBtn")) {
-    setTimeout(() => goInMatch(), 100);
+    setTimeout(() => {
+      if (phase === PHASE.START_CLICK) goInMatch();
+    }, 100);
   }
+}
+
+/* ——— Reportar erro do tutorial ——— */
+
+function setReportStatus(msg, ok = false) {
+  const el = $("tutorialReportStatus");
+  if (!el) return;
+  el.textContent = msg || "";
+  el.classList.toggle("ok", !!ok && !!msg);
+  el.classList.toggle("err", !ok && !!msg);
+}
+
+function clearReportImage() {
+  reportImageDataUrl = null;
+  const input = $("tutorialReportImage");
+  if (input) input.value = "";
+  $("tutorialReportPreviewWrap")?.classList.add("hidden");
+  const hint = $("tutorialReportImgHint");
+  if (hint) hint.textContent = "";
+}
+
+function openReportModal() {
+  const modal = $("tutorialReportModal");
+  if (!modal) return;
+  modal.classList.remove("hidden");
+  modal.setAttribute("aria-hidden", "false");
+  setReportStatus("");
+  $("tutorialReportText")?.focus();
+}
+
+function closeReportModal() {
+  const modal = $("tutorialReportModal");
+  if (!modal) return;
+  modal.classList.add("hidden");
+  modal.setAttribute("aria-hidden", "true");
+}
+
+/**
+ * Heurística pra bloquear imagem tipo QR / código de barras 2D
+ * (padrões de módulos B/W + cantos estilo finder).
+ */
+function looksLikeQrOrSimilar(imageData, w, h) {
+  const { data } = imageData;
+  const bin = new Uint8Array(w * h);
+  let dark = 0;
+  for (let i = 0; i < w * h; i++) {
+    const o = i * 4;
+    const y = data[o] * 0.299 + data[o + 1] * 0.587 + data[o + 2] * 0.114;
+    bin[i] = y < 140 ? 1 : 0;
+    dark += bin[i];
+  }
+  const darkRatio = dark / (w * h);
+  if (darkRatio < 0.12 || darkRatio > 0.88) return false;
+
+  // Transições horizontais altas = grade tipo QR
+  let transitions = 0;
+  let samples = 0;
+  for (let y = 0; y < h; y += 2) {
+    let prev = bin[y * w];
+    for (let x = 1; x < w; x++) {
+      const v = bin[y * w + x];
+      if (v !== prev) transitions++;
+      prev = v;
+      samples++;
+    }
+  }
+  const tRate = transitions / Math.max(1, samples);
+
+  function finderScore(ox, oy, size) {
+    // Procura cruz 1:1:3:1:1 aproximada no canto
+    let best = 0;
+    for (let row = oy; row < oy + size && row < h; row++) {
+      let runs = [];
+      let cur = bin[row * w + ox];
+      let len = 1;
+      for (let x = ox + 1; x < ox + size && x < w; x++) {
+        const v = bin[row * w + x];
+        if (v === cur) len++;
+        else {
+          runs.push({ v: cur, len });
+          cur = v;
+          len = 1;
+        }
+      }
+      runs.push({ v: cur, len });
+      for (let i = 0; i + 4 < runs.length; i++) {
+        const a = runs[i];
+        const b = runs[i + 1];
+        const c = runs[i + 2];
+        const d = runs[i + 3];
+        const e = runs[i + 4];
+        if (a.v !== 1 || b.v !== 0 || c.v !== 1 || d.v !== 0 || e.v !== 1) continue;
+        const unit = (a.len + b.len + c.len + d.len + e.len) / 7;
+        if (unit < 1.2) continue;
+        const ok =
+          Math.abs(a.len - unit) < unit * 0.75 &&
+          Math.abs(b.len - unit) < unit * 0.75 &&
+          Math.abs(c.len - unit * 3) < unit * 1.2 &&
+          Math.abs(d.len - unit) < unit * 0.75 &&
+          Math.abs(e.len - unit) < unit * 0.75;
+        if (ok) best++;
+      }
+    }
+    return best;
+  }
+
+  const corner = Math.max(18, Math.floor(Math.min(w, h) * 0.28));
+  const finders =
+    finderScore(0, 0, corner) +
+    finderScore(w - corner, 0, corner) +
+    finderScore(0, h - corner, corner);
+
+  // Grade bem marcada + finder-like → bloqueia
+  if (tRate > 0.22 && finders >= 2) return true;
+  if (tRate > 0.28 && finders >= 1) return true;
+  if (tRate > 0.34) return true;
+  return false;
+}
+
+async function validateReportImage(file) {
+  if (!file) return { ok: true, dataUrl: null };
+  if (!file.type.startsWith("image/")) {
+    return { ok: false, msg: "Envia só imagem (PNG, JPG ou WebP)." };
+  }
+  if (file.size > 2.5 * 1024 * 1024) {
+    return { ok: false, msg: "Imagem grande demais (máx. 2,5 MB)." };
+  }
+
+  const dataUrl = await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error("Falha ao ler imagem"));
+    reader.readAsDataURL(file);
+  });
+
+  const img = await new Promise((resolve, reject) => {
+    const el = new Image();
+    el.onload = () => resolve(el);
+    el.onerror = () => reject(new Error("Imagem inválida"));
+    el.src = dataUrl;
+  });
+
+  const size = 160;
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  ctx.drawImage(img, 0, 0, size, size);
+  const imageData = ctx.getImageData(0, 0, size, size);
+
+  if (looksLikeQrOrSimilar(imageData, size, size)) {
+    return {
+      ok: false,
+      msg: "Essa imagem parece um QR code (ou similar). Manda um print da tela do jogo.",
+    };
+  }
+
+  return { ok: true, dataUrl };
+}
+
+function bindReportModal(root) {
+  root.querySelectorAll("[data-report-close]").forEach((el) => {
+    el.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      closeReportModal();
+    });
+  });
+
+  $("tutorialReportClearImg")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    clearReportImage();
+  });
+
+  $("tutorialReportImage")?.addEventListener("change", async (e) => {
+    const file = e.target.files?.[0];
+    setReportStatus("Checando imagem…");
+    try {
+      const res = await validateReportImage(file);
+      if (!res.ok) {
+        clearReportImage();
+        setReportStatus(res.msg, false);
+        return;
+      }
+      reportImageDataUrl = res.dataUrl;
+      const wrap = $("tutorialReportPreviewWrap");
+      const prev = $("tutorialReportPreview");
+      if (prev && res.dataUrl) {
+        prev.src = res.dataUrl;
+        wrap?.classList.remove("hidden");
+      }
+      setReportStatus(res.dataUrl ? "Imagem ok." : "", true);
+      const hint = $("tutorialReportImgHint");
+      if (hint) hint.textContent = res.dataUrl ? "" : "";
+    } catch {
+      clearReportImage();
+      setReportStatus("Não deu pra ler essa imagem.", false);
+    }
+  });
+
+  $("tutorialReportSend")?.addEventListener("click", async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (reportBusy) return;
+    const text = $("tutorialReportText")?.value?.trim() || "";
+    if (text.length < 8) {
+      setReportStatus("Escreve um pouco mais sobre o erro (mín. 8 caracteres).", false);
+      return;
+    }
+    reportBusy = true;
+    setReportStatus("Enviando…");
+    try {
+      const res = await fetch("/api/tutorial-report", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: text.slice(0, 1200),
+          phase: phase || null,
+          playerName: playerName(),
+          imageDataUrl: reportImageDataUrl || null,
+          userAgent: navigator.userAgent.slice(0, 240),
+          url: location.href.slice(0, 240),
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.ok) {
+        setReportStatus(data.error || "Falha ao enviar. Tenta de novo.", false);
+        return;
+      }
+      setReportStatus("Valeu! Report enviado.", true);
+      if ($("tutorialReportText")) $("tutorialReportText").value = "";
+      clearReportImage();
+      setTimeout(() => closeReportModal(), 900);
+    } catch {
+      setReportStatus("Servidor offline ou sem rede.", false);
+    } finally {
+      reportBusy = false;
+    }
+  });
 }
 
 function bindGlobal() {
@@ -641,11 +1041,14 @@ function bindGlobal() {
     if (matchStarted || phase === PHASE.IN_MATCH) goFinale();
   };
 
+  installMenuHooks();
+
   if (listenersBound) return;
   listenersBound = true;
   document.addEventListener("click", onGateClick, true);
   document.addEventListener("touchstart", onGatePointer, { capture: true, passive: false });
-  document.addEventListener("click", onDocClick, false);
+  // Capture: detecta clique mesmo com stopPropagation nos mapas
+  document.addEventListener("click", onAdvanceCapture, true);
   window.addEventListener("resize", scheduleHole);
   window.addEventListener("scroll", scheduleHole, true);
   resizeObs = true;
@@ -659,6 +1062,7 @@ export function startTutorial({ force = false } = {}) {
   mapTourIndex = 0;
   showRoot(true);
   bindGlobal();
+  startUiWatch();
   resetMenuChrome();
   goIntro();
   return true;
@@ -668,7 +1072,6 @@ export function maybeStartTutorial() {
   if (isTutorialDone()) return false;
   const params = new URLSearchParams(location.search);
   if (params.get("tutorial") === "0") return false;
-  // Pequeno delay pra hub montar (fab, mapas, etc.)
   setTimeout(() => startTutorial(), 600);
   return true;
 }

@@ -36,9 +36,88 @@ const ROUTES = {
   "/celular.html": "celular.html",
 };
 
-function sendJson(res, data) {
-  res.writeHead(200, { "Content-Type": "application/json", "Cache-Control": "no-cache" });
+function sendJson(res, data, status = 200) {
+  res.writeHead(status, { "Content-Type": "application/json", "Cache-Control": "no-cache" });
   res.end(JSON.stringify(data));
+}
+
+function readJsonBody(req, limit = 3_500_000) {
+  return new Promise((resolve, reject) => {
+    let raw = "";
+    req.on("data", (c) => {
+      raw += c;
+      if (raw.length > limit) {
+        reject(new Error("Payload grande demais"));
+        req.destroy();
+      }
+    });
+    req.on("end", () => {
+      try {
+        resolve(raw ? JSON.parse(raw) : {});
+      } catch {
+        reject(new Error("JSON inválido"));
+      }
+    });
+    req.on("error", reject);
+  });
+}
+
+function looksLikeQrDataUrl(dataUrl) {
+  if (!dataUrl || typeof dataUrl !== "string") return false;
+  if (!dataUrl.startsWith("data:image/")) return true;
+  // Servidor: bloqueio básico — cliente já valida; aqui só rejeita data URLs suspeitas demais
+  if (dataUrl.length > 3_200_000) return true;
+  return false;
+}
+
+async function handleTutorialReport(req, res) {
+  const body = await readJsonBody(req);
+  const message = String(body.message || "").trim().slice(0, 1200);
+  if (message.length < 8) {
+    return sendJson(res, { ok: false, error: "Mensagem muito curta." }, 400);
+  }
+  const imageDataUrl = body.imageDataUrl ? String(body.imageDataUrl) : null;
+  if (imageDataUrl && looksLikeQrDataUrl(imageDataUrl)) {
+    return sendJson(res, { ok: false, error: "Imagem inválida ou parecida com QR code." }, 400);
+  }
+
+  const dir = path.join(ROOT, "data", "tutorial-reports");
+  fs.mkdirSync(dir, { recursive: true });
+
+  const id = `tr_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  let imageFile = null;
+  if (imageDataUrl && imageDataUrl.startsWith("data:image/")) {
+    const m = /^data:(image\/(?:png|jpeg|jpg|webp|gif));base64,(.+)$/i.exec(imageDataUrl);
+    if (!m) {
+      return sendJson(res, { ok: false, error: "Formato de imagem não aceito." }, 400);
+    }
+    const ext = m[1].includes("png")
+      ? "png"
+      : m[1].includes("webp")
+        ? "webp"
+        : m[1].includes("gif")
+          ? "gif"
+          : "jpg";
+    const buf = Buffer.from(m[2], "base64");
+    if (buf.length > 2.6 * 1024 * 1024) {
+      return sendJson(res, { ok: false, error: "Imagem grande demais." }, 400);
+    }
+    imageFile = `${id}.${ext}`;
+    fs.writeFileSync(path.join(dir, imageFile), buf);
+  }
+
+  const entry = {
+    id,
+    at: new Date().toISOString(),
+    message,
+    phase: body.phase || null,
+    playerName: String(body.playerName || "").slice(0, 40),
+    userAgent: String(body.userAgent || "").slice(0, 240),
+    url: String(body.url || "").slice(0, 240),
+    imageFile,
+  };
+  fs.appendFileSync(path.join(dir, "reports.jsonl"), JSON.stringify(entry) + "\n", "utf8");
+  return sendJson(res, { ok: true, id });
 }
 
 function getLocalIP() {
@@ -141,6 +220,14 @@ const server = http.createServer(async (req, res) => {
     } catch (err) {
       res.writeHead(500, { "Content-Type": "application/json" });
       return res.end(JSON.stringify({ error: err.message || "Erro no servidor" }));
+    }
+  }
+  if (pathname === "/api/tutorial-report" && req.method === "POST") {
+    try {
+      return await handleTutorialReport(req, res);
+    } catch (err) {
+      res.writeHead(500, { "Content-Type": "application/json" });
+      return res.end(JSON.stringify({ ok: false, error: err.message || "Erro ao salvar report" }));
     }
   }
   if (pathname === "/stripe-handlers.js" || pathname === "/stripe-config.js" || pathname === "/.env") {

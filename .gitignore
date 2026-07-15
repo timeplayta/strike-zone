@@ -12,3 +12,4 @@ temp_download.json
 
 # Contas locais — o servidor cria accounts.json na nuvem
 data/accounts.json
+data/tutorial-reports/
