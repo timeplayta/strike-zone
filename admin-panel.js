@@ -138,7 +138,7 @@ function initAdminPanel() {
       if (typeof window.openTableGames === "function") {
         window.openTableGames(mapKey);
       } else {
-        import("./table-games.js?v=4").then(() => window.openTableGames?.(mapKey));
+        import("./table-games.js?v=11").then(() => window.openTableGames?.(mapKey));
       }
       return;
     }
