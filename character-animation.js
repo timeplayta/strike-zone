@@ -251,6 +251,22 @@ function updateGltfAnimation(entity, dt, opts) {
   updateWeaponVisual(entity, dt, shooting, entity._aimBlend);
 }
 
+/** Boneco Blockbench não tem juntas de perna/quadril de verdade — anima o corpo
+ * inteiro (inclinação, balanço, respiração, agachar, mira) pra ainda se mexer bem. */
+function applySimpleBodyMotion(entity, dt, st, opts) {
+  const g = entity.group;
+  if (!g) return;
+  const { crouching, inAir, aimBlend } = opts;
+
+  const targetLeanX = st.leanX + aimBlend * 0.09 + (crouching ? 0.05 : 0) + (inAir ? -0.1 : 0);
+  g.rotation.x = smooth(g.rotation.x, targetLeanX, dt, 9);
+  g.rotation.z = smooth(g.rotation.z, st.leanZ * 0.6, dt, 9);
+
+  const targetBob = crouching ? -0.16 : st.bob;
+  entity._bobOffset = smooth(entity._bobOffset ?? 0, targetBob, dt, 10);
+  g.position.y += entity._bobOffset;
+}
+
 export function updateHumanAnimation(entity, dt, opts = {}) {
   if (entity.mixer) {
     updateGltfAnimation(entity, dt, opts);
@@ -258,7 +274,7 @@ export function updateHumanAnimation(entity, dt, opts = {}) {
   }
 
   const rig = entity.rig;
-  if (!rig || !entity.alive || entity.ragdoll) return;
+  if (!entity.alive || entity.ragdoll) return;
 
   const horrorMode = !!opts.horrorMode;
   const {
@@ -269,10 +285,10 @@ export function updateHumanAnimation(entity, dt, opts = {}) {
     crouching = false,
     jumping = false,
     jumpHeight = 0,
-    turnLean = 0,
   } = opts;
 
-  if (!horrorMode) resetGroupTilt(entity, dt);
+  const hasLegRig = !!(rig && rig.hipL && rig.hipR && rig.kneeL && rig.kneeR);
+  if (!horrorMode && hasLegRig) resetGroupTilt(entity, dt);
 
   const lx = entity._lastAnimX ?? entity.group.position.x;
   const lz = entity._lastAnimZ ?? entity.group.position.z;
@@ -285,6 +301,7 @@ export function updateHumanAnimation(entity, dt, opts = {}) {
   entity.animTime = (entity.animTime || 0) + dt * (isRunning ? speed * 1.2 : isMoving ? speed * 1.05 : 1.2);
   const t = entity.animTime;
   const st = entity._animState;
+  const inAir = jumping || jumpHeight > 0.05;
 
   if (horrorMode) {
     applyHorrorPose(entity, dt, { moving: isMoving });
@@ -302,13 +319,15 @@ export function updateHumanAnimation(entity, dt, opts = {}) {
     st.kneeR = smooth(st.kneeR, Math.max(0, -swing2 * 0.42) + (isRunning ? 0.08 : 0.05), dt, 16);
     st.bob = smooth(st.bob, Math.abs(Math.sin(t * freq)) * (isRunning ? 0.045 : 0.032), dt, 16);
     st.leanZ = smooth(st.leanZ, swing * 0.028, dt, 12);
+    st.leanX = smooth(st.leanX, isRunning ? 0.09 : 0.03, dt, 10);
   } else if (!jumping) {
     st.hipL = smooth(st.hipL, 0, dt, 8);
     st.hipR = smooth(st.hipR, 0, dt, 8);
     st.kneeL = smooth(st.kneeL, 0, dt, 8);
     st.kneeR = smooth(st.kneeR, 0, dt, 8);
-    st.bob = smooth(st.bob, 0, dt, 6);
+    st.bob = smooth(st.bob, hasLegRig ? 0 : Math.sin(t * 1.6) * 0.006, dt, 6);
     st.leanZ = smooth(st.leanZ, 0, dt, 8);
+    st.leanX = smooth(st.leanX, 0, dt, 8);
   }
 
   if (jumping || jumpHeight > 0.05) {
@@ -321,21 +340,26 @@ export function updateHumanAnimation(entity, dt, opts = {}) {
   } else if (crouching) {
     st.kneeL = smooth(st.kneeL, 0.65, dt, 10);
     st.kneeR = smooth(st.kneeR, 0.65, dt, 10);
-    st.bob = smooth(st.bob, -0.15, dt, 10);
+    if (hasLegRig) st.bob = smooth(st.bob, -0.15, dt, 10);
   }
-
-  rig.hipL.rotation.x = st.hipL;
-  rig.hipR.rotation.x = st.hipR;
-  rig.kneeL.rotation.x = st.kneeL;
-  rig.kneeR.rotation.x = st.kneeR;
 
   entity._aimBlend = smooth(entity._aimBlend ?? 0, aiming || shooting ? 1 : 0, dt, shooting ? 20 : 12);
-  applyRifleHold(rig, isMoving ? Math.sin(t * 10) * 0.02 : 0, entity._aimBlend);
-  rig.bodyBob.position.y = st.bob;
-  if (rig.torsoPivot) {
-    rig.torsoPivot.rotation.x = jumping || jumpHeight > 0.05 ? smooth(rig.torsoPivot.rotation.x, 0, dt, 14) : rig.torsoPivot.rotation.x;
-    rig.torsoPivot.rotation.z = st.leanZ;
+
+  if (hasLegRig) {
+    rig.hipL.rotation.x = st.hipL;
+    rig.hipR.rotation.x = st.hipR;
+    rig.kneeL.rotation.x = st.kneeL;
+    rig.kneeR.rotation.x = st.kneeR;
+    applyRifleHold(rig, isMoving ? Math.sin(t * 10) * 0.02 : 0, entity._aimBlend);
+    if (rig.bodyBob) rig.bodyBob.position.y = st.bob;
+    if (rig.torsoPivot) {
+      rig.torsoPivot.rotation.x = jumping || jumpHeight > 0.05 ? smooth(rig.torsoPivot.rotation.x, 0, dt, 14) : rig.torsoPivot.rotation.x;
+      rig.torsoPivot.rotation.z = st.leanZ;
+    }
+  } else {
+    applySimpleBodyMotion(entity, dt, st, { crouching, inAir, aimBlend: entity._aimBlend });
   }
+
   updateWeaponVisual(entity, dt, shooting, entity._aimBlend);
 }
 

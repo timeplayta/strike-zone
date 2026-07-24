@@ -14,6 +14,7 @@ import {
   destroyViewer,
   resizeViewer,
   updateViewerLoadout,
+  setViewerAiming,
 } from "./character-viewer.js";
 import {
   getShopItemThumbDataUrl,
@@ -31,6 +32,7 @@ let arsenalMounted = false;
 let activeWeapon = "ak47";
 let viewMode = "both"; // "both" | "weapon"
 let lastAcc = null;
+let aiming = false;
 
 const DEFAULT_WEAPON_COLOR = 0x5c3a1e;
 
@@ -147,10 +149,12 @@ function updateCoinsMini(acc) {
 function applyViewMode(acc) {
   const bothBtn = $("arsenalViewBothBtn");
   const weaponBtn = $("arsenalViewWeaponBtn");
+  const aimBtn = $("arsenalAimBtn");
   const bothCanvas = $("arsenalCanvas");
   const weaponCanvas = $("arsenalWeaponCanvas");
   bothBtn?.classList.toggle("selected", viewMode === "both");
   weaponBtn?.classList.toggle("selected", viewMode === "weapon");
+  if (aimBtn) aimBtn.hidden = viewMode !== "both";
 
   if (viewMode === "weapon") {
     bothCanvas?.classList.add("hidden");
@@ -216,6 +220,11 @@ function closeModal() {
   showPlayHub();
   const panel = $("ffHubPanelArsenal");
   if (panel) panel.setAttribute("aria-hidden", "true");
+  if (aiming) {
+    aiming = false;
+    $("arsenalAimBtn")?.classList.remove("selected");
+    setViewerAiming("arsenalCanvas", false);
+  }
 }
 
 export function initArsenalView() {
@@ -230,6 +239,11 @@ export function initArsenalView() {
     if (viewMode === "weapon") return;
     viewMode = "weapon";
     applyViewMode(lastAcc || {});
+  });
+  $("arsenalAimBtn")?.addEventListener("click", (ev) => {
+    aiming = !aiming;
+    ev.currentTarget.classList.toggle("selected", aiming);
+    setViewerAiming("arsenalCanvas", aiming);
   });
   window.addEventListener("resize", () => {
     const panel = $("ffHubPanelArsenal");

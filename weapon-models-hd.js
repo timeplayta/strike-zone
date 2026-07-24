@@ -191,6 +191,60 @@ function addRibbedGrip(g, grip, x, y, z, h = 0.11) {
   }
 }
 
+/** Coronha de madeira/polímero clássica — grossa e sólida (AK, AWM, Doze) */
+function addWoodStock(g, mat, zStart, zEnd, opts = {}) {
+  const { topY = 0.008, height = 0.09, width = 0.05, angle = -0.045 } = opts;
+  const len = zEnd - zStart;
+  const cz = zStart + len / 2;
+  g.add(box(width, height, len, mat, 0, topY, cz, angle));
+  g.add(box(width * 1.08, height * 1.22, 0.026, cloneMat(mat), 0, topY - Math.sin(angle) * len * 0.35, zEnd + 0.006, angle));
+  g.add(box(width * 0.9, 0.02, len * 0.7, cloneMat(mat), 0, topY + height * 0.36, zStart + len * 0.42, angle * 0.6));
+}
+
+/** Coronha retrátil dobrável (estilo tático moderno) — painel chato, não parece cabo */
+function addFoldingStock(g, bodyMat, dark, zStart, zEnd, y = 0.012) {
+  const len = zEnd - zStart;
+  const cz = zStart + len / 2;
+  g.add(box(0.014, 0.05, 0.05, dark, 0, y, zStart - 0.01, 0, 0, 0)); // dobradiça junto ao receptor
+  g.add(box(0.05, 0.014, len, bodyMat, 0, y + 0.032, cz));
+  g.add(box(0.05, 0.014, len, cloneMat(bodyMat), 0, y - 0.032, cz));
+  for (let i = 0; i < 3; i++) {
+    const z = zStart + (i + 0.5) * (len / 3);
+    g.add(box(0.05, 0.012, 0.012, cloneMat(dark), 0, y, z));
+  }
+  g.add(box(0.06, 0.095, 0.024, cloneMat(dark), 0, y, zEnd));
+}
+
+/** Coronha telescópica fina — ÚNICA arma com esse "cabo" (realista no M4) */
+function addTelescopingStock(g, metal, dark, zStart, zEnd) {
+  const len = zEnd - zStart;
+  g.add(tube(0.013, len, 12, metal, 0, 0.014, zStart + len / 2, Math.PI / 2));
+  g.add(box(0.052, 0.02, 0.045, cloneMat(dark), 0, 0.05, zStart + len * 0.22));
+  g.add(box(0.052, 0.09, 0.032, dark, 0, 0.018, zEnd));
+  g.add(box(0.052, 0.018, 0.03, cloneMat(dark), 0, 0.062, zEnd - 0.01));
+}
+
+/** Coronha curta retraída (SMGs) — pequena, não se estica pra trás */
+function addStubStock(g, dark, z) {
+  g.add(box(0.05, 0.06, 0.05, dark, 0, 0.02, z));
+  g.add(box(0.052, 0.008, 0.06, cloneMat(dark), 0, 0.05, z + 0.01));
+}
+
+/** Bipé dobrável — clássico em rifles de precisão */
+function addBipod(g, metal, z) {
+  for (const side of [-1, 1]) {
+    g.add(box(0.013, 0.17, 0.013, metal, side * 0.032, -0.1, z, 0, 0, side * 0.1));
+    g.add(box(0.02, 0.02, 0.02, cloneMat(metal), side * 0.02, -0.02, z));
+  }
+  g.add(box(0.045, 0.022, 0.05, cloneMat(metal), 0, -0.01, z));
+}
+
+/** Grip vertical dianteiro — traço moderno (SCAR) */
+function addForegrip(g, grip, z) {
+  g.add(box(0.03, 0.1, 0.032, grip, 0, -0.065, z, 0.06));
+  g.add(box(0.032, 0.014, 0.034, cloneMat(grip), 0, -0.02, z));
+}
+
 function markWeapon(g, type) {
   g.userData.weaponType = type;
   g.traverse((o) => {
@@ -199,10 +253,10 @@ function markWeapon(g, type) {
   return g;
 }
 
+/** Núcleo comum reduzido — cada arma monta sua própria coronha (nada de "cabo" genérico) */
 function rifleCore(g, tint, opts = {}) {
   const {
-    barrelLen = 0.42,
-    stockLen = 0.24,
+    barrelLen = 0.4,
     receiverLen = 0.22,
     handguardLen = 0.18,
     modern = false,
@@ -215,14 +269,12 @@ function rifleCore(g, tint, opts = {}) {
 
   g.add(box(0.062, 0.07, receiverLen, modern ? body : dark, 0, 0.005, 0.045));
   g.add(box(0.052, 0.045, handguardLen, body, 0, 0.015, -0.105));
-  g.add(box(0.048, 0.024, stockLen, body, 0, 0.01, 0.21 + stockLen * 0.12));
   g.add(box(0.062, 0.05, 0.08, body, 0, -0.005, 0.16));
   g.add(box(0.068, 0.01, receiverLen * 0.72, metal, 0, 0.046, 0.04));
   g.add(box(0.008, 0.024, receiverLen * 0.46, dark, 0.036, 0.012, 0.035));
   g.add(box(0.008, 0.024, receiverLen * 0.46, dark, -0.036, 0.012, 0.035));
   g.add(tube(0.013, barrelLen, 20, metal, 0, 0.024, -barrelLen / 2 - 0.16, Math.PI / 2));
   g.add(tube(0.019, 0.09, 16, metal, 0, 0.024, -0.16, Math.PI / 2));
-  addRail(g, dark, -0.18, 0.14, 0.057);
   addRibbedGrip(g, grip, 0, -0.07, -0.02);
   g.add(box(0.05, 0.03, 0.06, dark, 0, -0.02, -0.09));
   g.add(box(0.045, 0.008, 0.055, dark, 0, -0.03, 0.035));
@@ -236,17 +288,18 @@ export function buildHdAk47(tint = 0x6b4423) {
   const g = new THREE.Group();
   const { metal, dark, body } = rifleCore(g, tint, {
     barrelLen: 0.44,
-    stockLen: 0.28,
     receiverLen: 0.22,
-    handguardLen: 0.16,
+    handguardLen: 0.2,
   });
 
-  g.add(box(0.029, 0.16, 0.07, dark, 0.032, -0.045, -0.055, 0.18, 0, -0.05));
-  g.add(box(0.018, 0.12, 0.045, body, 0, 0.035, 0.135));
-  g.add(tube(0.007, 0.36, 10, metal, 0, 0.044, -0.05, Math.PI / 2));
-  g.add(box(0.034, 0.018, 0.17, metal, 0, 0.041, 0.02));
-  g.add(box(0.052, 0.012, 0.06, dark, 0, 0.072, 0.085));
-  g.add(box(0.075, 0.028, 0.11, body, 0, 0.026, -0.19));
+  addRail(g, dark, -0.14, 0.08, 0.057);
+  addWoodStock(g, body, 0.19, 0.5, { height: 0.095, width: 0.05, angle: -0.05 });
+  g.add(box(0.029, 0.16, 0.07, dark, 0.032, -0.045, -0.055, 0.18, 0, -0.05)); // pente curvo
+  g.add(box(0.018, 0.12, 0.045, body, 0, 0.035, 0.135)); // cobertura de madeira atrás do ferrolho
+  g.add(tube(0.007, 0.36, 10, metal, 0, 0.044, -0.05, Math.PI / 2)); // tubo de gás
+  g.add(box(0.034, 0.018, 0.17, metal, 0, 0.041, 0.02)); // tampa da caixa de mecanismo
+  g.add(box(0.052, 0.012, 0.06, dark, 0, 0.072, 0.085)); // base da mira traseira (leaf sight)
+  g.add(box(0.075, 0.028, 0.11, body, 0, 0.026, -0.19)); // ponta da madeira dianteira
   addIronSights(g, dark, -0.32, 0.11);
   addMuzzleBrake(g, metal, -0.61);
   addScrews(g, metal, [[0.037, 0.028, 0.045], [0.037, -0.002, 0.105], [-0.037, 0.028, 0.045], [-0.037, -0.002, 0.105]]);
@@ -260,25 +313,24 @@ export function buildHdAk47(tint = 0x6b4423) {
 export function buildHdScar(tint = 0x3a4550) {
   const g = new THREE.Group();
   const { metal, dark, body, grip } = rifleCore(g, tint, {
-    barrelLen: 0.39,
-    stockLen: 0.21,
+    barrelLen: 0.37,
     receiverLen: 0.24,
-    handguardLen: 0.21,
+    handguardLen: 0.27,
     modern: true,
   });
 
-  g.add(box(0.068, 0.048, 0.25, body, 0, 0.016, -0.055));
-  g.add(box(0.06, 0.014, 0.34, dark, 0, 0.069, -0.07));
-  g.add(box(0.048, 0.056, 0.1, grip, 0, 0.012, 0.095));
-  g.add(box(0.03, 0.08, 0.026, dark, 0, 0.04, 0.145));
-  g.add(box(0.016, 0.02, 0.09, metal, 0, 0.05, -0.235));
-  addScope(g, metal, dark, -0.08, false);
-  addIronSights(g, dark, -0.34, 0.12);
-  addMuzzleBrake(g, metal, -0.56);
-  addVentedShroud(g, dark, -0.25, -0.02, 0.047, 0.038);
-  addUnderbarrelModule(g, metal, dark, -0.18);
-  addScrews(g, metal, [[0.04, 0.029, -0.03], [0.04, 0.029, 0.07], [-0.04, 0.029, -0.03], [-0.04, 0.029, 0.07]]);
+  addFoldingStock(g, body, dark, 0.17, 0.38);
+  addForegrip(g, grip, -0.19);
+  g.add(box(0.068, 0.048, 0.28, body, 0, 0.016, -0.06));
+  g.add(box(0.06, 0.014, 0.4, dark, 0, 0.069, -0.08)); // trilho full-length
+  g.add(box(0.048, 0.056, 0.1, grip, 0, 0.012, 0.095)); // punho pistol grip
+  g.add(box(0.016, 0.02, 0.09, metal, 0, 0.05, -0.26));
+  addIronSights(g, dark, -0.37, 0.12);
+  addMuzzleBrake(g, metal, -0.58);
+  addVentedShroud(g, dark, -0.28, -0.03, 0.047, 0.04);
+  addScrews(g, metal, [[0.042, 0.029, -0.03], [0.042, 0.029, 0.07], [-0.042, 0.029, -0.03], [-0.042, 0.029, 0.07]]);
   addMagazineLines(g, metal, 0.095, -0.012, 0.08);
+  g.add(box(0.05, 0.1, 0.085, body, 0, -0.018, -0.02)); // magwell alargado
 
   return markWeapon(g, "scar");
 }
@@ -286,14 +338,14 @@ export function buildHdScar(tint = 0x3a4550) {
 export function buildHdM4(tint = 0x3d4a38) {
   const g = new THREE.Group();
   const { metal, dark, body, grip } = rifleCore(g, tint, {
-    barrelLen: 0.37,
-    stockLen: 0.2,
+    barrelLen: 0.34,
     receiverLen: 0.2,
-    handguardLen: 0.2,
+    handguardLen: 0.22,
     modern: true,
   });
 
-  g.add(box(0.064, 0.045, 0.18, body, 0, 0.02, -0.045));
+  // ÚNICA arma com coronha-tubo fina retrátil (traço realista só do M4)
+  addTelescopingStock(g, metal, dark, 0.15, 0.34);
   g.add(box(0.05, 0.018, 0.28, metal, 0, 0.046, -0.12));
   g.add(box(0.018, 0.024, 0.1, dark, 0, 0.04, -0.285));
   for (let i = 0; i < 5; i++) {
@@ -301,13 +353,11 @@ export function buildHdM4(tint = 0x3d4a38) {
     g.add(box(0.005, 0.012, 0.145, cloneMat(metal), -0.027, 0.019, -0.02 - i * 0.032));
   }
   g.add(box(0.04, 0.058, 0.072, grip, 0, -0.004, 0.092));
-  addScope(g, metal, dark, -0.09, false);
+  addScope(g, metal, dark, -0.1, false); // óptico curto tipo ACOG
   addIronSights(g, dark, -0.31, 0.1);
   addMuzzleBrake(g, metal, -0.52);
-  addVentedShroud(g, dark, -0.26, -0.05, 0.042, 0.033);
-  addUnderbarrelModule(g, metal, dark, -0.19);
   addScrews(g, metal, [[0.038, 0.025, -0.035], [0.038, 0.025, 0.055], [-0.038, 0.025, -0.035], [-0.038, 0.025, 0.055]]);
-  g.add(box(0.025, 0.052, 0.035, dark, 0.034, -0.022, 0.06, 0.1));
+  g.add(box(0.032, 0.16, 0.05, dark, 0, -0.09, 0.045, 0.04)); // pente reto (STANAG)
 
   return markWeapon(g, "m4");
 }
@@ -322,6 +372,7 @@ export function buildHdUmp45(tint = 0x2a2a32) {
   g.add(box(0.055, 0.035, 0.2, dark, 0, 0.03, -0.02));
   g.add(tube(0.012, 0.29, 16, metal, 0, 0.017, -0.22, Math.PI / 2));
   addMuzzleBrake(g, metal, -0.38);
+  addStubStock(g, dark, 0.15); // coronha curta retraída — SMG compacta, sem cabo comprido
   g.add(box(0.035, 0.09, 0.078, grip, 0, -0.01, 0.072));
   addRibbedGrip(g, matGrip(), 0, -0.064, -0.018, 0.095);
   g.add(box(0.04, 0.026, 0.055, dark, 0, -0.013, -0.11));
@@ -345,7 +396,8 @@ export function buildHdAwm(tint = 0x5c4030) {
   g.add(box(0.044, 0.054, 0.34, metal, 0, 0.002, -0.09));
   g.add(tube(0.015, 0.62, 24, metal, 0, 0.022, -0.47, Math.PI / 2));
   addMuzzleBrake(g, dark, -0.79, true);
-  g.add(box(0.04, 0.105, 0.26, body, 0, -0.012, 0.18));
+  addBipod(g, metal, -0.62); // bipé — assinatura de rifle de precisão
+  g.add(box(0.04, 0.105, 0.26, body, 0, -0.012, 0.18)); // coronha grossa com apoio de bochecha
   g.add(box(0.05, 0.032, 0.28, body, 0, 0.01, 0.02));
   addScope(g, metal, dark, -0.24, true);
   g.add(box(0.036, 0.032, 0.13, dark, 0, 0.064, -0.13));
@@ -362,26 +414,28 @@ export function buildHdAwm(tint = 0x5c4030) {
   return markWeapon(g, "awm");
 }
 
+/** Espingarda pump-action de cano único — antes era cano duplo (estranho), agora reconhecível */
 export function buildHdShotgun(tint = 0x6b4423) {
   const g = new THREE.Group();
   const metal = matMetal();
   const dark = matDark();
   const body = matBody(tint);
 
-  g.add(box(0.056, 0.08, 0.24, body, 0, 0.004, 0.06));
-  g.add(tube(0.03, 0.46, 18, metal, -0.014, 0.028, -0.29, Math.PI / 2));
-  g.add(tube(0.03, 0.46, 18, metal, 0.014, 0.028, -0.29, Math.PI / 2));
-  g.add(tube(0.026, 0.12, 14, dark, -0.014, 0.026, -0.58, Math.PI / 2));
-  g.add(tube(0.026, 0.12, 14, dark, 0.014, 0.026, -0.58, Math.PI / 2));
-  g.add(box(0.048, 0.06, 0.09, dark, 0, 0.012, 0.02));
-  g.add(box(0.038, 0.032, 0.16, body, 0, -0.005, -0.16));
-  addRibbedGrip(g, matGrip(), 0, -0.057, -0.02, 0.1);
-  addSidePanels(g, body, -0.44, -0.05, 0.025, 0.05);
-  g.add(box(0.018, 0.04, 0.06, dark, 0, 0.041, 0.105));
-  addIronSights(g, dark, -0.48, 0.095);
-  addShells(g, -0.09, 5);
-  addScrews(g, metal, [[0.037, 0.026, 0.04], [-0.037, 0.026, 0.04], [0.05, 0.035, -0.29], [-0.05, 0.035, -0.29]], 0.005);
-  g.add(box(0.04, 0.014, 0.23, dark, 0, 0.068, -0.22));
+  g.add(box(0.06, 0.078, 0.2, dark, 0, 0.012, 0.02)); // receptor
+  g.add(tube(0.024, 0.5, 18, metal, 0, 0.05, -0.32, Math.PI / 2)); // cano único
+  g.add(tube(0.017, 0.44, 16, metal, 0, 0.008, -0.28, Math.PI / 2)); // tubo do carregador (magazine)
+  g.add(box(0.052, 0.05, 0.15, body, 0, 0.008, -0.2)); // pump (guarda-mão deslizante)
+  for (let i = 0; i < 6; i++) {
+    g.add(box(0.054, 0.006, 0.01, dark, 0, 0.008, -0.13 - i * 0.022));
+  }
+  g.add(tube(0.028, 0.03, 16, dark, 0, 0.05, -0.58, Math.PI / 2)); // boca do cano
+  g.add(box(0.012, 0.022, 0.012, metal, 0, 0.078, -0.57)); // mira de esfera (bead sight)
+  g.add(box(0.05, 0.05, 0.06, body, 0, 0.012, -0.08)); // remate de madeira do guarda-mão
+  addWoodStock(g, body, 0.13, 0.32, { height: 0.088, width: 0.058, angle: -0.03 });
+  addRibbedGrip(g, matGrip(), 0, -0.055, 0.02, 0.09);
+  addTriggerGuard(g, dark, 0.05);
+  addShells(g, -0.05, 3);
+  addScrews(g, metal, [[0.037, 0.03, 0.05], [-0.037, 0.03, 0.05]], 0.005);
 
   return markWeapon(g, "doze");
 }

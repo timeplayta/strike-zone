@@ -13,6 +13,7 @@ import {
 } from "./blockbench-model-loader.js";
 import { buildNpcWeapon, attachStylizedWeapon, ensureBlockbenchGunPivot } from "./npc-weapon.js";
 import { attachOrbitDrag } from "./orbit-drag.js";
+import { initCharacterAnim, updateHumanAnimation } from "./character-animation.js";
 
 const viewers = new Map();
 
@@ -78,6 +79,9 @@ export function buildPreviewCharacter(loadout, team = "ct", portrait = false, ch
     human: false,
     player: true,
     among: !!body.among,
+    gun: body.gun || null,
+    weaponPivot: body.weaponPivot || null,
+    rig: body.rig || null,
   };
 }
 
@@ -178,6 +182,18 @@ function mountCharacterViewerImpl(canvasId, opts = {}) {
     rim.intensity = 0.5;
   }
 
+  const animEntity = {
+    group: charGroup,
+    gun: built.gun || null,
+    weaponPivot: built.weaponPivot || null,
+    rig: built.rig || null,
+    mixer: null,
+    alive: true,
+    ragdoll: false,
+    horrorMode: false,
+  };
+  initCharacterAnim(animEntity);
+
   v = {
     canvasId,
     renderer,
@@ -195,6 +211,8 @@ function mountCharacterViewerImpl(canvasId, opts = {}) {
     enemy: !!opts.enemy,
     human: built.human,
     clock: new THREE.Clock(),
+    animEntity: !portrait && !opts.enemy ? animEntity : null,
+    aiming: false,
   };
   viewers.set(canvasId, v);
 
@@ -211,11 +229,13 @@ function mountCharacterViewerImpl(canvasId, opts = {}) {
 
   const tick = () => {
     v.raf = requestAnimationFrame(tick);
-    const dt = v.clock.getDelta();
+    const dt = Math.min(v.clock.getDelta(), 0.05);
     if (v.mixer) v.mixer.update(dt);
     if (v.autoSpin) v.orbit += 0.008;
     pivot.rotation.y = v.orbit;
-    if (!v.portrait) {
+    if (v.animEntity) {
+      updateHumanAnimation(v.animEntity, dt, { aiming: v.aiming, moving: false });
+    } else if (!v.portrait) {
       charGroup.position.y = Math.sin(performance.now() * 0.002) * 0.02;
     }
     renderer.render(scene, camera);
@@ -234,38 +254,45 @@ export async function mountCharacterViewer(canvasId, opts = {}) {
   return mountCharacterViewerImpl(canvasId, opts);
 }
 
-export function updateViewerLoadout(canvasId, loadout) {
-  const v = viewers.get(canvasId);
-  if (!v || v.enemy) return;
+function rebuildViewerCharacter(v, canvasId) {
   v.pivot.remove(v.charGroup);
   disposeGroup(v.charGroup);
-  v.loadout = normalizeLoadout(loadout);
   const isAccountFab = canvasId === "accountFabCanvas";
   const built = buildPreviewCharacter(v.loadout, "ct", v.portrait, v.characterSkin, isAccountFab);
   v.charGroup = built.group;
   v.mixer = built.mixer;
   v.human = built.human;
   v.pivot.add(v.charGroup);
+  if (v.animEntity) {
+    v.animEntity.group = built.group;
+    v.animEntity.gun = built.gun || null;
+    v.animEntity.weaponPivot = built.weaponPivot || null;
+    v.animEntity.rig = built.rig || null;
+  }
   if (v.portrait && isAccountFab) {
     frameAccountFabPortrait(v.charGroup, v.camera);
   }
+}
+
+export function updateViewerLoadout(canvasId, loadout) {
+  const v = viewers.get(canvasId);
+  if (!v || v.enemy) return;
+  v.loadout = normalizeLoadout(loadout);
+  rebuildViewerCharacter(v, canvasId);
 }
 
 export function updateViewerCharacterSkin(canvasId, characterSkin) {
   const v = viewers.get(canvasId);
   if (!v || v.enemy) return;
   v.characterSkin = characterSkin || "soldier";
-  v.pivot.remove(v.charGroup);
-  disposeGroup(v.charGroup);
-  const isAccountFab = canvasId === "accountFabCanvas";
-  const built = buildPreviewCharacter(v.loadout, "ct", v.portrait, v.characterSkin, isAccountFab);
-  v.charGroup = built.group;
-  v.mixer = built.mixer;
-  v.human = built.human;
-  v.pivot.add(v.charGroup);
-  if (v.portrait && isAccountFab) {
-    frameAccountFabPortrait(v.charGroup, v.camera);
-  }
+  rebuildViewerCharacter(v, canvasId);
+}
+
+/** Alterna o boneco entre postura normal e mirando a arma (usado no visualizador) */
+export function setViewerAiming(canvasId, aiming) {
+  const v = viewers.get(canvasId);
+  if (!v) return;
+  v.aiming = !!aiming;
 }
 
 function disposeViewer(v) {
