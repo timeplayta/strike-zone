@@ -12,6 +12,7 @@ import {
   fitBlockbenchModel,
 } from "./blockbench-model-loader.js";
 import { buildNpcWeapon, attachStylizedWeapon, ensureBlockbenchGunPivot } from "./npc-weapon.js";
+import { attachOrbitDrag } from "./orbit-drag.js";
 
 const viewers = new Map();
 
@@ -196,6 +197,17 @@ function mountCharacterViewerImpl(canvasId, opts = {}) {
     clock: new THREE.Clock(),
   };
   viewers.set(canvasId, v);
+
+  if (!isAccountFab) {
+    attachOrbitDrag(
+      canvas,
+      () => viewers.get(canvasId)?.pivot,
+      () => {
+        const cur = viewers.get(canvasId);
+        if (cur) cur.autoSpin = false;
+      }
+    );
+  }
 
   const tick = () => {
     v.raf = requestAnimationFrame(tick);

@@ -306,11 +306,20 @@
           <div class="hub-header hub-header-inline">
             <span class="hub-badge hub-badge-a">🔫</span>
             <span>Arsenal — suas skins</span>
+            <span id="arsenalCoinsMini" class="hub-coins-mini">0 🪙</span>
             <button type="button" id="closeArsenalBtn" class="shop-close hub-back-btn" aria-label="Voltar">✕</button>
           </div>
           <p class="hub-sub">Skins compradas • clique para equipar</p>
           <div class="arsenal-hub-layout">
-            <canvas id="arsenalCanvas" class="arsenal-canvas" width="360" height="240"></canvas>
+            <div class="arsenal-canvas-wrap">
+              <canvas id="arsenalCanvas" class="arsenal-canvas" width="360" height="240"></canvas>
+              <canvas id="arsenalWeaponCanvas" class="arsenal-canvas arsenal-weapon-canvas hidden" width="360" height="240"></canvas>
+              <p class="arsenal-drag-hint">🖱️ Arraste para girar</p>
+              <div class="arsenal-view-toggle" role="group" aria-label="Modo de visualização">
+                <button type="button" id="arsenalViewBothBtn" class="arsenal-view-btn selected" title="Boneco com arma" aria-label="Ver boneco com arma">🧍</button>
+                <button type="button" id="arsenalViewWeaponBtn" class="arsenal-view-btn" title="Arma sozinha" aria-label="Ver arma sozinha">🔫</button>
+              </div>
+            </div>
             <div class="arsenal-hub-side">
               <div id="arsenalWeaponPreview" class="arsenal-weapon-preview">AK-47</div>
               <div id="arsenalWeaponTabs" class="arsenal-weapon-tabs"></div>

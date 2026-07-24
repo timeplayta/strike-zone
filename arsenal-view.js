@@ -15,7 +15,12 @@ import {
   resizeViewer,
   updateViewerLoadout,
 } from "./character-viewer.js";
-import { getShopItemThumbDataUrl } from "./shop-item-preview.js";
+import {
+  getShopItemThumbDataUrl,
+  mountShopFeaturedPreview,
+  stopShopFeaturedPreview,
+  resizeFeaturedPreview,
+} from "./shop-item-preview.js";
 import { switchHubPanel, showPlayHub } from "./menu-hub.js";
 
 function $(id) {
@@ -24,9 +29,27 @@ function $(id) {
 
 let arsenalMounted = false;
 let activeWeapon = "ak47";
+let viewMode = "both"; // "both" | "weapon"
+let lastAcc = null;
+
+const DEFAULT_WEAPON_COLOR = 0x5c3a1e;
 
 function hex(c) {
   return "#" + (c >>> 0).toString(16).padStart(6, "0");
+}
+
+function getActiveWeaponItem(acc) {
+  const activeColor = acc.skins?.[activeWeapon];
+  const owned = WEAPON_SKINS.find((i) => i.weapon === activeWeapon && i.color === activeColor);
+  if (owned) return owned;
+  return {
+    id: `default_${activeWeapon}`,
+    type: "weapon",
+    weapon: activeWeapon,
+    color: activeColor ?? DEFAULT_WEAPON_COLOR,
+    label: getWeaponLabel(activeWeapon),
+    tier: "comum",
+  };
 }
 
 async function renderWeaponTabs(acc) {
@@ -106,15 +129,51 @@ function renderSkinList(acc) {
       preview.style.background = "#334455";
     }
   }
+
+  if (viewMode === "weapon") renderWeaponOnlyPreview(acc);
+}
+
+function renderWeaponOnlyPreview(acc) {
+  const canvas = $("arsenalWeaponCanvas");
+  if (!canvas) return;
+  mountShopFeaturedPreview(canvas, getActiveWeaponItem(acc));
+}
+
+function updateCoinsMini(acc) {
+  const el = $("arsenalCoinsMini");
+  if (el) el.textContent = `${acc.coins || 0} 🪙`;
+}
+
+function applyViewMode(acc) {
+  const bothBtn = $("arsenalViewBothBtn");
+  const weaponBtn = $("arsenalViewWeaponBtn");
+  const bothCanvas = $("arsenalCanvas");
+  const weaponCanvas = $("arsenalWeaponCanvas");
+  bothBtn?.classList.toggle("selected", viewMode === "both");
+  weaponBtn?.classList.toggle("selected", viewMode === "weapon");
+
+  if (viewMode === "weapon") {
+    bothCanvas?.classList.add("hidden");
+    weaponCanvas?.classList.remove("hidden");
+    renderWeaponOnlyPreview(acc);
+  } else {
+    weaponCanvas?.classList.add("hidden");
+    bothCanvas?.classList.remove("hidden");
+    stopShopFeaturedPreview();
+    if (arsenalMounted) resizeViewer("arsenalCanvas");
+  }
 }
 
 export async function refreshArsenal() {
   const acc = await loadAccount(getLoggedInName());
+  lastAcc = acc;
   renderWeaponTabs(acc);
   renderSkinList(acc);
+  updateCoinsMini(acc);
   if (arsenalMounted) {
     updateViewerLoadout("arsenalCanvas", normalizeLoadout(window.__playerLoadout || DEFAULT_LOADOUT));
   }
+  if (viewMode === "weapon") renderWeaponOnlyPreview(acc);
 }
 
 async function openModal() {
@@ -124,6 +183,7 @@ async function openModal() {
     return;
   }
   const acc = await loadAccount(name);
+  lastAcc = acc;
   switchHubPanel("arsenal");
   const panel = $("ffHubPanelArsenal");
   if (panel) {
@@ -132,6 +192,7 @@ async function openModal() {
   }
   renderWeaponTabs(acc);
   renderSkinList(acc);
+  updateCoinsMini(acc);
 
   const loadout = normalizeLoadout(window.__playerLoadout || DEFAULT_LOADOUT);
   requestAnimationFrame(async () => {
@@ -146,10 +207,12 @@ async function openModal() {
       updateViewerLoadout("arsenalCanvas", loadout);
     }
     resizeViewer("arsenalCanvas");
+    applyViewMode(acc);
   });
 }
 
 function closeModal() {
+  stopShopFeaturedPreview();
   showPlayHub();
   const panel = $("ffHubPanelArsenal");
   if (panel) panel.setAttribute("aria-hidden", "true");
@@ -158,11 +221,21 @@ function closeModal() {
 export function initArsenalView() {
   $("openArsenalBtn")?.addEventListener("click", openModal);
   $("closeArsenalBtn")?.addEventListener("click", closeModal);
+  $("arsenalViewBothBtn")?.addEventListener("click", () => {
+    if (viewMode === "both") return;
+    viewMode = "both";
+    applyViewMode(lastAcc || {});
+  });
+  $("arsenalViewWeaponBtn")?.addEventListener("click", () => {
+    if (viewMode === "weapon") return;
+    viewMode = "weapon";
+    applyViewMode(lastAcc || {});
+  });
   window.addEventListener("resize", () => {
     const panel = $("ffHubPanelArsenal");
-    if (arsenalMounted && panel && !panel.classList.contains("hidden")) {
-      resizeViewer("arsenalCanvas");
-    }
+    if (!panel || panel.classList.contains("hidden")) return;
+    if (viewMode === "weapon") resizeFeaturedPreview();
+    else if (arsenalMounted) resizeViewer("arsenalCanvas");
   });
 }
 

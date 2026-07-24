@@ -7,6 +7,7 @@ import { buildPlayerCharacter, preloadPlayerCharacterModels } from "./player-cha
 import { DEFAULT_LOADOUT, applyOutfitToLoadout, applyPresetToLoadout } from "./character-loadout.js";
 import { applyWeaponSkin } from "./weapon-skin-apply.js";
 import { isWeaponGltfReady } from "./weapon-gltf-loader.js";
+import { attachOrbitDrag } from "./orbit-drag.js";
 
 const cache = new Map();
 const THUMB_CACHE_VER = "v11";
@@ -27,6 +28,7 @@ let featuredPivot;
 let featuredLights = false;
 let featuredAnimId = 0;
 let featuredCanvas = null;
+let featuredManualRotate = false;
 
 function ensureWeaponsReady() {
   if (!weaponsReadyPromise) {
@@ -68,6 +70,11 @@ function ensureFeaturedPreview(canvas) {
   featuredRenderer.setSize(w, h, false);
   featuredCamera.aspect = w / h;
   featuredCamera.updateProjectionMatrix();
+}
+
+/** Reajusta o tamanho do canvas em destaque (ex.: após redimensionar a janela) */
+export function resizeFeaturedPreview() {
+  if (featuredCanvas) ensureFeaturedPreview(featuredCanvas);
 }
 
 function addLightsToScene(targetScene, flagRef) {
@@ -213,6 +220,12 @@ export async function mountShopFeaturedPreview(canvas, item) {
   addLightsToScene(featuredScene, lightsRef);
   featuredLights = lightsRef.value;
   clearGroup(featuredPivot);
+  featuredManualRotate = false;
+  attachOrbitDrag(
+    canvas,
+    () => featuredPivot,
+    () => { featuredManualRotate = true; }
+  );
 
   const isWeapon = item.type === "weapon" || item.type === "weapon_unlock";
   if (isWeapon) {
@@ -229,7 +242,7 @@ export async function mountShopFeaturedPreview(canvas, item) {
   const spin = isWeapon;
   const tick = (now) => {
     if (canvas !== featuredCanvas) return;
-    if (spin) featuredPivot.rotation.y = (now - t0) * 0.00055;
+    if (spin && !featuredManualRotate) featuredPivot.rotation.y = (now - t0) * 0.00055;
     featuredRenderer.render(featuredScene, featuredCamera);
     featuredAnimId = requestAnimationFrame(tick);
   };
