@@ -59,6 +59,8 @@ const SHOP = {
   char_cowboy_outlaw: { type: "character", skinId: "cowboy_outlaw", color: 0x6b2a1d, price: 260 },
   char_cowboy_vaqueiro: { type: "character", skinId: "cowboy_vaqueiro", color: 0x2c5f78, price: 220 },
   char_birthday: { type: "character", skinId: "birthday_hero", color: 0xffcc44, price: 0 },
+  char_john_cravoixq: { type: "character", skinId: "john_cravoixq", color: 0x2255aa, price: 890 },
+  char_miria_voixquisa: { type: "character", skinId: "miria_voixquisa", color: 0xb3384f, price: 890 },
   outfit_ct_elite: {
     type: "outfit",
     color: 0x2266aa,

@@ -1,4 +1,4 @@
-const CACHE = "strike-zone-v123";
+const CACHE = "strike-zone-v124";
 const ASSETS = [
   "/",
   "/index.html",
@@ -77,6 +77,10 @@ const ASSETS = [
   "/chameleon-mode.js",
   "/chameleon-map.js",
   "/chameleon-animals.js",
+  "/special-characters.js",
+  "/character-abilities.js",
+  "/john-art.js",
+  "/lobby-view.js",
   "/stylized-character.js",
   "/character-animation.js",
   "/entity-jump.js",

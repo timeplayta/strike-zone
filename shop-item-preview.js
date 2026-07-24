@@ -163,9 +163,16 @@ function addNonWeaponToPivot(item, targetPivot, cam) {
     cam.lookAt(0, 0.9, 0);
     return;
   }
-  targetPivot.add(buildAmongUsCharacter(item.skinId, 0.62).group);
-  cam.position.set(0, 0.92, 1.85);
-  cam.lookAt(0, 0.82, 0);
+  if (item.skinId && item.skinId.startsWith("among")) {
+    targetPivot.add(buildAmongUsCharacter(item.skinId, 0.62).group);
+    cam.position.set(0, 0.92, 1.85);
+    cam.lookAt(0, 0.82, 0);
+    return;
+  }
+  const body = buildPlayerCharacter({ characterSkin: item.skinId, scale: 0.72, withRifle: false, portrait: true });
+  targetPivot.add(body.group);
+  cam.position.set(0, 1.05, 2.15);
+  cam.lookAt(0, 0.9, 0);
 }
 
 export function getShopItemThumbDataUrl(item) {

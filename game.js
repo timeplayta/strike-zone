@@ -42,6 +42,8 @@ import {
   assignEnemyRole,
 } from "./npc-brain.js";
 import { pickNpcWeaponType } from "./npc-weapon.js";
+import { getActiveCharacterAbility } from "./character-abilities.js";
+import { getSavedArtDataUrl } from "./john-art.js";
 import { applyNpcSteering, resolveNavTarget } from "./npc-steering.js";
 import {
   isCinematicActive,
@@ -188,6 +190,7 @@ let innerBombTimer = INNER_BOMB_TIME;
 let innerBombActive = false;
 let innerBombDefused = false;
 let wantHelpers = false;
+let specialCooldownUntil = 0;
 let doorHitMeshes = [];
 let alertPoint = null;
 let alertTimer = 0;
@@ -1307,6 +1310,8 @@ function startGame(config = {}) {
     const mapBtn = document.querySelector(".map-btn.selected");
     const mapKey = config.mapKey || mapBtn?.dataset.map || "dust";
     primaryWeaponId = config.primaryWeaponId || "ak47";
+    const charAbility = getActiveCharacterAbility();
+    if (charAbility?.weaponOverride) primaryWeaponId = charAbility.weaponOverride;
     currentMapKey = mapKey;
     mapData = MAPS[mapKey];
     if (!mapData) {
@@ -1341,6 +1346,7 @@ function startGame(config = {}) {
     round = 1;
     kills = 0;
     deaths = 0;
+    specialCooldownUntil = 0;
     sessionCoins = getAccountCoins(playerName);
     matchOver = false;
     inCinematic = false;
@@ -2525,7 +2531,7 @@ function spawnHelpers() {
   if (!wantHelpers) return;
 
   const stats = getHelperStats();
-  for (let i = 0; i < 2; i++) {
+  for (let i = 0; i < 3; i++) {
     const char = createHelper(i, currentMapKey);
     char.group.position.set(mapData.spawnCT.x + 1.5 + i * 1.8, 0, mapData.spawnCT.z + 2.5);
     scene.add(char.group);
@@ -2735,6 +2741,7 @@ function onKeyDown(e) {
   }
   if (e.code === "KeyR") reload();
   if (e.code === "KeyE") tryInteractWorld();
+  if (e.code === "KeyT") tryUseCharacterSpecial();
   if (e.code === "Digit1") switchWeapon(1);
   if (e.code === "Digit2") switchWeapon(2);
   if (e.code === "Digit3") switchWeapon(3);
@@ -2848,7 +2855,9 @@ function shoot() {
 
   const w = currentWeapon;
   const now = performance.now();
-  if (now - w.lastShot < w.fireRate) return;
+  const charAbility = getActiveCharacterAbility();
+  const fireRateMult = charAbility?.fireRateMult ?? 1;
+  if (now - w.lastShot < w.fireRate * fireRateMult) return;
   if (!w.melee && w.mag <= 0) {
     playEmptyClip();
     return;
@@ -2898,7 +2907,7 @@ function shoot() {
   }
 
   const rawSpread = adsActive && w.adsSpread != null ? w.adsSpread : w.spread;
-  const spreadBase = rawSpread * (mythicSkin ? 0.72 : 1);
+  const spreadBase = rawSpread * (mythicSkin ? 0.72 : 1) * (charAbility?.accuracyMult ?? 1);
   const damageMul = mythicSkin ? 1.1 : 1;
 
   if (w.explosive) {
@@ -2952,8 +2961,12 @@ function shoot() {
       if (enemy) {
         const headshot = hits[0].object.userData?.hitPart === "head";
         const dist = origin.distanceTo(hits[0].point);
-        const dmg = calcWeaponDamage(w, dist, headshot) * damageMul;
+        const dmg = w.bleedWeapon
+          ? headshot ? 80 + Math.random() * 20 : 20 + Math.random() * 10
+          : calcWeaponDamage(w, dist, headshot) * damageMul;
         damageEnemy(enemy, dmg, headshot, hits[0].point);
+        if (w.bleedWeapon && charAbility?.bleed) applyBleedStatus(enemy, charAbility.bleed);
+        if (charAbility?.dizzyOnHit) applyDizzyStatus(enemy, charAbility.dizzyOnHit);
         spawnImpact(hits[0].point, true);
         hitEnemy = true;
         break;
@@ -3264,7 +3277,165 @@ async function killEnemy(e, headshot) {
     )
   );
 
+  const killAbility = getActiveCharacterAbility();
+  if (killAbility?.paintTrailOnKill) spawnPaintTrail(bloodPos);
+
   checkWin();
+}
+
+/* ——— Efeitos de status das habilidades de personagem (John/Miriã) ——— */
+function applyBleedStatus(e, cfg) {
+  const now = performance.now();
+  e.bleedUntil = now + cfg.durationMs;
+  e.bleedTickAt = now + cfg.tickMs;
+  e.bleedDmgPerTick = cfg.dmgPerTick;
+  e.bleedTickMs = cfg.tickMs;
+}
+
+function updateBleedStatus(e) {
+  if (!e.bleedUntil) return;
+  const now = performance.now();
+  if (now > e.bleedUntil) {
+    e.bleedUntil = 0;
+    return;
+  }
+  if (e.alive && now >= (e.bleedTickAt || 0)) {
+    e.bleedTickAt = now + (e.bleedTickMs || 500);
+    damageEnemy(e, e.bleedDmgPerTick || 1, false, null, true);
+  }
+}
+
+function applyDizzyStatus(e, cfg) {
+  e.dizzyUntil = performance.now() + cfg.durationMs;
+}
+
+function updateDizzyStatus(e) {
+  const now = performance.now();
+  const isDizzy = !!(e.dizzyUntil && now < e.dizzyUntil);
+  if (isDizzy && !e._dizzySpeedApplied) {
+    e._baseSpeedBeforeDizzy = e.speed;
+    e.speed = e.speed * 0.35;
+    e._dizzySpeedApplied = true;
+  } else if (!isDizzy && e._dizzySpeedApplied) {
+    e.speed = e._baseSpeedBeforeDizzy ?? e.speed;
+    e._dizzySpeedApplied = false;
+  }
+}
+
+/** Poça de tinta do John — muda de cor e some sozinha depois de alguns segundos */
+function spawnPaintTrail(pos) {
+  const mat = new THREE.MeshBasicMaterial({
+    color: 0xe63946,
+    transparent: true,
+    opacity: 0.88,
+    depthWrite: false,
+  });
+  const mesh = new THREE.Mesh(new THREE.CircleGeometry(0.55 + Math.random() * 0.35, 20), mat);
+  mesh.rotation.x = -Math.PI / 2;
+  mesh.position.set(pos.x, 0.03, pos.z);
+  scene.add(mesh);
+  const bornAt = performance.now();
+  const life = 9000;
+  const tick = () => {
+    const age = performance.now() - bornAt;
+    if (age > life || !mesh.parent) {
+      scene.remove(mesh);
+      mat.dispose();
+      mesh.geometry.dispose();
+      return;
+    }
+    const hue = (age * 0.09) % 360;
+    mat.color.setHSL(hue / 360, 0.7, 0.5);
+    mat.opacity = 0.88 * Math.max(0, 1 - age / life);
+    requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+}
+
+/** Cola a arte desenhada do John na parede que ela acertou */
+function spawnArtDecal(point, localNormal, artUrl) {
+  const loader = new THREE.TextureLoader();
+  loader.load(artUrl, (tex) => {
+    const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, side: THREE.DoubleSide });
+    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(1.15, 1.15), mat);
+    mesh.position.copy(point);
+    const normal = localNormal ? localNormal.clone().normalize() : new THREE.Vector3(0, 0, 1);
+    mesh.lookAt(point.clone().add(normal));
+    mesh.position.addScaledVector(normal, 0.02);
+    scene.add(mesh);
+  });
+}
+
+/** Ataque especial do John (T) — atira a arte desenhada até 150m ou até bater numa parede */
+function performArtAttack(special) {
+  const artUrl = getSavedArtDataUrl();
+  if (!artUrl) {
+    showOverlay("Desenhe sua arte na loja antes de usar (personagem John)!");
+    specialCooldownUntil = 0;
+    return;
+  }
+  const dir = getShootDirection();
+  const origin = camera.position.clone();
+  const hitTargets = [];
+  for (const e of enemies) {
+    if (e.alive) hitTargets.push(...e.hitMeshes);
+  }
+  const ray = new THREE.Raycaster(origin, dir, 0, special.range || 150);
+  const enemyHits = hitTargets.length ? ray.intersectObjects(hitTargets, false) : [];
+  const wallHits = ray.intersectObjects(wallMeshCache, false);
+  const enemyDist = enemyHits[0]?.distance ?? Infinity;
+  const wallDist = wallHits[0]?.distance ?? Infinity;
+
+  if (enemyHits.length && enemyDist < wallDist) {
+    const enemy = findEnemyFromHit(enemyHits[0].object);
+    if (enemy) {
+      damageEnemy(enemy, special.damage || 150, false, enemyHits[0].point);
+      spawnImpact(enemyHits[0].point, true);
+    }
+    showOverlay("Sua arte acertou em cheio!");
+    return;
+  }
+  if (wallHits.length) {
+    let normal = null;
+    if (wallHits[0].face) {
+      normal = wallHits[0].face.normal.clone().transformDirection(wallHits[0].object.matrixWorld);
+    }
+    spawnArtDecal(wallHits[0].point, normal, artUrl);
+    showOverlay("Sua arte grudou na parede!");
+    return;
+  }
+  showOverlay("Sua arte voou pro vazio...");
+}
+
+/** Ataque especial da Miriã (T) — tapa corpo a corpo que mata na hora */
+function performFatalSlap(range = 2.4) {
+  if (isNoCombatMap(mapData)) return;
+  for (const e of enemies) {
+    if (!e.alive) continue;
+    const dist = e.group.position.distanceTo(camera.position);
+    if (dist < range) {
+      damageEnemy(e, e.health + 9999, false, null, true);
+      showOverlay("TAPA FATAL!");
+      return;
+    }
+  }
+  showOverlay("Ninguém por perto pro tapa!");
+}
+
+function tryUseCharacterSpecial() {
+  if (window.__strikeInGameMenuOpen) return;
+  if (!roundActive || player.dead || inCinematic || weaponPickPending) return;
+  const ability = getActiveCharacterAbility();
+  if (!ability?.special) return;
+  const now = performance.now();
+  if (now < specialCooldownUntil) {
+    const secs = Math.ceil((specialCooldownUntil - now) / 1000);
+    showOverlay(`${ability.special.label}: espera mais ${secs}s`);
+    return;
+  }
+  specialCooldownUntil = now + ability.special.cooldownMs;
+  if (ability.special.id === "art_attack") performArtAttack(ability.special);
+  else if (ability.special.id === "fatal_slap") performFatalSlap(ability.special.range);
 }
 
 function damageHelper(h, dmg, attacker) {
@@ -3550,6 +3721,8 @@ function updateEnemies(dt) {
       applyRagdoll(e, dt);
       continue;
     }
+    updateBleedStatus(e);
+    updateDizzyStatus(e);
 
     const posBefore = { x: e.group.position.x, z: e.group.position.z };
     const dist = Math.hypot(e.group.position.x - px, e.group.position.z - pz);

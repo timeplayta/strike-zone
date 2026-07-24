@@ -91,6 +91,26 @@ export const CHARACTER_SKINS = [
   { id: "char_cowboy_vaqueiro", type: "character", skinId: "cowboy_vaqueiro", color: 0x2c5f78, price: 220, label: "Vaqueiro Nômade", tier: "rara" },
   { id: "char_birthday", type: "character", skinId: "birthday_hero", color: 0xffcc44, price: 0, label: "Aniversariante", tier: "presente" },
   { id: "char_soldier_pro", type: "character", skinId: "soldier", color: 0x8899aa, price: 0, label: "Soldado (padrão)", tier: "grátis" },
+  {
+    id: "char_john_cravoixq",
+    type: "character",
+    skinId: "john_cravoixq",
+    color: 0x2255aa,
+    price: 890,
+    label: "John Cravóixq",
+    tier: "mítica",
+    desc: "Atira canetas que sangram o alvo · +50% cadência · especial (T): arte desenhada por você, 150 dmg, 150m, gruda na parede · recarrega em 150s",
+  },
+  {
+    id: "char_miria_voixquisa",
+    type: "character",
+    skinId: "miria_voixquisa",
+    color: 0xb3384f,
+    price: 890,
+    label: "Miriã Vóixquisa",
+    tier: "mítica",
+    desc: "+30% cadência · +40% recarga · +10% precisão · atordoa e inverte os comandos do alvo · especial (T): tapa fatal corpo a corpo (20s)",
+  },
 ];
 
 export const SHOP_OUTFITS = OUTFIT_SETS.map((o) => ({
@@ -156,6 +176,7 @@ export function getWeaponLabel(id) {
     bazooka: "Bazuca",
     glock: "Glock",
     revolver: "Revólver",
+    pens: "Canetas do John",
   };
   return map[id] || id;
 }

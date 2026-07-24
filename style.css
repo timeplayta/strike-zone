@@ -3490,7 +3490,15 @@ body.mode-mobile .flashlight-hud {
 .ff-menu-canvas {
   flex: 1;
   min-height: 0;
+  position: relative;
   /* centro limpo — só fundo do menu */
+}
+
+.lobby-scene-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
 }
 
 .ff-side-nav {
@@ -3676,69 +3684,62 @@ body.ff-map-screen-open .ff-header {
 .shop-hub-preview {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.6rem;
   align-items: stretch;
   order: 1;
+  min-width: 0;
 }
 
-.shop-selected-preview {
-  display: grid;
-  grid-template-columns: minmax(220px, 1.15fr) minmax(140px, 0.85fr);
-  gap: 0.85rem;
-  align-items: center;
-  min-height: 220px;
-  padding: 0.85rem;
-  border: 1px solid rgba(120, 150, 200, 0.18);
-  border-radius: 12px;
-  background:
-    radial-gradient(circle at 28% 35%, rgba(80, 150, 255, 0.2), transparent 38%),
-    linear-gradient(145deg, rgba(18, 26, 40, 0.94), rgba(7, 10, 16, 0.98));
+.shop-canvas-wrap {
+  position: relative;
+  margin-bottom: 0;
 }
 
-.shop-selected-preview-media {
-  min-height: 180px;
-}
-
-.shop-selected-preview-canvas {
-  display: block;
-  width: 100%;
-  height: auto;
-  min-height: 180px;
-  max-height: 300px;
-  border-radius: 10px;
-  background: radial-gradient(ellipse at 50% 45%, #23344e 0%, #080b12 76%);
-}
-
-.shop-selected-preview-canvas.hidden,
-.shop-selected-preview-img.hidden {
+.shop-weapon-only-canvas.hidden {
   display: none;
 }
 
-.shop-selected-preview-img {
-  display: block;
-  width: 100%;
-  min-height: 112px;
-  object-fit: contain;
-  border-radius: 10px;
-  background: radial-gradient(ellipse at 50% 45%, #23344e 0%, #080b12 76%);
+.shop-hub-meta {
+  min-width: 0;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid rgba(120, 150, 200, 0.18);
+  border-radius: 12px;
+  background:
+    radial-gradient(circle at 28% 35%, rgba(80, 150, 255, 0.16), transparent 45%),
+    linear-gradient(145deg, rgba(18, 26, 40, 0.94), rgba(7, 10, 16, 0.98));
 }
 
-.shop-selected-preview-meta h3 {
+.shop-selected-title {
   margin: 0 0 0.25rem;
   color: #f2c46a;
   font-size: 0.95rem;
 }
 
-.shop-selected-preview-meta p {
+.shop-selected-desc {
   margin: 0;
   color: #aab8cc;
   font-size: 0.78rem;
   line-height: 1.35;
 }
 
-.shop-hub-meta {
-  flex: 1;
+.shop-hub-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.5rem;
+}
+
+.shop-hub-divider {
+  display: none;
+}
+
+.shop-hub-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
   min-width: 0;
+  min-height: 0;
+  order: 2;
 }
 
 .shop-catalog {
@@ -3749,7 +3750,6 @@ body.ff-map-screen-open .ff-header {
   padding: 0 2px 6px;
   scrollbar-width: thin;
   scrollbar-color: #f0a030 #101722;
-  order: 2;
 }
 
 .hub-panel-map { width: min(96vw, 860px); }
@@ -3833,35 +3833,53 @@ body.ff-map-screen-open .ff-header {
     min-width: 0;
   }
 
+  .map-hub-layout {
+    display: grid;
+    grid-template-columns: minmax(260px, 0.9fr) minmax(280px, 1.1fr);
+    align-items: stretch;
+  }
+}
+
+@media (min-width: 560px) {
+  .shop-hub-layout {
+    display: grid;
+    grid-template-columns: minmax(260px, 0.85fr) 1px minmax(340px, 1.15fr);
+    align-items: stretch;
+    height: 100%;
+    min-height: 0;
+    gap: 1rem;
+  }
+
+  .shop-hub-preview {
+    min-height: 0;
+  }
+
   .shop-hub-layout .solo-canvas {
     width: 100%;
     max-width: none;
-    height: min(52vh, 430px);
+    height: min(58vh, 480px);
   }
 
-  .shop-hub-layout {
-    display: grid;
-    grid-template-columns: minmax(300px, 0.95fr) minmax(340px, 1.1fr);
-    align-items: stretch;
+  .shop-hub-divider {
+    display: block;
+    width: 1px;
     height: 100%;
+    background: linear-gradient(180deg, transparent, rgba(160, 180, 210, 0.35) 12%, rgba(160, 180, 210, 0.35) 88%, transparent);
+  }
+
+  .shop-hub-list {
     min-height: 0;
   }
 
   .shop-hub-layout .shop-grid {
     grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-    max-height: calc(100vh - 9rem);
+    max-height: calc(100vh - 11rem);
     overflow-y: auto;
     padding-right: 6px;
   }
 
   .shop-hub-layout .shop-item {
     min-height: 128px;
-  }
-
-  .map-hub-layout {
-    display: grid;
-    grid-template-columns: minmax(260px, 0.9fr) minmax(280px, 1.1fr);
-    align-items: stretch;
   }
 }
 
@@ -7407,6 +7425,134 @@ body.tg-open {
     text-align: center;
     padding: 0.5rem 0.35rem;
   }
+}
+
+/* ——— John Cravóixq — quadro de desenho da arte especial ——— */
+.john-art-open-btn {
+  width: 100%;
+  margin-top: 0.5rem;
+  padding: 0.5rem 0.8rem;
+  border-radius: 10px;
+  border: 1px solid rgba(230, 90, 60, 0.5);
+  background: linear-gradient(180deg, #3a2018, #24140e);
+  color: #ffcf9a;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.john-art-open-btn.hidden {
+  display: none;
+}
+
+.john-art-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 13000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(6, 4, 8, 0.82);
+  backdrop-filter: blur(6px);
+}
+
+.john-art-modal.hidden {
+  display: none;
+}
+
+.john-art-card {
+  width: min(420px, 92vw);
+  background: linear-gradient(160deg, rgba(28, 18, 22, 0.98), rgba(12, 8, 10, 0.98));
+  border: 1px solid rgba(230, 120, 80, 0.35);
+  border-radius: 16px;
+  padding: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  max-height: 92vh;
+  overflow-y: auto;
+}
+
+.john-art-title {
+  margin: 0;
+  color: #ffcf9a;
+  font-size: 1.05rem;
+}
+
+.john-art-desc {
+  margin: 0;
+  color: #cbb;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  min-height: 2.2em;
+}
+
+.john-art-canvas {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: #0e0e14;
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.john-art-tools {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.john-art-colors {
+  display: flex;
+  gap: 0.3rem;
+}
+
+.john-art-swatch {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+}
+
+.john-art-swatch.selected {
+  border-color: #fff;
+  transform: scale(1.15);
+}
+
+.john-art-sizes {
+  display: flex;
+  gap: 0.25rem;
+  margin-left: 0.4rem;
+}
+
+.john-art-size {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.john-art-size.selected {
+  border-color: #ff8c42;
+  background: rgba(255, 140, 66, 0.2);
+}
+
+.john-art-actions {
+  display: flex;
+  gap: 0.6rem;
+  margin-top: 0.2rem;
+}
+
+.john-art-actions .tg-btn {
+  flex: 1;
 }
 
 /* ——— Mecha Camaleão — esconde-esconde com camuflagem de cor ——— */

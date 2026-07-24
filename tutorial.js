@@ -400,7 +400,7 @@ function goOptionsExplain() {
     allow: ["#ffGameOptionsPanel", "#ffOptionsBtn", "#ffTopCorner"],
   });
   setChat(
-    "Aqui tu muda a quantidade de NPCs nos modos com bots, escolhe o modo (Eliminação ou Desarmar bomba) e pode pedir 2 ajudantes CT!",
+    "Aqui tu muda a quantidade de NPCs nos modos com bots, escolhe o modo (Eliminação ou Desarmar bomba) e pode pedir 3 ajudantes CT!",
     [{ label: "Beleza!", primary: true, onClick: () => goArsenalClick() }]
   );
 }

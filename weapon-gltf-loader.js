@@ -45,6 +45,7 @@ export const WEAPON_FPS_SCALE = {
   bazooka: 0.68,
   glock: 0.52,
   revolver: 0.54,
+  pens: 0.58,
 };
 
 const templates = new Map();

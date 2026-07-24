@@ -530,9 +530,37 @@ export function buildHdBazooka(tint = 0x45305f) {
   return markWeapon(g, "bazooka");
 }
 
+/** Feixe de canetas — arma exclusiva do John Cravóixq */
+export function buildHdPens(tint = 0x1a3a8f) {
+  const g = new THREE.Group();
+  const metal = matMetal(0xd8d8de);
+  const dark = matDark(0x14141a);
+  const clipMat = matMetal(0xc9c9d2);
+
+  const penColors = [tint, 0xcc2233, 0x1fa055];
+  for (let i = 0; i < 3; i++) {
+    const pen = new THREE.Group();
+    const body = matBody(penColors[i]);
+    pen.add(cyl(0.009, 0.009, 0.34, 12, body, 0, 0, 0, Math.PI / 2));
+    pen.add(cyl(0.0095, 0.0075, 0.05, 12, cloneMat(metal), 0, 0, -0.195, Math.PI / 2));
+    pen.add(cyl(0.003, 0.0001, 0.035, 8, cloneMat(dark), 0, 0, -0.235, Math.PI / 2));
+    pen.add(cyl(0.0092, 0.0092, 0.09, 12, cloneMat(metal), 0, 0, 0.155, Math.PI / 2));
+    pen.add(box(0.004, 0.09, 0.012, cloneMat(clipMat), 0.011, 0.05, 0.1));
+    pen.position.set((i - 1) * 0.026, (i - 1) * -0.006, 0);
+    pen.rotation.z = (i - 1) * 0.05;
+    g.add(pen);
+  }
+  g.add(box(0.05, 0.028, 0.07, dark, 0, -0.04, 0.16));
+  addTriggerGuard(g, dark, 0.19);
+  addScrews(g, metal, [[0.02, -0.02, 0.15], [-0.02, -0.02, 0.15]], 0.004);
+
+  return markWeapon(g, "pens");
+}
+
 export function buildHdWeapon(type = "ak47", tint = 0x5c3a1e) {
   let g;
   switch (type) {
+    case "pens": g = buildHdPens(tint); break;
     case "scar": g = buildHdScar(tint); break;
     case "m4": g = buildHdM4(tint); break;
     case "ump45": g = buildHdUmp45(tint); break;

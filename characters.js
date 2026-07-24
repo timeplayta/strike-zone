@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { buildPlayerCharacter } from "./player-character.js";
 import { pickNpcWeaponType } from "./npc-weapon.js";
+import { DEFAULT_LOADOUT, applyOutfitToLoadout } from "./character-loadout.js";
 
 const OUTFITS = {
   dust: [
@@ -91,21 +92,30 @@ export function createHostage(variant = 0) {
   }).group;
 }
 
+/** Cada ajudante usa um conjunto de roupa diferente pra dar pra distinguir de longe */
+const HELPER_OUTFITS = ["outfit_ct_elite", "outfit_desert_raider", "outfit_black_ops"];
+const HELPER_WEAPONS = ["m4", "scar", "ump45"];
+const HELPER_NAMES = ["Operador Alpha", "Operador Bravo", "Operador Charlie"];
+const HELPER_HORROR_NAMES = ["Eco Alpha", "Eco Bravo", "Eco Charlie"];
+
 export function createHelper(index, mapKey = "dust") {
   const horror = mapKey === "horror";
   const faceProfile = HELPER_FACES[index] || HELPER_FACES[0];
+  const weaponType = HELPER_WEAPONS[index] || HELPER_WEAPONS[0];
+  const loadout = applyOutfitToLoadout(DEFAULT_LOADOUT, HELPER_OUTFITS[index] || HELPER_OUTFITS[0]);
   const body = buildPlayerCharacter({
     characterSkin: "operator",
+    loadout,
     scale: 1.04,
     withRifle: true,
-    weaponType: index === 0 ? "m4" : "scar",
+    weaponType,
     team: "ct",
   });
   return {
     ...body,
-    name: horror ? (index === 0 ? "Eco Alpha" : "Eco Bravo") : index === 0 ? "Operador Alpha" : "Operador Bravo",
+    name: (horror ? HELPER_HORROR_NAMES[index] : HELPER_NAMES[index]) || `Operador ${index + 1}`,
     isHelper: true,
-    weaponType: index === 0 ? "m4" : "scar",
+    weaponType,
   };
 }
 

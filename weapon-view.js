@@ -5,6 +5,7 @@ import { WEAPON_FPS_SCALE } from "./weapon-gltf-loader.js";
 import { applyWeaponSkin, findWeaponSkinItem } from "./weapon-skin-apply.js";
 
 import { buildMeleeFpsModel } from "./melee-weapons.js";
+import { getActiveCharacterAbility } from "./character-abilities.js";
 
 
 
@@ -280,6 +281,12 @@ export function createWeaponView(camera) {
 
 
 
+  const pensGroup = makeFpsWeapon("pens", WEAPON_FPS_SCALE.pens, 0x2255aa);
+
+  pensGroup.visible = false;
+
+
+
   const knifeBlade = new THREE.Mesh(
     new THREE.BoxGeometry(0.02, 0.04, 0.22),
     new THREE.MeshStandardMaterial({ color: 0x888888, roughness: 0.35, metalness: 0.75 })
@@ -317,7 +324,7 @@ export function createWeaponView(camera) {
 
   root.add(
 
-    akGroup, scarGroup, m4Group, umpGroup, awmGroup, shotgunGroup, bazookaGroup, glockGroup, revolverGroup,
+    akGroup, scarGroup, m4Group, umpGroup, awmGroup, shotgunGroup, bazookaGroup, glockGroup, revolverGroup, pensGroup,
 
     knifeGroup, meleeModels.facao, meleeModels.porrete, meleeModels.katana
 
@@ -372,6 +379,8 @@ export function createWeaponView(camera) {
 
       bazooka: bazookaGroup,
 
+      pens: pensGroup,
+
     },
 
     meleeModels,
@@ -423,6 +432,8 @@ const MUZZLE_Z = {
   revolver: -0.15,
 
   glock: -0.12,
+
+  pens: -0.16,
 
 };
 
@@ -557,7 +568,8 @@ export function updateWeaponView(view, dt, moving = false) {
   view.adsBlend += (targetAds - view.adsBlend) * Math.min(1, dt * 14);
 
   const b = view.adsBlend;
-  view.reloadAnim = Math.max(0, (view.reloadAnim || 0) - dt * 2.8);
+  const reloadAnimMult = getActiveCharacterAbility()?.reloadAnimMult ?? 1;
+  view.reloadAnim = Math.max(0, (view.reloadAnim || 0) - dt * (2.8 / reloadAnimMult));
   const reload = view.reloadAnim || 0;
   resetWeaponModelPose(view);
 

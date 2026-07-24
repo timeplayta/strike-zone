@@ -1,6 +1,6 @@
 /** Tela cheia de mapas — abre pelo botão acima de JOGAR */
 
-import { getMapCardArtUrl } from "./map-card-art.js?v=74";
+import { getMapCardArtUrl } from "./map-card-art.js?v=75";
 import { closeAccountModalIfLeavingHome } from "./account-hub.js";
 
 const MAPS = [

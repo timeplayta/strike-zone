@@ -9,7 +9,7 @@ import {
   LOADOUT_ITEMS,
   getShopItem,
 } from "./shop-catalog.js";
-import { getShopItemThumbDataUrl, getShopItemThumbDataUrlAsync, mountShopFeaturedPreview, stopShopFeaturedPreview, preloadShopPreviews, warmShopThumbCache } from "./shop-item-preview.js";
+import { getShopItemThumbDataUrl, getShopItemThumbDataUrlAsync, preloadShopPreviews, warmShopThumbCache } from "./shop-item-preview.js";
 import { ownsWeapon } from "./weapon-unlocks.js";
 
 export const SHOP_ITEMS = ALL_SHOP_ITEMS;
@@ -529,26 +529,19 @@ function getShopItemState(item, acc) {
 }
 
 function updateShopSelectedPreview(item, owned = false, active = false) {
-  const img = document.getElementById("shopSelectedPreviewImg");
-  const canvas = document.getElementById("shopWeaponPreviewCanvas");
   const title = document.getElementById("shopSelectedPreviewTitle");
   const desc = document.getElementById("shopSelectedPreviewDesc");
   if (!item || !title || !desc) return;
 
-  const isWeapon = item.type === "weapon" || item.type === "weapon_unlock";
-  if (isWeapon && canvas) {
-    img?.classList.add("hidden");
-    canvas.classList.remove("hidden");
-    mountShopFeaturedPreview(canvas, item);
-  } else {
-    stopShopFeaturedPreview();
-    canvas?.classList.add("hidden");
-    img?.classList.remove("hidden");
-    if (img) {
-      getShopItemThumbDataUrlAsync(item).then((url) => {
-        if (url) img.src = url;
-      });
-    }
+  import("./solo-view.js").then((m) => m.previewShopItemLive?.(item));
+
+  const artBtn = document.getElementById("shopOpenArtBtn");
+  if (artBtn) {
+    const showArtBtn = item.skinId === "john_cravoixq" && owned;
+    artBtn.classList.toggle("hidden", !showArtBtn);
+    artBtn.onclick = showArtBtn
+      ? () => import("./john-art.js").then((m) => m.openArtDrawingModal?.())
+      : null;
   }
 
   title.textContent = item.label;
@@ -562,7 +555,9 @@ function updateShopSelectedPreview(item, owned = false, active = false) {
     : item.type === "outfit" ? "Conjunto"
     : item.type === "loadout" ? item.category || "Peça"
     : "Personagem";
-  desc.textContent = `${type} • ${item.tier || "comum"} • ${action}`;
+  desc.textContent = item.desc
+    ? `${item.desc} — ${action}`
+    : `${type} • ${item.tier || "comum"} • ${action}`;
 }
 
 async function renderShopGrid(grid, items, acc, onBuy) {
@@ -608,8 +603,10 @@ export async function refreshShopUI(username) {
 
   const coins = acc.coins || 0;
   const shopCoinsEl = document.getElementById("shopCoins");
+  const shopCoinsMiniEl = document.getElementById("shopCoinsMini");
   const menuCoinsEl = document.getElementById("menuCoinsDisplay");
   if (shopCoinsEl) shopCoinsEl.textContent = `${coins} 🪙`;
+  if (shopCoinsMiniEl) shopCoinsMiniEl.textContent = `${coins} 🪙`;
   if (menuCoinsEl) menuCoinsEl.textContent = `${coins} 🪙`;
 
   const accHint = document.getElementById("accountHint");
@@ -639,6 +636,7 @@ export async function refreshShopUI(username) {
       import("./character-customizer.js").then((m) => m.preloadPlayerLoadout?.(username));
       import("./arsenal-view.js").then((m) => m.refreshArsenal?.());
       import("./account-hub.js").then((m) => m.refreshAccountHub?.());
+      import("./lobby-view.js").then((m) => m.refreshLobbyScene?.());
     } else alert(res.msg);
   };
 

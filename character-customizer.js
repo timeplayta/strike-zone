@@ -75,6 +75,7 @@ function refreshPreview() {
     updateViewerCharacterSkin("customizerCanvas", currentCharacterSkin);
   }
   import("./solo-view.js").then((m) => m.refreshSoloViewer?.());
+  import("./lobby-view.js").then((m) => m.refreshLobbyScene?.());
   refreshAccountHub();
   import("./account-hub.js").then((m) => m.mountAccountFab?.());
 }
@@ -265,6 +266,7 @@ async function saveLoadout() {
       refreshAccountHub();
       import("./account-hub.js").then((m) => m.mountAccountFab?.());
       import("./solo-view.js").then((m) => m.refreshSoloViewer?.());
+      import("./lobby-view.js").then((m) => m.refreshLobbyScene?.());
     } else alert(res.msg || "Erro ao salvar.");
   } catch {
     alert("Servidor offline.");

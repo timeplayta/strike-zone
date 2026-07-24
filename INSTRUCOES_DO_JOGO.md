@@ -60,7 +60,7 @@ Este documento reúne **todas as solicitações e diretrizes** passadas para o d
 - Mapa (Dust / Warehouse)
 - Arma principal (AK-47, SCAR, AWM, Doze)
 - Modo (Eliminação / Defuse)
-- **Seleção de NPCs antes da partida:** botões para 1, 4, 8, 12 ou 20 inimigos + botão **+2 Ajudantes CT** (aliados)
+- **Seleção de NPCs antes da partida:** botões para 1, 4, 8, 12 ou 20 inimigos + botão **+3 Ajudantes CT** (aliados)
 - Ajuste fino com slider (1–20) e opção de dificuldade dinâmica
 - **Layout PC:** dispositivo, mapas, armas e NPCs em **fileira horizontal**
 - **Layout celular:** mesmas opções **empilhadas na vertical**
@@ -70,8 +70,8 @@ Este documento reúne **todas as solicitações e diretrizes** passadas para o d
 
 ## 5. Ajudantes CT (opcionais)
 
-- **2 operadores aliados** se marcado no menu.
-- Uniforme azul CT, seguem o jogador e atiram nos bandidos.
+- **3 operadores aliados** se marcado no menu.
+- Cada um usa um uniforme diferente (CT azul, deserto, black ops) pra dar pra distinguir de longe, seguem o jogador e atiram nos bandidos.
 - Se forem eliminados, **T ganha pontos** e os inimigos são alertados.
 - **Stats escalam com a quantidade de inimigos** (1 bot = básicos, 20 bots = elite):
 
@@ -91,7 +91,7 @@ Este documento reúne **todas as solicitações e diretrizes** passadas para o d
 
 - Humanos **realistas estilo FPS tático** (~1,72 m): botas, pernas proporcionais, colete tático, cinto com rádio, joelheiras, luvas, rifle nas mãos.
 - **Rostos únicos por NPC:** pele variada, olhos, barba, cicatriz; ou **máscaras táticas** (caveira, listras, camuflagem), **bandana**, **boné** ou **óculos** — cada bandido tem visual diferente.
-- Ajudantes CT: uniforme azul + **capacete tático** com rosto visível por baixo (Alpha e Bravo distintos).
+- Ajudantes CT: uniformes distintos (azul/deserto/black ops) + **capacete tático** com rosto visível por baixo (Alpha, Bravo e Charlie).
 - Boss: corpo musculoso maior + **máscara caveira vermelha** + metralhadora rotativa.
 - **Barra de HP escondida:** só aparece quando **o jogador atira** no inimigo, e **some 2 segundos** após o último tiro — sem "wallhack" de vida à distância (jogo mais difícil).
 - Barras dos **ajudantes CT** ficam sempre visíveis (aliados).

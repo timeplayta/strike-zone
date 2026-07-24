@@ -18,6 +18,7 @@ export const NPC_HD_GRIP = {
   bazooka: { pos: [0, 0.06, 0.06], rot: [0.02, 0, 0], scale: 1 },
   glock: { pos: [0, 0.055, 0.025], rot: [0.08, 0, 0], scale: 1 },
   revolver: { pos: [0, 0.055, 0.025], rot: [0.08, 0, 0], scale: 1 },
+  pens: { pos: [0, 0.05, 0.02], rot: [0.08, 0, 0], scale: 1.1 },
 };
 
 /** Offsets para armas GLB Blockbench (loot / revólver) */
@@ -31,6 +32,7 @@ export const BLOCKBENCH_GRIP = {
   bazooka: { pos: [0, -0.03, 0.1], rot: [0, 0, 0], scale: 0.62 },
   glock: { pos: [0, -0.025, 0.035], rot: [0, 0, 0], scale: 0.82 },
   revolver: { pos: [0, -0.025, 0.035], rot: [0, 0, 0], scale: 0.8 },
+  pens: { pos: [0, -0.025, 0.035], rot: [0, 0, 0], scale: 0.85 },
 };
 
 /** Compat — alias antigo */
@@ -47,6 +49,7 @@ const HAND_GRIP = {
   bazooka: { pos: [0.034, 0.038, 0.012], rot: [-1.5708, Math.PI, 0], scale: 0.48 },
   glock: { pos: [0.018, 0.018, 0.006], rot: [-1.5708, Math.PI, 0], scale: 0.36 },
   revolver: { pos: [0.02, 0.02, 0.008], rot: [-1.5708, Math.PI, 0], scale: 0.38 },
+  pens: { pos: [0.018, 0.018, 0.006], rot: [-1.5708, Math.PI, 0], scale: 0.4 },
 };
 
 function getMeshGeometryCenter(mesh) {

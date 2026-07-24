@@ -15,6 +15,7 @@ import {
   fitBlockbenchModel,
 } from "./blockbench-model-loader.js";
 import { buildNpcWeapon, attachStylizedWeapon, ensureBlockbenchGunPivot } from "./npc-weapon.js";
+import { isSpecialCharacter, buildSpecialCharacter } from "./special-characters.js";
 
 const FACE_COLORS = {
   eyeWhite: 0xf4f4f8,
@@ -387,6 +388,16 @@ export function buildPlayerCharacter(options = {}) {
     const among = buildAmongUsCharacter(skinId, scale * (portrait ? 0.95 : 1.1), normalized);
     among.group.userData.playerAvatar = true;
     return { ...among, playerModel: true };
+  }
+
+  if (isSpecialCharacter(skinId)) {
+    const special = buildSpecialCharacter(skinId, {
+      scale: scale * (portrait ? 0.95 : 1),
+      withRifle,
+      weaponType,
+      shirt: buildOpts.shirt,
+    });
+    if (special) return special;
   }
 
   const body = buildBlockbenchPlayer(skinId, {
