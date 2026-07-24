@@ -110,7 +110,17 @@ function refreshAccountPanel(name) {
   window.dispatchEvent(new CustomEvent("strikezone-account-refresh"));
 }
 
+/** Conta só pode abrir na tela inicial do menu — não sobre loja, boneco, armas ou mapa. */
+function isHomeScreenActive() {
+  return (
+    !document.body.classList.contains("hub-panel-open") &&
+    !document.body.classList.contains("ff-map-screen-open") &&
+    !document.body.classList.contains("game-active")
+  );
+}
+
 function openModal() {
+  if (!isHomeScreenActive()) return;
   const name = getLoggedInName() || $("playerName")?.value?.trim();
   if (!name) {
     alert("Faça login para ver sua conta.");
@@ -128,6 +138,12 @@ function openModal() {
 function closeModal() {
   $("accountModal")?.classList.add("hidden");
   $("accountModal")?.setAttribute("aria-hidden", "true");
+}
+
+/** Fecha a conta se o jogador sair da tela inicial (loja, boneco, armas, mapa). */
+export function closeAccountModalIfLeavingHome() {
+  if (!$("accountModal") || $("accountModal").classList.contains("hidden")) return;
+  closeModal();
 }
 
 async function pickAvatar(id) {

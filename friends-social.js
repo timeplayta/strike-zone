@@ -24,17 +24,24 @@ function $(id) {
 let micStream = null;
 let searchTimer = null;
 
+const AVATAR_ICON_IMAGES = {
+  dog: "/assets/icons/avatar-dog.png",
+  cat: "/assets/icons/avatar-cat.png",
+};
+
 function avatarEmoji(avatar) {
-  if (avatar === "dog") return "🐕";
-  if (avatar === "cat") return "🐈";
-  if (avatar === "enemy") return "☠";
+  if (avatar === "enemy") return "💀";
   if (avatar === "photo") return "📷";
-  return "🎖";
+  return "👤";
 }
 
 function friendThumbHtml(friend) {
   if (friend?.profilePhoto) {
     return `<img class="friend-thumb" src="${friend.profilePhoto}" alt="" />`;
+  }
+  const img = AVATAR_ICON_IMAGES[friend?.avatar];
+  if (img) {
+    return `<img class="friend-thumb" src="${img}" alt="" />`;
   }
   return `<span class="friend-thumb friend-thumb-emoji">${avatarEmoji(friend?.avatar)}</span>`;
 }
@@ -300,6 +307,30 @@ async function compressImageDataUrl(dataUrl, maxSide = 512, quality = 0.82) {
   });
 }
 
+async function sendPhotoDataUrl(dataUrl) {
+  const status = $("accountPhotoStatus");
+  if (status) status.textContent = "Enviando foto…";
+  try {
+    const compressed = await compressImageDataUrl(dataUrl);
+    const r = await uploadProfilePhoto(compressed);
+    if (!r.ok) {
+      if (status) status.textContent = "";
+      alert(r.msg || "Erro ao enviar");
+      return false;
+    }
+    updatePhotoPreview();
+    if (status) status.textContent = "Foto salva no perfil!";
+    setTimeout(() => {
+      if (status) status.textContent = "";
+    }, 2200);
+    return true;
+  } catch {
+    if (status) status.textContent = "";
+    alert("Não deu pra processar essa imagem.");
+    return false;
+  }
+}
+
 async function handlePhotoFile(file) {
   if (!file || !file.type.startsWith("image/")) {
     alert("Escolha uma imagem (JPG, PNG ou WebP).");
@@ -309,26 +340,106 @@ async function handlePhotoFile(file) {
     alert("Arquivo grande demais. Tente outra foto.");
     return;
   }
-  const status = $("accountPhotoStatus");
-  if (status) status.textContent = "Enviando foto…";
   try {
     const raw = await fileToDataUrl(file);
-    const compressed = await compressImageDataUrl(raw);
-    const r = await uploadProfilePhoto(compressed);
-    if (!r.ok) {
-      if (status) status.textContent = "";
-      alert(r.msg || "Erro ao enviar");
-      return;
-    }
-    updatePhotoPreview();
-    if (status) status.textContent = "Foto salva no perfil!";
-    setTimeout(() => {
-      if (status) status.textContent = "";
-    }, 2200);
+    await sendPhotoDataUrl(raw);
   } catch {
-    if (status) status.textContent = "";
     alert("Não deu pra processar essa imagem.");
   }
+}
+
+let cameraStream = null;
+
+function stopCameraStream() {
+  if (cameraStream) {
+    cameraStream.getTracks().forEach((t) => t.stop());
+    cameraStream = null;
+  }
+}
+
+function closeCameraModal() {
+  stopCameraStream();
+  $("accountCameraModal")?.classList.add("hidden");
+  $("accountCameraModal")?.setAttribute("aria-hidden", "true");
+}
+
+function setCameraStage(mode) {
+  const video = $("accountCameraVideo");
+  const canvas = $("accountCameraCanvas");
+  const captureBtn = $("accountCameraCaptureBtn");
+  const retakeBtn = $("accountCameraRetakeBtn");
+  const useBtn = $("accountCameraUseBtn");
+  video?.classList.toggle("hidden", mode !== "live");
+  canvas?.classList.toggle("hidden", mode !== "preview");
+  captureBtn?.classList.toggle("hidden", mode !== "live");
+  retakeBtn?.classList.toggle("hidden", mode !== "preview");
+  useBtn?.classList.toggle("hidden", mode !== "preview");
+}
+
+async function openCameraModal() {
+  const modal = $("accountCameraModal");
+  const status = $("accountCameraStatus");
+  if (!modal) return;
+  modal.classList.remove("hidden");
+  modal.setAttribute("aria-hidden", "false");
+  setCameraStage("live");
+  if (status) status.textContent = "Ligando a câmera…";
+
+  if (!navigator.mediaDevices?.getUserMedia) {
+    if (status) status.textContent = "Seu navegador não permite abrir a câmera aqui. Use \"Escolher arquivo\".";
+    return;
+  }
+  if (!window.isSecureContext) {
+    if (status) {
+      status.textContent =
+        "A câmera só funciona em conexão segura (https) ou localhost. Use \"Escolher arquivo\" ou acesse pelo site oficial.";
+    }
+    return;
+  }
+
+  try {
+    cameraStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } },
+      audio: false,
+    });
+    const video = $("accountCameraVideo");
+    if (video) {
+      video.srcObject = cameraStream;
+      await video.play().catch(() => {});
+    }
+    if (status) status.textContent = "Sorria e clique em Capturar.";
+  } catch (err) {
+    const denied = err?.name === "NotAllowedError";
+    if (status) {
+      status.textContent = denied
+        ? "Permissão da câmera negada. Libere o acesso nas configurações do navegador ou use \"Escolher arquivo\"."
+        : "Não foi possível acessar a câmera. Use \"Escolher arquivo\".";
+    }
+  }
+}
+
+function captureCameraFrame() {
+  const video = $("accountCameraVideo");
+  const canvas = $("accountCameraCanvas");
+  if (!video || !canvas || !video.videoWidth) return;
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  const ctx = canvas.getContext("2d");
+  ctx.translate(canvas.width, 0);
+  ctx.scale(-1, 1);
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  stopCameraStream();
+  setCameraStage("preview");
+  const status = $("accountCameraStatus");
+  if (status) status.textContent = "Gostou da foto?";
+}
+
+async function useCapturedPhoto() {
+  const canvas = $("accountCameraCanvas");
+  if (!canvas) return;
+  const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
+  const ok = await sendPhotoDataUrl(dataUrl);
+  if (ok) closeCameraModal();
 }
 
 export function refreshSocialPanels() {
@@ -405,11 +516,12 @@ export function initFriendsSocial() {
     e.target.value = "";
   });
 
-  $("accountPhotoCameraInput")?.addEventListener("change", (e) => {
-    const file = e.target.files?.[0];
-    if (file) handlePhotoFile(file);
-    e.target.value = "";
-  });
+  $("accountPhotoCameraBtn")?.addEventListener("click", openCameraModal);
+  $("accountCameraCloseBtn")?.addEventListener("click", closeCameraModal);
+  $("accountCameraBackdrop")?.addEventListener("click", closeCameraModal);
+  $("accountCameraCaptureBtn")?.addEventListener("click", captureCameraFrame);
+  $("accountCameraRetakeBtn")?.addEventListener("click", openCameraModal);
+  $("accountCameraUseBtn")?.addEventListener("click", useCapturedPhoto);
 
   $("accountPhotoRemoveBtn")?.addEventListener("click", async () => {
     if (!getProfilePhotoUrl()) return;
@@ -422,7 +534,13 @@ export function initFriendsSocial() {
     updatePhotoPreview();
   });
 
-  window.addEventListener("beforeunload", stopMic);
+  $("closeAccountBtn")?.addEventListener("click", closeCameraModal);
+  $("accountModalBackdrop")?.addEventListener("click", closeCameraModal);
+
+  window.addEventListener("beforeunload", () => {
+    stopMic();
+    stopCameraStream();
+  });
   window.addEventListener("strikezone-account-refresh", refreshSocialPanels);
   refreshSocialPanels();
 }

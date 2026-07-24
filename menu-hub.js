@@ -1,6 +1,7 @@
 /** Navegação do hub no menu principal */
 
 import { stopShopFeaturedPreview } from "./shop-item-preview.js";
+import { closeAccountModalIfLeavingHome } from "./account-hub.js";
 
 const HUB_PANELS = {
   character: "ffHubPanelCharacter",
@@ -38,6 +39,7 @@ export function switchHubPanel(panel) {
   });
 
   syncHubOverlay(openPanel);
+  if (openPanel) closeAccountModalIfLeavingHome();
 }
 
 export function showPlayHub() {

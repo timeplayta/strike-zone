@@ -40,7 +40,7 @@
       background: rgba(0,0,0,.25); color: rgba(255,255,255,.75); cursor: pointer; }
     .welcome-tab.active { background: rgba(232,192,96,.18); border-color: rgba(232,192,96,.45); color: #e8c060; }
   </style>
-    <link rel="stylesheet" href="/style.css?v=96" />
+    <link rel="stylesheet" href="/style.css?v=97" />
 
   <script>
 
@@ -555,8 +555,7 @@
           <span id="accountPhotoEmpty" class="account-photo-empty">Sem foto</span>
         </div>
         <div class="account-photo-actions">
-          <label class="account-photo-btn" for="accountPhotoCameraInput">Tirar foto</label>
-          <input type="file" id="accountPhotoCameraInput" class="visually-hidden" accept="image/*" capture="user" />
+          <button type="button" id="accountPhotoCameraBtn" class="account-photo-btn">Tirar foto</button>
           <label class="account-photo-btn" for="accountPhotoInput">Escolher arquivo</label>
           <input type="file" id="accountPhotoInput" class="visually-hidden" accept="image/png,image/jpeg,image/webp" />
           <button type="button" id="accountPhotoRemoveBtn" class="account-photo-btn account-photo-btn-danger">Remover</button>
@@ -565,10 +564,10 @@
       </div>
       <label class="hub-section-label">Ícone do perfil</label>
       <div class="avatar-grid avatar-grid-5">
-        <button type="button" class="avatar-pick" data-avatar="dog" title="Cachorro"><span>🐕</span><small>Cachorro</small></button>
-        <button type="button" class="avatar-pick" data-avatar="cat" title="Gato"><span>🐈</span><small>Gato</small></button>
-        <button type="button" class="avatar-pick selected" data-avatar="soldier" title="Meu personagem"><span>🎖</span><small>Meu boneco</small></button>
-        <button type="button" class="avatar-pick" data-avatar="enemy" title="Inimigo"><span>☠</span><small>Inimigo</small></button>
+        <button type="button" class="avatar-pick" data-avatar="dog" title="Cachorro"><img class="avatar-pick-img" src="/assets/icons/avatar-dog.png" alt="Cachorro" /><small>Cachorro</small></button>
+        <button type="button" class="avatar-pick" data-avatar="cat" title="Gato"><img class="avatar-pick-img" src="/assets/icons/avatar-cat.png" alt="Gato" /><small>Gato</small></button>
+        <button type="button" class="avatar-pick selected" data-avatar="soldier" title="Meu personagem"><span>👤</span><small>Meu boneco</small></button>
+        <button type="button" class="avatar-pick" data-avatar="enemy" title="Inimigo"><span>💀</span><small>Inimigo</small></button>
         <button type="button" class="avatar-pick" data-avatar="photo" title="Minha foto" disabled><span>📷</span><small>Minha foto</small></button>
       </div>
       <label class="hub-section-label">Conversas por voz</label>
@@ -598,6 +597,27 @@
           <span class="account-preview-title">Personagem inimigo</span>
           <canvas id="accountEnemyCanvas" width="280" height="200"></canvas>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="accountCameraModal" class="hub-modal hidden" aria-hidden="true">
+    <div class="hub-modal-backdrop" id="accountCameraBackdrop"></div>
+    <div class="hub-modal-panel hub-panel-camera">
+      <div class="hub-header">
+        <span class="hub-badge">📷</span>
+        <span>Tirar foto</span>
+        <button type="button" id="accountCameraCloseBtn" class="shop-close" aria-label="Fechar">✕</button>
+      </div>
+      <div class="account-camera-stage">
+        <video id="accountCameraVideo" class="account-camera-video hidden" autoplay playsinline muted></video>
+        <canvas id="accountCameraCanvas" class="account-camera-canvas hidden"></canvas>
+      </div>
+      <p id="accountCameraStatus" class="social-status-note">Ligando a câmera…</p>
+      <div class="account-camera-actions">
+        <button type="button" id="accountCameraCaptureBtn" class="btn-primary hidden">Capturar</button>
+        <button type="button" id="accountCameraRetakeBtn" class="account-photo-btn hidden">Tirar outra</button>
+        <button type="button" id="accountCameraUseBtn" class="btn-primary hidden">Usar essa foto</button>
       </div>
     </div>
   </div>

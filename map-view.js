@@ -1,6 +1,7 @@
 /** Tela cheia de mapas — abre pelo botão acima de JOGAR */
 
 import { getMapCardArtUrl } from "./map-card-art.js?v=74";
+import { closeAccountModalIfLeavingHome } from "./account-hub.js";
 
 const MAPS = [
   { id: "dust", category: "tiro", name: "Dust Alley", desc: "Deserto aberto" },
@@ -106,6 +107,7 @@ export function openMapFullscreen() {
   el.setAttribute("aria-hidden", "false");
   $("ffMapPickerBtn")?.setAttribute("aria-expanded", "true");
   document.body.classList.add("ff-map-screen-open");
+  closeAccountModalIfLeavingHome();
 }
 
 export function closeMapFullscreen() {

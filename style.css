@@ -3011,6 +3011,13 @@ body.mode-mobile .flashlight-hud {
   font-size: 1.5rem;
 }
 .avatar-pick small { font-size: 0.62rem; color: #9ab0c0; }
+.avatar-pick-img {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+}
 .avatar-pick.selected {
   border-color: #66aaff;
   background: rgba(50, 100, 180, 0.25);
@@ -3075,6 +3082,41 @@ body.mode-mobile .flashlight-hud {
   border-color: rgba(220, 80, 80, 0.45);
   color: #ffb0b0;
   background: rgba(120, 30, 30, 0.25);
+}
+
+.hub-panel-camera {
+  width: min(94vw, 480px);
+}
+.account-camera-stage {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #000;
+  display: grid;
+  place-items: center;
+}
+.account-camera-video,
+.account-camera-canvas {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.account-camera-video {
+  transform: scaleX(-1);
+}
+.account-camera-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+.account-camera-actions .btn-primary,
+.account-camera-actions .account-photo-btn {
+  flex: 1;
+  min-width: 120px;
+  margin-top: 0;
 }
 
 .social-options-body {
@@ -3513,9 +3555,11 @@ body.hub-panel-open {
   overflow: hidden;
 }
 
-/* Com um painel em tela cheia (Boneco/Armas/Loja) aberto, o cartão de conta
-   flutuante fica acima do conteúdo e atrapalha a visualização — escondemos. */
-body.hub-panel-open .ff-header {
+/* Com um painel em tela cheia (Boneco/Armas/Loja, seleção de mapa) aberto, o
+   cartão de conta flutuante fica acima do conteúdo e atrapalha a visualização
+   — escondemos. A conta só deve aparecer na tela inicial do menu. */
+body.hub-panel-open .ff-header,
+body.ff-map-screen-open .ff-header {
   display: none;
 }
 
