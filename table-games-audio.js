@@ -54,10 +54,76 @@ function noiseBurst(dur, vol, lowpass = 1800) {
   }
 }
 
+/* ——— Vozes da IA — seleção inteligente de voz + 2 locutores (M/F) ——— */
+let voiceCache = [];
+function refreshVoices() {
+  try {
+    voiceCache = speechSynthesis.getVoices?.() || [];
+  } catch {
+    voiceCache = [];
+  }
+  return voiceCache;
+}
+if (typeof speechSynthesis !== "undefined") {
+  try {
+    speechSynthesis.addEventListener?.("voiceschanged", refreshVoices);
+  } catch {
+    /* ignore */
+  }
+}
+
+const FEMALE_HINTS = ["maria", "francisca", "fernanda", "camila", "luciana", "yara", "helena", "isabela", "female", "mulher"];
+const MALE_HINTS = ["daniel", "antonio", "antônio", "fabio", "fábio", "ricardo", "humberto", "julio", "júlio", "felipe", "male", "homem"];
+
+function classifyVoice(v) {
+  const n = v.name.toLowerCase();
+  const natural = /natural|online|neural/.test(n);
+  let gender = null;
+  if (FEMALE_HINTS.some((h) => n.includes(h))) gender = "female";
+  else if (MALE_HINTS.some((h) => n.includes(h))) gender = "male";
+  return { voice: v, natural, gender };
+}
+
+function ptVoices() {
+  const voices = voiceCache.length ? voiceCache : refreshVoices();
+  return voices.filter((v) => /^pt/i.test(v.lang));
+}
+
+/** Acha a melhor voz do sistema pro gênero pedido; prioriza vozes "Natural/Online" */
+function resolveVoice(gender) {
+  const list = ptVoices().map(classifyVoice);
+  if (!list.length) return { voice: null, matched: false };
+  const byNatural = (a, b) => (b.natural ? 1 : 0) - (a.natural ? 1 : 0);
+  const exact = list.filter((c) => c.gender === gender).sort(byNatural);
+  if (exact.length) return { voice: exact[0].voice, matched: true };
+  const rest = [...list].sort(byNatural);
+  return { voice: rest[0]?.voice || null, matched: false };
+}
+
+const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
+
+// Duas personas de locutor: quando o sistema só tem 1 voz em pt-BR, a diferença
+// de tom/velocidade ainda deixa as duas audivelmente diferentes.
+const VOICE_PERSONAS = {
+  female: { gender: "female", pitch: 1.05, rate: 0.98, fallbackPitch: 1.22 },
+  male: { gender: "male", pitch: 0.9, rate: 0.96, fallbackPitch: 0.76 },
+};
+
+let currentPersona = "female";
+export function setAnnouncerPersona(id) {
+  if (VOICE_PERSONAS[id]) currentPersona = id;
+}
+export function getAnnouncerPersona() {
+  return currentPersona;
+}
+export function listAnnouncerPersonas() {
+  return Object.keys(VOICE_PERSONAS);
+}
+
 export function unlockTableAudio() {
   try {
     getCtx();
-    if (typeof speechSynthesis !== "undefined") speechSynthesis.getVoices?.();
+    if (typeof speechSynthesis !== "undefined") refreshVoices();
   } catch {
     /* ignore */
   }
@@ -70,15 +136,17 @@ export function speakLine(text, opts = {}) {
         resolve(false);
         return;
       }
+      const persona = VOICE_PERSONAS[opts.persona || currentPersona] || VOICE_PERSONAS.female;
+      const { voice, matched } = resolveVoice(persona.gender);
       const u = new SpeechSynthesisUtterance(String(text));
       u.lang = opts.lang || "pt-BR";
-      u.rate = opts.rate ?? 1.05;
-      u.pitch = opts.pitch ?? 1.08;
+      if (voice) u.voice = voice;
+      const excited = opts.excited ? 0.05 : 0;
+      const jitter = (Math.random() - 0.5) * 0.03; // evita cadência robótica sempre igual
+      const basePitch = matched ? persona.pitch : persona.fallbackPitch;
+      u.pitch = clamp((opts.pitch ?? basePitch + excited) + jitter, 0.3, 2);
+      u.rate = clamp((opts.rate ?? persona.rate + excited) + jitter, 0.5, 2);
       u.volume = opts.volume ?? 0.95;
-      const voices = speechSynthesis.getVoices?.() || [];
-      const pt =
-        voices.find((v) => /pt(-|_)?BR/i.test(v.lang)) || voices.find((v) => /^pt/i.test(v.lang));
-      if (pt) u.voice = pt;
       let done = false;
       const finish = (ok) => {
         if (done) return;
@@ -95,18 +163,19 @@ export function speakLine(text, opts = {}) {
   });
 }
 
-/** Contagem 1, 2, 3… Começou! */
+/** Contagem 1, 2, 3… Começou! — cada partida sorteia um locutor (homem ou mulher) */
 export async function announceMatchStart(gameName = "") {
   unlockTableAudio();
+  currentPersona = Math.random() < 0.5 ? "female" : "male";
   tone(320, 0.08, "triangle", 0.06);
-  await speakLine("Um", { rate: 1.15 });
+  await speakLine("Um");
   tone(380, 0.08, "triangle", 0.07);
-  await speakLine("Dois", { rate: 1.15 });
+  await speakLine("Dois");
   tone(440, 0.08, "triangle", 0.08);
-  await speakLine("Três", { rate: 1.15 });
+  await speakLine("Três");
   playWinShort();
   const line = gameName ? `Começou! ${gameName}!` : "Começou!";
-  await speakLine(line, { rate: 1.08, pitch: 1.12 });
+  await speakLine(line, { excited: true });
 }
 
 export function playWinShort() {

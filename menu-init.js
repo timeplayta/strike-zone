@@ -126,6 +126,7 @@
     warehouse: "Cold Storage",
     horror: "Terror",
     labyrinth: "Fim das Trevas",
+    camaleao: "Mecha Camaleão",
     frontier: "Ilha Frontier",
     chess: "Xadrez",
     dama: "Dama",
@@ -174,8 +175,9 @@
     const isLab = map === "labyrinth";
     const isFrontier = map === "frontier";
     const isTable = TABLE_GAME_MAPS.has(map);
+    const isCamaleao = map === "camaleao";
     document.querySelectorAll(".labyrinth-hide").forEach((el) => {
-      el.classList.toggle("hidden", isLab || isTable);
+      el.classList.toggle("hidden", isLab || isTable || isCamaleao);
     });
     const botSlider = $("botCount");
     if (botSlider && isFrontier) botSlider.value = "100";
@@ -196,6 +198,11 @@
     const table = TABLE_GAME_MAPS.has(map);
     const hint = $("menuHint");
     if (!hint) return;
+    if (map === "camaleao") {
+      hint.textContent =
+        "Mecha Camaleão — escolha bichinho e cor · combine com o ambiente · WASD move, A/D vira, Shift corre, E cola";
+      return;
+    }
     if (table) {
       hint.textContent =
         "Jogos de mesa — escolha o bot · contagem 1 2 3 · sons e falas na partida";
@@ -282,6 +289,23 @@
         }
       } catch (e) {
         showLoadError(e?.message || "Falha ao abrir jogos de mesa.");
+        return;
+      }
+    }
+    if (map === "camaleao") {
+      $("loadError")?.classList.add("hidden");
+      if (typeof window.openChameleonMode === "function") {
+        window.openChameleonMode();
+        return;
+      }
+      try {
+        await import("./chameleon-mode.js?v=1");
+        if (typeof window.openChameleonMode === "function") {
+          window.openChameleonMode();
+          return;
+        }
+      } catch (e) {
+        showLoadError(e?.message || "Falha ao abrir o Mecha Camaleão.");
         return;
       }
     }

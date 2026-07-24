@@ -177,6 +177,53 @@ function drawLabyrinth(ctx) {
   ctx.fillRect(W * 0.35, H * 0.55, W * 0.3, 40);
 }
 
+function drawCamaleao(ctx) {
+  sky(ctx, "#1a0f28", "#2a1840");
+  ground(ctx, "#160f22", H * 0.5);
+  const patchColors = ["#e74c3c", "#f39c12", "#2ecc71", "#3498db", "#9b59b6", "#ff6fa5", "#f1d430"];
+  let seed = 7;
+  const rnd = () => {
+    seed = (seed * 9301 + 49297) % 233280;
+    return seed / 233280;
+  };
+  for (let i = 0; i < 26; i++) {
+    ctx.fillStyle = patchColors[Math.floor(rnd() * patchColors.length)];
+    ctx.globalAlpha = 0.85;
+    const x = rnd() * W;
+    const y = H * 0.42 + rnd() * H * 0.5;
+    const s = 30 + rnd() * 46;
+    ctx.beginPath();
+    ctx.arc(x, y, s, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+  fog(ctx, "rgba(15,8,25,0.5)", H * 0.38);
+  // bichinho pequeno se camuflando num patch
+  ctx.fillStyle = "#2ecc71";
+  ctx.beginPath();
+  ctx.ellipse(W * 0.42, H * 0.68, 34, 22, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(W * 0.42 - 30, H * 0.62, 12, 10, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "#12321f";
+  ctx.beginPath();
+  ctx.arc(W * 0.42 - 34, H * 0.6, 2.6, 0, Math.PI * 2);
+  ctx.fill();
+  // olho grande do caçador espiando no canto
+  ctx.fillStyle = "rgba(0,0,0,0.82)";
+  ctx.beginPath();
+  ctx.ellipse(W * 0.84, H * 0.22, 46, 60, 0.2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "#ff3d2e";
+  ctx.beginPath();
+  ctx.arc(W * 0.84, H * 0.24, 11, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "rgba(255,255,255,0.85)";
+  ctx.font = "bold 24px sans-serif";
+  ctx.fillText("🦎", W * 0.06, H * 0.2);
+}
+
 function drawFrontier(ctx) {
   sky(ctx, "#6ec8ff", "#cceeff");
   sun(ctx, W * 0.78, H * 0.14, 58, "rgba(255,230,150,0.95)");
@@ -420,6 +467,7 @@ const DRAWERS = {
   warehouse: drawWarehouse,
   horror: drawHorror,
   labyrinth: drawLabyrinth,
+  camaleao: drawCamaleao,
   frontier: drawFrontier,
   chess: drawChess,
   dama: drawDama,

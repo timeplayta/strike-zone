@@ -42,21 +42,39 @@ function endVoice(winner) {
 }
 
 /* ——— Jogo da Velha ——— */
+const TTT_LINES = [
+  [0, 1, 2], [3, 4, 5], [6, 7, 8],
+  [0, 3, 6], [1, 4, 7], [2, 5, 8],
+  [0, 4, 8], [2, 4, 6],
+];
+
 export function mountTicTacToeGame(root, { botTier, onExit, onEnd, onBind, match }) {
   const tier = getBotTier(botTier);
   let board = Array(9).fill(null);
-  let turn = "X";
+  let playerSymbol = "X";
+  let botSymbol = "O";
+  let turn = "X"; // X sempre começa, como na regra oficial
   let over = false;
+  let chosen = false;
+  let lastMove = -1;
+  let winLine = null;
 
   const wrap = document.createElement("div");
   wrap.className = "tg-board-wrap tg-simple-wrap";
   wrap.innerHTML = `
     <div class="tg-board-hud">
       <div class="tg-board-title">Jogo da Velha</div>
-      <div class="tg-board-status" data-status>Você é X</div>
+      <div class="tg-board-status" data-status>Escolha seu símbolo</div>
       <div class="tg-board-meta">Bot: ${tier.label}</div>
     </div>
-    <div class="tg-ttt" data-board></div>
+    <div class="tg-ttt-choose" data-choose>
+      <p class="tg-ttt-choose-title">Você quer jogar de:</p>
+      <div class="tg-ttt-choose-btns">
+        <button type="button" class="tg-ttt-choose-btn" data-pick="X">✕<span>X · você começa</span></button>
+        <button type="button" class="tg-ttt-choose-btn tg-ttt-choose-o" data-pick="O">◯<span>O · bot começa</span></button>
+      </div>
+    </div>
+    <div class="tg-ttt hidden" data-board></div>
     <div class="tg-board-actions">
       <button type="button" class="tg-btn tg-btn-ghost" data-exit>Sair</button>
       <button type="button" class="tg-btn" data-restart>Reiniciar</button>
@@ -65,18 +83,18 @@ export function mountTicTacToeGame(root, { botTier, onExit, onEnd, onBind, match
   root.appendChild(wrap);
   const boardEl = wrap.querySelector("[data-board]");
   const statusEl = wrap.querySelector("[data-status]");
+  const chooseEl = wrap.querySelector("[data-choose]");
 
   function winner() {
-    const lines = [
-      [0, 1, 2], [3, 4, 5], [6, 7, 8],
-      [0, 3, 6], [1, 4, 7], [2, 5, 8],
-      [0, 4, 8], [2, 4, 6],
-    ];
-    for (const [a, b, c] of lines) {
+    for (const [a, b, c] of TTT_LINES) {
       if (board[a] && board[a] === board[b] && board[a] === board[c]) return board[a];
     }
     if (board.every(Boolean)) return "draw";
     return null;
+  }
+
+  function winningLine(sym) {
+    return TTT_LINES.find(([a, b, c]) => board[a] === sym && board[b] === sym && board[c] === sym) || null;
   }
 
   function render() {
@@ -85,8 +103,11 @@ export function mountTicTacToeGame(root, { botTier, onExit, onEnd, onBind, match
       const b = document.createElement("button");
       b.type = "button";
       b.className = "tg-ttt-cell";
-      b.textContent = v || "";
-      b.disabled = over || !!v || turn !== "X";
+      if (v) b.dataset.val = v;
+      if (i === lastMove) b.classList.add("just-placed");
+      if (winLine && winLine.includes(i)) b.classList.add("tg-ttt-win");
+      b.textContent = v === "X" ? "✕" : v === "O" ? "◯" : "";
+      b.disabled = !chosen || over || !!v || turn !== playerSymbol;
       b.onclick = () => play(i);
       boardEl.appendChild(b);
     });
@@ -94,11 +115,14 @@ export function mountTicTacToeGame(root, { botTier, onExit, onEnd, onBind, match
 
   function finish(w) {
     over = true;
+    winLine = w !== "draw" ? winningLine(w) : null;
     match?.endPlayerClock?.();
     match?.setActionsEnabled?.(false);
-    statusEl.textContent = w === "X" ? "Você venceu!" : w === "O" ? "Bot venceu." : "Empate!";
-    endVoice(w === "X" ? "you" : w === "draw" ? "draw" : "bot");
-    onEnd?.(w === "X" ? "you" : w === "draw" ? "draw" : "bot");
+    const isPlayer = w === playerSymbol;
+    statusEl.textContent = isPlayer ? "Você venceu!" : w === "draw" ? "Empate!" : "Bot venceu.";
+    render();
+    endVoice(isPlayer ? "you" : w === "draw" ? "draw" : "bot");
+    onEnd?.(isPlayer ? "you" : w === "draw" ? "draw" : "bot");
   }
 
   function botMove() {
@@ -106,69 +130,72 @@ export function mountTicTacToeGame(root, { botTier, onExit, onEnd, onBind, match
     playBotThink();
     const empties = board.map((v, i) => (v ? null : i)).filter((x) => x != null);
     const scored = empties.map((i) => {
-      const tryB = [...board];
-      tryB[i] = "O";
-      let score = 0;
-      if (winner.call({ board: tryB }) || (() => {
-        const lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
-        for (const [a,b,c] of lines) if (tryB[a]==="O"&&tryB[b]==="O"&&tryB[c]==="O") return true;
-        return false;
-      })()) score += 100;
-      // block
-      const tryX = [...board];
-      tryX[i] = "X";
-      for (const [a,b,c] of [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]]) {
-        if (tryX[a]==="X"&&tryX[b]==="X"&&tryX[c]==="X") score += 80;
-      }
-      if (i === 4) score += 10;
-      score += Math.random() * (1 - tier.pocketBias) * 30;
-      return { i, score };
-    });
-    // fix winner check for O
-    const scored2 = empties.map((i) => {
-      const tryB = [...board];
-      tryB[i] = "O";
+      const tryBot = [...board];
+      tryBot[i] = botSymbol;
       let score = Math.random() * 5;
-      const lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
-      for (const [a,b,c] of lines) {
-        if (tryB[a]==="O"&&tryB[b]==="O"&&tryB[c]==="O") score += 100;
-        const block = [...board];
-        block[i] = "X";
-        if (block[a]==="X"&&block[b]==="X"&&block[c]==="X") score += 70;
+      for (const [a, b, c] of TTT_LINES) {
+        if (tryBot[a] === botSymbol && tryBot[b] === botSymbol && tryBot[c] === botSymbol) score += 100;
+        const tryBlock = [...board];
+        tryBlock[i] = playerSymbol;
+        if (tryBlock[a] === playerSymbol && tryBlock[b] === playerSymbol && tryBlock[c] === playerSymbol) score += 70;
       }
       if (i === 4) score += 8;
-      if ([0,2,6,8].includes(i)) score += 3;
+      if ([0, 2, 6, 8].includes(i)) score += 3;
       score *= 0.5 + tier.pocketBias;
       return { move: i, score };
     });
-    const pick = pickMoveWithWisdom(scored2, tier.id);
+    const pick = pickMoveWithWisdom(scored, tier.id);
     const i = pick?.move ?? empties[0];
-    board[i] = "O";
+    board[i] = botSymbol;
+    lastMove = i;
     playPiecePlace();
-    render();
     const w = winner();
-    if (w) finish(w);
-    else {
-      turn = "X";
-      statusEl.textContent = "Sua vez";
-      match?.startPlayerClock?.(false);
+    if (w) {
+      finish(w);
+      return;
     }
+    turn = playerSymbol;
+    statusEl.textContent = "Sua vez";
+    match?.startPlayerClock?.(false);
+    render();
   }
 
   function play(i) {
-    if (over || board[i] || turn !== "X") return;
+    if (!chosen || over || board[i] || turn !== playerSymbol) return;
     match?.endPlayerClock?.();
-    board[i] = "X";
+    board[i] = playerSymbol;
+    lastMove = i;
     playPiecePlace();
-    render();
     const w = winner();
-    if (w) finish(w);
-    else {
-      turn = "O";
+    if (w) {
+      finish(w);
+      return;
+    }
+    turn = botSymbol;
+    statusEl.textContent = "Bot pensando…";
+    render();
+    setTimeout(botMove, 350);
+  }
+
+  function pickSymbol(sym) {
+    playerSymbol = sym;
+    botSymbol = sym === "X" ? "O" : "X";
+    chosen = true;
+    chooseEl.classList.add("hidden");
+    boardEl.classList.remove("hidden");
+    if (turn === botSymbol) {
       statusEl.textContent = "Bot pensando…";
+      render();
       setTimeout(botMove, 350);
+    } else {
+      statusEl.textContent = "Sua vez";
+      render();
     }
   }
+
+  chooseEl.querySelectorAll("[data-pick]").forEach((b) => {
+    b.addEventListener("click", () => pickSymbol(b.dataset.pick));
+  });
 
   bindCommon(wrap, {
     onExit,
@@ -176,19 +203,28 @@ export function mountTicTacToeGame(root, { botTier, onExit, onEnd, onBind, match
       board = Array(9).fill(null);
       turn = "X";
       over = false;
+      lastMove = -1;
+      winLine = null;
       match?.setActionsEnabled?.(true);
-      statusEl.textContent = "Você é X";
-      render();
+      if (chosen) {
+        statusEl.textContent = turn === playerSymbol ? "Sua vez" : "Bot pensando…";
+        render();
+        if (turn === botSymbol) setTimeout(botMove, 350);
+      } else {
+        statusEl.textContent = "Escolha seu símbolo";
+        chooseEl.classList.remove("hidden");
+        boardEl.classList.add("hidden");
+      }
       match?.startPlayerClock?.(true);
     },
   });
   onBind?.({
-    resign: () => finish("O"),
+    resign: () => finish(botSymbol),
     offerDraw: () => {
       finish("draw");
       match?.markDrawResolved?.(true);
     },
-    timeout: () => finish("O"),
+    timeout: () => finish(botSymbol),
   });
   render();
   match?.startPlayerClock?.(true);
