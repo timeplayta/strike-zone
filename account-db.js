@@ -101,6 +101,15 @@ for (const weapon of ["ak47", "scar", "m4", "ump45", "awm", "doze", "bazooka", "
 }
 
 const LOADOUT_PRESETS = {
+  ff_hair_short: { color: 0x3a2414, style: "short", neon: false },
+  ff_hair_fade: { color: 0x141018, style: "fade", neon: false },
+  ff_hair_spike: { color: 0x1a1008, style: "spike", neon: false },
+  ff_hair_slick: { color: 0x0e0c10, style: "slick", neon: false },
+  ff_hair_curly: { color: 0x4a2a14, style: "curly", neon: false },
+  a8_hair_neon: { color: 0x22e8ff, style: "spike", neon: true },
+  a8_hair_pink: { color: 0xff44aa, style: "slick", neon: true },
+  ff_hair_blonde: { color: 0xc8a858, style: "short", neon: false },
+  ff_hair_red: { color: 0x8a2818, style: "fade", neon: false },
   ff_helmet_blue: { color: 0x2a4a7a, style: "helmet", neon: false },
   ff_helmet_black: { color: 0x1a1a22, style: "helmet", neon: false },
   a8_helmet_neon: { color: 0x00eeff, style: "helmet", neon: true },
@@ -163,6 +172,7 @@ const LOADOUT_PRESETS = {
 };
 
 const SLOT_PRESETS = {
+  hair: ["ff_hair_short", "ff_hair_fade", "ff_hair_spike", "ff_hair_slick", "ff_hair_curly", "a8_hair_neon", "a8_hair_pink", "ff_hair_blonde", "ff_hair_red"],
   helmet: ["ff_helmet_blue", "ff_helmet_black", "a8_helmet_neon", "a8_helmet_fire", "ff_cap_olive", "ff_cap_red", "ff_mask_skull", "a8_helmet_pink", "ff_cap_starter", "ff_bandana_red", "ff_visor_gold", "ff_hood_black", "ff_mask_future"],
   shirt: ["ff_ct_blue", "ff_desert", "a8_neon_blue", "a8_neon_red", "ff_urban_gray", "a8_neon_green", "ff_camo", "a8_chrome", "ff_starter_jacket", "ff_striker_red", "ff_street_orange", "ff_tech_white", "ff_night_blue"],
   pants: ["ff_black_ops", "ff_navy", "a8_neon_purple", "ff_khaki", "a8_neon_yellow", "ff_urban", "ff_jogger_black", "ff_jogger_blue", "ff_tactical_red", "ff_runner_white", "ff_denim"],
@@ -171,6 +181,17 @@ const SLOT_PRESETS = {
 };
 
 const LOADOUT_PRESETS_BY_SLOT = {
+  hair: {
+    ff_hair_short: { color: 0x3a2414, style: "short", neon: false },
+    ff_hair_fade: { color: 0x141018, style: "fade", neon: false },
+    ff_hair_spike: { color: 0x1a1008, style: "spike", neon: false },
+    ff_hair_slick: { color: 0x0e0c10, style: "slick", neon: false },
+    ff_hair_curly: { color: 0x4a2a14, style: "curly", neon: false },
+    a8_hair_neon: { color: 0x22e8ff, style: "spike", neon: true },
+    a8_hair_pink: { color: 0xff44aa, style: "slick", neon: true },
+    ff_hair_blonde: { color: 0xc8a858, style: "short", neon: false },
+    ff_hair_red: { color: 0x8a2818, style: "fade", neon: false },
+  },
   helmet: {
     ff_helmet_blue: { color: 0x2a4a7a, style: "helmet", neon: false },
     ff_helmet_black: { color: 0x1a1a22, style: "helmet", neon: false },
@@ -246,8 +267,8 @@ function getLoadoutPreset(slot, presetId) {
   return LOADOUT_PRESETS_BY_SLOT[slot]?.[presetId] || LOADOUT_PRESETS[presetId] || null;
 }
 
-const DEFAULT_LOADOUT_PRESETS = ["ff_helmet_blue", "ff_ct_blue", "ff_black_ops", "ff_black", "ff_boot_black"];
-const LOADOUT_SLOT_PRICE = { helmet: 35, shirt: 40, pants: 38, gloves: 25, shoes: 30 };
+const DEFAULT_LOADOUT_PRESETS = ["ff_hair_short", "ff_helmet_blue", "ff_ct_blue", "ff_black_ops", "ff_black", "ff_boot_black"];
+const LOADOUT_SLOT_PRICE = { hair: 28, helmet: 35, shirt: 40, pants: 38, gloves: 25, shoes: 30 };
 
 for (const [slot, presetIds] of Object.entries(SLOT_PRESETS)) {
   for (const presetId of presetIds) {
@@ -277,6 +298,7 @@ function applyLoadoutItemOnPlayer(p, item) {
   const preset = getLoadoutPreset(item.slot, item.presetId);
   if (!preset) return false;
   p.loadout = p.loadout || materializeOutfitLoadout({
+    hair: "ff_hair_short",
     helmet: "ff_helmet_blue",
     shirt: "ff_ct_blue",
     pants: "ff_black_ops",
@@ -309,6 +331,7 @@ function ownsOutfit(p, outfitId) {
 
 function sanitizeLoadoutForPlayer(p, raw) {
   const loadout = materializeOutfitLoadout({
+    hair: "ff_hair_short",
     helmet: "ff_helmet_blue",
     shirt: "ff_ct_blue",
     pants: "ff_black_ops",
@@ -941,6 +964,8 @@ function purchase(accountId, token, itemId) {
   if (item.type === "weapon") {
     p.skins = p.skins || {};
     p.skins[item.weapon] = item.color;
+  } else if (item.type === "weapon_unlock") {
+    // desbloqueio registrado em purchases — ownsWeapon() consulta unlockId
   } else if (item.type === "character") {
     p.characterSkin = item.skinId;
     p.outfitId = itemId;

@@ -438,7 +438,7 @@ function goShopExplain() {
   setPhase(PHASE.SHOP_EXPLAIN);
   positionChat("bottom");
   setSpotlight(["#ffHubPanelShop"], {
-    allow: ["#ffHubPanelShop", "#openSoloBtn", ".shop-tab"],
+    allow: ["#ffHubPanelShop", "#openSoloBtn", ".shop-tab", ".shop-item"],
   });
   setChat(
     "Na Loja tu customiza armas e personagem — skins, outfits e personagens. Gasta as moedas com estilo!",

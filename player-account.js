@@ -331,6 +331,9 @@ export async function tryRestoreSession() {
       saveSession(saved.name, saved.token, data.account);
       return data.account;
     }
+    // Servidor respondeu, mas a sessão não vale mais — não reutilizar token velho.
+    clearSession();
+    return null;
   } catch { /* offline */ }
 
   if (saved.account && hasValidEmail(saved.account)) {
@@ -461,7 +464,13 @@ export async function buyShopItem(username, itemId) {
       window.__playerLoadout = data.account.loadout || window.__playerLoadout;
       return { ok: true, msg: `${item.label} comprado!`, coins: data.account.coins };
     }
-    if (data.error) return { ok: false, msg: data.error };
+    if (data.error) {
+      if (data.error.includes("autorizado") || data.error.includes("Sessão expirada")) {
+        clearSession();
+        return { ok: false, msg: "Sessão expirada — faça login novamente." };
+      }
+      return { ok: false, msg: data.error };
+    }
   } catch {
     return { ok: false, msg: "Servidor offline — não foi possível comprar" };
   }
@@ -480,6 +489,10 @@ export async function equipShopItem(itemId) {
       window.__characterSkin = data.account.characterSkin;
       window.__playerLoadout = data.account.loadout || window.__playerLoadout;
       return { ok: true, account: data.account };
+    }
+    if (data.error?.includes("autorizado") || data.error?.includes("Sessão expirada")) {
+      clearSession();
+      return { ok: false, msg: "Sessão expirada — faça login novamente." };
     }
     return { ok: false, msg: data.error || "Não foi possível equipar" };
   } catch {
