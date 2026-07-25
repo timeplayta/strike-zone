@@ -61,8 +61,13 @@ export function createBandit(index, mapKey = "dust", opts = {}) {
 
   const weaponType = opts.weaponType || pickNpcWeaponType(index, opts.squadSize ?? 4);
 
+  // Inimigo usa conjunto vermelho/preto próprio — diferente do jogador CT azul.
+  const banditLoadout = applyOutfitToLoadout(DEFAULT_LOADOUT, "outfit_bandit_raider");
+  banditLoadout.helmet = { ...banditLoadout.helmet, color: outfit.cap };
+
   const body = buildPlayerCharacter({
     characterSkin: "soldier",
+    loadout: banditLoadout,
     scale: opts.solo ? 1.08 : 1,
     withRifle: true,
     weaponType,

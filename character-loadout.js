@@ -181,6 +181,20 @@ export const OUTFIT_SETS = [
       shoes: "a8_sneaker_cyan",
     },
   },
+  {
+    id: "outfit_bandit_raider",
+    name: "Conjunto Bandido",
+    price: 0,
+    tier: "comum",
+    color: 0xc42b1e,
+    loadout: {
+      helmet: "ff_helmet_black",
+      shirt: "ff_striker_red",
+      pants: "ff_black_ops",
+      gloves: "ff_wrap_red",
+      shoes: "ff_boot_black",
+    },
+  },
 ];
 
 export function findPreset(slot, presetId) {
