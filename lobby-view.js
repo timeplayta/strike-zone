@@ -65,10 +65,10 @@ function buildPad(x, z, color, radius = 0.72) {
 }
 
 const SLOTS = [
-  { x: 0, z: 0.8, color: 0xf0a030, mine: true, scale: 1.95, padRadius: 1.0 },
-  { x: -1.5, z: 0.0, color: 0x2266aa, scale: 1.58, padRadius: 0.82 },
-  { x: 1.5, z: 0.0, color: 0xc9a227, scale: 1.58, padRadius: 0.82 },
-  { x: 0, z: -0.5, color: 0x888899, scale: 1.58, padRadius: 0.82 },
+  { x: 0, z: 0.8, color: 0xf0a030, mine: true, scale: 1.65, padRadius: 0.92 },
+  { x: -1.2, z: 0.0, color: 0x2266aa, scale: 1.4, padRadius: 0.76 },
+  { x: 1.2, z: 0.0, color: 0xc9a227, scale: 1.4, padRadius: 0.76 },
+  { x: 0, z: -0.5, color: 0x888899, scale: 1.4, padRadius: 0.76 },
 ];
 
 function facePivotToCamera(group, x, z) {
@@ -77,9 +77,9 @@ function facePivotToCamera(group, x, z) {
 
 function buildScene() {
   scene = new THREE.Scene();
-  camera = new THREE.PerspectiveCamera(46, 1, 0.1, 40);
-  camera.position.set(0, 1.15, 3.0);
-  camera.lookAt(0, 1.75, 0.5);
+  camera = new THREE.PerspectiveCamera(48, 1, 0.1, 40);
+  camera.position.set(0, 1.2, 3.2);
+  camera.lookAt(0, 1.55, 0.5);
 
   scene.add(new THREE.AmbientLight(0xffffff, 0.78));
   const key = new THREE.DirectionalLight(0xfff4e0, 1.15);
