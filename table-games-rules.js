@@ -103,7 +103,7 @@ export const TABLE_GAME_RULES = {
       "Jogar pedra que não casa",
       "Escolher o lado manualmente se as duas pontas aceitam (prioriza a esquerda)",
     ],
-    vitoria: "Quem zerar a mão bate e vence. Desistir = bot vence.",
+    vitoria: "Quem zerar a mão bate e vence. Desistir ou estourar o tempo = derrota.",
   },
 
   lig4: {
@@ -143,7 +143,7 @@ export const TABLE_GAME_RULES = {
       "Blackjack natural com pagamento especial (só compara totais)",
     ],
     vitoria:
-      "Estourou (>21) perde a mão. Dealer estourou ou seu total maior = você marca. Empate de total = push. Primeiro a 5 mãos vence a partida.",
+      "Estourou (>21) perde a mão. Dealer estourou ou seu total maior = você marca. Empate de total = push. Primeiro a 5 mãos vence. Desistir ou estourar o tempo = derrota.",
   },
 
   poker: {
@@ -159,7 +159,7 @@ export const TABLE_GAME_RULES = {
       "All-in / raises múltiplos / Texas Hold'em (não é community)",
     ],
     vitoria:
-      "Adversário com ≤0 fichas. Ranking: straight flush > quadra > full house > flush > straight > trinca > dois pares > par > carta alta.",
+      "Adversário com ≤0 fichas. Ranking: straight flush > quadra > full house > flush > straight > trinca > dois pares > par > carta alta. Desistir ou estourar o tempo = derrota.",
   },
 
   memoria: {
@@ -176,23 +176,70 @@ export const TABLE_GAME_RULES = {
   },
 
   uno: {
-    objetivo: "Zerar a mão combinando cor ou número/ação (1v1 simplificado).",
+    objetivo: "Zerar a mão antes do bot (regras oficiais do UNO, 1v1).",
     como_jogar: [
-      "7 cartas cada; descarte inicial do monte.",
-      "Jogue carta da mesma cor ou mesmo valor (0–9, +2, skip).",
-      "Sem jogada: Comprar 1 carta e a vez passa.",
+      "7 cartas cada; uma carta abre o descarte.",
+      "Jogue carta da mesma cor, mesmo número/símbolo, ou um coringa.",
+      "Sem jogada: compre 1 carta — se ela der jogo, pode jogar na hora.",
+      "Coringa e +4: você escolhe a cor da mesa.",
     ],
     pode: [
-      "Jogar carta legal",
-      "Comprar 1 e passar a vez",
-      "Usar +2 (adversário compra 2) e skip (você joga de novo)",
+      "Jogar carta legal ou coringa a qualquer momento da sua vez",
+      "Jogar a carta que acabou de comprar (se for válida)",
+      "Usar +2 (bot compra 2 e perde a vez), +4 (compra 4 e perde a vez)",
+      "Pular (⊘) e Inverter (⇄): no 1v1, o adversário perde a vez",
     ],
     nao_pode: [
-      "Coringa / +4 / inverter (não existem neste baralho)",
-      "Jogar a carta comprada no mesmo turno",
-      "Gritar UNO com multa (não há)",
+      "Jogar carta que não combina cor nem símbolo",
+      "Comprar mais de 1 carta por turno",
+      "Empatar (joga até alguém bater)",
     ],
-    vitoria: "Mão vazia = vitória. Desistir = bot. Timeout força compra e passa a vez.",
+    vitoria:
+      "Mão vazia = vitória. Com 1 carta o UNO é anunciado automaticamente. Desistir ou estourar o tempo = derrota.",
+  },
+
+  batalha: {
+    objetivo: "Afundar os 5 navios do bot antes que ele afunde os seus.",
+    como_jogar: [
+      "Cada frota tem 5 navios (4, 3, 3, 2 e 2 células) posicionados automaticamente.",
+      "Na sua vez, toque numa célula do tabuleiro inimigo para atirar.",
+      "✸ = acertou (atira de novo!) · • = água (vez do bot).",
+      "Seu tabuleiro à direita mostra seus navios e os tiros do bot.",
+    ],
+    pode: [
+      "Atirar em qualquer célula ainda não atacada",
+      "Continuar atirando enquanto acertar",
+      "Reiniciar para sortear novas posições",
+    ],
+    nao_pode: [
+      "Atirar na mesma célula duas vezes",
+      "Mover os navios depois que a partida começou",
+      "Ver os navios do bot (só os acertos aparecem)",
+    ],
+    vitoria:
+      "Afundou as 14 células inimigas = vitória. Navios não se tocam. Desistir ou estourar o tempo = derrota.",
+  },
+
+  general: {
+    objetivo: "Fazer mais pontos que o bot preenchendo as 11 categorias de dados.",
+    como_jogar: [
+      "No seu turno, role os 5 dados (até 3 rolagens).",
+      "Entre as rolagens, toque nos dados que quer segurar.",
+      "Depois, toque numa categoria livre para marcar os pontos.",
+      "Uns a Seis: soma da face · Trinca/Quadra: soma dos 5 dados · Full: 25 · Sequência: 30 · GENERAL: 50.",
+    ],
+    pode: [
+      "Parar de rolar quando quiser (1, 2 ou 3 rolagens)",
+      "Marcar 0 numa categoria pra queimar ela",
+      "Ver o preview de pontos (→) em cada categoria livre",
+    ],
+    nao_pode: [
+      "Usar a mesma categoria duas vezes",
+      "Rolar mais de 3 vezes no turno",
+      "Pular seu turno sem marcar categoria",
+    ],
+    vitoria:
+      "Quando as 11 categorias dos dois estiverem cheias, maior total vence (empate possível). Desistir ou estourar o tempo = derrota.",
   },
 };
 
@@ -206,14 +253,27 @@ export function renderRulesHtml(rules) {
   }
   const list = (items) =>
     (items || []).map((t) => `<li>${t}</li>`).join("");
+  const steps = (items) =>
+    (items || [])
+      .map(
+        (t, i) =>
+          `<li class="tg-rules-step"><span class="tg-rules-step-num">${i + 1}</span><span>${t}</span></li>`
+      )
+      .join("");
   return `
-    <p class="tg-rules-goal"><strong>Objetivo:</strong> ${rules.objetivo}</p>
-    <h3 class="tg-rules-sub">Como jogar</h3>
-    <ul class="tg-rules-list">${list(rules.como_jogar)}</ul>
-    <h3 class="tg-rules-sub">Pode</h3>
-    <ul class="tg-rules-list tg-rules-ok">${list(rules.pode)}</ul>
-    <h3 class="tg-rules-sub">Não pode</h3>
-    <ul class="tg-rules-list tg-rules-no">${list(rules.nao_pode)}</ul>
-    <p class="tg-rules-end"><strong>Vitória / fim:</strong> ${rules.vitoria}</p>
+    <p class="tg-rules-goal">🎯 <strong>Objetivo:</strong> ${rules.objetivo}</p>
+    <h3 class="tg-rules-sub">📖 Como jogar</h3>
+    <ol class="tg-rules-steps">${steps(rules.como_jogar)}</ol>
+    <div class="tg-rules-cols">
+      <div class="tg-rules-col ok">
+        <h3 class="tg-rules-sub">✅ Pode</h3>
+        <ul class="tg-rules-list tg-rules-ok">${list(rules.pode)}</ul>
+      </div>
+      <div class="tg-rules-col no">
+        <h3 class="tg-rules-sub">🚫 Não pode</h3>
+        <ul class="tg-rules-list tg-rules-no">${list(rules.nao_pode)}</ul>
+      </div>
+    </div>
+    <p class="tg-rules-end">🏆 <strong>Vitória / fim:</strong> ${rules.vitoria}</p>
   `;
 }

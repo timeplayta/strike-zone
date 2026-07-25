@@ -727,11 +727,21 @@ export function mountBlackjackGame(root, { botTier, onExit, onEnd, onBind, match
   });
   onBind?.({
     resign: () => {
+      over = true;
+      actions.innerHTML = "";
+      statusEl.textContent = "Você desistiu.";
       endVoice("bot");
       onEnd?.("bot");
     },
     offerDraw: () => match?.markDrawResolved?.(false),
-    timeout: () => finishRound(),
+    timeout: () => {
+      over = true;
+      actions.innerHTML = "";
+      statusEl.textContent = "Tempo esgotado. Dealer venceu.";
+      match?.setActionsEnabled?.(false);
+      endVoice("bot");
+      onEnd?.("bot");
+    },
   });
   deal();
   return () => wrap.remove();
@@ -893,29 +903,47 @@ export function mountPokerGame(root, { botTier, onExit, onEnd, onBind, match }) 
   });
   onBind?.({
     resign: () => {
+      over = true;
+      actions.innerHTML = "";
+      statusEl.textContent = "Você desistiu.";
       endVoice("bot");
       onEnd?.("bot");
     },
     offerDraw: () => match?.markDrawResolved?.(false),
-    timeout: () => showdown(0),
+    timeout: () => {
+      over = true;
+      actions.innerHTML = "";
+      statusEl.textContent = "Tempo esgotado. Bot venceu.";
+      match?.setActionsEnabled?.(false);
+      endVoice("bot");
+      onEnd?.("bot");
+    },
   });
   deal();
   return () => wrap.remove();
 }
 
-/* ——— Uno simplificado 1v1 ——— */
+/* ——— Uno oficial 1v1 (coringa, +4, inverter) ——— */
 export function mountUnoGame(root, { botTier, onExit, onEnd, onBind, match }) {
   const tier = getBotTier(botTier);
   const COLORS = ["R", "G", "B", "Y"];
   const COLOR_HEX = { R: "#e04040", G: "#2aaa55", B: "#3380e0", Y: "#e0c020" };
+  const COLOR_NAME = { R: "Vermelho", G: "Verde", B: "Azul", Y: "Amarelo" };
+  const FACE = { skip: "⊘", rev: "⇄", "+2": "+2", wild: "★", "+4": "+4" };
 
   function makeUnoDeck() {
     const d = [];
     for (const col of COLORS) {
-      for (let n = 0; n <= 9; n++) d.push({ col, n, id: `${col}${n}a` });
-      for (let n = 1; n <= 9; n++) d.push({ col, n, id: `${col}${n}b` });
+      d.push({ col, n: 0, id: `${col}0` });
+      for (let n = 1; n <= 9; n++) {
+        d.push({ col, n, id: `${col}${n}a` }, { col, n, id: `${col}${n}b` });
+      }
       d.push({ col, n: "+2", id: `${col}+2a` }, { col, n: "+2", id: `${col}+2b` });
       d.push({ col, n: "skip", id: `${col}sa` }, { col, n: "skip", id: `${col}sb` });
+      d.push({ col, n: "rev", id: `${col}ra` }, { col, n: "rev", id: `${col}rb` });
+    }
+    for (let k = 0; k < 4; k++) {
+      d.push({ col: "W", n: "wild", id: `W${k}` }, { col: "W", n: "+4", id: `W4${k}` });
     }
     return shuffle(d);
   }
@@ -926,10 +954,11 @@ export function mountUnoGame(root, { botTier, onExit, onEnd, onBind, match }) {
   let bot = [];
   let turn = "you";
   let over = false;
+  let drewThisTurn = false;
 
   const wrap = createSalonShell({
     title: "Uno",
-    subtitle: "1v1 · combine cor ou número",
+    subtitle: "1v1 · regras oficiais",
     botName: `Bot ${tier.label}`,
     accent: "teal",
   });
@@ -945,18 +974,30 @@ export function mountUnoGame(root, { botTier, onExit, onEnd, onBind, match }) {
     return discard[discard.length - 1];
   }
 
-  function canPlay(c) {
+  function activeColor() {
     const t = top();
-    return c.col === t.col || c.n === t.n;
+    return t.chosenCol || t.col;
+  }
+
+  function canPlay(c) {
+    if (c.col === "W") return true;
+    const t = top();
+    return c.col === activeColor() || (t.n !== "wild" && t.n !== "+4" && c.n === t.n);
   }
 
   function unoCardEl(c, playable) {
     const el = document.createElement("button");
     el.type = "button";
-    el.className = `tg-uno-card${playable ? " playable" : ""}`;
-    const hex = COLOR_HEX[c.col];
-    el.style.background = `linear-gradient(160deg, color-mix(in srgb, ${hex} 100%, white 30%), ${hex} 45%, color-mix(in srgb, ${hex} 100%, black 40%))`;
-    el.textContent = String(c.n);
+    el.className = `tg-uno-card${playable ? " playable" : ""}${c.col === "W" ? " tg-uno-wild" : ""}`;
+    if (c.col === "W") {
+      el.style.background =
+        "conic-gradient(#e04040 0 90deg, #e0c020 90deg 180deg, #2aaa55 180deg 270deg, #3380e0 270deg 360deg)";
+      if (c.chosenCol) el.style.boxShadow = `0 0 0 3px ${COLOR_HEX[c.chosenCol]}, 0 4px 10px rgba(0,0,0,.45)`;
+    } else {
+      const hex = COLOR_HEX[c.col];
+      el.style.background = `linear-gradient(160deg, color-mix(in srgb, ${hex} 100%, white 30%), ${hex} 45%, color-mix(in srgb, ${hex} 100%, black 40%))`;
+    }
+    el.textContent = FACE[c.n] ?? String(c.n);
     el.disabled = !playable;
     return el;
   }
@@ -964,7 +1005,16 @@ export function mountUnoGame(root, { botTier, onExit, onEnd, onBind, match }) {
   function paint() {
     center.innerHTML = "";
     const t = top();
-    if (t) center.appendChild(unoCardEl(t, false));
+    if (t) {
+      center.appendChild(unoCardEl(t, false));
+      if (t.col === "W" && t.chosenCol) {
+        const tag = document.createElement("span");
+        tag.className = "tg-uno-color-tag";
+        tag.textContent = `Cor: ${COLOR_NAME[t.chosenCol]}`;
+        tag.style.background = COLOR_HEX[t.chosenCol];
+        center.appendChild(tag);
+      }
+    }
     handEl.innerHTML = "";
     you.forEach((c, i) => {
       const el = unoCardEl(c, !over && turn === "you" && canPlay(c));
@@ -976,55 +1026,167 @@ export function mountUnoGame(root, { botTier, onExit, onEnd, onBind, match }) {
   }
 
   function drawOne(who) {
-    if (!deck.length) deck = shuffle(discard.splice(0, discard.length - 1));
+    if (!deck.length) {
+      const topCard = discard.pop();
+      deck = shuffle(discard.map((c) => ({ ...c, chosenCol: undefined })));
+      discard = [topCard];
+    }
+    if (!deck.length) return null;
     const c = deck.pop();
     if (who === "you") you.push(c);
     else bot.push(c);
     playCardDeal();
+    return c;
+  }
+
+  function renderActions() {
+    actions.innerHTML = "";
+    const drawBtn = document.createElement("button");
+    drawBtn.className = "tg-btn";
+    drawBtn.textContent = "Comprar";
+    drawBtn.onclick = () => {
+      if (turn !== "you" || over || drewThisTurn) return;
+      const c = drawOne("you");
+      drewThisTurn = true;
+      paint();
+      if (c && canPlay(c)) {
+        statusEl.textContent = "A carta comprada dá jogo! Jogue ou passe.";
+        renderActions();
+      } else {
+        passTurn();
+      }
+    };
+    drawBtn.disabled = over || turn !== "you" || drewThisTurn;
+    actions.appendChild(drawBtn);
+    if (drewThisTurn && turn === "you" && !over) {
+      const passBtn = document.createElement("button");
+      passBtn.className = "tg-btn tg-btn-ghost";
+      passBtn.textContent = "Passar";
+      passBtn.onclick = passTurn;
+      actions.appendChild(passBtn);
+    }
+  }
+
+  function passTurn() {
+    match?.endPlayerClock?.();
+    drewThisTurn = false;
+    turn = "bot";
+    statusEl.textContent = "Vez do bot…";
+    renderActions();
+    paint();
+    setTimeout(botPlay, 500);
   }
 
   function start() {
     deck = makeUnoDeck();
     you = deck.splice(0, 7);
     bot = deck.splice(0, 7);
-    discard = [deck.pop()];
+    let first = deck.pop();
+    while (first.col === "W") {
+      deck.unshift(first);
+      first = deck.pop();
+    }
+    discard = [first];
     turn = "you";
     over = false;
+    drewThisTurn = false;
+    match?.setActionsEnabled?.(true);
     announceDealing();
     paint();
-    statusEl.textContent = "Sua vez";
-    actions.innerHTML = "";
-    const drawBtn = document.createElement("button");
-    drawBtn.className = "tg-btn";
-    drawBtn.textContent = "Comprar";
-    drawBtn.onclick = () => {
-      if (turn !== "you" || over) return;
-      match?.endPlayerClock?.();
-      drawOne("you");
-      turn = "bot";
-      paint();
-      setTimeout(botPlay, 500);
-    };
-    actions.appendChild(drawBtn);
+    statusEl.textContent = "Sua vez — combine cor ou símbolo";
+    renderActions();
     match?.startPlayerClock?.(true);
   }
 
   function winCheck() {
     if (you.length === 0) {
       over = true;
-      statusEl.textContent = "Uno! Você venceu!";
+      statusEl.textContent = "UNO! Você venceu!";
       endVoice("you");
       onEnd?.("you");
       return true;
     }
     if (bot.length === 0) {
       over = true;
-      statusEl.textContent = "Bot fez Uno.";
+      statusEl.textContent = "Bot bateu. Você perdeu.";
       endVoice("bot");
       onEnd?.("bot");
       return true;
     }
     return false;
+  }
+
+  function unoShout(who) {
+    if (who === "you" && you.length === 1) {
+      statusEl.textContent = "UNO! Só falta 1 carta!";
+      speakLine("Uno!");
+    } else if (who === "bot" && bot.length === 1) {
+      speakLine("O bot gritou uno!");
+    }
+  }
+
+  // Efeito oficial 1v1: skip, inverter, +2 e +4 pulam o adversário (quem jogou joga de novo)
+  function applyEffect(c, who) {
+    const victim = who === "you" ? "bot" : "you";
+    let playAgain = false;
+    if (c.n === "skip" || c.n === "rev") playAgain = true;
+    if (c.n === "+2") {
+      drawOne(victim);
+      drawOne(victim);
+      playAgain = true;
+    }
+    if (c.n === "+4") {
+      for (let k = 0; k < 4; k++) drawOne(victim);
+      playAgain = true;
+    }
+    return playAgain;
+  }
+
+  function chooseColorUI(cb) {
+    actions.innerHTML = "";
+    statusEl.textContent = "Escolha a cor do coringa";
+    COLORS.forEach((col) => {
+      const b = document.createElement("button");
+      b.className = "tg-btn tg-uno-pickcolor";
+      b.textContent = COLOR_NAME[col];
+      b.style.background = COLOR_HEX[col];
+      b.onclick = () => cb(col);
+      actions.appendChild(b);
+    });
+  }
+
+  function afterPlay(c, who) {
+    if (winCheck()) return;
+    unoShout(who);
+    const playAgain = applyEffect(c, who);
+    if (who === "you") {
+      drewThisTurn = false;
+      if (playAgain) {
+        turn = "you";
+        statusEl.textContent = "Adversário pulou — jogue de novo!";
+        paint();
+        renderActions();
+        match?.startPlayerClock?.(false);
+      } else {
+        turn = "bot";
+        paint();
+        renderActions();
+        setTimeout(botPlay, 500);
+      }
+    } else {
+      if (playAgain) {
+        turn = "bot";
+        paint();
+        setTimeout(botPlay, 550);
+      } else {
+        turn = "you";
+        drewThisTurn = false;
+        statusEl.textContent = "Sua vez";
+        paint();
+        renderActions();
+        match?.startPlayerClock?.(false);
+      }
+    }
   }
 
   function playYou(i) {
@@ -1036,56 +1198,71 @@ export function mountUnoGame(root, { botTier, onExit, onEnd, onBind, match }) {
     }
     match?.endPlayerClock?.();
     you.splice(i, 1);
-    discard.push(c);
     playCardPlay();
-    if (winCheck()) return;
-    let skip = c.n === "skip";
-    if (c.n === "+2") {
-      drawOne("bot");
-      drawOne("bot");
+    if (c.col === "W") {
+      chooseColorUI((col) => {
+        discard.push({ ...c, chosenCol: col });
+        afterPlay(c, "you");
+      });
+      paint();
+      return;
     }
-    turn = skip ? "you" : "bot";
-    paint();
-    if (turn === "bot") setTimeout(botPlay, 450);
-    else {
-      statusEl.textContent = "Skip! Jogue de novo";
-      match?.startPlayerClock?.(false);
-    }
+    discard.push(c);
+    afterPlay(c, "you");
+  }
+
+  function botBestColor() {
+    const count = { R: 0, G: 0, B: 0, Y: 0 };
+    bot.forEach((c) => {
+      if (c.col !== "W") count[c.col]++;
+    });
+    return COLORS.reduce((best, col) => (count[col] > count[best] ? col : best), "R");
   }
 
   function botPlay() {
     if (over) return;
     playBotThink();
-    const opts = bot.map((c, i) => ({ c, i, score: canPlay(c) ? 10 + Math.random() * tier.pocketBias * 10 : -1 }));
-    const playable = opts.filter((o) => o.score >= 0);
-    if (!playable.length) {
-      drawOne("bot");
+    const opts = bot
+      .map((c, i) => {
+        if (!canPlay(c)) return null;
+        let score = 10;
+        if (c.n === "+4") score += 8;
+        else if (c.n === "+2") score += 6;
+        else if (c.n === "skip" || c.n === "rev") score += 4;
+        else if (c.col === "W") score += 2;
+        score += Math.random() * tier.pocketBias * 10;
+        return { i, c, score };
+      })
+      .filter(Boolean);
+    if (!opts.length) {
+      const c = drawOne("bot");
+      if (c && canPlay(c)) {
+        setTimeout(() => {
+          if (over) return;
+          const idx = bot.findIndex((x) => x.id === c.id);
+          if (idx >= 0) bot.splice(idx, 1);
+          const played = c.col === "W" ? { ...c, chosenCol: botBestColor() } : c;
+          discard.push(played);
+          playCardPlay();
+          statusEl.textContent = "Bot comprou e jogou.";
+          afterPlay(c, "bot");
+        }, 450);
+        return;
+      }
       turn = "you";
-      statusEl.textContent = "Bot comprou. Sua vez";
+      drewThisTurn = false;
+      statusEl.textContent = "Bot comprou e passou. Sua vez";
       paint();
+      renderActions();
       match?.startPlayerClock?.(false);
       return;
     }
-    const pick = pickMoveWithWisdom(
-      playable.map((o) => ({ ...o, score: o.score })),
-      tier.id
-    );
+    const pick = pickMoveWithWisdom(opts, tier.id);
     const c = bot.splice(pick.i, 1)[0];
-    discard.push(c);
+    const played = c.col === "W" ? { ...c, chosenCol: botBestColor() } : c;
+    discard.push(played);
     playCardPlay();
-    if (winCheck()) return;
-    let skip = c.n === "skip";
-    if (c.n === "+2") {
-      drawOne("you");
-      drawOne("you");
-    }
-    turn = skip ? "bot" : "you";
-    paint();
-    if (turn === "bot") setTimeout(botPlay, 400);
-    else {
-      statusEl.textContent = "Sua vez";
-      match?.startPlayerClock?.(false);
-    }
+    afterPlay(c, "bot");
   }
 
   bindCommon(wrap, {
@@ -1094,15 +1271,19 @@ export function mountUnoGame(root, { botTier, onExit, onEnd, onBind, match }) {
   });
   onBind?.({
     resign: () => {
+      if (over) return;
+      over = true;
+      statusEl.textContent = "Você desistiu.";
       endVoice("bot");
       onEnd?.("bot");
     },
     offerDraw: () => match?.markDrawResolved?.(false),
     timeout: () => {
-      drawOne("you");
-      turn = "bot";
-      paint();
-      setTimeout(botPlay, 400);
+      if (over) return;
+      over = true;
+      statusEl.textContent = "Tempo esgotado. Bot venceu.";
+      endVoice("bot");
+      onEnd?.("bot");
     },
   });
   start();
@@ -1311,8 +1492,9 @@ export function mountDominoGame(root, { botTier, onExit, onEnd, onBind, match })
     resign: () => finish("bot"),
     offerDraw: () => match?.markDrawResolved?.(false),
     timeout: () => {
-      turn = "bot";
-      setTimeout(botPlay, 300);
+      if (over) return;
+      statusEl.textContent = "Tempo esgotado.";
+      finish("bot");
     },
   });
   deal();

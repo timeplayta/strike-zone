@@ -133,12 +133,14 @@ function initAdminPanel() {
       "poker",
       "memoria",
       "uno",
+      "batalha",
+      "general",
     ]);
     if (tableGames.has(mapKey)) {
       if (typeof window.openTableGames === "function") {
         window.openTableGames(mapKey);
       } else {
-        import("./table-games.js?v=12").then(() => window.openTableGames?.(mapKey));
+        import("./table-games.js?v=13").then(() => window.openTableGames?.(mapKey));
       }
       return;
     }

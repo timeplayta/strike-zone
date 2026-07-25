@@ -23,6 +23,7 @@ import {
   mountUnoGame,
   mountDominoGame,
 } from "./table-games-extra.js";
+import { mountBattleshipGame, mountGeneralGame } from "./table-games-extra2.js";
 import { getTableGameRules, renderRulesHtml } from "./table-games-rules.js";
 
 export const TABLE_GAMES = {
@@ -99,9 +100,23 @@ export const TABLE_GAMES = {
   uno: {
     id: "uno",
     name: "Uno",
-    desc: "Combine cor ou número · 1v1",
+    desc: "Regras oficiais · coringa e +4 · 1v1",
     ambience: "cards",
     mount: mountUnoGame,
+  },
+  batalha: {
+    id: "batalha",
+    name: "Batalha Naval",
+    desc: "Afunde a frota inimiga · acertou, atira de novo",
+    ambience: "salon",
+    mount: mountBattleshipGame,
+  },
+  general: {
+    id: "general",
+    name: "General",
+    desc: "5 dados · 3 rolagens · marque as categorias",
+    ambience: "salon",
+    mount: mountGeneralGame,
   },
 };
 
@@ -217,7 +232,7 @@ function showLobby(gameId) {
     rulesEl.innerHTML = renderRulesHtml(getTableGameRules(gameId));
   }
   const rulesPanel = el.querySelector("[data-rules-panel]");
-  if (rulesPanel) rulesPanel.open = false;
+  if (rulesPanel) rulesPanel.open = true;
   el.querySelector("[data-lobby]").classList.remove("hidden");
   el.querySelector("[data-match]").classList.add("hidden");
   el.querySelectorAll("[data-tier]").forEach((b) => b.classList.remove("selected"));

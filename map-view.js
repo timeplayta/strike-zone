@@ -20,7 +20,9 @@ const MAPS = [
   { id: "blackjack", category: "jogos-de-mesa", name: "Blackjack", desc: "21 · vs dealer" },
   { id: "poker", category: "jogos-de-mesa", name: "Poker", desc: "5 cartas · heads-up" },
   { id: "memoria", category: "jogos-de-mesa", name: "Memória", desc: "Ache os pares" },
-  { id: "uno", category: "jogos-de-mesa", name: "Uno", desc: "Cor ou número · 1v1" },
+  { id: "uno", category: "jogos-de-mesa", name: "Uno", desc: "Regras oficiais · coringa e +4" },
+  { id: "batalha", category: "jogos-de-mesa", name: "Batalha Naval", desc: "Afunde a frota do bot" },
+  { id: "general", category: "jogos-de-mesa", name: "General", desc: "5 dados · 3 rolagens · 11 categorias" },
 ];
 
 const CATEGORIES = ["tiro", "terror", "esconde-esconde", "jogos-de-mesa"];

@@ -65,10 +65,10 @@ function buildPad(x, z, color, radius = 0.72) {
 }
 
 const SLOTS = [
-  { x: 0, z: 0.8, color: 0xf0a030, mine: true, scale: 1.65, padRadius: 0.92 },
-  { x: -1.2, z: 0.0, color: 0x2266aa, scale: 1.4, padRadius: 0.76 },
-  { x: 1.2, z: 0.0, color: 0xc9a227, scale: 1.4, padRadius: 0.76 },
-  { x: 0, z: -0.5, color: 0x888899, scale: 1.4, padRadius: 0.76 },
+  { x: 0, z: 0.55, color: 0xf0a030, mine: true, scale: 1.35, padRadius: 0.78 },
+  { x: -1.35, z: -0.15, color: 0x2266aa, scale: 1.15, padRadius: 0.62 },
+  { x: 1.35, z: -0.15, color: 0xc9a227, scale: 1.15, padRadius: 0.62 },
+  { x: 0, z: -0.85, color: 0x888899, scale: 1.1, padRadius: 0.58 },
 ];
 
 function facePivotToCamera(group, x, z) {
@@ -77,23 +77,32 @@ function facePivotToCamera(group, x, z) {
 
 function buildScene() {
   scene = new THREE.Scene();
-  camera = new THREE.PerspectiveCamera(48, 1, 0.1, 40);
-  camera.position.set(0, 1.2, 3.2);
-  camera.lookAt(0, 1.55, 0.5);
+  // Fundo transparente — personagens “grudam” no menu (estilo Free Fire)
+  scene.background = null;
+  camera = new THREE.PerspectiveCamera(38, 1, 0.1, 60);
+  camera.position.set(0, 1.55, 5.8);
+  camera.lookAt(0, 1.05, 0.15);
 
-  scene.add(new THREE.AmbientLight(0xffffff, 0.78));
-  const key = new THREE.DirectionalLight(0xfff4e0, 1.15);
+  scene.add(new THREE.AmbientLight(0xffffff, 0.82));
+  const key = new THREE.DirectionalLight(0xfff4e0, 1.2);
   key.position.set(2.2, 5, 4);
   scene.add(key);
-  const rim = new THREE.DirectionalLight(0x6688ff, 0.6);
+  const rim = new THREE.DirectionalLight(0x6688ff, 0.55);
   rim.position.set(-3, 3, -3);
   scene.add(rim);
 
+  // Chão quase invisível — só dá base leve sob os pads, sem “caixa”
   const floor = new THREE.Mesh(
-    new THREE.CircleGeometry(4.2, 48),
-    new THREE.MeshStandardMaterial({ color: 0x0b0e16, roughness: 0.9, metalness: 0.08 })
+    new THREE.CircleGeometry(3.6, 48),
+    new THREE.MeshBasicMaterial({
+      color: 0x101820,
+      transparent: true,
+      opacity: 0.18,
+      depthWrite: false,
+    })
   );
   floor.rotation.x = -Math.PI / 2;
+  floor.position.y = 0.005;
   scene.add(floor);
 
   entities = [];
@@ -173,10 +182,18 @@ function resize() {
   renderer.setSize(w, h, false);
   const aspect = w / h;
   camera.aspect = aspect;
-  // Canvas estreito (mobile/vertical) — afasta a câmera pra todos os personagens caberem
-  camera.position.z = aspect < 1.3 ? 4.6 : (aspect > 2.2 ? 3.0 : 3.2);
-  camera.position.y = aspect < 1.3 ? 1.45 : 1.2;
-  camera.lookAt(0, 1.55, 0.5);
+  // Tela inteira: afasta o bastante pra cabeça + corpo caberem no meio
+  if (aspect < 0.85) {
+    camera.position.set(0, 1.7, 7.4);
+    camera.fov = 42;
+  } else if (aspect < 1.25) {
+    camera.position.set(0, 1.6, 6.4);
+    camera.fov = 40;
+  } else {
+    camera.position.set(0, 1.55, 5.6);
+    camera.fov = 36;
+  }
+  camera.lookAt(0, 1.05, 0.15);
   camera.updateProjectionMatrix();
 }
 
@@ -212,7 +229,13 @@ export function mountLobbyScene() {
     return;
   }
   try {
-    renderer = new THREE.WebGLRenderer({ canvas: canvasEl, antialias: true, alpha: true });
+    renderer = new THREE.WebGLRenderer({
+      canvas: canvasEl,
+      antialias: true,
+      alpha: true,
+      premultipliedAlpha: false,
+    });
+    renderer.setClearColor(0x000000, 0);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
     buildScene();
     clock = new THREE.Clock();

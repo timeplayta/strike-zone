@@ -139,6 +139,8 @@
     poker: "Poker",
     memoria: "Memória",
     uno: "Uno",
+    batalha: "Batalha Naval",
+    general: "General",
   };
 
   const TABLE_GAME_MAPS = new Set([
@@ -153,6 +155,8 @@
     "poker",
     "memoria",
     "uno",
+    "batalha",
+    "general",
   ]);
 
   function updateSelectedMapLabel() {
@@ -285,7 +289,7 @@
         return;
       }
       try {
-        await import("./table-games.js?v=12");
+        await import("./table-games.js?v=13");
         if (typeof window.openTableGames === "function") {
           window.openTableGames(map);
           return;
@@ -382,7 +386,7 @@
       tut.maybeStartTutorial?.();
     } catch { /* tutorial opcional */ }
     try {
-      const lobby = await import("./lobby-view.js?v=2");
+      const lobby = await import("./lobby-view.js?v=3");
       lobby.mountLobbyScene?.();
     } catch { /* lobby 3D opcional */ }
   }
