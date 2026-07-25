@@ -1,19 +1,23 @@
 import * as THREE from "three";
+import { applyPsxWobble } from "./psx-style.js";
 
 const SKIN = 0xc4956a;
 const SHOE = 0x1a1a1a;
-const SEG = 12;
+// Baixa contagem de segmentos de propósito — visual retrô/low-poly PS1.
+const SEG = 6;
 
 function mat(color, rough = 0.82, emissive = null) {
   const m = new THREE.MeshStandardMaterial({
     color,
     roughness: rough,
     metalness: emissive ? 0.38 : 0.04,
+    flatShading: true,
   });
   if (emissive) {
     m.emissive = new THREE.Color(emissive);
     m.emissiveIntensity = 0.55;
   }
+  applyPsxWobble(m);
   return m;
 }
 
@@ -42,14 +46,14 @@ function applyHold(armL, armR, hold = RIFLE_HOLD) {
 function addFace(parent, headY, profile) {
   const skin = mat(profile.skinTone ?? SKIN, 0.88);
   parent.add(
-    part(new THREE.SphereGeometry(0.018, 8, 8), mat(profile.eyeColor ?? 0xeeeeee), -0.038, headY + 0.018, 0.1),
-    part(new THREE.SphereGeometry(0.018, 8, 8), mat(profile.eyeColor ?? 0xeeeeee), 0.038, headY + 0.018, 0.1),
-    part(new THREE.SphereGeometry(0.009, 6, 6), mat(0x111111), -0.038, headY + 0.016, 0.112),
-    part(new THREE.SphereGeometry(0.009, 6, 6), mat(0x111111), 0.038, headY + 0.016, 0.112)
+    part(new THREE.SphereGeometry(0.018, 6, 5), mat(profile.eyeColor ?? 0xeeeeee), -0.038, headY + 0.018, 0.1),
+    part(new THREE.SphereGeometry(0.018, 6, 5), mat(profile.eyeColor ?? 0xeeeeee), 0.038, headY + 0.018, 0.1),
+    part(new THREE.SphereGeometry(0.009, 5, 4), mat(0x111111), -0.038, headY + 0.016, 0.112),
+    part(new THREE.SphereGeometry(0.009, 5, 4), mat(0x111111), 0.038, headY + 0.016, 0.112)
   );
   parent.add(part(new THREE.BoxGeometry(0.044, 0.008, 0.01), mat(0x884444), 0, headY - 0.034, 0.106));
   if (profile.beard) {
-    parent.add(part(new THREE.SphereGeometry(0.06, 8, 8, 0, Math.PI * 2, Math.PI * 0.5, Math.PI * 0.42), mat(0x3a2818), 0, headY - 0.042, 0.05));
+    parent.add(part(new THREE.SphereGeometry(0.06, 6, 5, 0, Math.PI * 2, Math.PI * 0.5, Math.PI * 0.42), mat(0x3a2818), 0, headY - 0.042, 0.05));
   }
   if (!profile.headStyle || profile.headStyle === "face" || profile.headStyle === "cap" || profile.headStyle === "glasses") {
     parent.add(part(new THREE.SphereGeometry(0.1, SEG, SEG, 0, Math.PI * 2, 0, Math.PI * 0.48), mat(profile.hairColor ?? 0x2a1810), 0, headY + 0.024, -0.01));
@@ -62,8 +66,8 @@ function addMask(parent, headY, profile) {
   const accent = mat(profile.maskAccent ?? 0xcc2222);
   if (profile.maskPattern === "skull") {
     parent.add(
-      part(new THREE.SphereGeometry(0.02, 6, 6), mat(0xeeeeee), -0.03, headY + 0.024, 0.106),
-      part(new THREE.SphereGeometry(0.02, 6, 6), mat(0xeeeeee), 0.03, headY + 0.024, 0.106)
+      part(new THREE.SphereGeometry(0.02, 5, 4), mat(0xeeeeee), -0.03, headY + 0.024, 0.106),
+      part(new THREE.SphereGeometry(0.02, 5, 4), mat(0xeeeeee), 0.03, headY + 0.024, 0.106)
     );
   } else if (profile.maskPattern === "stripe") {
     parent.add(part(new THREE.BoxGeometry(0.1, 0.02, 0.01), accent, 0, headY + 0.032, 0.106));
@@ -138,7 +142,7 @@ function buildArm(side, sm, mSleeve, mSkin, mGlove) {
 
   // Relógio tático no pulso esquerdo
   if (side === "L") {
-    const watchBand = part(new THREE.CylinderGeometry(0.036 * sm, 0.036 * sm, 0.024, 16), mat(0x151515, 0.7), 0, -0.008, 0);
+    const watchBand = part(new THREE.CylinderGeometry(0.036 * sm, 0.036 * sm, 0.024, 6), mat(0x151515, 0.7), 0, -0.008, 0);
     watchBand.rotation.x = Math.PI / 2;
     elbow.add(watchBand);
     const watchFace = part(new THREE.BoxGeometry(0.028 * sm, 0.02, 0.01), mat(0x1a2a3a, 0.55, 0x0044aa), 0, -0.008, 0.042);
