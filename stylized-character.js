@@ -1,23 +1,21 @@
 import * as THREE from "three";
-import { applyPsxWobble } from "./psx-style.js";
 
 const SKIN = 0xc4956a;
 const SHOE = 0x1a1a1a;
-// Baixa contagem de segmentos de propósito — visual retrô/low-poly PS1.
-const SEG = 6;
+// Low-poly estilizado limpo (sem vertex wobble — wobble estraga a partida).
+const SEG = 7;
 
 function mat(color, rough = 0.82, emissive = null) {
   const m = new THREE.MeshStandardMaterial({
     color,
     roughness: rough,
     metalness: emissive ? 0.38 : 0.04,
-    flatShading: true,
+    flatShading: true, // faces facetadas = low-poly estilizado
   });
   if (emissive) {
     m.emissive = new THREE.Color(emissive);
     m.emissiveIntensity = 0.55;
   }
-  applyPsxWobble(m);
   return m;
 }
 

@@ -6,7 +6,6 @@ import { applyWeaponSkin, findWeaponSkinItem } from "./weapon-skin-apply.js";
 
 import { buildMeleeFpsModel } from "./melee-weapons.js";
 import { getActiveCharacterAbility } from "./character-abilities.js";
-import { applyPsxWobble } from "./psx-style.js";
 
 
 
@@ -26,18 +25,14 @@ function makeFpsWeapon(type, scale, tint) {
 
 }
 
-// Visual retrô PS1/PSX: flat shading (facetado) + vertex snap (tremor de baixa precisão)
+/** Materiais REALISTAS para mãos FPS — smooth shading, sem flat/wobble (partida limpa) */
 function matHand(color, roughness = 0.72) {
-  const m = new THREE.MeshStandardMaterial({ color, roughness, metalness: 0.02, flatShading: true });
-  applyPsxWobble(m);
-  return m;
+  return new THREE.MeshStandardMaterial({ color, roughness, metalness: 0.02, flatShading: false });
 }
 
 function makeNailMat(skinColor) {
   const c = new THREE.Color(skinColor).lerp(new THREE.Color(0xffe8d8), 0.55);
-  const m = new THREE.MeshStandardMaterial({ color: c, roughness: 0.28, metalness: 0.05, flatShading: true });
-  applyPsxWobble(m);
-  return m;
+  return new THREE.MeshStandardMaterial({ color: c, roughness: 0.28, metalness: 0.05, flatShading: false });
 }
 
 /**
@@ -53,11 +48,11 @@ function makeFinger(baseX, baseY, baseZ, restCurl, lenMult, mat, nailMat) {
   const lm = lenMult;
 
   // Falange proximal
-  const prox = new THREE.Mesh(new THREE.CylinderGeometry(0.0082, 0.0096, 0.036 * lm, 5), mat);
+  const prox = new THREE.Mesh(new THREE.CylinderGeometry(0.0082, 0.0096, 0.036 * lm, 12), mat);
   prox.position.y = -0.018 * lm;
   root.add(prox);
 
-  const j1 = new THREE.Mesh(new THREE.SphereGeometry(0.0095, 5, 4), mat);
+  const j1 = new THREE.Mesh(new THREE.SphereGeometry(0.0095, 10, 8), mat);
   j1.position.y = -0.036 * lm;
   root.add(j1);
 
@@ -66,11 +61,11 @@ function makeFinger(baseX, baseY, baseZ, restCurl, lenMult, mat, nailMat) {
   midPivot.position.y = -0.036 * lm;
   root.add(midPivot);
 
-  const mid = new THREE.Mesh(new THREE.CylinderGeometry(0.0072, 0.0084, 0.03 * lm, 5), mat);
+  const mid = new THREE.Mesh(new THREE.CylinderGeometry(0.0072, 0.0084, 0.03 * lm, 12), mat);
   mid.position.y = -0.015 * lm;
   midPivot.add(mid);
 
-  const j2 = new THREE.Mesh(new THREE.SphereGeometry(0.0078, 5, 4), mat);
+  const j2 = new THREE.Mesh(new THREE.SphereGeometry(0.0078, 10, 8), mat);
   j2.position.y = -0.03 * lm;
   midPivot.add(j2);
 
@@ -79,11 +74,11 @@ function makeFinger(baseX, baseY, baseZ, restCurl, lenMult, mat, nailMat) {
   distPivot.position.y = -0.03 * lm;
   midPivot.add(distPivot);
 
-  const dist = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.0074, 0.024 * lm, 5), mat);
+  const dist = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.0074, 0.024 * lm, 10), mat);
   dist.position.y = -0.012 * lm;
   distPivot.add(dist);
 
-  const tip = new THREE.Mesh(new THREE.SphereGeometry(0.0066, 5, 4), mat);
+  const tip = new THREE.Mesh(new THREE.SphereGeometry(0.0066, 10, 8), mat);
   tip.position.y = -0.024 * lm;
   distPivot.add(tip);
 
@@ -110,11 +105,11 @@ function makeThumb(posX, posY, posZ, s, mat, nailMat) {
   root.rotation.set(0.82, 0, s * -0.88);
 
   // Metacarpo
-  const meta = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.014, 0.038, 5), mat);
+  const meta = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.014, 0.038, 12), mat);
   meta.position.y = -0.019;
   root.add(meta);
 
-  const jb = new THREE.Mesh(new THREE.SphereGeometry(0.013, 5, 4), mat);
+  const jb = new THREE.Mesh(new THREE.SphereGeometry(0.013, 10, 8), mat);
   jb.position.y = -0.038;
   root.add(jb);
 
@@ -123,11 +118,11 @@ function makeThumb(posX, posY, posZ, s, mat, nailMat) {
   p1.position.y = -0.038;
   root.add(p1);
 
-  const p1m = new THREE.Mesh(new THREE.CylinderGeometry(0.0095, 0.012, 0.038, 5), mat);
+  const p1m = new THREE.Mesh(new THREE.CylinderGeometry(0.0095, 0.012, 0.038, 12), mat);
   p1m.position.y = -0.019;
   p1.add(p1m);
 
-  const tj = new THREE.Mesh(new THREE.SphereGeometry(0.0105, 5, 4), mat);
+  const tj = new THREE.Mesh(new THREE.SphereGeometry(0.0105, 10, 8), mat);
   tj.position.y = -0.038;
   p1.add(tj);
 
@@ -136,11 +131,11 @@ function makeThumb(posX, posY, posZ, s, mat, nailMat) {
   p2.position.y = -0.038;
   p1.add(p2);
 
-  const p2m = new THREE.Mesh(new THREE.CylinderGeometry(0.0078, 0.0095, 0.032, 5), mat);
+  const p2m = new THREE.Mesh(new THREE.CylinderGeometry(0.0078, 0.0095, 0.032, 10), mat);
   p2m.position.y = -0.016;
   p2.add(p2m);
 
-  const ttip = new THREE.Mesh(new THREE.SphereGeometry(0.0085, 5, 4), mat);
+  const ttip = new THREE.Mesh(new THREE.SphereGeometry(0.0085, 10, 8), mat);
   ttip.position.y = -0.032;
   p2.add(ttip);
 
@@ -168,18 +163,17 @@ function makeFpsHand(side, skinMat, gloveMat, nailMat) {
   const isRight = side === "right";
   const g = new THREE.Group();
 
-  const sleeveMat = new THREE.MeshStandardMaterial({ color: 0x1b2534, roughness: 0.9, metalness: 0.05, flatShading: true });
-  applyPsxWobble(sleeveMat);
+  const sleeveMat = new THREE.MeshStandardMaterial({ color: 0x1b2534, roughness: 0.9, metalness: 0.05, flatShading: false });
 
   // Braço superior
-  const upper = new THREE.Mesh(new THREE.CylinderGeometry(0.037, 0.035, 0.33, 6), sleeveMat);
+  const upper = new THREE.Mesh(new THREE.CylinderGeometry(0.037, 0.035, 0.33, 14), sleeveMat);
   upper.position.set(s * 0.21, -0.23, 0.05);
   upper.rotation.set(Math.PI / 2, 0, s * 0.1);
   upper.scale.x = 0.86;
   g.add(upper);
 
   // Antebraço
-  const forearm = new THREE.Mesh(new THREE.CylinderGeometry(0.033, 0.031, 0.35, 6), sleeveMat);
+  const forearm = new THREE.Mesh(new THREE.CylinderGeometry(0.033, 0.031, 0.35, 14), sleeveMat);
   forearm.position.set(s * 0.15, -0.19, -0.15);
   forearm.rotation.set(Math.PI / 2, 0, s * 0.17);
   forearm.scale.x = 0.82;
@@ -193,21 +187,24 @@ function makeFpsHand(side, skinMat, gloveMat, nailMat) {
   wristPivot.rotation.set(0.04, 0, s * -0.05);
   g.add(wristPivot);
 
-  const wrist = new THREE.Mesh(new THREE.CylinderGeometry(0.029, 0.032, 0.065, 6), gloveMat);
+  const wrist = new THREE.Mesh(new THREE.CylinderGeometry(0.029, 0.032, 0.065, 14), gloveMat);
   wrist.rotation.set(Math.PI / 2, 0, 0);
   wristPivot.add(wrist);
 
-  // Palma (posição relativa à junta do punho)
+  // Palma (posição relativa à junta do punho) — cápsula anatômica, não bloco
   const palmPivot = new THREE.Group();
   palmPivot.position.set(s * 0.075 - wristPos.x, -0.108 - wristPos.y, -0.356 - wristPos.z);
   palmPivot.rotation.set(0.14, 0, s * 0.1);
   wristPivot.add(palmPivot);
 
-  palmPivot.add(new THREE.Mesh(new THREE.BoxGeometry(0.078, 0.044, 0.09), gloveMat));
+  const palm = new THREE.Mesh(new THREE.CapsuleGeometry(0.028, 0.042, 6, 12), gloveMat);
+  palm.scale.set(1.45, 0.72, 1.55);
+  palm.rotation.x = Math.PI / 2;
+  palmPivot.add(palm);
 
   // Nós dos dedos (detalhe visual da palma)
   for (let i = 0; i < 4; i++) {
-    const km = new THREE.Mesh(new THREE.SphereGeometry(0.012, 5, 4), gloveMat);
+    const km = new THREE.Mesh(new THREE.SphereGeometry(0.012, 10, 8), gloveMat);
     km.position.set(s * (-0.026 + i * 0.018), 0.022, -0.044);
     palmPivot.add(km);
   }

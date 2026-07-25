@@ -1,18 +1,17 @@
 /**
- * Utilitário de estilo retrô PS1/PSX para os personagens (corpo + mãos em
- * primeira pessoa). Dois efeitos clássicos daquela geração:
+ * Utilitário opcional de estilo PS1/PSX.
  *
- * 1. Flat shading — cada face do low-poly aparece "quebrada" (facetada) em
- *    vez de suavizada, o visual mais reconhecível do PS1.
- * 2. Vertex snapping — trava a posição do vértice numa grade de baixa
- *    precisão no clip space, causando aquele tremor/"wobble" característico
- *    quando a câmera ou o personagem se move (o hardware original não tinha
- *    precisão de ponto flutuante suficiente pra manter os vértices estáveis).
+ * NÃO usar na partida padrão: o vertex snap causa tremor e deixa o jogo
+ * ilegível. Personagens usam low-poly limpo (flat shading) em
+ * stylized-character.js; mãos FPS ficam realistas em weapon-view.js.
+ *
+ * Este arquivo fica disponível só se algum modo/filtro retrô pedir
+ * explicitamente o wobble no futuro.
  */
 import * as THREE from "three";
 
-/** Grade do vertex snap — menor = mais tremido/retrô, maior = mais estável */
-export const PSX_GRID = 180;
+/** Grade do vertex snap — menor = mais tremido, maior = mais estável */
+export const PSX_GRID = 320;
 
 export function applyPsxWobble(material, grid = PSX_GRID) {
   material.onBeforeCompile = (shader) => {
@@ -28,7 +27,7 @@ export function applyPsxWobble(material, grid = PSX_GRID) {
   return material;
 }
 
-/** Material PS1: flat shading + vertex snap já aplicados */
+/** Material PS1 completo (só use em filtros/modos opt-in) */
 export function psxMaterial(options = {}) {
   const m = new THREE.MeshStandardMaterial({ flatShading: true, ...options });
   applyPsxWobble(m);
