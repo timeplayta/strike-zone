@@ -393,10 +393,10 @@ body.mode-desktop.user-is-admin .menu-layout {
 }
 
 body.user-is-admin .menu-hub-tabs:not(.hidden) {
-  position: fixed;
-  left: 50%;
-  top: 4.5rem;
-  transform: translateX(-50%);
+  position: fixed !important;
+  left: 50% !important;
+  top: 4.5rem !important;
+  transform: translateX(-50%) !important;
   z-index: 44;
   margin: 0;
   padding: 0.45rem;
@@ -5135,9 +5135,9 @@ body.mode-mobile .menu-hub-tabs {
 }
 
 body.mode-mobile.user-is-admin .menu-hub-tabs:not(.hidden) {
-  left: 50%;
-  top: 4rem;
-  transform: translateX(-50%);
+  left: 50% !important;
+  top: 4rem !important;
+  transform: translateX(-50%) !important;
   width: max-content;
   max-width: min(94vw, 300px);
 }
