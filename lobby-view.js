@@ -38,24 +38,24 @@ function ensureCanvas() {
   return c;
 }
 
-function buildPad(x, z, color) {
+function buildPad(x, z, color, radius = 0.72) {
   const group = new THREE.Group();
   const ring = new THREE.Mesh(
-    new THREE.RingGeometry(0.52, 0.68, 40),
+    new THREE.RingGeometry(radius, radius * 1.31, 40),
     new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.85, side: THREE.DoubleSide })
   );
   ring.rotation.x = -Math.PI / 2;
   ring.position.set(x, 0.02, z);
   group.add(ring);
   const disc = new THREE.Mesh(
-    new THREE.CircleGeometry(0.52, 40),
+    new THREE.CircleGeometry(radius, 40),
     new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.14, side: THREE.DoubleSide })
   );
   disc.rotation.x = -Math.PI / 2;
   disc.position.set(x, 0.015, z);
   group.add(disc);
   const beam = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.48, 0.48, 2.6, 24, 1, true),
+    new THREE.CylinderGeometry(radius * 0.92, radius * 0.92, 2.6, 24, 1, true),
     new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.045, side: THREE.DoubleSide, depthWrite: false })
   );
   beam.position.set(x, 1.3, z);
@@ -65,10 +65,10 @@ function buildPad(x, z, color) {
 }
 
 const SLOTS = [
-  { x: 0, z: 0.3, color: 0xf0a030, mine: true },
-  { x: -1.85, z: 0.75, color: 0x2266aa },
-  { x: 1.85, z: 0.75, color: 0xc9a227 },
-  { x: 0, z: 1.65, color: 0x888899 },
+  { x: 0, z: 0.8, color: 0xf0a030, mine: true, scale: 1.55, padRadius: 0.85 },
+  { x: -1.5, z: 0.0, color: 0x2266aa, scale: 1.35, padRadius: 0.72 },
+  { x: 1.5, z: 0.0, color: 0xc9a227, scale: 1.35, padRadius: 0.72 },
+  { x: 0, z: -0.5, color: 0x888899, scale: 1.35, padRadius: 0.72 },
 ];
 
 function facePivotToCamera(group, x, z) {
@@ -77,20 +77,20 @@ function facePivotToCamera(group, x, z) {
 
 function buildScene() {
   scene = new THREE.Scene();
-  camera = new THREE.PerspectiveCamera(36, 1, 0.1, 40);
-  camera.position.set(0, 1.55, 6.6);
-  camera.lookAt(0, 1.02, 0.4);
+  camera = new THREE.PerspectiveCamera(42, 1, 0.1, 40);
+  camera.position.set(0, 1.45, 5.0);
+  camera.lookAt(0, 0.85, 0.5);
 
-  scene.add(new THREE.AmbientLight(0xffffff, 0.72));
-  const key = new THREE.DirectionalLight(0xfff4e0, 1.05);
+  scene.add(new THREE.AmbientLight(0xffffff, 0.78));
+  const key = new THREE.DirectionalLight(0xfff4e0, 1.15);
   key.position.set(2.2, 5, 4);
   scene.add(key);
-  const rim = new THREE.DirectionalLight(0x6688ff, 0.5);
+  const rim = new THREE.DirectionalLight(0x6688ff, 0.6);
   rim.position.set(-3, 3, -3);
   scene.add(rim);
 
   const floor = new THREE.Mesh(
-    new THREE.CircleGeometry(6.2, 48),
+    new THREE.CircleGeometry(4.2, 48),
     new THREE.MeshStandardMaterial({ color: 0x0b0e16, roughness: 0.9, metalness: 0.08 })
   );
   floor.rotation.x = -Math.PI / 2;
@@ -99,7 +99,7 @@ function buildScene() {
   entities = [];
   myEntityIndex = -1;
   SLOTS.forEach((s, i) => {
-    scene.add(buildPad(s.x, s.z, s.color));
+    scene.add(buildPad(s.x, s.z, s.color, s.padRadius));
     let body;
     if (s.mine) {
       const loadout = normalizeLoadout(window.__playerLoadout || DEFAULT_LOADOUT);
@@ -115,6 +115,7 @@ function buildScene() {
       body = createHelper(i - 1, "dust");
     }
     body.group.position.set(s.x, 0, s.z);
+    body.group.scale.setScalar(s.scale || 1);
     facePivotToCamera(body.group, s.x, s.z);
     scene.add(body.group);
     const entity = {
@@ -148,6 +149,7 @@ function rebuildMyCharacter() {
     team: "ct",
   });
   body.group.position.set(s.x, 0, s.z);
+  body.group.scale.setScalar(s.scale || 1);
   facePivotToCamera(body.group, s.x, s.z);
   scene.add(body.group);
   const entity = {
