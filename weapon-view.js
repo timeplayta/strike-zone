@@ -29,59 +29,76 @@ function matHand(color, roughness = 0.72) {
   return new THREE.MeshStandardMaterial({ color, roughness, metalness: 0.02 });
 }
 
-/** Cria um dedo articulado com 3 falanges + esferas de juntas */
-function makeFinger(baseX, baseY, baseZ, baseCurl, lenMult, mat) {
-  const root = new THREE.Group();
+function makeNailMat(skinColor) {
+  const c = new THREE.Color(skinColor).lerp(new THREE.Color(0xffe8d8), 0.55);
+  return new THREE.MeshStandardMaterial({ color: c, roughness: 0.28, metalness: 0.05 });
+}
+
+/**
+ * Dedo articulado anatômico — 3 juntas reais (MCP no nó, PIP e DIP nos pivots
+ * internos), 3 falanges (proximal/média/distal) e unha na ponta.
+ * setExtra(0..1+) soma curvatura extra sobre a pose de repouso (fechar a mão,
+ * apertar o gatilho) sem perder a pose base de descanso no cabo da arma.
+ */
+function makeFinger(baseX, baseY, baseZ, restCurl, lenMult, mat, nailMat) {
+  const root = new THREE.Group(); // Junta MCP (nó do dedo na palma)
   root.position.set(baseX, baseY, baseZ);
-  root.rotation.x = baseCurl;
 
   const lm = lenMult;
 
   // Falange proximal
-  const prox = new THREE.Mesh(new THREE.CylinderGeometry(0.0082, 0.0095, 0.036 * lm, 10), mat);
+  const prox = new THREE.Mesh(new THREE.CylinderGeometry(0.0082, 0.0096, 0.036 * lm, 10), mat);
   prox.position.y = -0.018 * lm;
   root.add(prox);
 
-  // Junta 1
-  const j1 = new THREE.Mesh(new THREE.SphereGeometry(0.0095, 8, 6), mat);
+  const j1 = new THREE.Mesh(new THREE.SphereGeometry(0.0095, 9, 7), mat);
   j1.position.y = -0.036 * lm;
   root.add(j1);
 
-  // Pivot da falange média
+  // Pivot da falange média — junta PIP
   const midPivot = new THREE.Group();
   midPivot.position.y = -0.036 * lm;
-  midPivot.rotation.x = 0.38;
   root.add(midPivot);
 
-  const mid = new THREE.Mesh(new THREE.CylinderGeometry(0.0072, 0.0082, 0.03 * lm, 10), mat);
+  const mid = new THREE.Mesh(new THREE.CylinderGeometry(0.0072, 0.0084, 0.03 * lm, 10), mat);
   mid.position.y = -0.015 * lm;
   midPivot.add(mid);
 
-  // Junta 2
-  const j2 = new THREE.Mesh(new THREE.SphereGeometry(0.0078, 8, 6), mat);
+  const j2 = new THREE.Mesh(new THREE.SphereGeometry(0.0078, 9, 7), mat);
   j2.position.y = -0.03 * lm;
   midPivot.add(j2);
 
-  // Pivot da falange distal
+  // Pivot da falange distal — junta DIP
   const distPivot = new THREE.Group();
   distPivot.position.y = -0.03 * lm;
-  distPivot.rotation.x = 0.32;
   midPivot.add(distPivot);
 
-  const dist = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.0072, 0.024 * lm, 8), mat);
+  const dist = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.0074, 0.024 * lm, 8), mat);
   dist.position.y = -0.012 * lm;
   distPivot.add(dist);
 
-  // Ponta do dedo
-  const tip = new THREE.Mesh(new THREE.SphereGeometry(0.0065, 8, 6), mat);
+  const tip = new THREE.Mesh(new THREE.SphereGeometry(0.0066, 8, 6), mat);
   tip.position.y = -0.024 * lm;
   distPivot.add(tip);
 
-  return root;
+  // Unha pequena na ponta do dedo
+  const nail = new THREE.Mesh(new THREE.BoxGeometry(0.0072 * lm, 0.0092 * lm, 0.0022), nailMat);
+  nail.position.set(0, -0.021 * lm, 0.0057);
+  distPivot.add(nail);
+
+  function setExtra(extra) {
+    const e = extra;
+    root.rotation.x = restCurl + e * 1.05;
+    midPivot.rotation.x = 0.38 + e * 1.2;
+    distPivot.rotation.x = 0.32 + e * 0.9;
+  }
+  setExtra(0);
+
+  return { group: root, setExtra, restCurl };
 }
 
-/** Cria o polegar com 2 falanges + metacarpo */
-function makeThumb(posX, posY, posZ, s, mat) {
+/** Polegar — junta metacarpal + 2 falanges (IP proximal/distal) + unha */
+function makeThumb(posX, posY, posZ, s, mat, nailMat) {
   const root = new THREE.Group();
   root.position.set(posX, posY, posZ);
   root.rotation.set(0.82, 0, s * -0.88);
@@ -91,29 +108,26 @@ function makeThumb(posX, posY, posZ, s, mat) {
   meta.position.y = -0.019;
   root.add(meta);
 
-  // Junta base
-  const jb = new THREE.Mesh(new THREE.SphereGeometry(0.013, 8, 6), mat);
+  const jb = new THREE.Mesh(new THREE.SphereGeometry(0.013, 9, 7), mat);
   jb.position.y = -0.038;
   root.add(jb);
 
-  // Falange proximal
+  // Falange proximal — junta MCP do polegar
   const p1 = new THREE.Group();
   p1.position.y = -0.038;
-  p1.rotation.x = 0.28;
   root.add(p1);
 
   const p1m = new THREE.Mesh(new THREE.CylinderGeometry(0.0095, 0.012, 0.038, 10), mat);
   p1m.position.y = -0.019;
   p1.add(p1m);
 
-  const tj = new THREE.Mesh(new THREE.SphereGeometry(0.0105, 8, 6), mat);
+  const tj = new THREE.Mesh(new THREE.SphereGeometry(0.0105, 9, 7), mat);
   tj.position.y = -0.038;
   p1.add(tj);
 
-  // Falange distal
+  // Falange distal — junta IP do polegar
   const p2 = new THREE.Group();
   p2.position.y = -0.038;
-  p2.rotation.x = 0.25;
   p1.add(p2);
 
   const p2m = new THREE.Mesh(new THREE.CylinderGeometry(0.0078, 0.0095, 0.032, 8), mat);
@@ -124,10 +138,26 @@ function makeThumb(posX, posY, posZ, s, mat) {
   ttip.position.y = -0.032;
   p2.add(ttip);
 
-  return root;
+  const nail = new THREE.Mesh(new THREE.BoxGeometry(0.009, 0.011, 0.0025), nailMat);
+  nail.position.set(0, -0.028, 0.0068);
+  p2.add(nail);
+
+  function setExtra(extra) {
+    const e = extra;
+    p1.rotation.x = 0.28 + e * 0.9;
+    p2.rotation.x = 0.25 + e * 0.8;
+  }
+  setExtra(0);
+
+  return { group: root, setExtra };
 }
 
-function makeFpsHand(side, skinMat, gloveMat) {
+/**
+ * Mão FPS com punho articulado — braço → antebraço → junta do punho
+ * (wristPivot) → palma → 5 dedos com 3 juntas cada. A wristPivot dá a
+ * "articulação no punho" pedida e permite pequenos ajustes/flick de pulso.
+ */
+function makeFpsHand(side, skinMat, gloveMat, nailMat) {
   const s = side === "left" ? -1 : 1;
   const isRight = side === "right";
   const g = new THREE.Group();
@@ -148,17 +178,23 @@ function makeFpsHand(side, skinMat, gloveMat) {
   forearm.scale.x = 0.82;
   g.add(forearm);
 
-  // Pulso
-  const wrist = new THREE.Mesh(new THREE.CylinderGeometry(0.029, 0.032, 0.065, 14), gloveMat);
-  wrist.position.set(s * 0.09, -0.118, -0.304);
-  wrist.rotation.set(Math.PI / 2, 0, 0);
-  g.add(wrist);
+  // Junta do punho — tudo daqui pra baixo (palma + dedos) pende desse pivot,
+  // permitindo rotação real do pulso (não é só um cilindro estático).
+  const wristPos = { x: s * 0.09, y: -0.118, z: -0.304 };
+  const wristPivot = new THREE.Group();
+  wristPivot.position.set(wristPos.x, wristPos.y, wristPos.z);
+  wristPivot.rotation.set(0.04, 0, s * -0.05);
+  g.add(wristPivot);
 
-  // Palma
+  const wrist = new THREE.Mesh(new THREE.CylinderGeometry(0.029, 0.032, 0.065, 14), gloveMat);
+  wrist.rotation.set(Math.PI / 2, 0, 0);
+  wristPivot.add(wrist);
+
+  // Palma (posição relativa à junta do punho)
   const palmPivot = new THREE.Group();
-  palmPivot.position.set(s * 0.075, -0.108, -0.356);
+  palmPivot.position.set(s * 0.075 - wristPos.x, -0.108 - wristPos.y, -0.356 - wristPos.z);
   palmPivot.rotation.set(0.14, 0, s * 0.1);
-  g.add(palmPivot);
+  wristPivot.add(palmPivot);
 
   palmPivot.add(new THREE.Mesh(new THREE.BoxGeometry(0.078, 0.044, 0.09), gloveMat));
 
@@ -169,31 +205,44 @@ function makeFpsHand(side, skinMat, gloveMat) {
     palmPivot.add(km);
   }
 
-  // 4 dedos: indicador, médio, anelar, mínimo
-  // Mão direita: indicador menos curvado (posição de gatilho)
-  // Mão esquerda: todos moderadamente curvados (suporte)
+  // 4 dedos (indicador, médio, anelar, mínimo) + polegar = 5 dedos, 3 juntas cada.
+  // Mão direita: indicador menos curvado em repouso (dedo no gatilho).
+  // Mão esquerda: todos moderadamente curvados (apoio no cano/guarda-mão).
   const fingerDefs = isRight
     ? [
-        { dx: s * -0.024, curl: 0.72, len: 1.0  },
+        { dx: s * -0.024, curl: 0.72, len: 1.0, isIndex: true },
         { dx: s * -0.007, curl: 1.26, len: 1.08 },
         { dx: s *  0.009, curl: 1.24, len: 1.0  },
         { dx: s *  0.024, curl: 1.28, len: 0.82 },
       ]
     : [
-        { dx: s * -0.024, curl: 1.22, len: 1.0  },
+        { dx: s * -0.024, curl: 1.22, len: 1.0, isIndex: true },
         { dx: s * -0.007, curl: 1.25, len: 1.08 },
         { dx: s *  0.009, curl: 1.23, len: 1.0  },
         { dx: s *  0.024, curl: 1.27, len: 0.82 },
       ];
 
+  const fingerRoots = [];
+  let indexFinger = null;
   for (const fd of fingerDefs) {
-    g.add(makeFinger(s * 0.075 + fd.dx, -0.094, -0.402, fd.curl, fd.len, gloveMat));
+    const finger = makeFinger(
+      s * 0.075 + fd.dx - wristPos.x,
+      -0.094 - wristPos.y,
+      -0.402 - wristPos.z,
+      fd.curl,
+      fd.len,
+      gloveMat,
+      nailMat
+    );
+    wristPivot.add(finger.group);
+    fingerRoots.push(finger);
+    if (fd.isIndex) indexFinger = finger;
   }
 
-  // Polegar
-  g.add(makeThumb(s * 0.109, -0.097, -0.346, s, gloveMat));
+  const thumb = makeThumb(s * 0.109 - wristPos.x, -0.097 - wristPos.y, -0.346 - wristPos.z, s, gloveMat, nailMat);
+  wristPivot.add(thumb.group);
 
-  return g;
+  return { group: g, wristPivot, fingers: fingerRoots, indexFinger, thumb, side };
 }
 
 function createFpsHands() {
@@ -203,15 +252,19 @@ function createFpsHands() {
   group.userData.gloveColor = 0x111111;
   const skinMat = matHand(group.userData.skinColor, 0.66);
   const gloveMat = matHand(group.userData.gloveColor, 0.78);
+  const nailMat = makeNailMat(group.userData.skinColor);
   group.userData.skinMat = skinMat;
   group.userData.gloveMat = gloveMat;
+  group.userData.nailMat = nailMat;
 
-  const rightHand = makeFpsHand("right", skinMat, gloveMat);
-  const leftHand = makeFpsHand("left", skinMat, gloveMat);
+  const rightHand = makeFpsHand("right", skinMat, gloveMat, nailMat);
+  const leftHand = makeFpsHand("left", skinMat, gloveMat, nailMat);
   // Mão esquerda mais avançada (apoio no guardamão)
-  leftHand.position.z = -0.07;
-  group.add(leftHand, rightHand);
+  leftHand.group.position.z = -0.07;
+  group.add(leftHand.group, rightHand.group);
   group.position.set(0, 0.02, 0.02);
+  group.userData.rightHand = rightHand;
+  group.userData.leftHand = leftHand;
   return group;
 }
 
@@ -224,11 +277,44 @@ function updateFpsHandsFromLoadout(view) {
   if (skin !== hands.userData.skinColor) {
     hands.userData.skinColor = skin;
     hands.userData.skinMat.color.setHex(skin);
+    hands.userData.nailMat.color.copy(new THREE.Color(skin).lerp(new THREE.Color(0xffe8d8), 0.55));
   }
   if (glove !== hands.userData.gloveColor) {
     hands.userData.gloveColor = glove;
     hands.userData.gloveMat.color.setHex(glove);
   }
+}
+
+/**
+ * Fecha/abre a mão de forma natural (grab-in ao trocar de arma) e faz o
+ * indicador da mão direita apertar o gatilho ao atirar — a outra mão fica
+ * fechada no cano/guarda-mão o tempo todo.
+ */
+function updateHandsPose(view, dt) {
+  const hands = view?.hands;
+  if (!hands?.userData?.rightHand) return;
+  const right = hands.userData.rightHand;
+  const left = hands.userData.leftHand;
+
+  view.handGrab = Math.max(0, (view.handGrab ?? 1) - dt * 6.5);
+  view.triggerPull = Math.max(0, (view.triggerPull ?? 0) - dt * 10);
+
+  const grabOpen = -view.handGrab * 0.62; // negativo = abre a mão na animação de "pegar" a arma
+  const triggerExtra = view.triggerPull * 0.85;
+
+  for (const finger of right.fingers) {
+    finger.setExtra(finger === right.indexFinger ? grabOpen + triggerExtra : grabOpen);
+  }
+  right.thumb.setExtra(grabOpen);
+
+  for (const finger of left.fingers) {
+    finger.setExtra(grabOpen * 0.85);
+  }
+  left.thumb.setExtra(grabOpen * 0.85);
+
+  // Pequeno "flick" de pulso na mão do gatilho ao disparar
+  const kick = view.triggerPull * 0.05;
+  right.wristPivot.rotation.x = 0.04 + kick;
 }
 
 
@@ -407,6 +493,9 @@ export function createWeaponView(camera) {
 
     basePos: { x: 0.2, y: -0.15, z: -0.34 },
 
+    handGrab: 1,
+    triggerPull: 0,
+
   };
 
 }
@@ -440,6 +529,9 @@ const MUZZLE_Z = {
 
 
 export function setWeaponView(view, slot, weaponId = "ak47") {
+
+  const prevId = slot === 1 ? view.currentPrimary : slot === 2 ? view.currentSecondary : view.currentMelee;
+  if (weaponId && weaponId !== prevId) view.handGrab = 1; // troca de arma → mão fecha de novo no cabo
 
   if (slot === 1) {
 
@@ -531,6 +623,8 @@ export function triggerMuzzleFlash(view) {
 
   view.recoil = 0.045;
 
+  view.triggerPull = 1; // dedo indicador aperta o gatilho
+
   setTimeout(() => {
 
     view.muzzleFlash.visible = false;
@@ -562,6 +656,7 @@ export function updateWeaponView(view, dt, moving = false) {
   const t = performance.now() * 0.001;
   animateSkinFx(view, t);
   updateFpsHandsFromLoadout(view);
+  updateHandsPose(view, dt);
 
   const targetAds = view.adsWeapon ? 1 : 0;
 
