@@ -1,4 +1,4 @@
-const CACHE = "strike-zone-v124";
+const CACHE = "strike-zone-v125";
 const ASSETS = [
   "/",
   "/index.html",

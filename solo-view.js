@@ -30,12 +30,12 @@ export function previewShopItemLive(item) {
   const isWeapon = item.type === "weapon" || item.type === "weapon_unlock";
   if (isWeapon) {
     lastWeaponItem = item;
-    if (shopViewMode === "weapon") {
-      const canvas = $("shopWeaponOnlyCanvas");
-      if (canvas) mountShopFeaturedPreview(canvas, item);
-    }
+    shopViewMode = "weapon";
+    applyShopViewMode();
     return;
   }
+  shopViewMode = "both";
+  applyShopViewMode();
   if (!soloMounted) return;
   if (item.type === "character") {
     updateViewerCharacterSkin("soloCanvas", item.skinId);
