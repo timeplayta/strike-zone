@@ -171,7 +171,12 @@ function resize() {
   const h = canvasEl.clientHeight || 400;
   if (w < 2 || h < 2) return;
   renderer.setSize(w, h, false);
-  camera.aspect = w / h;
+  const aspect = w / h;
+  camera.aspect = aspect;
+  // Canvas estreito (mobile/vertical) — afasta a câmera pra todos os personagens caberem
+  camera.position.z = aspect < 1.3 ? 4.6 : (aspect > 2.2 ? 3.0 : 3.2);
+  camera.position.y = aspect < 1.3 ? 1.45 : 1.2;
+  camera.lookAt(0, 1.55, 0.5);
   camera.updateProjectionMatrix();
 }
 
