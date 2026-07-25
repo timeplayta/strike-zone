@@ -298,9 +298,26 @@ export function mountPoolGame(root, { botTier, onExit, onEnd, onBind, match }) {
 
     for (const b of balls) {
       if (b.pocketed) continue;
+      const baseColor = BALL_COLORS[b.id] || "#ccc";
+      // sombra de contato no feltro (desenhada antes da bola)
+      ctx.beginPath();
+      ctx.ellipse(b.x, b.y + BALL_R * 0.82, BALL_R * 0.75, BALL_R * 0.28, 0, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(0,0,0,0.22)";
+      ctx.fill();
       ctx.beginPath();
       ctx.arc(b.x, b.y, BALL_R, 0, Math.PI * 2);
-      ctx.fillStyle = BALL_COLORS[b.id] || "#ccc";
+      const sphereGrad = ctx.createRadialGradient(
+        b.x - BALL_R * 0.35,
+        b.y - BALL_R * 0.4,
+        BALL_R * 0.1,
+        b.x,
+        b.y,
+        BALL_R * 1.05
+      );
+      sphereGrad.addColorStop(0, "rgba(255,255,255,0.85)");
+      sphereGrad.addColorStop(0.28, baseColor);
+      sphereGrad.addColorStop(1, "rgba(0,0,0,0.35)");
+      ctx.fillStyle = sphereGrad;
       ctx.fill();
       ctx.strokeStyle = "rgba(0,0,0,0.35)";
       ctx.lineWidth = 1;

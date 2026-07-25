@@ -954,7 +954,8 @@ export function mountUnoGame(root, { botTier, onExit, onEnd, onBind, match }) {
     const el = document.createElement("button");
     el.type = "button";
     el.className = `tg-uno-card${playable ? " playable" : ""}`;
-    el.style.background = COLOR_HEX[c.col];
+    const hex = COLOR_HEX[c.col];
+    el.style.background = `linear-gradient(160deg, color-mix(in srgb, ${hex} 100%, white 30%), ${hex} 45%, color-mix(in srgb, ${hex} 100%, black 40%))`;
     el.textContent = String(c.n);
     el.disabled = !playable;
     return el;
