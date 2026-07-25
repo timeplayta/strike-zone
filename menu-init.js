@@ -302,7 +302,7 @@
         return;
       }
       try {
-        await import("./chameleon-mode.js?v=1");
+        await import("./chameleon-mode.js?v=2");
         if (typeof window.openChameleonMode === "function") {
           window.openChameleonMode();
           return;

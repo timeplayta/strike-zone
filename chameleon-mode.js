@@ -2,7 +2,7 @@
 
 import * as THREE from "three";
 import { buildChameleonAnimal, buildHunter, ANIMAL_TYPES, ANIMAL_META } from "./chameleon-animals.js";
-import { buildChameleonArena, CHAMELEON_PALETTE } from "./chameleon-map.js";
+import { buildChameleonArena } from "./chameleon-map.js";
 import { attachOrbitDrag } from "./orbit-drag.js";
 import { speakLine, unlockTableAudio } from "./table-games-audio.js";
 
@@ -34,8 +34,18 @@ let touchDir = { x: 0, z: 0 };
 let cleanupFns = [];
 
 let chosenAnimal = "leao";
-let chosenColorIdx = 0;
 let running = false;
+
+// Cor atual do bicho — começa branco, o jogador pinta DURANTE a partida
+let currentHue = 0;
+let currentSat = 0;
+let currentLum = 0.95;
+
+function currentColorHex() {
+  const c = new THREE.Color();
+  c.setHSL(currentHue, currentSat, currentLum);
+  return c.getHex();
+}
 
 function ensureShell() {
   if (shell) return shell;
@@ -48,11 +58,9 @@ function ensureShell() {
       <div class="cha-lobby-card">
         <p class="cha-eyebrow">Esconde-esconde</p>
         <h1 class="cha-title">🦎 Mecha Camaleão</h1>
-        <p class="cha-desc">Escolha seu bichinho, pinte a cor dele igual ao ambiente e se esconda do caçador até o tempo acabar. Corra pra fugir rápido, ou grude num objeto da sua cor pra desaparecer.</p>
+        <p class="cha-desc">Escolha seu bichinho e entre na arena. Lá dentro, use o botão 🎨 pra pintar sua cor na hora — combine com o chão, as jarras e os patos pra sumir da vista do caçador.</p>
         <h2 class="cha-sub">Seu bichinho</h2>
         <div class="cha-animal-grid" data-animals></div>
-        <h2 class="cha-sub">Cor de camuflagem</h2>
-        <div class="cha-color-grid" data-colors></div>
         <div class="cha-lobby-foot">
           <button type="button" class="tg-btn tg-btn-ghost" data-back>Voltar ao menu</button>
           <button type="button" class="tg-btn tg-btn-primary" data-start>Entrar na arena</button>
@@ -77,6 +85,18 @@ function ensureShell() {
           </div>
         </div>
         <div class="cha-status" data-status>Combine sua cor com o chão pra se camuflar</div>
+        <div class="cha-color-dock" data-color-dock>
+          <div class="cha-color-panel hidden" data-color-panel>
+            <canvas class="cha-wheel" data-wheel width="170" height="170"></canvas>
+            <label class="cha-lum-label">Luminosidade</label>
+            <input type="range" class="cha-lum-slider" data-lum min="8" max="95" value="95" />
+            <div class="cha-color-preview-row">
+              <span class="cha-color-preview" data-color-preview></span>
+              <span class="cha-color-hint">Toque na roda pra escolher a cor</span>
+            </div>
+          </div>
+          <button type="button" class="cha-color-btn" data-color-btn>🎨 Cores</button>
+        </div>
         <div class="cha-touch" data-touch>
           <div class="cha-touch-move">
             <button type="button" class="cha-touch-btn" data-move="up">▲</button>
@@ -122,18 +142,7 @@ function ensureShell() {
     });
   });
 
-  const colorsEl = shell.querySelector("[data-colors]");
-  colorsEl.innerHTML = CHAMELEON_PALETTE.map(
-    (c, i) =>
-      `<button type="button" class="cha-swatch${i === chosenColorIdx ? " selected" : ""}" data-color-idx="${i}" ` +
-      `style="background:#${c.hex.toString(16).padStart(6, "0")}" title="${c.name}"></button>`
-  ).join("");
-  colorsEl.querySelectorAll("[data-color-idx]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      chosenColorIdx = Number(btn.dataset.colorIdx);
-      colorsEl.querySelectorAll(".cha-swatch").forEach((b) => b.classList.toggle("selected", b === btn));
-    });
-  });
+  initColorWheel();
 
   shell.querySelector("[data-back]").addEventListener("click", closeChameleonMode);
   shell.querySelector("[data-start]").addEventListener("click", startMatch);
@@ -171,6 +180,94 @@ function ensureShell() {
   touchEl.querySelector('[data-action="run"]').addEventListener("pointerleave", () => keys.delete("run-touch"));
 
   return shell;
+}
+
+/** Aplica a cor escolhida no bicho e no estado do jogador, ao vivo */
+function applyPlayerColor() {
+  const hex = currentColorHex();
+  if (animalRig) animalRig.setColor(hex);
+  if (player) player.color = new THREE.Color(hex);
+  const preview = shell?.querySelector("[data-color-preview]");
+  if (preview) preview.style.background = `#${hex.toString(16).padStart(6, "0")}`;
+}
+
+/** Roda cromática: matiz no ângulo, saturação no raio; luminosidade no slider */
+function drawColorWheel(canvas) {
+  const ctx = canvas.getContext("2d");
+  const w = canvas.width;
+  const h = canvas.height;
+  const cx = w / 2;
+  const cy = h / 2;
+  const radius = Math.min(cx, cy) - 2;
+  const img = ctx.createImageData(w, h);
+  const tmp = new THREE.Color();
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const dx = x - cx;
+      const dy = y - cy;
+      const dist = Math.hypot(dx, dy);
+      const idx = (y * w + x) * 4;
+      if (dist > radius) {
+        img.data[idx + 3] = 0;
+        continue;
+      }
+      const hue = (Math.atan2(dy, dx) / (Math.PI * 2) + 1) % 1;
+      const sat = Math.min(1, dist / radius);
+      tmp.setHSL(hue, sat, 0.5);
+      img.data[idx] = Math.round(tmp.r * 255);
+      img.data[idx + 1] = Math.round(tmp.g * 255);
+      img.data[idx + 2] = Math.round(tmp.b * 255);
+      img.data[idx + 3] = 255;
+    }
+  }
+  ctx.putImageData(img, 0, 0);
+}
+
+function initColorWheel() {
+  const dock = shell.querySelector("[data-color-dock]");
+  const btn = dock.querySelector("[data-color-btn]");
+  const panel = dock.querySelector("[data-color-panel]");
+  const wheel = dock.querySelector("[data-wheel]");
+  const lum = dock.querySelector("[data-lum]");
+
+  drawColorWheel(wheel);
+
+  btn.addEventListener("click", () => {
+    panel.classList.toggle("hidden");
+  });
+
+  const pickFromWheel = (e) => {
+    const rect = wheel.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * wheel.width;
+    const y = ((e.clientY - rect.top) / rect.height) * wheel.height;
+    const cx = wheel.width / 2;
+    const cy = wheel.height / 2;
+    const dx = x - cx;
+    const dy = y - cy;
+    const radius = Math.min(cx, cy) - 2;
+    const dist = Math.hypot(dx, dy);
+    if (dist > radius) return;
+    currentHue = (Math.atan2(dy, dx) / (Math.PI * 2) + 1) % 1;
+    currentSat = Math.min(1, dist / radius);
+    applyPlayerColor();
+  };
+  let wheelDown = false;
+  wheel.addEventListener("pointerdown", (e) => {
+    wheelDown = true;
+    wheel.setPointerCapture?.(e.pointerId);
+    pickFromWheel(e);
+  });
+  wheel.addEventListener("pointermove", (e) => {
+    if (wheelDown) pickFromWheel(e);
+  });
+  wheel.addEventListener("pointerup", () => {
+    wheelDown = false;
+  });
+
+  lum.addEventListener("input", () => {
+    currentLum = Number(lum.value) / 100;
+    applyPlayerColor();
+  });
 }
 
 let player = null;
@@ -228,7 +325,7 @@ function setupScene(canvas) {
   arena = buildChameleonArena(Math.floor(Math.random() * 99999) + 1);
   scene.add(arena.group);
 
-  const colorHex = CHAMELEON_PALETTE[chosenColorIdx].hex;
+  const colorHex = currentColorHex();
   animalRig = buildChameleonAnimal(chosenAnimal, colorHex);
   animalRig.group.scale.setScalar(ANIMAL_SCALE);
   scene.add(animalRig.group);
@@ -485,11 +582,20 @@ function startMatch() {
   matchEl.classList.remove("hidden");
   const canvas = shell.querySelector("[data-canvas]");
 
+  // Bicho sempre entra branco — pinta durante a partida com o botão 🎨
+  currentHue = 0;
+  currentSat = 0;
+  currentLum = 0.95;
+  const lumSlider = shell.querySelector("[data-lum]");
+  if (lumSlider) lumSlider.value = "95";
+  shell.querySelector("[data-color-panel]")?.classList.add("hidden");
+
   if (renderer) {
     renderer.dispose();
     renderer = null;
   }
   setupScene(canvas);
+  applyPlayerColor();
 
   matchState = { timeLeft: MATCH_DURATION, suspicion: 0, concealment: 0.3, light: 0.3, over: false };
   clock = new THREE.Clock();
@@ -497,7 +603,7 @@ function startMatch() {
   touchDir = { x: 0, z: 0 };
   running = true;
   unlockTableAudio();
-  speakLine("Se esconda! O caçador está por perto.", { excited: true });
+  speakLine("Se esconda! Pinte sua cor com o botão de cores e engane o caçador.", { excited: true });
   if (raf) cancelAnimationFrame(raf);
   tick();
 }

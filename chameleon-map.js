@@ -1,4 +1,4 @@
-/** Arena colorida do modo Mecha Camaleão — patches de cor + props pra se camuflar/colar */
+/** Arena do modo Mecha Camaleão — chão sólido + zonas de cor + objetos (jarras, patos) pra se camuflar/colar */
 
 import * as THREE from "three";
 
@@ -15,8 +15,7 @@ export const CHAMELEON_PALETTE = [
 ];
 
 const HALF = 21;
-const TILE = 3.5;
-const N = Math.round((HALF * 2) / TILE);
+const FLOOR_HEX = 0xb9ac93; // areia — chão sólido de uma cor só
 
 function seededRand(seed) {
   let s = seed % 2147483647;
@@ -27,64 +26,157 @@ function seededRand(seed) {
   };
 }
 
+/** Textura de bolinhas/listras pra dar "desenho" nos objetos */
+function makePatternTexture(baseHex, patternHex, kind) {
+  const c = document.createElement("canvas");
+  c.width = 128;
+  c.height = 128;
+  const ctx = c.getContext("2d");
+  ctx.fillStyle = `#${baseHex.toString(16).padStart(6, "0")}`;
+  ctx.fillRect(0, 0, 128, 128);
+  ctx.fillStyle = `#${patternHex.toString(16).padStart(6, "0")}`;
+  if (kind === "dots") {
+    for (let y = 0; y < 4; y++) {
+      for (let x = 0; x < 4; x++) {
+        ctx.beginPath();
+        ctx.arc(16 + x * 32 + (y % 2) * 16, 16 + y * 32, 7, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+  } else if (kind === "stripes") {
+    for (let i = 0; i < 4; i++) {
+      ctx.fillRect(0, 8 + i * 32, 128, 12);
+    }
+  } else {
+    // flores simples
+    for (let y = 0; y < 2; y++) {
+      for (let x = 0; x < 2; x++) {
+        const cx = 32 + x * 64;
+        const cy = 32 + y * 64;
+        for (let p = 0; p < 5; p++) {
+          const a = (p / 5) * Math.PI * 2;
+          ctx.beginPath();
+          ctx.arc(cx + Math.cos(a) * 9, cy + Math.sin(a) * 9, 6, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+    }
+  }
+  const tex = new THREE.CanvasTexture(c);
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  return tex;
+}
+
+/** Jarra/vaso — corpo bojudo + gargalo. Branca ou com desenho. */
+function buildJar(rand, colorHex, patternHex) {
+  const g = new THREE.Group();
+  const withPattern = patternHex != null;
+  const mat = withPattern
+    ? new THREE.MeshStandardMaterial({ map: makePatternTexture(colorHex, patternHex, rand() < 0.5 ? "stripes" : "dots"), roughness: 0.55 })
+    : new THREE.MeshStandardMaterial({ color: colorHex, roughness: 0.5, metalness: 0.04 });
+
+  const h = 1.1 + rand() * 0.7;
+  const body = new THREE.Mesh(new THREE.SphereGeometry(h * 0.34, 14, 12), mat);
+  body.scale.set(1, 1.25, 1);
+  body.position.y = h * 0.42;
+  g.add(body);
+  const neck = new THREE.Mesh(new THREE.CylinderGeometry(h * 0.13, h * 0.2, h * 0.34, 12), mat);
+  neck.position.y = h * 0.85;
+  g.add(neck);
+  const lip = new THREE.Mesh(new THREE.TorusGeometry(h * 0.15, h * 0.035, 8, 14), mat);
+  lip.rotation.x = Math.PI / 2;
+  lip.position.y = h * 1.02;
+  g.add(lip);
+  return { group: g, radius: h * 0.4, height: h };
+}
+
+/** Pato de borracha — corpo + cabeça + bico. Alguns com bolinhas desenhadas. */
+function buildDuck(rand, colorHex, patternHex) {
+  const g = new THREE.Group();
+  const withPattern = patternHex != null;
+  const mat = withPattern
+    ? new THREE.MeshStandardMaterial({ map: makePatternTexture(colorHex, patternHex, "dots"), roughness: 0.45 })
+    : new THREE.MeshStandardMaterial({ color: colorHex, roughness: 0.4, metalness: 0.03 });
+  const beakMat = new THREE.MeshStandardMaterial({ color: 0xff8c26, roughness: 0.5 });
+  const eyeMat = new THREE.MeshStandardMaterial({ color: 0x18120e, roughness: 0.4 });
+
+  const s = 0.85 + rand() * 0.8;
+  const body = new THREE.Mesh(new THREE.SphereGeometry(s * 0.5, 16, 12), mat);
+  body.scale.set(1.15, 0.9, 1.35);
+  body.position.y = s * 0.45;
+  g.add(body);
+  const tail = new THREE.Mesh(new THREE.SphereGeometry(s * 0.2, 10, 8), mat);
+  tail.scale.set(0.8, 0.9, 1);
+  tail.position.set(0, s * 0.62, -s * 0.58);
+  tail.rotation.x = -0.6;
+  g.add(tail);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(s * 0.3, 14, 12), mat);
+  head.position.set(0, s * 0.95, s * 0.42);
+  g.add(head);
+  const beak = new THREE.Mesh(new THREE.BoxGeometry(s * 0.24, s * 0.1, s * 0.22), beakMat);
+  beak.position.set(0, s * 0.9, s * 0.72);
+  g.add(beak);
+  for (const side of [-1, 1]) {
+    const eye = new THREE.Mesh(new THREE.SphereGeometry(s * 0.045, 8, 6), eyeMat);
+    eye.position.set(side * s * 0.14, s * 1.02, s * 0.62);
+    g.add(eye);
+  }
+  return { group: g, radius: s * 0.62, height: s };
+}
+
 /** Monta a arena. Retorna hooks de consulta (colorAt/lightAt) + listas de colisão/colar. */
 export function buildChameleonArena(seed = 1) {
   const rand = seededRand(seed * 9973 + 17);
   const group = new THREE.Group();
   const colliders = []; // {minX,maxX,minZ,maxZ}
   const stickables = []; // {x,z,radius,color:THREE.Color}
+  const floorColor = new THREE.Color(FLOOR_HEX);
 
-  // ---- Patches de cor no chão (Voronoi simplificado por sementes) ----
-  const seeds = [];
-  const seedCount = 12;
-  for (let i = 0; i < seedCount; i++) {
-    seeds.push({
-      x: (rand() * 2 - 1) * HALF * 0.92,
-      z: (rand() * 2 - 1) * HALF * 0.92,
-      color: CHAMELEON_PALETTE[Math.floor(rand() * CHAMELEON_PALETTE.length)].hex,
-    });
-  }
+  // ---- Chão sólido de uma cor só ----
+  const floor = new THREE.Mesh(
+    new THREE.BoxGeometry(HALF * 2, 0.1, HALF * 2),
+    new THREE.MeshStandardMaterial({ color: FLOOR_HEX, roughness: 0.92, metalness: 0.02 })
+  );
+  floor.position.y = 0.0;
+  group.add(floor);
 
-  const tileGrid = [];
-  const tileGeo = new THREE.BoxGeometry(TILE * 0.98, 0.1, TILE * 0.98);
-  for (let ix = 0; ix < N; ix++) {
-    tileGrid[ix] = [];
-    for (let iz = 0; iz < N; iz++) {
-      const x = -HALF + TILE / 2 + ix * TILE;
-      const z = -HALF + TILE / 2 + iz * TILE;
-      let best = seeds[0];
-      let bestD = Infinity;
-      for (const s of seeds) {
-        const d = (s.x - x) ** 2 + (s.z - z) ** 2;
-        if (d < bestD) {
-          bestD = d;
-          best = s;
-        }
-      }
-      const mat = new THREE.MeshStandardMaterial({ color: best.color, roughness: 0.88, metalness: 0.02 });
-      const tile = new THREE.Mesh(tileGeo, mat);
-      tile.position.set(x, 0.05, z);
-      group.add(tile);
-      tileGrid[ix][iz] = { color: new THREE.Color(best.color) };
-    }
-  }
-
-  function tileIndex(x, z) {
-    let ix = Math.floor((x + HALF) / TILE);
-    let iz = Math.floor((z + HALF) / TILE);
-    ix = Math.max(0, Math.min(N - 1, ix));
-    iz = Math.max(0, Math.min(N - 1, iz));
-    return { ix, iz };
+  // ---- Zonas de cor: tapetes redondos pintados no chão ----
+  const zones = []; // {x,z,radius,color}
+  const zoneCount = 8;
+  const zoneGeoCache = new Map();
+  for (let i = 0; i < zoneCount; i++) {
+    const paletteEntry = CHAMELEON_PALETTE[i % CHAMELEON_PALETTE.length];
+    const radius = 2.6 + rand() * 1.8;
+    let x, z, tries = 0;
+    do {
+      x = (rand() * 2 - 1) * (HALF - radius - 1);
+      z = (rand() * 2 - 1) * (HALF - radius - 1);
+      tries++;
+    } while (
+      tries < 20 &&
+      (Math.hypot(x, z) < 4 || zones.some((zn) => Math.hypot(zn.x - x, zn.z - z) < zn.radius + radius + 1.2))
+    );
+    const key = Math.round(radius * 10);
+    if (!zoneGeoCache.has(key)) zoneGeoCache.set(key, new THREE.CircleGeometry(radius, 36));
+    const disc = new THREE.Mesh(
+      zoneGeoCache.get(key),
+      new THREE.MeshStandardMaterial({ color: paletteEntry.hex, roughness: 0.85, metalness: 0.02 })
+    );
+    disc.rotation.x = -Math.PI / 2;
+    disc.position.set(x, 0.06, z);
+    group.add(disc);
+    zones.push({ x, z, radius, color: new THREE.Color(paletteEntry.hex) });
   }
 
   function colorAt(x, z) {
-    const { ix, iz } = tileIndex(x, z);
-    return tileGrid[ix][iz].color;
+    for (const zn of zones) {
+      if (Math.hypot(zn.x - x, zn.z - z) <= zn.radius) return zn.color;
+    }
+    return floorColor;
   }
 
-  // ---- Props espalhados (crates, pilares, arbustos) — colar/camuflagem ----
-  const propCount = 26;
-  const darkMat = new THREE.MeshStandardMaterial({ color: 0x20201f, roughness: 0.9 });
+  // ---- Objetos: jarras brancas, jarras com desenho, patos ----
+  const propCount = 22;
   for (let i = 0; i < propCount; i++) {
     let x, z;
     let tries = 0;
@@ -94,47 +186,43 @@ export function buildChameleonArena(seed = 1) {
       tries++;
     } while (Math.hypot(x, z) < 4 && tries < 12);
 
-    const { color: tileColor } = colorAtIndexed(x, z);
-    const matchTile = rand() < 0.55;
-    const hex = matchTile ? tileColor.getHex() : CHAMELEON_PALETTE[Math.floor(rand() * CHAMELEON_PALETTE.length)].hex;
-    const propMat = new THREE.MeshStandardMaterial({ color: hex, roughness: 0.8, metalness: 0.05 });
-
-    const kind = Math.floor(rand() * 3);
-    let mesh;
-    let radius;
-    if (kind === 0) {
-      const s = 0.9 + rand() * 0.5;
-      mesh = new THREE.Mesh(new THREE.BoxGeometry(s, s, s), propMat);
-      mesh.position.set(x, s / 2, z);
-      radius = s * 0.75;
-      const trim = new THREE.Mesh(new THREE.BoxGeometry(s * 1.02, s * 0.08, s * 1.02), darkMat);
-      trim.position.set(x, s * 0.05, z);
-      group.add(trim);
-    } else if (kind === 1) {
-      const h = 1.4 + rand() * 1.6;
-      const r = 0.32 + rand() * 0.22;
-      mesh = new THREE.Mesh(new THREE.CylinderGeometry(r, r * 1.05, h, 10), propMat);
-      mesh.position.set(x, h / 2, z);
-      radius = r + 0.45;
+    const roll = rand();
+    let built;
+    let dominantHex;
+    if (roll < 0.42) {
+      // jarra branca (algumas com listras/bolinhas coloridas)
+      const withPattern = rand() < 0.45;
+      const patternHex = withPattern
+        ? CHAMELEON_PALETTE[Math.floor(rand() * 7)].hex
+        : null;
+      built = buildJar(rand, 0xf2efe6, patternHex);
+      dominantHex = 0xf2efe6;
+    } else if (roll < 0.72) {
+      // pato — branco, amarelo ou colorido; alguns com bolinhas
+      const duckBase = rand();
+      const baseHex = duckBase < 0.4 ? 0xf2f2f2 : duckBase < 0.75 ? 0xf1d430 : CHAMELEON_PALETTE[Math.floor(rand() * 7)].hex;
+      const patternHex = rand() < 0.4 ? CHAMELEON_PALETTE[Math.floor(rand() * 7)].hex : null;
+      built = buildDuck(rand, baseHex, patternHex);
+      dominantHex = baseHex;
     } else {
-      const r = 0.55 + rand() * 0.4;
-      mesh = new THREE.Mesh(new THREE.IcosahedronGeometry(r, 0), propMat);
-      mesh.position.set(x, r * 0.8, z);
-      mesh.scale.set(1, 0.8, 1);
-      radius = r + 0.35;
+      // jarra colorida combinando com a zona mais próxima (ou cor aleatória)
+      const zoneColor = colorAt(x, z);
+      const useZone = zoneColor !== floorColor && rand() < 0.7;
+      dominantHex = useZone ? zoneColor.getHex() : CHAMELEON_PALETTE[Math.floor(rand() * CHAMELEON_PALETTE.length)].hex;
+      built = buildJar(rand, dominantHex, null);
     }
-    mesh.rotation.y = rand() * Math.PI;
-    group.add(mesh);
 
-    colliders.push({ minX: x - radius * 0.6, maxX: x + radius * 0.6, minZ: z - radius * 0.6, maxZ: z + radius * 0.6 });
-    stickables.push({ x, z, radius: radius + 0.55, color: new THREE.Color(hex), mesh });
+    built.group.position.set(x, 0.05, z);
+    built.group.rotation.y = rand() * Math.PI * 2;
+    group.add(built.group);
+
+    const r = built.radius;
+    colliders.push({ minX: x - r * 0.6, maxX: x + r * 0.6, minZ: z - r * 0.6, maxZ: z + r * 0.6 });
+    stickables.push({ x, z, radius: r + 0.55, color: new THREE.Color(dominantHex), mesh: built.group });
   }
 
-  function colorAtIndexed(x, z) {
-    return { color: colorAt(x, z) };
-  }
-
-  // ---- Muro/cerca colorida no limite da arena ----
+  // ---- Muro/cerca no limite da arena ----
+  const darkMat = new THREE.MeshStandardMaterial({ color: 0x20201f, roughness: 0.9 });
   const fenceMat = new THREE.MeshStandardMaterial({
     color: 0x14141a,
     emissive: 0x2a1a3a,
