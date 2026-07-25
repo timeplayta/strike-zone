@@ -138,6 +138,11 @@ function openModal() {
 function closeModal() {
   $("accountModal")?.classList.add("hidden");
   $("accountModal")?.setAttribute("aria-hidden", "true");
+  if (viewersMounted) {
+    destroyViewer("accountPlayerCanvas");
+    destroyViewer("accountEnemyCanvas");
+    viewersMounted = false;
+  }
 }
 
 /** Fecha a conta se o jogador sair da tela inicial (loja, boneco, armas, mapa). */

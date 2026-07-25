@@ -274,6 +274,9 @@
       showLoadError("Pagina aberta pelo Explorer. Use JOGAR.bat na pasta do jogo.");
       return;
     }
+    if (document.body.classList.contains("mode-mobile") && !document.fullscreenElement) {
+      document.documentElement.requestFullscreen?.().catch(() => {});
+    }
     const map = document.querySelector(".map-btn.selected")?.dataset?.map;
     if (TABLE_GAME_MAPS.has(map)) {
       $("loadError")?.classList.add("hidden");
