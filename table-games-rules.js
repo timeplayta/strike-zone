@@ -119,10 +119,10 @@ export const TABLE_GAME_RULES = {
   },
 
   velha: {
-    objetivo: "Alinhar 3 X em linha, coluna ou diagonal no 3×3.",
+    objetivo: "Alinhar 3 símbolos iguais em linha, coluna ou diagonal no 3×3.",
     como_jogar: [
-      "Você é X e começa; toque numa casa vazia.",
-      "Bot joga O.",
+      "Escolha se quer jogar de X (você começa) ou O (o bot começa).",
+      "Toque numa casa vazia na sua vez.",
       "Alterna até vitória ou empate.",
     ],
     pode: ["Marcar qualquer casa vazia na sua vez"],

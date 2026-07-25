@@ -190,6 +190,7 @@ export function mountTicTacToeGame(root, { botTier, onExit, onEnd, onBind, match
     } else {
       statusEl.textContent = "Sua vez";
       render();
+      match?.startPlayerClock?.(true);
     }
   }
 
@@ -209,13 +210,16 @@ export function mountTicTacToeGame(root, { botTier, onExit, onEnd, onBind, match
       if (chosen) {
         statusEl.textContent = turn === playerSymbol ? "Sua vez" : "Bot pensando…";
         render();
-        if (turn === botSymbol) setTimeout(botMove, 350);
+        if (turn === botSymbol) {
+          setTimeout(botMove, 350);
+        } else {
+          match?.startPlayerClock?.(true);
+        }
       } else {
         statusEl.textContent = "Escolha seu símbolo";
         chooseEl.classList.remove("hidden");
         boardEl.classList.add("hidden");
       }
-      match?.startPlayerClock?.(true);
     },
   });
   onBind?.({
@@ -224,10 +228,12 @@ export function mountTicTacToeGame(root, { botTier, onExit, onEnd, onBind, match
       finish("draw");
       match?.markDrawResolved?.(true);
     },
-    timeout: () => finish(botSymbol),
+    timeout: () => {
+      if (!chosen) return;
+      finish(botSymbol);
+    },
   });
   render();
-  match?.startPlayerClock?.(true);
   return () => wrap.remove();
 }
 

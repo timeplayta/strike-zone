@@ -3700,6 +3700,7 @@ body.ff-map-screen-open .ff-header {
 }
 
 .shop-hub-meta {
+  width: 100%;
   min-width: 0;
   padding: 0.7rem 0.85rem;
   border: 1px solid rgba(120, 150, 200, 0.18);
@@ -3707,12 +3708,15 @@ body.ff-map-screen-open .ff-header {
   background:
     radial-gradient(circle at 28% 35%, rgba(80, 150, 255, 0.16), transparent 45%),
     linear-gradient(145deg, rgba(18, 26, 40, 0.94), rgba(7, 10, 16, 0.98));
+  box-sizing: border-box;
 }
 
 .shop-selected-title {
   margin: 0 0 0.25rem;
   color: #f2c46a;
   font-size: 0.95rem;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .shop-selected-desc {
@@ -3720,6 +3724,8 @@ body.ff-map-screen-open .ff-header {
   color: #aab8cc;
   font-size: 0.78rem;
   line-height: 1.35;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .shop-hub-meta-row {
@@ -6880,77 +6886,97 @@ body.tg-open {
 .tg-ttt {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 0.5rem;
+  gap: 0.55rem;
   width: min(92vw, 300px);
   margin: 0.5rem auto;
-  padding: 0.5rem;
-  background: linear-gradient(150deg, rgba(255, 255, 255, 0.04), rgba(0, 0, 0, 0.28));
-  border: 1px solid rgba(201, 162, 39, 0.2);
-  border-radius: 16px;
-  box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.35);
+  padding: 0.6rem;
+  background: linear-gradient(150deg, rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0.32));
+  border: 1px solid rgba(201, 162, 39, 0.22);
+  border-radius: 18px;
+  box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.4), 0 14px 30px rgba(0, 0, 0, 0.35);
+  perspective: 900px;
 }
 
 .tg-ttt-cell {
   aspect-ratio: 1;
   border: none;
-  border-radius: 12px;
-  background: linear-gradient(160deg, #362c1c, #1c150c);
+  border-radius: 14px;
+  background: linear-gradient(160deg, #3a2f1e, #1c150c);
   box-shadow:
-    inset 0 2px 3px rgba(255, 255, 255, 0.07),
-    inset 0 -5px 9px rgba(0, 0, 0, 0.5),
-    0 2px 0 rgba(0, 0, 0, 0.35);
+    inset 0 3px 4px rgba(255, 255, 255, 0.08),
+    inset 0 -7px 12px rgba(0, 0, 0, 0.55),
+    0 5px 0 rgba(0, 0, 0, 0.4),
+    0 8px 14px rgba(0, 0, 0, 0.35);
   color: #f0e0c0;
-  font-size: 2.3rem;
+  font-size: 2.4rem;
   font-weight: 800;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+  transform-style: preserve-3d;
   transition: transform 0.14s ease, box-shadow 0.14s ease, background 0.14s ease;
 }
 
 .tg-ttt-cell:not(:disabled):hover {
-  transform: translateY(-2px);
-  background: linear-gradient(160deg, #40331e, #241b0e);
+  transform: translateY(-3px) scale(1.03);
+  background: linear-gradient(160deg, #45371f, #241b0e);
   box-shadow:
-    inset 0 2px 3px rgba(255, 255, 255, 0.09),
-    inset 0 -5px 9px rgba(0, 0, 0, 0.5),
-    0 6px 12px rgba(0, 0, 0, 0.4);
+    inset 0 3px 4px rgba(255, 255, 255, 0.1),
+    inset 0 -7px 12px rgba(0, 0, 0, 0.55),
+    0 6px 0 rgba(0, 0, 0, 0.4),
+    0 12px 20px rgba(0, 0, 0, 0.4);
+}
+
+.tg-ttt-cell:not(:disabled):active {
+  transform: translateY(1px) scale(0.97);
 }
 
 .tg-ttt-cell:disabled { cursor: default; }
 
 .tg-ttt-cell[data-val="X"] {
-  color: #ffcf6b;
+  color: #ffb23f;
+  background: linear-gradient(160deg, #443218, #24170a);
   text-shadow:
-    0 0 8px rgba(255, 190, 60, 0.9),
-    0 0 20px rgba(255, 140, 20, 0.5),
-    0 2px 0 rgba(0, 0, 0, 0.55);
+    0 1px 0 #cf8a1a,
+    0 2px 0 #a56a12,
+    0 3px 0 #7e4f0c,
+    0 4px 6px rgba(0, 0, 0, 0.6),
+    0 0 18px rgba(255, 160, 40, 0.55);
 }
 
 .tg-ttt-cell[data-val="O"] {
-  color: #7fe3ff;
+  color: #4fd8ff;
+  background: linear-gradient(160deg, #163140, #0b1c26);
   text-shadow:
-    0 0 8px rgba(90, 210, 255, 0.9),
-    0 0 20px rgba(30, 160, 255, 0.5),
-    0 2px 0 rgba(0, 0, 0, 0.55);
+    0 1px 0 #1793c2,
+    0 2px 0 #0f6f96,
+    0 3px 0 #0a5270,
+    0 4px 6px rgba(0, 0, 0, 0.6),
+    0 0 18px rgba(60, 190, 255, 0.55);
 }
 
 .tg-ttt-cell.just-placed {
-  animation: tttPop 0.32s cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation: tttDrop3d 0.42s cubic-bezier(0.22, 1.4, 0.5, 1);
 }
 
 .tg-ttt-cell.tg-ttt-win {
   background: linear-gradient(160deg, #4d3c1c, #2c2210);
   box-shadow:
     inset 0 2px 4px rgba(255, 255, 255, 0.14),
-    0 0 18px rgba(255, 190, 60, 0.55);
+    0 0 22px rgba(255, 190, 60, 0.6);
+  animation: tttWinPulse 1s ease-in-out infinite;
 }
 
-@keyframes tttPop {
-  0% { transform: scale(0.35) rotate(-10deg); opacity: 0.15; }
-  55% { transform: scale(1.18) rotate(4deg); opacity: 1; }
-  100% { transform: scale(1) rotate(0deg); }
+@keyframes tttDrop3d {
+  0% { transform: translateY(-38px) rotateX(70deg) scale(0.5); opacity: 0; }
+  60% { transform: translateY(4px) rotateX(-8deg) scale(1.08); opacity: 1; }
+  100% { transform: translateY(0) rotateX(0deg) scale(1); }
+}
+
+@keyframes tttWinPulse {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-2px) scale(1.05); }
 }
 
 .tg-ttt-choose {
@@ -6984,34 +7010,57 @@ body.tg-open {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.35rem;
-  padding: 0.9rem 0.5rem;
-  border-radius: 12px;
+  gap: 0.4rem;
+  padding: 1rem 0.5rem;
+  border-radius: 14px;
   border: 1px solid rgba(180, 140, 60, 0.35);
-  background: linear-gradient(180deg, #3a2a18, #24180e);
-  color: #ffcf6b;
-  font-size: 1.9rem;
+  background: linear-gradient(160deg, #443218, #24170a);
+  color: #ffb23f;
+  font-size: 2rem;
   font-weight: 800;
   cursor: pointer;
-  text-shadow: 0 0 12px rgba(255, 190, 60, 0.65);
-  transition: transform 0.14s ease, border-color 0.14s ease;
+  box-shadow:
+    inset 0 3px 4px rgba(255, 255, 255, 0.08),
+    inset 0 -7px 12px rgba(0, 0, 0, 0.5),
+    0 5px 0 rgba(0, 0, 0, 0.4),
+    0 8px 14px rgba(0, 0, 0, 0.3);
+  text-shadow:
+    0 1px 0 #cf8a1a,
+    0 2px 0 #a56a12,
+    0 3px 5px rgba(0, 0, 0, 0.5),
+    0 0 16px rgba(255, 160, 40, 0.55);
+  transition: transform 0.14s ease, border-color 0.14s ease, box-shadow 0.14s ease;
 }
 
 .tg-ttt-choose-btn span {
-  font-size: 0.66rem;
-  font-weight: 600;
-  color: #cbb98a;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #e8d4a8;
   text-shadow: none;
 }
 
 .tg-ttt-choose-btn.tg-ttt-choose-o {
-  color: #7fe3ff;
-  text-shadow: 0 0 12px rgba(90, 210, 255, 0.65);
+  color: #4fd8ff;
+  background: linear-gradient(160deg, #163140, #0b1c26);
+  text-shadow:
+    0 1px 0 #1793c2,
+    0 2px 0 #0f6f96,
+    0 3px 5px rgba(0, 0, 0, 0.5),
+    0 0 16px rgba(60, 190, 255, 0.55);
 }
 
 .tg-ttt-choose-btn:hover {
   border-color: #c9a227;
-  transform: translateY(-2px);
+  transform: translateY(-3px) scale(1.03);
+  box-shadow:
+    inset 0 3px 4px rgba(255, 255, 255, 0.1),
+    inset 0 -7px 12px rgba(0, 0, 0, 0.5),
+    0 6px 0 rgba(0, 0, 0, 0.4),
+    0 14px 22px rgba(0, 0, 0, 0.4);
+}
+
+.tg-ttt-choose-btn:active {
+  transform: translateY(1px) scale(0.98);
 }
 
 .tg-c4 {
