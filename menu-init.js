@@ -358,6 +358,9 @@
     $("welcomeScreen")?.classList.remove("active");
     $("menu")?.classList.remove("hidden");
     $("menu")?.classList.add("active");
+    if (window.innerHeight < window.screen.height && !document.fullscreenElement) {
+      setTimeout(() => window.scrollTo(0, 1), 60);
+    }
     try {
       const acc = account || { isAdmin: mod.isSessionAdmin?.() };
       window.showAdminForAccount?.(acc);
@@ -690,6 +693,22 @@
         panel.classList.add("hidden");
         panel.setAttribute("aria-hidden", "true");
       }
+    });
+
+    $("ffFullscreenBtn")?.addEventListener("click", () => {
+      const doc = document.documentElement;
+      if (!document.fullscreenElement) {
+        doc.requestFullscreen?.().catch(() => {});
+      } else {
+        document.exitFullscreen?.().catch(() => {});
+      }
+    });
+
+    document.addEventListener("fullscreenchange", () => {
+      const btn = $("ffFullscreenBtn");
+      if (!btn) return;
+      const label = btn.querySelector(".ff-options-label");
+      if (label) label.textContent = document.fullscreenElement ? "Sair" : "Tela cheia";
     });
 
     $("restartBtn")?.addEventListener("click", (e) => {

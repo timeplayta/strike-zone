@@ -395,8 +395,8 @@ body.mode-desktop.user-is-admin .menu-layout {
 body.user-is-admin .menu-hub-tabs:not(.hidden) {
   position: fixed;
   left: 50%;
-  top: calc((3.25rem + 50vh - 5.5rem) / 2);
-  transform: translate(-50%, -50%);
+  top: 4.5rem;
+  transform: translateX(-50%);
   z-index: 44;
   margin: 0;
   padding: 0.45rem;
@@ -3915,11 +3915,18 @@ body.ff-map-screen-open .ff-header {
   top: max(0.35rem, env(safe-area-inset-top));
   right: max(0.35rem, env(safe-area-inset-right));
   z-index: 46;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
   pointer-events: none;
 }
 
 .ff-top-corner .ff-options-btn {
   pointer-events: auto;
+}
+
+.ff-fullscreen-btn .ff-options-label {
+  font-size: 0.75rem;
 }
 
 .ff-options-panel {
@@ -5129,8 +5136,8 @@ body.mode-mobile .menu-hub-tabs {
 
 body.mode-mobile.user-is-admin .menu-hub-tabs:not(.hidden) {
   left: 50%;
-  top: calc((2.85rem + 50vh - 5rem) / 2);
-  transform: translate(-50%, -50%);
+  top: 4rem;
+  transform: translateX(-50%);
   width: max-content;
   max-width: min(94vw, 300px);
 }
