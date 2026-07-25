@@ -55,7 +55,7 @@ function hasValidEmail(account) {
 }
 
 function emptyAccount() {
-  return { coins: 0, skins: {}, purchases: [], characterSkin: "soldier" };
+  return { coins: 0, skins: {}, purchases: [], characterSkin: "ct_tactical" };
 }
 
 export function saveSession(name, token, account) {
@@ -126,7 +126,7 @@ export function getSavedAvatar() {
 }
 
 export function getCharacterSkin() {
-  return cachedAccount?.characterSkin || getSavedSession()?.account?.characterSkin || "soldier";
+  return cachedAccount?.characterSkin || getSavedSession()?.account?.characterSkin || "ct_tactical";
 }
 
 function authBody(extra = {}) {
@@ -615,7 +615,7 @@ export async function refreshShopUI(username) {
     accHint.textContent = `ID ${pid} — skins salvas na sua conta única`;
   }
 
-  window.__characterSkin = acc.characterSkin || "soldier";
+  window.__characterSkin = acc.characterSkin || "ct_tactical";
 
   const weaponGrid = document.getElementById("shopGridWeapons");
   const charGrid = document.getElementById("shopGridChars");

@@ -66,7 +66,7 @@ export function createBandit(index, mapKey = "dust", opts = {}) {
   banditLoadout.helmet = { ...banditLoadout.helmet, color: outfit.cap };
 
   const body = buildPlayerCharacter({
-    characterSkin: "soldier",
+    characterSkin: "terrorist",
     loadout: banditLoadout,
     scale: opts.solo ? 1.08 : 1,
     withRifle: true,
@@ -109,7 +109,7 @@ export function createHelper(index, mapKey = "dust") {
   const weaponType = HELPER_WEAPONS[index] || HELPER_WEAPONS[0];
   const loadout = applyOutfitToLoadout(DEFAULT_LOADOUT, HELPER_OUTFITS[index] || HELPER_OUTFITS[0]);
   const body = buildPlayerCharacter({
-    characterSkin: "operator",
+    characterSkin: "ct_tactical",
     loadout,
     scale: 1.04,
     withRifle: true,
@@ -126,7 +126,7 @@ export function createHelper(index, mapKey = "dust") {
 
 export function createBoss() {
   const body = buildPlayerCharacter({
-    characterSkin: "soldier",
+    characterSkin: "terrorist",
     scale: 1.12,
     withRifle: false,
     team: "t",

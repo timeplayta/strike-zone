@@ -16,6 +16,7 @@ import {
 } from "./blockbench-model-loader.js";
 import { buildNpcWeapon, attachStylizedWeapon, ensureBlockbenchGunPivot } from "./npc-weapon.js";
 import { isSpecialCharacter, buildSpecialCharacter } from "./special-characters.js";
+import { isTacticalSkin, buildTacticalCharacter } from "./tactical-character.js";
 
 const FACE_COLORS = {
   eyeWhite: 0xf4f4f8,
@@ -371,7 +372,7 @@ function equipRealWeapon(body, buildOpts, weaponType, withRifle) {
 export function buildPlayerCharacter(options = {}) {
   const {
     loadout = null,
-    characterSkin = "soldier",
+    characterSkin = "ct_tactical",
     scale = 1,
     withRifle = true,
     weaponType = "ak47",
@@ -398,6 +399,17 @@ export function buildPlayerCharacter(options = {}) {
       shirt: buildOpts.shirt,
     });
     if (special) return special;
+  }
+
+  if (isTacticalSkin(skinId)) {
+    const team = skinId === "terrorist" ? "t" : "ct";
+    return buildTacticalCharacter({
+      team,
+      loadout: normalized,
+      scale: scale * (portrait ? 0.95 : 1),
+      weaponType,
+      withRifle,
+    });
   }
 
   const body = buildBlockbenchPlayer(skinId, {

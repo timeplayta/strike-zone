@@ -188,11 +188,25 @@ export const OUTFIT_SETS = [
     tier: "comum",
     color: 0xc42b1e,
     loadout: {
-      helmet: "ff_helmet_black",
+      helmet: "ff_mask_skull",
       shirt: "ff_striker_red",
       pants: "ff_black_ops",
       gloves: "ff_wrap_red",
       shoes: "ff_boot_black",
+    },
+  },
+  {
+    id: "outfit_ct_tactical",
+    name: "Conjunto CT Tático",
+    price: 0,
+    tier: "comum",
+    color: 0x2266aa,
+    loadout: {
+      helmet: "ff_helmet_blue",
+      shirt: "ff_ct_blue",
+      pants: "ff_navy",
+      gloves: "ff_black",
+      shoes: "ff_boot_tactical",
     },
   },
 ];

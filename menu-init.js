@@ -352,7 +352,7 @@
   async function enterMenuWithAccount(name, mod, account) {
     const playerName = $("playerName");
     if (playerName) playerName.value = name;
-    window.__characterSkin = account?.characterSkin || "soldier";
+    window.__characterSkin = account?.characterSkin || "ct_tactical";
     await mod.refreshShopUI(name);
     $("welcomeScreen")?.classList.add("hidden");
     $("welcomeScreen")?.classList.remove("active");

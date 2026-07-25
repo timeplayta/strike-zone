@@ -127,54 +127,80 @@ function buildArm(side, sm, mSleeve, mSkin, mGlove) {
   hand.position.y = -0.22;
   elbow.add(hand);
 
-  // Relógio no pulso esquerdo
+  // Punho/luva com mais volume
+  const wrist = part(new THREE.CylinderGeometry(0.032 * sm, 0.034 * sm, 0.05, 8), mGlove, 0, -0.022, 0);
+  wrist.rotation.x = Math.PI / 2;
+  elbow.add(wrist);
+  // Barra de ajuste da luva
+  const wristStrap = part(new THREE.BoxGeometry(0.052 * sm, 0.008, 0.03), mat(0x0a0a0a, 0.9), 0, -0.022, 0.03);
+  wristStrap.rotation.x = Math.PI / 2;
+  elbow.add(wristStrap);
+
+  // Relógio tático no pulso esquerdo
   if (side === "L") {
-    const watchBand = part(new THREE.CylinderGeometry(0.043, 0.043, 0.018, 16), mat(0x111111, 0.7), 0, -0.008, 0);
+    const watchBand = part(new THREE.CylinderGeometry(0.036 * sm, 0.036 * sm, 0.024, 16), mat(0x151515, 0.7), 0, -0.008, 0);
     watchBand.rotation.x = Math.PI / 2;
     elbow.add(watchBand);
-    const watchFace = part(new THREE.BoxGeometry(0.032, 0.024, 0.01), mat(0x1a2a3a, 0.55, 0x0044aa), 0, -0.008, 0.044);
+    const watchFace = part(new THREE.BoxGeometry(0.028 * sm, 0.02, 0.01), mat(0x1a2a3a, 0.55, 0x0044aa), 0, -0.008, 0.042);
     watchFace.rotation.x = 0.08;
     elbow.add(watchFace);
   }
 
-  // Palma
-  hand.add(part(new THREE.BoxGeometry(0.054, 0.04, 0.062), mGlove, 0, 0, 0.022));
-  // Nós dos dedos
-  for (let i = 0; i < 4; i++) {
-    hand.add(part(new THREE.SphereGeometry(0.008 * sm, 7, 5), mGlove, -0.018 + i * 0.012, 0.022, 0.05));
+  // Palma da luva — formato mais anatômico, não bloco
+  const palm = part(new THREE.CapsuleGeometry(0.022 * sm, 0.04, 4, 8), mGlove, 0, 0, 0.022);
+  palm.scale.set(1.35, 0.55, 1.45);
+  hand.add(palm);
+  // Dorso da mão com padding tático
+  const backhand = part(new THREE.BoxGeometry(0.05 * sm, 0.012, 0.044), mat(0x111111, 0.82), 0, 0.018, 0.022);
+  hand.add(backhand);
+  for (let i = 0; i < 3; i++) {
+    hand.add(part(new THREE.SphereGeometry(0.005 * sm, 5, 4), mat(0x151515, 0.8), -0.015 + i * 0.015, 0.018, 0.038));
   }
-  // 4 dedos com 2 falanges cada
-  const fingerBaseZ = 0.055;
-  const curlAngles = [1.15, 1.12, 1.14, 1.18];
-  const fingerLens = [1.0, 1.06, 0.98, 0.8];
+
+  // 4 dedos com 3 falanges (mais natural)
+  const fingerBaseZ = 0.05;
+  const curlAngles = [1.05, 1.02, 1.04, 1.08];
+  const fingerLens = [1.0, 1.08, 0.98, 0.85];
+  const fingerWidths = [1.0, 0.95, 0.9, 0.82];
   for (let i = 0; i < 4; i++) {
     const fx = -0.018 + i * 0.012;
     const fc = curlAngles[i];
     const fl = fingerLens[i] * sm;
+    const fw = fingerWidths[i] * sm;
     // Falange proximal
     const fp = new THREE.Group();
     fp.position.set(fx, 0, fingerBaseZ);
     fp.rotation.x = fc;
     hand.add(fp);
-    fp.add(part(new THREE.CapsuleGeometry(0.006 * fl, 0.022, 2, 6), mGlove, 0, -0.011, 0));
-    // Falange distal (dobrada extra)
+    fp.add(part(new THREE.CapsuleGeometry(0.0075 * fw, 0.024, 2, 6), mGlove, 0, -0.012, 0));
+    // Falange média
+    const fm = new THREE.Group();
+    fm.position.set(0, -0.024, 0);
+    fm.rotation.x = 0.35;
+    fp.add(fm);
+    fm.add(part(new THREE.CapsuleGeometry(0.0068 * fw, 0.02, 2, 6), mGlove, 0, -0.01, 0));
+    // Falange distal
     const fd = new THREE.Group();
-    fd.position.set(0, -0.022, 0);
-    fd.rotation.x = 0.3;
-    fp.add(fd);
-    fd.add(part(new THREE.CapsuleGeometry(0.005 * fl, 0.018, 2, 6), mGlove, 0, -0.009, 0));
+    fd.position.set(0, -0.02, 0);
+    fd.rotation.x = 0.28;
+    fm.add(fd);
+    fd.add(part(new THREE.CapsuleGeometry(0.006 * fw, 0.016, 2, 6), mGlove, 0, -0.008, 0));
+    // Ponta do dedo com unhagem/luva reforçada
+    fd.add(part(new THREE.SphereGeometry(0.0065 * fw, 5, 4), mat(0x0a0a0a, 0.88), 0, -0.015, 0));
   }
-  // Polegar
+
+  // Polegar com 2 falanges
   const thumbPivot = new THREE.Group();
-  thumbPivot.position.set(side === "L" ? -0.034 : 0.034, 0, 0.036);
-  thumbPivot.rotation.set(0.32, 0, side === "L" ? -0.78 : 0.78);
+  thumbPivot.position.set(side === "L" ? -0.032 : 0.032, 0, 0.032);
+  thumbPivot.rotation.set(0.35, 0, side === "L" ? -0.72 : 0.72);
   hand.add(thumbPivot);
-  thumbPivot.add(part(new THREE.CapsuleGeometry(0.007 * sm, 0.026, 2, 6), mGlove, 0, -0.013, 0));
+  thumbPivot.add(part(new THREE.CapsuleGeometry(0.0085 * sm, 0.024, 2, 6), mGlove, 0, -0.012, 0));
   const thumbDist = new THREE.Group();
-  thumbDist.position.y = -0.026;
-  thumbDist.rotation.x = 0.22;
+  thumbDist.position.y = -0.024;
+  thumbDist.rotation.x = 0.18;
   thumbPivot.add(thumbDist);
-  thumbDist.add(part(new THREE.CapsuleGeometry(0.006 * sm, 0.02, 2, 6), mGlove, 0, -0.01, 0));
+  thumbDist.add(part(new THREE.CapsuleGeometry(0.0075 * sm, 0.018, 2, 6), mGlove, 0, -0.009, 0));
+  thumbDist.add(part(new THREE.SphereGeometry(0.0075 * sm, 5, 4), mat(0x0a0a0a, 0.88), 0, -0.018, 0));
 
   return { shoulder, elbow, hand, upper, fore };
 }
@@ -213,6 +239,31 @@ function addTacticalGear(torso, sm, vestColor, darkColor, profile) {
   }
 }
 
+function buildBackpack(color, sm) {
+  const group = new THREE.Group();
+  const bagMat = mat(color, 0.92);
+  const dark = mat(0x151515, 0.9);
+  const zipper = mat(0x888888, 0.6, 0xaaaaaa);
+  zipper.metalness = 0.7;
+
+  // Corpo principal da mochila
+  const body = part(new THREE.BoxGeometry(0.32 * sm, 0.42, 0.16), bagMat, 0, 0, 0);
+  group.add(body);
+  // Bolso frontal
+  group.add(part(new THREE.BoxGeometry(0.22 * sm, 0.18, 0.04), bagMat, 0, -0.05, 0.08));
+  // Bolso frontal com profundidade
+  group.add(part(new THREE.BoxGeometry(0.22 * sm, 0.18, 0.02), dark, 0, -0.05, 0.095));
+  // Zíperes
+  group.add(part(new THREE.BoxGeometry(0.02 * sm, 0.34, 0.01), zipper, 0, 0.02, 0.083)); // zíper principal
+  group.add(part(new THREE.BoxGeometry(0.02 * sm, 0.14, 0.01), zipper, 0, -0.05, 0.103)); // zíper do bolso
+  // Alças laterais
+  group.add(part(new THREE.BoxGeometry(0.02 * sm, 0.34, 0.01), dark, -0.14 * sm, 0.02, -0.02));
+  group.add(part(new THREE.BoxGeometry(0.02 * sm, 0.34, 0.01), dark, 0.14 * sm, 0.02, -0.02));
+  // Alça de cima
+  group.add(part(new THREE.TorusGeometry(0.04 * sm, 0.006, 4, 8, Math.PI), dark, 0, 0.22, 0));
+  return group;
+}
+
 export function buildStylizedHuman(opts = {}) {
   const {
     shirt = 0x4a4a4a,
@@ -232,6 +283,9 @@ export function buildStylizedHuman(opts = {}) {
     shoesNeon = null,
     helmetNeon = null,
     withRifle = true,
+    backpack = false,
+    backpackColor = 0x3a2818,
+    vest = true,
     faceProfile = {},
   } = opts;
 
@@ -266,7 +320,15 @@ export function buildStylizedHuman(opts = {}) {
     part(new THREE.BoxGeometry(0.09, 0.055, 0.035), mAccent, 0.075, 1.25, 0.092)
   );
 
-  addTacticalGear(torso, sm, muscular ? 0x2a2a2a : 0x3a4530, 0x1a1a1a, profile);
+  if (vest) {
+    addTacticalGear(torso, sm, muscular ? 0x2a2a2a : 0x3a4530, 0x1a1a1a, profile);
+  }
+
+  if (backpack) {
+    const bp = buildBackpack(backpackColor, sm);
+    bp.position.set(0, 1.38, -0.12);
+    torso.add(bp);
+  }
 
   const legL = buildLeg("L", sm, mPants, mBoot);
   const legR = buildLeg("R", sm, mPants, mBoot);
