@@ -386,7 +386,7 @@
       tut.maybeStartTutorial?.();
     } catch { /* tutorial opcional */ }
     try {
-      const lobby = await import("./lobby-view.js?v=3");
+      const lobby = await import("./lobby-view.js?v=4");
       lobby.mountLobbyScene?.();
     } catch { /* lobby 3D opcional */ }
   }

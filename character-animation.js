@@ -105,8 +105,13 @@ function updateWeaponVisual(entity, dt, shooting, aimBlend) {
   const recoil = (entity._shootRecoil ?? 0) * 0.12;
 
   if (pivot) {
-    pivot.rotation.x = smooth(pivot.rotation.x, -aimBlend * 0.06 - recoil, dt, shooting ? 24 : 14);
-    pivot.rotation.y = smooth(pivot.rotation.y, shooting ? -recoil * 0.3 : 0, dt, shooting ? 20 : 10);
+    const base = pivot.userData.baseRot || { x: 0, y: 0, z: 0 };
+    // Soma mira/recuo em cima da pose base — nunca sobrescreve o grip
+    const targetX = base.x - aimBlend * 0.06 - recoil;
+    const targetY = base.y - (shooting ? recoil * 0.3 : 0);
+    pivot.rotation.x = smooth(pivot.rotation.x, targetX, dt, shooting ? 24 : 14);
+    pivot.rotation.y = smooth(pivot.rotation.y, targetY, dt, shooting ? 20 : 10);
+    pivot.rotation.z = base.z;
   }
 
   if (entity.gun && shooting) {

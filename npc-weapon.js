@@ -7,18 +7,18 @@ export { preloadWeaponModels, isWeaponGltfReady } from "./weapon-gltf-loader.js"
 
 const DEFAULT_HAND = new THREE.Vector3(0.1, 0.92, -0.34);
 
-/** Grip das armas HD na mão do Blockbench (cano já aponta para -Z) */
+/** Grip das armas HD na mão do Blockbench — arma de lado, cano pra frente, pente pra baixo */
 export const NPC_HD_GRIP = {
-  ak47: { pos: [0, 0.07, 0.04], rot: [0.04, 0, 0.02], scale: 1 },
-  scar: { pos: [0, 0.07, 0.04], rot: [0.04, 0, 0.02], scale: 1 },
-  m4: { pos: [0, 0.07, 0.04], rot: [0.04, 0, 0.02], scale: 1 },
-  ump45: { pos: [0, 0.065, 0.035], rot: [0.04, 0, 0.02], scale: 1 },
-  awm: { pos: [0, 0.075, 0.045], rot: [0.04, 0, 0.02], scale: 1 },
-  doze: { pos: [0, 0.07, 0.04], rot: [0.04, 0, 0.02], scale: 1 },
-  bazooka: { pos: [0, 0.06, 0.06], rot: [0.02, 0, 0], scale: 1 },
-  glock: { pos: [0, 0.055, 0.025], rot: [0.08, 0, 0], scale: 1 },
-  revolver: { pos: [0, 0.055, 0.025], rot: [0.08, 0, 0], scale: 1 },
-  pens: { pos: [0, 0.05, 0.02], rot: [0.08, 0, 0], scale: 1.1 },
+  ak47: { pos: [0.01, 0.02, 0.05], rot: [0.12, 0.05, 0.08], scale: 1 },
+  scar: { pos: [0.01, 0.02, 0.05], rot: [0.12, 0.05, 0.08], scale: 1 },
+  m4: { pos: [0.01, 0.02, 0.05], rot: [0.12, 0.05, 0.08], scale: 1 },
+  ump45: { pos: [0.01, 0.018, 0.045], rot: [0.12, 0.05, 0.08], scale: 1 },
+  awm: { pos: [0.01, 0.022, 0.055], rot: [0.1, 0.04, 0.06], scale: 1 },
+  doze: { pos: [0.01, 0.02, 0.05], rot: [0.12, 0.05, 0.08], scale: 1 },
+  bazooka: { pos: [0.0, 0.015, 0.06], rot: [0.06, 0.02, 0.04], scale: 1 },
+  glock: { pos: [0.0, 0.01, 0.03], rot: [0.2, 0.0, 0.1], scale: 1 },
+  revolver: { pos: [0.0, 0.01, 0.03], rot: [0.2, 0.0, 0.1], scale: 1 },
+  pens: { pos: [0.0, 0.008, 0.025], rot: [0.2, 0.0, 0.1], scale: 1.1 },
 };
 
 /** Offsets para armas GLB Blockbench (loot / revólver) */
@@ -74,6 +74,8 @@ function purgeStaleGunPivots(model) {
 /**
  * Blockbench exporta cada parte como mesh na raiz com vértices no espaço do modelo.
  * Filho da mão cai no chão — o pivot precisa ficar na raiz, na posição real da mão.
+ * Orientação é FIXA (rifle de lado na mão, cano pra frente) — NÃO alinhar no antebraço,
+ * senão a arma aponta pra baixo/pro lado do braço e fica toda errada.
  */
 export function ensureBlockbenchGunPivot(model, handName = "hand_r") {
   if (!model) return null;
@@ -96,25 +98,17 @@ export function ensureBlockbenchGunPivot(model, handName = "hand_r") {
 
   const hand = model.getObjectByName(handName) || model.getObjectByName("handR");
   const handC = hand?.isMesh ? getMeshGeometryCenter(hand) : null;
-  const fore = model.getObjectByName("forearm_r");
-  const foreC = fore?.isMesh ? getMeshGeometryCenter(fore) : null;
 
   if (handC) rig.position.copy(handC);
   else rig.position.copy(DEFAULT_HAND);
 
-  if (handC && foreC) {
-    const dir = new THREE.Vector3().subVectors(handC, foreC);
-    if (dir.lengthSq() > 1e-6) {
-      dir.normalize();
-      gunPivot.rotation.set(
-        Math.asin(THREE.MathUtils.clamp(-dir.y, -1, 1)),
-        Math.atan2(dir.x, -dir.z),
-        0
-      );
-    }
-  } else {
-    gunPivot.rotation.set(-0.3, 0.15, 0.05);
-  }
+  // Pose de rifle: horizontal / de lado na mão, cano pra frente do personagem
+  gunPivot.rotation.set(-0.28, 0.42, 1.18);
+  gunPivot.userData.baseRot = {
+    x: gunPivot.rotation.x,
+    y: gunPivot.rotation.y,
+    z: gunPivot.rotation.z,
+  };
 
   return gunPivot;
 }
@@ -186,6 +180,15 @@ export function attachStylizedWeapon(rig, gun, weaponType = "ak47") {
   tuneWeaponMeshes(gun);
   rig.gun = gun;
 
+  // Guarda a pose base pra animação não zerar a orientação do grip
+  if (!rig.gunPivot.userData.baseRot) {
+    rig.gunPivot.userData.baseRot = {
+      x: rig.gunPivot.rotation.x,
+      y: rig.gunPivot.rotation.y,
+      z: rig.gunPivot.rotation.z,
+    };
+  }
+
   return { gun, pivot: rig.gunPivot };
 }
 
@@ -206,6 +209,8 @@ export function attachNpcWeapon(bones, gun, weaponType = "ak47") {
   gun.rotation.set(...cfg.rot);
   pivot.add(gun);
   tuneWeaponMeshes(gun);
+
+  pivot.userData.baseRot = { x: 0, y: 0, z: 0 };
 
   return { gun, pivot };
 }
