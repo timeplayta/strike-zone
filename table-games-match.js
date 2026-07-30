@@ -123,6 +123,9 @@ export function mountMatchChrome(matchEl, handlers = {}) {
         <span class="tg-clock-label">Tempo</span>
         <span class="tg-clock-value" data-clock-val>1:00</span>
       </div>
+      <button type="button" class="tg-match-menu-toggle" data-menu-toggle aria-expanded="false" aria-label="Menu da partida">☰</button>
+    </div>
+    <div class="tg-match-actions-row" data-actions-row>
       <div class="tg-match-actions">
         <button type="button" class="tg-match-action tg-action-resign" data-resign title="Desistir" aria-label="Desistir">
           🏳 <span class="tg-action-label">Desistir</span>
@@ -170,6 +173,28 @@ export function mountMatchChrome(matchEl, handlers = {}) {
   const chatClose = chrome.querySelector("[data-chat-close]");
   const voiceStatus = chrome.querySelector("[data-voice-status]");
   const voiceHint = chrome.querySelector("[data-voice-hint]");
+  const menuToggle = chrome.querySelector("[data-menu-toggle]");
+
+  function isMobileMatch() {
+    return window.matchMedia("(max-width: 768px), (max-height: 640px)").matches;
+  }
+
+  function syncMobileLayout() {
+    matchEl.classList.toggle("tg-match-mobile", isMobileMatch());
+    if (!isMobileMatch()) setMenuOpen(false);
+  }
+
+  function setMenuOpen(open) {
+    chrome.classList.toggle("menu-open", open);
+    menuToggle?.setAttribute("aria-expanded", open ? "true" : "false");
+  }
+
+  syncMobileLayout();
+  window.addEventListener("resize", syncMobileLayout);
+
+  menuToggle?.addEventListener("click", () => {
+    setMenuOpen(!chrome.classList.contains("menu-open"));
+  });
 
   function setVoiceStatus(text) {
     if (voiceStatus) voiceStatus.textContent = text || "";
@@ -407,6 +432,7 @@ export function mountMatchChrome(matchEl, handlers = {}) {
     chatToggle.setAttribute("aria-expanded", open ? "true" : "false");
     chatToggle.classList.toggle("active", open);
     if (open) {
+      setMenuOpen(false);
       unread = 0;
       updateBadge();
       logEl.scrollTop = logEl.scrollHeight;
@@ -552,6 +578,7 @@ export function mountMatchChrome(matchEl, handlers = {}) {
     },
     destroy() {
       destroyed = true;
+      window.removeEventListener("resize", syncMobileLayout);
       stopVoice();
       stopBotSpeech();
       stopClock();
