@@ -5,7 +5,7 @@ import { GLTFLoader } from "./vendor/GLTFLoader.js";
 import { clone as cloneSkeleton } from "./vendor/SkeletonUtils.js";
 import { buildNpcWeapon, attachNpcWeapon } from "./npc-weapon.js";
 
-import { MAX_PIXEL_RATIO, MAX_TEXTURE_ANISO } from "./perf-config.js";
+import { MAX_PIXEL_RATIO, MAX_TEXTURE_ANISO, ENABLE_SHADOWS } from "./perf-config.js";
 
 const BASE_SCALE = 1.2;
 const MAX_ANISO = MAX_TEXTURE_ANISO;
@@ -72,7 +72,10 @@ export function configureCharacterRenderer(renderer, exposure = 1.05) {
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = exposure;
-  renderer.shadowMap.enabled = false;
+  renderer.shadowMap.enabled = ENABLE_SHADOWS;
+  if (ENABLE_SHADOWS) {
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  }
 }
 
 function findBone(model, names) {

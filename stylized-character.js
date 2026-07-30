@@ -402,8 +402,8 @@ export function buildStylizedHuman(opts = {}) {
   root.scale.setScalar(scale);
   root.traverse((o) => {
     if (o.isMesh) {
-      o.castShadow = false;
-      o.receiveShadow = false;
+      o.castShadow = true;
+      o.receiveShadow = true;
     }
   });
 

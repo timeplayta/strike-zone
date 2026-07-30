@@ -85,6 +85,7 @@ import {
   LOW_GRAPHICS,
   MAX_PIXEL_RATIO,
   ENABLE_ANTIALIAS,
+  ENABLE_SHADOWS,
   ENEMY_LABEL_FRAME_SKIP,
   BLOOD_SPRAY_MUL,
   MOBILE_MAX_BOTS,
@@ -92,9 +93,24 @@ import {
   getRendererPowerPreference,
   shouldUseHeavyMapTextures,
 } from "./perf-config.js";
+import { configureCharacterRenderer } from "./human-model.js";
+import {
+  applyShadowSettings,
+  enableSceneShadows,
+  ensureSkyDome,
+  applyEnvLighting,
+  spawnHitSparks,
+  updateHitSparks,
+  addCameraShake,
+  addFovPunch,
+  updateCameraJuice,
+  flashHitmarker,
+  bumpTextureAnisotropy,
+  setGraphicsBaseFov,
+  disposeGraphicsBoost,
+} from "./graphics-boost.js";
 import { WEAPONS, calcWeaponDamage, getPrimaryWeapon, refillWeaponToMax } from "./weapons-data.js";
 import { ownsWeapon, getAccountForUnlocks, getSecondaryWeaponId, isPremiumWeapon } from "./weapon-unlocks.js";
-import { configureCharacterRenderer } from "./human-model.js";
 import { buildPlayerCharacter } from "./player-character.js";
 import { upgradeWithBlockbenchModel } from "./blockbench-model-loader.js";
 import { initCharacterAnim, updateHumanAnimation, smoothTurn, getAnimOpts } from "./character-animation.js";
@@ -1470,18 +1486,19 @@ function startGame(config = {}) {
 }
 
 function addSceneLights() {
-  if (!hemiLight) hemiLight = new THREE.HemisphereLight(0xbfd0d8, 0x33291f, 0.38);
-  if (!ambientLight) ambientLight = new THREE.AmbientLight(0xcfc4b0, 0.32);
+  if (!hemiLight) hemiLight = new THREE.HemisphereLight(0xbfd0d8, 0x33291f, 0.42);
+  if (!ambientLight) ambientLight = new THREE.AmbientLight(0xcfc4b0, 0.36);
   if (!sunLight) {
-    sunLight = new THREE.DirectionalLight(0xe8d9b8, 0.62);
+    sunLight = new THREE.DirectionalLight(0xe8d9b8, 0.78);
     sunLight.position.set(25, 45, 15);
     sunLight.castShadow = false;
   }
   if (!fillLight) {
-    fillLight = new THREE.DirectionalLight(0x9ab4d8, 0.42);
+    fillLight = new THREE.DirectionalLight(0x9ab4d8, 0.48);
     fillLight.position.set(-14, 18, -16);
   }
   scene.add(hemiLight, ambientLight, sunLight, fillLight);
+  applyShadowSettings(renderer, sunLight);
 }
 
 function applyMapAtmosphere() {
@@ -1568,6 +1585,18 @@ function applyMapAtmosphere() {
       scene.fog.near *= 0.25;
       scene.fog.far *= 2.8;
     }
+  }
+
+  // Céu gradiente + IBL — visual bem mais rico que background flat
+  const skyHex = scene.background?.isColor ? scene.background.getHex() : (mapData?.sky ?? 0x87aacc);
+  const fogHex = scene.fog?.color?.getHex?.() ?? mapData?.fog ?? 0x8899aa;
+  if (!labyrinth) {
+    ensureSkyDome(scene, skyHex, fogHex, mapData?.floorColor ?? 0x2a2418);
+    applyEnvLighting(renderer, scene, skyHex, mapData?.floorColor ?? 0x3a2a18);
+  }
+  if (ENABLE_SHADOWS) {
+    applyShadowSettings(renderer, sunLight);
+    enableSceneShadows(scene, { cast: true, receive: true });
   }
 }
 
@@ -1685,6 +1714,7 @@ function initThree() {
   }
 
   scene = new THREE.Scene();
+  disposeGraphicsBoost();
   camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100);
   scene.add(camera);
   if (!weaponView) {
@@ -1702,9 +1732,11 @@ function initThree() {
   renderer.debug.checkShaderErrors = false;
   renderer.setSize(window.innerWidth, window.innerHeight);
   configureCharacterRenderer(renderer);
+  setGraphicsBaseFov(camera.fov || 75);
   window.__strikeRenderer = renderer;
 
   addSceneLights();
+  applyShadowSettings(renderer, sunLight);
 
   window.addEventListener("resize", onResize);
   document.addEventListener("keydown", onKeyDown);
@@ -2067,6 +2099,9 @@ function buildMap() {
     buildLabyrinthHorrorAmbience(scene, mapData);
     spawnLabyrinthMonsters(scene, mapData);
   }
+
+  bumpTextureAnisotropy(scene, renderer);
+  if (ENABLE_SHADOWS) enableSceneShadows(scene, { cast: true, receive: true });
 }
 
 function broadcastAlert(x, z) {
@@ -2783,6 +2818,7 @@ function updateADS(dt) {
   if (camera) {
     camera.fov += (targetFov - camera.fov) * Math.min(1, dt * 14);
     camera.updateProjectionMatrix();
+    setGraphicsBaseFov(targetFov);
   }
 
   const cross = document.getElementById("crosshair");
@@ -2991,13 +3027,15 @@ function spawnImpact(pos, blood) {
     bloodParticles.push(...spawnBloodImpact(scene, pos, 1 + Math.random() * 0.5));
     return;
   }
+  spawnHitSparks(scene, pos, LOW_GRAPHICS ? 4 : 10);
   const p = new THREE.Mesh(
-    new THREE.SphereGeometry(0.05, 4, 4),
-    new THREE.MeshBasicMaterial({ color: 0xffaa44 })
+    new THREE.SphereGeometry(0.04, 5, 5),
+    new THREE.MeshBasicMaterial({ color: 0xffcc66, transparent: true, opacity: 0.9 })
   );
   p.position.copy(pos);
+  p.userData.noShadow = true;
   scene.add(p);
-  setTimeout(() => scene.remove(p), 150);
+  setTimeout(() => scene.remove(p), 90);
 }
 
 function applyShotKick(w, mythicSkin = false) {
@@ -3014,6 +3052,8 @@ function applyShotKick(w, mythicSkin = false) {
   pitch = Math.max(-1.45, Math.min(1.45, pitch + base * (mythicSkin ? 0.82 : 1)));
   yaw += (Math.random() - 0.5) * base * 0.35;
   applyCameraRotation();
+  addCameraShake(base * 1.8);
+  addFovPunch(w.id === "awm" || w.id === "doze" || w.id === "bazooka" ? 3.2 : 1.6);
 }
 
 function cosmicMaterial(color, opacity = 0.85) {
@@ -3225,6 +3265,8 @@ function damageEnemy(e, dmg, headshot, hitPoint, fromPlayer = true) {
     e.hpVisibleUntil = performance.now() + 2000;
     const fxPos = hitPoint || e.group.position.clone().add(new THREE.Vector3(0, 1.2, 0));
     showDamageNumber(actual, fxPos, camera, headshot);
+    flashHitmarker(headshot);
+    addCameraShake(headshot ? 0.028 : 0.014);
   }
   updateEnemyHealthBar(e);
   const bleedOrigin = hitPoint
@@ -3644,6 +3686,8 @@ function damagePlayer(dmg, attacker) {
   updateHealthHUD();
   document.body.classList.add("damage-flash");
   setTimeout(() => document.body.classList.remove("damage-flash"), 150);
+  addCameraShake(0.055 + Math.min(0.06, dmg * 0.0015));
+  addFovPunch(2.2);
   if (player.health <= 0) killPlayer(attacker);
 }
 
@@ -5333,6 +5377,8 @@ function animate() {
   }
 
   updateBloodSpray(bloodParticles, dt, scene);
+  updateHitSparks(dt, scene);
+  updateCameraJuice(camera, dt);
 
   if (!inCinematic && !isCinematicActive()) {
     if (weaponView) {
