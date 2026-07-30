@@ -25,17 +25,21 @@ function makeFpsWeapon(type, scale, tint) {
 
 }
 
-/** Materiais FPS — lambert + leve emissive pra cor não sumir na câmera */
-function matHand(color, roughness = 0.72) {
+/** Materiais FPS — cor visível na câmera (inclui neon do loadout) */
+function matHand(color, roughness = 0.72, neon = false) {
   const c = new THREE.Color(color);
   return new THREE.MeshStandardMaterial({
     color: c,
-    roughness,
-    metalness: 0.04,
+    roughness: neon ? 0.38 : roughness,
+    metalness: neon ? 0.18 : 0.04,
     flatShading: false,
-    emissive: c.clone().multiplyScalar(0.22),
-    emissiveIntensity: 0.55,
+    emissive: c.clone().multiplyScalar(neon ? 0.55 : 0.22),
+    emissiveIntensity: neon ? 0.85 : 0.55,
   });
+}
+
+function darkerShade(hex, mul = 0.52) {
+  return new THREE.Color(hex).multiplyScalar(mul).getHex();
 }
 
 function makeNailMat(skinColor) {
@@ -64,20 +68,20 @@ function readableGloveColor(hex) {
  * setExtra(0..1+) soma curvatura extra sobre a pose de repouso (fechar a mão,
  * apertar o gatilho) sem perder a pose base de descanso no cabo da arma.
  */
-function makeFinger(baseX, baseY, baseZ, restCurl, lenMult, mat, nailMat) {
+function makeFinger(baseX, baseY, baseZ, restCurl, lenMult, mat, nailMat, skinMat) {
   const root = new THREE.Group();
   root.position.set(baseX, baseY, baseZ);
 
   const lm = lenMult;
-  const r0 = 0.013;
-  const r1 = 0.0115;
-  const r2 = 0.01;
+  const r0 = 0.0145;
+  const r1 = 0.013;
+  const r2 = 0.0115;
 
-  const prox = new THREE.Mesh(new THREE.CylinderGeometry(r1, r0, 0.052 * lm, 12), mat);
+  const prox = new THREE.Mesh(new THREE.CylinderGeometry(r1, r0, 0.052 * lm, 14), mat);
   prox.position.y = -0.026 * lm;
   root.add(prox);
 
-  const j1 = new THREE.Mesh(new THREE.SphereGeometry(r0, 10, 8), mat);
+  const j1 = new THREE.Mesh(new THREE.SphereGeometry(r0, 12, 10), mat);
   j1.position.y = -0.052 * lm;
   root.add(j1);
 
@@ -85,11 +89,11 @@ function makeFinger(baseX, baseY, baseZ, restCurl, lenMult, mat, nailMat) {
   midPivot.position.y = -0.052 * lm;
   root.add(midPivot);
 
-  const mid = new THREE.Mesh(new THREE.CylinderGeometry(r2, r1, 0.042 * lm, 12), mat);
+  const mid = new THREE.Mesh(new THREE.CylinderGeometry(r2, r1, 0.042 * lm, 14), mat);
   mid.position.y = -0.021 * lm;
   midPivot.add(mid);
 
-  const j2 = new THREE.Mesh(new THREE.SphereGeometry(r1, 10, 8), mat);
+  const j2 = new THREE.Mesh(new THREE.SphereGeometry(r1, 12, 10), mat);
   j2.position.y = -0.042 * lm;
   midPivot.add(j2);
 
@@ -97,11 +101,11 @@ function makeFinger(baseX, baseY, baseZ, restCurl, lenMult, mat, nailMat) {
   distPivot.position.y = -0.042 * lm;
   midPivot.add(distPivot);
 
-  const dist = new THREE.Mesh(new THREE.CylinderGeometry(0.0085, r2, 0.034 * lm, 10), mat);
+  const dist = new THREE.Mesh(new THREE.CylinderGeometry(0.0095, r2, 0.034 * lm, 12), mat);
   dist.position.y = -0.017 * lm;
   distPivot.add(dist);
 
-  const tip = new THREE.Mesh(new THREE.SphereGeometry(0.0095, 10, 8), mat);
+  const tip = new THREE.Mesh(new THREE.SphereGeometry(0.0105, 12, 10), skinMat || mat);
   tip.position.y = -0.034 * lm;
   distPivot.add(tip);
 
@@ -173,42 +177,37 @@ function makeThumb(posX, posY, posZ, s, mat, nailMat) {
 }
 
 /**
- * Mão FPS maior e legível: manga com cor da camisa, luva com cor real,
- * pezinho de pele no pulso, grip que fecha em volta da arma.
+ * Mão FPS redonda e colorida — palma esférica, punho arredondado, grip no cabo da arma.
  */
-function makeFpsHand(side, skinMat, gloveMat, nailMat, sleeveMat) {
+function makeFpsHand(side, skinMat, gloveMat, nailMat, sleeveMat, gloveHex) {
   const s = side === "left" ? -1 : 1;
   const isRight = side === "right";
   const g = new THREE.Group();
 
-  // Braço / antebraço mais grossos (proporção FPS clássica)
-  const upper = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.05, 0.36, 14), sleeveMat);
+  const upper = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.05, 0.36, 16), sleeveMat);
   upper.position.set(s * 0.24, -0.22, 0.06);
   upper.rotation.set(Math.PI / 2, 0, s * 0.12);
   upper.scale.x = 0.88;
   g.add(upper);
 
-  const forearm = new THREE.Mesh(new THREE.CylinderGeometry(0.048, 0.044, 0.38, 14), sleeveMat);
+  const forearm = new THREE.Mesh(new THREE.CylinderGeometry(0.048, 0.044, 0.38, 16), sleeveMat);
   forearm.position.set(s * 0.17, -0.17, -0.16);
   forearm.rotation.set(Math.PI / 2, 0, s * 0.18);
   forearm.scale.x = 0.86;
   g.add(forearm);
 
-  const wristPos = { x: s * 0.1, y: -0.1, z: -0.34 };
   const wristPivot = new THREE.Group();
-  wristPivot.position.set(wristPos.x, wristPos.y, wristPos.z);
-  // Mão direita: grip no cabo; esquerda: apoio no cano (ligeiramente inclinada)
+  wristPivot.position.set(s * 0.1, -0.1, -0.34);
   wristPivot.rotation.set(isRight ? 0.18 : 0.08, isRight ? -0.08 : 0.12, s * (isRight ? -0.2 : 0.15));
   g.add(wristPivot);
 
-  // Faixa de pele entre manga e luva (dá cor humana)
-  const skinBand = new THREE.Mesh(new THREE.CylinderGeometry(0.042, 0.044, 0.028, 14), skinMat);
-  skinBand.rotation.x = Math.PI / 2;
+  const skinBand = new THREE.Mesh(new THREE.SphereGeometry(0.044, 16, 12), skinMat);
+  skinBand.scale.set(1.05, 0.72, 1.08);
   skinBand.position.z = 0.02;
   wristPivot.add(skinBand);
 
-  const wrist = new THREE.Mesh(new THREE.CylinderGeometry(0.044, 0.048, 0.08, 14), gloveMat);
-  wrist.rotation.x = Math.PI / 2;
+  const wrist = new THREE.Mesh(new THREE.SphereGeometry(0.046, 16, 12), gloveMat);
+  wrist.scale.set(1.02, 0.78, 1.05);
   wrist.position.z = -0.02;
   wristPivot.add(wrist);
 
@@ -217,15 +216,23 @@ function makeFpsHand(side, skinMat, gloveMat, nailMat, sleeveMat) {
   palmPivot.rotation.set(0.2, 0, s * 0.08);
   wristPivot.add(palmPivot);
 
-  const palm = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.055, 0.12), gloveMat);
+  const palm = new THREE.Mesh(new THREE.SphereGeometry(0.058, 18, 14), gloveMat);
+  palm.scale.set(1.08, 0.58, 1.18);
   palmPivot.add(palm);
-  // Dorso com padding (contraste de cor)
-  const pad = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.018, 0.08), matHand(0x1a2230, 0.85));
-  pad.position.set(0, 0.028, -0.01);
+
+  const palmHeel = new THREE.Mesh(new THREE.SphereGeometry(0.048, 16, 12), gloveMat);
+  palmHeel.scale.set(0.92, 0.5, 1.05);
+  palmHeel.position.set(0, -0.012, 0.018);
+  palmPivot.add(palmHeel);
+
+  const padMat = matHand(darkerShade(gloveHex, 0.48), 0.82);
+  const pad = new THREE.Mesh(new THREE.SphereGeometry(0.042, 14, 10), padMat);
+  pad.scale.set(1.05, 0.42, 0.88);
+  pad.position.set(0, 0.026, -0.012);
   palmPivot.add(pad);
 
   for (let i = 0; i < 4; i++) {
-    const km = new THREE.Mesh(new THREE.SphereGeometry(0.016, 10, 8), gloveMat);
+    const km = new THREE.Mesh(new THREE.SphereGeometry(0.017, 12, 10), skinMat);
     km.position.set(s * (-0.036 + i * 0.024), 0.028, -0.058);
     palmPivot.add(km);
   }
@@ -248,7 +255,7 @@ function makeFpsHand(side, skinMat, gloveMat, nailMat, sleeveMat) {
   const fingerRoots = [];
   let indexFinger = null;
   for (const fd of fingerDefs) {
-    const finger = makeFinger(fd.dx, 0.02, -0.12, fd.curl, fd.len, gloveMat, nailMat);
+    const finger = makeFinger(fd.dx, 0.02, -0.12, fd.curl, fd.len, gloveMat, nailMat, skinMat);
     palmPivot.add(finger.group);
     fingerRoots.push(finger);
     if (fd.isIndex) indexFinger = finger;
@@ -257,7 +264,7 @@ function makeFpsHand(side, skinMat, gloveMat, nailMat, sleeveMat) {
   const thumb = makeThumb(s * 0.055, -0.01, -0.02, s, gloveMat, nailMat);
   palmPivot.add(thumb.group);
 
-  return { group: g, wristPivot, fingers: fingerRoots, indexFinger, thumb, side };
+  return { group: g, wristPivot, fingers: fingerRoots, indexFinger, thumb, side, padMat };
 }
 
 function createFpsHands() {
@@ -266,6 +273,8 @@ function createFpsHands() {
   group.userData.skinColor = 0xc4956a;
   group.userData.gloveColor = 0x3a4048;
   group.userData.sleeveColor = 0x2266aa;
+  group.userData.glovesNeon = false;
+  group.userData.sleeveNeon = false;
 
   const skinMat = matHand(group.userData.skinColor, 0.66);
   const gloveMat = matHand(readableGloveColor(group.userData.gloveColor), 0.78);
@@ -276,37 +285,133 @@ function createFpsHands() {
   group.userData.nailMat = nailMat;
   group.userData.sleeveMat = sleeveMat;
 
-  const rightHand = makeFpsHand("right", skinMat, gloveMat, nailMat, sleeveMat);
-  const leftHand = makeFpsHand("left", skinMat, gloveMat, nailMat, sleeveMat);
-
-  // Direita no cabo; esquerda mais à frente no cano/guarda-mão
-  rightHand.group.position.set(0.02, 0.01, 0.04);
-  leftHand.group.position.set(-0.04, 0.02, -0.12);
-  leftHand.group.rotation.y = 0.08;
+  const rightHand = makeFpsHand("right", skinMat, gloveMat, nailMat, sleeveMat, group.userData.gloveColor);
+  const leftHand = makeFpsHand("left", skinMat, gloveMat, nailMat, sleeveMat, group.userData.gloveColor);
 
   group.add(leftHand.group, rightHand.group);
   group.position.set(0, 0.01, 0.01);
-  group.scale.setScalar(1.45); // mão grande o bastante pra ler na mira
+  group.scale.setScalar(1.42);
   group.userData.rightHand = rightHand;
   group.userData.leftHand = leftHand;
   return group;
 }
 
-function applyMatColor(mat, hex) {
+/** Posição das mãos em volta do cabo/cano — ajustado por tipo de arma */
+const WEAPON_FPS_HAND_GRIP = {
+  ak47: {
+    right: { pos: [0.038, -0.038, 0.028], rot: [0.04, -0.02, 0] },
+    left: { pos: [-0.048, -0.008, -0.108], rot: [0, 0.11, 0.02] },
+  },
+  scar: {
+    right: { pos: [0.036, -0.036, 0.026], rot: [0.04, -0.02, 0] },
+    left: { pos: [-0.05, -0.006, -0.102], rot: [0, 0.1, 0.02] },
+  },
+  m4: {
+    right: { pos: [0.034, -0.034, 0.024], rot: [0.03, -0.02, 0] },
+    left: { pos: [-0.046, -0.004, -0.098], rot: [0, 0.1, 0.015] },
+  },
+  ump45: {
+    right: { pos: [0.032, -0.032, 0.022], rot: [0.03, -0.015, 0] },
+    left: { pos: [-0.042, 0.0, -0.088], rot: [0, 0.09, 0.01] },
+  },
+  awm: {
+    right: { pos: [0.034, -0.04, 0.03], rot: [0.05, -0.02, 0] },
+    left: { pos: [-0.052, -0.01, -0.128], rot: [0, 0.12, 0.02] },
+  },
+  doze: {
+    right: { pos: [0.036, -0.042, 0.034], rot: [0.06, -0.02, 0] },
+    left: { pos: [-0.044, -0.012, -0.095], rot: [0, 0.08, 0.02] },
+  },
+  bazooka: {
+    right: { pos: [0.04, -0.045, 0.038], rot: [0.05, -0.03, 0] },
+    left: { pos: [-0.055, -0.02, -0.06], rot: [0, 0.14, 0.03] },
+  },
+  glock: {
+    right: { pos: [0.028, -0.058, 0.018], rot: [0.1, 0, 0.02] },
+    left: { pos: [-0.072, -0.028, -0.018], rot: [0, 0.16, -0.04] },
+  },
+  revolver: {
+    right: { pos: [0.026, -0.056, 0.016], rot: [0.1, 0, 0.02] },
+    left: { pos: [-0.07, -0.026, -0.015], rot: [0, 0.15, -0.03] },
+  },
+  pens: {
+    right: { pos: [0.027, -0.054, 0.017], rot: [0.09, 0, 0.02] },
+    left: { pos: [-0.068, -0.025, -0.014], rot: [0, 0.14, -0.03] },
+  },
+  faca: {
+    right: { pos: [0.03, -0.05, 0.02], rot: [0.12, 0.05, 0.04] },
+    left: { pos: [-0.09, -0.04, 0.02], rot: [0, 0.2, -0.08] },
+  },
+  facao: {
+    right: { pos: [0.032, -0.048, 0.015], rot: [0.1, 0.04, 0.03] },
+    left: { pos: [-0.085, -0.035, 0.0], rot: [0, 0.18, -0.06] },
+  },
+  porrete: {
+    right: { pos: [0.034, -0.046, 0.012], rot: [0.08, 0.03, 0.02] },
+    left: { pos: [-0.08, -0.032, -0.02], rot: [0, 0.16, -0.05] },
+  },
+  katana: {
+    right: { pos: [0.03, -0.05, 0.018], rot: [0.1, 0.04, 0.03] },
+    left: { pos: [-0.088, -0.034, -0.01], rot: [0, 0.17, -0.06] },
+  },
+};
+
+const DEFAULT_FPS_HAND_GRIP = {
+  right: { pos: [0.02, 0.01, 0.04], rot: [0, 0, 0] },
+  left: { pos: [-0.04, 0.02, -0.12], rot: [0, 0.08, 0] },
+};
+
+function applyHandSidePose(hand, cfg) {
+  if (!hand?.group || !cfg) return;
+  hand.group.position.set(...cfg.pos);
+  hand.group.rotation.set(...cfg.rot);
+}
+
+export function applyFpsHandGrip(view, weaponId) {
+  const hands = view?.hands;
+  if (!hands?.userData?.rightHand) return;
+  const grip = WEAPON_FPS_HAND_GRIP[weaponId] || WEAPON_FPS_HAND_GRIP.ak47 || DEFAULT_FPS_HAND_GRIP;
+  applyHandSidePose(hands.userData.rightHand, grip.right || DEFAULT_FPS_HAND_GRIP.right);
+  applyHandSidePose(hands.userData.leftHand, grip.left || DEFAULT_FPS_HAND_GRIP.left);
+  view.currentHandGrip = weaponId;
+}
+
+function applyMatColor(mat, hex, neon = false) {
   if (!mat) return;
   const c = new THREE.Color(hex);
   mat.color.copy(c);
-  if (mat.emissive) mat.emissive.copy(c).multiplyScalar(0.22);
+  if (mat.emissive) mat.emissive.copy(c).multiplyScalar(neon ? 0.55 : 0.22);
+  if ("emissiveIntensity" in mat) mat.emissiveIntensity = neon ? 0.85 : 0.55;
+  if ("roughness" in mat) mat.roughness = neon ? 0.38 : Math.max(0.66, mat.roughness ?? 0.72);
+  if ("metalness" in mat) mat.metalness = neon ? 0.18 : 0.04;
+}
+
+function readLoadoutColors(loadout) {
+  const skin = loadout.skin || 0xc4956a;
+  const gloveRaw =
+    typeof loadout.gloves === "number"
+      ? loadout.gloves
+      : loadout.gloves?.color ?? 0x3a4048;
+  const gloveNeon = !!(loadout.glovesNeon || loadout.gloves?.neon);
+  const sleeveRaw =
+    typeof loadout.shirt === "number"
+      ? loadout.shirt
+      : loadout.shirt?.color ?? 0x2266aa;
+  const sleeveNeon = !!(loadout.shirtNeon || loadout.shirt?.neon);
+  return {
+    skin,
+    glove: readableGloveColor(gloveRaw),
+    gloveNeon,
+    sleeve: sleeveRaw,
+    sleeveNeon,
+  };
 }
 
 function updateFpsHandsFromLoadout(view) {
   const hands = view?.hands;
   if (!hands) return;
   const loadout = window.__playerLoadout || {};
-  const skin = loadout.skin || 0xc4956a;
-  const gloveRaw = loadout.gloves?.color ?? 0x3a4048;
-  const glove = readableGloveColor(gloveRaw);
-  const sleeve = loadout.shirt?.color || loadout.shirt || 0x2266aa;
+  const { skin, glove, gloveNeon, sleeve, sleeveNeon } = readLoadoutColors(loadout);
 
   if (skin !== hands.userData.skinColor) {
     hands.userData.skinColor = skin;
@@ -315,13 +420,17 @@ function updateFpsHandsFromLoadout(view) {
     hands.userData.nailMat.color.copy(nail);
     if (hands.userData.nailMat.emissive) hands.userData.nailMat.emissive.copy(nail).multiplyScalar(0.18);
   }
-  if (glove !== hands.userData.gloveColor) {
+  if (glove !== hands.userData.gloveColor || gloveNeon !== hands.userData.glovesNeon) {
     hands.userData.gloveColor = glove;
-    applyMatColor(hands.userData.gloveMat, glove);
+    hands.userData.glovesNeon = gloveNeon;
+    applyMatColor(hands.userData.gloveMat, glove, gloveNeon);
+    const padMat = hands.userData.rightHand?.padMat || hands.userData.leftHand?.padMat;
+    if (padMat) applyMatColor(padMat, darkerShade(glove, 0.48));
   }
-  if (sleeve !== hands.userData.sleeveColor) {
+  if (sleeve !== hands.userData.sleeveColor || sleeveNeon !== hands.userData.sleeveNeon) {
     hands.userData.sleeveColor = sleeve;
-    applyMatColor(hands.userData.sleeveMat, sleeve);
+    hands.userData.sleeveNeon = sleeveNeon;
+    applyMatColor(hands.userData.sleeveMat, sleeve, sleeveNeon);
   }
 }
 
@@ -458,6 +567,7 @@ export function createWeaponView(camera) {
 
   const hands = createFpsHands();
   root.add(hands);
+  applyFpsHandGrip({ hands }, "ak47");
 
   // Luz local pra mão/arma não ficarem pretas (câmera não pega bem a luz da cena)
   const handFill = new THREE.PointLight(0xfff0e0, 0.85, 1.6, 1.5);
@@ -595,6 +705,7 @@ export function setWeaponView(view, slot, weaponId = "ak47") {
     const z = MUZZLE_Z[weaponId] ?? -0.55;
 
     view.muzzleFlash.position.set(0, 0.02, z);
+    applyFpsHandGrip(view, weaponId);
 
   } else if (slot === 2) {
 
@@ -613,6 +724,7 @@ export function setWeaponView(view, slot, weaponId = "ak47") {
     view.models[3].visible = false;
 
     view.muzzleFlash.position.set(0, 0.04, MUZZLE_Z[secondaryId] ?? -0.22);
+    applyFpsHandGrip(view, secondaryId);
 
   } else if (slot === 3) {
 
@@ -633,6 +745,7 @@ export function setWeaponView(view, slot, weaponId = "ak47") {
     if (meleeId !== "faca") view.models[3].visible = false;
 
     view.muzzleFlash.position.set(0, 0, -0.2);
+    applyFpsHandGrip(view, meleeId);
 
   } else {
 
