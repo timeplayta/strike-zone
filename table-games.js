@@ -30,7 +30,7 @@ export const TABLE_GAMES = {
   chess: {
     id: "chess",
     name: "Xadrez",
-    desc: "Tabuleiro clássico · você joga de brancas",
+    desc: "Tabuleiro 3D · você joga de brancas",
     ambience: "salon",
     mount: mountChessGame,
   },
