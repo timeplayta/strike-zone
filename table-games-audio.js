@@ -123,7 +123,17 @@ export function listAnnouncerPersonas() {
 export function unlockTableAudio() {
   try {
     getCtx();
-    if (typeof speechSynthesis !== "undefined") refreshVoices();
+    if (typeof speechSynthesis !== "undefined") {
+      refreshVoices();
+      // Aquece o motor de voz cedo para não atrasar a contagem na 1ª partida
+      if (!voiceCache.length) {
+        speechSynthesis.addEventListener?.(
+          "voiceschanged",
+          () => refreshVoices(),
+          { once: true }
+        );
+      }
+    }
   } catch {
     /* ignore */
   }
@@ -163,19 +173,53 @@ export function speakLine(text, opts = {}) {
   });
 }
 
-/** Contagem 1, 2, 3… Começou! — cada partida sorteia um locutor (homem ou mulher) */
-export async function announceMatchStart(gameName = "") {
+/** Contagem 1-2-3 sincronizada: voz + visual no mesmo passo, ritmo fixo */
+export async function runMatchCountdown(gameName = "", onVisualStep = null) {
   unlockTableAudio();
   currentPersona = Math.random() < 0.5 ? "female" : "male";
-  tone(320, 0.08, "triangle", 0.06);
-  await speakLine("Um");
-  tone(380, 0.08, "triangle", 0.07);
-  await speakLine("Dois");
-  tone(440, 0.08, "triangle", 0.08);
-  await speakLine("Três");
-  playWinShort();
-  const line = gameName ? `Começou! ${gameName}!` : "Começou!";
-  await speakLine(line, { excited: true });
+
+  const COUNTDOWN_RATE = 1.42;
+  const STEP_MS = 580;
+  const FINAL_MS = 720;
+
+  const steps = [
+    { visual: "1", speech: "Um", freq: 320 },
+    { visual: "2", speech: "Dois", freq: 380 },
+    { visual: "3", speech: "Três", freq: 440 },
+    {
+      visual: "COMEÇOU!",
+      speech: gameName ? `Começou! ${gameName}!` : "Começou!",
+      excited: true,
+      final: true,
+    },
+  ];
+
+  try {
+    speechSynthesis.cancel();
+  } catch {
+    /* ignore */
+  }
+
+  for (const step of steps) {
+    onVisualStep?.(step.visual);
+    if (step.freq) tone(step.freq, 0.08, "triangle", step.freq >= 440 ? 0.08 : 0.07);
+    else playWinShort();
+
+    speakLine(step.speech, { excited: step.excited, rate: COUNTDOWN_RATE });
+
+    await new Promise((r) => setTimeout(r, step.final ? FINAL_MS : STEP_MS));
+  }
+
+  try {
+    speechSynthesis.cancel();
+  } catch {
+    /* ignore */
+  }
+}
+
+/** Contagem 1, 2, 3… Começou! — cada partida sorteia um locutor (homem ou mulher) */
+export async function announceMatchStart(gameName = "") {
+  await runMatchCountdown(gameName);
 }
 
 export function playWinShort() {

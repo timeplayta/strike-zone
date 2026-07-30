@@ -7,7 +7,7 @@ import {
   unlockTableAudio,
   startTableAmbience,
   stopTableAmbience,
-  announceMatchStart,
+  runMatchCountdown,
 } from "./table-games-audio.js";
 import { mountMatchChrome } from "./table-games-match.js";
 import { mountChessGame } from "./table-game-chess.js";
@@ -246,21 +246,17 @@ function showLobby(gameId) {
 async function runCountdown(gameName) {
   const cd = shell.querySelector("[data-countdown]");
   const num = shell.querySelector("[data-countdown-num]");
-  if (!cd || !num) {
-    await announceMatchStart(gameName);
-    return;
-  }
-  cd.classList.remove("hidden");
-  const steps = ["1", "2", "3", "COMEÇOU!"];
-  for (const s of steps) {
-    num.textContent = s;
+  if (cd) cd.classList.remove("hidden");
+
+  await runMatchCountdown(gameName, (visual) => {
+    if (!num) return;
+    num.textContent = visual;
     num.classList.remove("pop");
     void num.offsetWidth;
     num.classList.add("pop");
-    await new Promise((r) => setTimeout(r, s === "COMEÇOU!" ? 700 : 550));
-  }
-  await announceMatchStart(gameName);
-  cd.classList.add("hidden");
+  });
+
+  if (cd) cd.classList.add("hidden");
 }
 
 async function beginMatch() {
