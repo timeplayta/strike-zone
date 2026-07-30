@@ -54,6 +54,10 @@ const COLORS = {
   faceInk: 0x2a1810,
   eyeWhite: 0xf4f4f8,
   eyeDark: 0x181820,
+  roundMint: 0x5ecfb0,
+  cheekPink: 0xff8fab,
+  sunnyYellow: 0xffd166,
+  softCream: 0xfff1d6,
 };
 
 function ensureDir(dir) {
@@ -645,6 +649,48 @@ function monsterPelucia() {
   return { id: "horror_pelucia", name: "Bam-Bam Pelucia", parts: p };
 }
 
+/** Personagem redondo colorido com mãos e dedos — abre no Blockbench. */
+function roundBuddy() {
+  const bodyY = 0.55;
+  const faceZ = -0.42;
+  const p = [
+    sphere("body", "roundMint", 0, bodyY, 0, 0.42, 22),
+    sphere("belly", "softCream", 0, bodyY - 0.04, -0.28, 0.26, 18),
+    sphere("head_bump", "roundMint", 0, bodyY + 0.38, -0.02, 0.28, 20),
+    part("antenna_stem", "sunnyYellow", 0, bodyY + 0.72, 0, 0.05, 0.22, 0.05),
+    sphere("antenna_ball", "cheekPink", 0, bodyY + 0.86, 0, 0.08, 14),
+    part("eye_white_l", "eyeWhite", -0.12, bodyY + 0.42, faceZ, 0.11, 0.12, 0.04),
+    part("eye_white_r", "eyeWhite", 0.12, bodyY + 0.42, faceZ, 0.11, 0.12, 0.04),
+    part("pupil_l", "eyeDark", -0.11, bodyY + 0.4, faceZ - 0.02, 0.055, 0.06, 0.03),
+    part("pupil_r", "eyeDark", 0.13, bodyY + 0.4, faceZ - 0.02, 0.055, 0.06, 0.03),
+    part("shine_l", "eyeWhite", -0.13, bodyY + 0.43, faceZ - 0.035, 0.025, 0.025, 0.02),
+    part("shine_r", "eyeWhite", 0.11, bodyY + 0.43, faceZ - 0.035, 0.025, 0.025, 0.02),
+    sphere("cheek_l", "cheekPink", -0.22, bodyY + 0.28, faceZ + 0.06, 0.07, 12),
+    sphere("cheek_r", "cheekPink", 0.22, bodyY + 0.28, faceZ + 0.06, 0.07, 12),
+    part("mouth", "faceInk", 0, bodyY + 0.22, faceZ - 0.01, 0.14, 0.04, 0.03),
+    part("smile_l", "faceInk", -0.07, bodyY + 0.24, faceZ - 0.01, 0.04, 0.03, 0.025, 0.4),
+    part("smile_r", "faceInk", 0.07, bodyY + 0.24, faceZ - 0.01, 0.04, 0.03, 0.025, -0.4),
+  ];
+
+  for (const sx of [-1, 1]) {
+    const side = sx > 0 ? "r" : "l";
+    p.push(
+      sphere(`shoulder_${side}`, "roundMint", sx * 0.38, bodyY + 0.12, 0.02, 0.09, 14),
+      cylinder(`arm_${side}`, "roundMint", sx * 0.52, bodyY - 0.02, 0.02, 0.07, 0.28, sx * 0.55),
+      sphere(`hand_${side}`, "softCream", sx * 0.66, bodyY - 0.18, 0.04, 0.11, 16),
+      part(`palm_${side}`, "softCream", sx * 0.66, bodyY - 0.18, -0.02, 0.14, 0.08, 0.1),
+      part(`thumb_${side}`, "softCream", sx * 0.58, bodyY - 0.14, -0.08, 0.05, 0.08, 0.05, sx * -0.6),
+      part(`finger1_${side}`, "softCream", sx * 0.62, bodyY - 0.12, -0.12, 0.035, 0.09, 0.035, sx * 0.15),
+      part(`finger2_${side}`, "softCream", sx * 0.68, bodyY - 0.11, -0.13, 0.035, 0.1, 0.035, sx * 0.05),
+      part(`finger3_${side}`, "softCream", sx * 0.74, bodyY - 0.12, -0.12, 0.035, 0.09, 0.035, sx * -0.12),
+      sphere(`foot_${side}`, "sunnyYellow", sx * 0.16, 0.08, 0.04, 0.12, 14),
+      part(`shoe_${side}`, "cheekPink", sx * 0.16, 0.04, -0.04, 0.16, 0.06, 0.18)
+    );
+  }
+
+  return { id: "round_buddy", name: "Bolinha Colorida", parts: p };
+}
+
 function rockCluster() {
   return {
     id: "rock_cluster",
@@ -819,6 +865,7 @@ function main() {
     { model: monsterGigante(), src: "characters", out: "characters" },
     { model: monsterGosmento(), src: "characters", out: "characters" },
     { model: monsterPelucia(), src: "characters", out: "characters" },
+    { model: roundBuddy(), src: "characters", out: "characters" },
     { model: rockCluster(), src: "props", out: "props" },
     { model: borderMountain(), src: "props", out: "props" },
     { model: battleMonster(), src: "props", out: "props" },
