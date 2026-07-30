@@ -91,6 +91,9 @@ export function getActiveToken() {
   return sessionToken || getSavedSession()?.token || "";
 }
 
+// Restaura memória a partir do localStorage assim que o módulo carrega.
+hydrateSessionFromStorage();
+
 function invalidateServerSession() {
   const email = cachedAccount?.email || getSavedSession()?.account?.email;
   sessionToken = "";
@@ -366,32 +369,50 @@ async function apiPost(path, body) {
   return { ok: res.ok, status: res.status, data };
 }
 
-export async function tryRestoreSession() {
+function restoreFromLocalCache(saved) {
+  if (!saved?.account || !hasValidEmail(saved.account)) return null;
+  hydrateSessionFromStorage();
+  return saved.account;
+}
+
+export async function tryRestoreSession(options = {}) {
+  const retries = options.retries ?? 2;
+  const retryDelayMs = options.retryDelayMs ?? 1800;
   const saved = getSavedSession();
   if (!saved?.token || !saved?.accountId) return null;
 
   hydrateSessionFromStorage();
 
-  try {
-    const { ok, data, status } = await apiPost("/api/account/session", {
-      accountId: saved.accountId,
-      token: saved.token,
-    });
-    if (ok && data.ok && data.account) {
-      saveSession(saved.name || data.account.name, saved.token, data.account);
-      return data.account;
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const { ok, data, status } = await apiPost("/api/account/session", {
+        accountId: saved.accountId,
+        token: saved.token,
+      });
+      if (ok && data.ok && data.account) {
+        saveSession(saved.name || data.account.name, saved.token, data.account);
+        return data.account;
+      }
+      if (status === 401) {
+        if (data?.reason === "account_missing") {
+          return restoreFromLocalCache(saved);
+        }
+        if (data?.reason !== "invalid_token") {
+          return restoreFromLocalCache(saved);
+        }
+        invalidateServerSession();
+        return null;
+      }
+    } catch {
+      if (attempt < retries) {
+        await new Promise((r) => setTimeout(r, retryDelayMs));
+        continue;
+      }
     }
-    if (status === 401) {
-      invalidateServerSession();
-      return null;
-    }
-  } catch { /* offline ou servidor acordando */ }
-
-  if (saved.account && hasValidEmail(saved.account)) {
-    hydrateSessionFromStorage();
-    return saved.account;
+    break;
   }
-  return null;
+
+  return restoreFromLocalCache(saved);
 }
 
 export async function registerAccount(name, age, email, birthDate, password) {

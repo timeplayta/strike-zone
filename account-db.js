@@ -942,11 +942,31 @@ function migrateLegacyPassword(name, age, email, birthDate, password) {
 }
 
 function validateSession(accountId, token) {
-  const p = getPlayerById(accountId);
-  if (!sessionValid(p, token)) return { ok: false, error: "Sessão expirada — faça login novamente" };
-  p.lastLogin = new Date().toISOString();
-  savePlayer(p);
-  return { ok: true, account: exportAccount(p), token };
+  const id = String(accountId || "").trim();
+  const tok = String(token || "").trim();
+  if (!id || !tok) {
+    return { ok: false, error: "Sessão inválida — faça login novamente", reason: "invalid_token" };
+  }
+
+  const p = getPlayerById(id);
+  if (p && sessionValid(p, tok)) {
+    p.lastLogin = new Date().toISOString();
+    savePlayer(p);
+    return { ok: true, account: exportAccount(p), token: tok };
+  }
+
+  const payload = verifyJwt(tok);
+  if (payload?.sub === id) {
+    if (!p) {
+      return {
+        ok: false,
+        error: "Conta temporariamente indisponível no servidor — tente login de novo se persistir.",
+        reason: "account_missing",
+      };
+    }
+  }
+
+  return { ok: false, error: "Sessão expirada — faça login novamente", reason: "invalid_token" };
 }
 
 function accountExists(name) {

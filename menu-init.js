@@ -636,22 +636,33 @@
       if (e.key === "Enter") loginBtn?.click();
     });
 
-    // Ao abrir: restaurar sessão salva e entrar direto no menu
-    (async () => {
+    let autoLoginDone = false;
+    async function autoLoginFromSavedSession() {
+      if (autoLoginDone || !isWelcomeVisible()) return false;
       try {
         const mod = await import("./player-account.js");
         const saved = mod.getSavedSession();
         const lastEmail = mod.getLastLoginEmail?.() || saved?.account?.email || "";
-        if (lastEmail) $("loginEmail").value = lastEmail;
-        if (saved?.name) $("registerName").value = saved.name;
+        if (lastEmail && $("loginEmail")) $("loginEmail").value = lastEmail;
+        if (saved?.name && $("registerName")) $("registerName").value = saved.name;
+        if (!saved?.token || !saved?.accountId) return false;
 
-        const account = await mod.tryRestoreSession();
-        if (account) {
-          const name = account.name || saved?.name || account.email || lastEmail;
-          await enterMenuWithAccount(name, mod, account);
-        }
-      } catch { /* mostra tela de login */ }
-    })();
+        const account = await mod.tryRestoreSession({ retries: 2, retryDelayMs: 1800 });
+        if (!account || !isWelcomeVisible()) return false;
+
+        autoLoginDone = true;
+        const name = account.name || saved?.name || account.email || lastEmail;
+        await enterMenuWithAccount(name, mod, account);
+        return true;
+      } catch {
+        return false;
+      }
+    }
+
+    autoLoginFromSavedSession();
+    window.addEventListener("strikezone-ready", () => {
+      autoLoginFromSavedSession();
+    });
   }
 
   function initShopModal() {

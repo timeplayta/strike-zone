@@ -13,3 +13,6 @@ services:
         value: production
       - key: RENDER
         value: "true"
+      # Opcional: Neon Postgres grátis — contas não somem quando o Render dorme
+      # - key: DATABASE_URL
+      #   sync: false
