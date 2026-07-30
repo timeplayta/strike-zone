@@ -19,16 +19,8 @@ function bindCommon(wrap, { onExit, restart }) {
   wrap.querySelector("[data-restart]")?.addEventListener("click", () => restart?.());
 }
 
-function endVoice(winner) {
-  if (winner === "you") {
-    playWin();
-    speakLine("Você venceu!");
-  } else if (winner === "draw") {
-    speakLine("Empate!");
-  } else {
-    playLose();
-    speakLine("O bot venceu.");
-  }
+function endVoice() {
+  /* voz e overlay centralizados em showMatchResult via onEnd */
 }
 
 /* ═══════════ Batalha Naval ═══════════ */

@@ -3,6 +3,21 @@
  */
 
 import { isSessionAdult } from "./player-account.js";
+import { announceMatchEnd } from "./table-games-audio.js";
+
+function normalizeMatchOutcome(result) {
+  const r = String(result ?? "").toLowerCase();
+  if (!r || r === "draw" || r === "empate" || r === "0" || r === "d") {
+    return { outcome: "draw", title: "Empate!", emoji: "🤝" };
+  }
+  if (["you", "w", "player", "1", "white"].includes(r)) {
+    return { outcome: "win", title: "Você venceu!", emoji: "🏆" };
+  }
+  if (["bot", "b", "2", "dealer", "black"].includes(r)) {
+    return { outcome: "lose", title: "O bot venceu.", emoji: "🤖" };
+  }
+  return { outcome: "draw", title: "Partida encerrada", emoji: "🏁" };
+}
 
 export const FIRST_MOVE_LIMIT_MS = 60_000;
 export const MOVE_LIMIT_MS = 180_000;
@@ -155,6 +170,17 @@ export function mountMatchChrome(matchEl, handlers = {}) {
         <button type="submit" class="tg-btn tg-chat-send">Enviar</button>
       </form>
     </div>
+    <div class="tg-result-overlay hidden" data-result-overlay aria-live="assertive" role="alertdialog" aria-modal="true">
+      <div class="tg-result-card">
+        <div class="tg-result-emoji" data-result-emoji>🏆</div>
+        <div class="tg-result-title" data-result-title>Partida encerrada</div>
+        <div class="tg-result-desc" data-result-desc></div>
+        <div class="tg-result-actions">
+          <button type="button" class="tg-btn tg-btn-ghost" data-result-lobby>Voltar ao lobby</button>
+          <button type="button" class="tg-btn tg-btn-primary" data-result-again>Jogar de novo</button>
+        </div>
+      </div>
+    </div>
   `;
 
   matchEl.prepend(chrome);
@@ -174,6 +200,63 @@ export function mountMatchChrome(matchEl, handlers = {}) {
   const voiceStatus = chrome.querySelector("[data-voice-status]");
   const voiceHint = chrome.querySelector("[data-voice-hint]");
   const menuToggle = chrome.querySelector("[data-menu-toggle]");
+  const resultOverlay = chrome.querySelector("[data-result-overlay]");
+  const resultEmoji = chrome.querySelector("[data-result-emoji]");
+  const resultTitle = chrome.querySelector("[data-result-title]");
+  const resultDesc = chrome.querySelector("[data-result-desc]");
+  const resultAgain = chrome.querySelector("[data-result-again]");
+  const resultLobby = chrome.querySelector("[data-result-lobby]");
+  let resultShown = false;
+
+  function hideMatchResult() {
+    resultShown = false;
+    resultOverlay?.classList.add("hidden");
+  }
+
+  function showMatchResult(result, reason = "") {
+    if (destroyed || resultShown) return;
+    resultShown = true;
+    endPlayerClock();
+    setActionsEnabled(false);
+    setMenuOpen(false);
+
+    const { outcome, title, emoji } = normalizeMatchOutcome(result);
+    const detail = String(reason || "").trim();
+    const speech =
+      detail ||
+      (outcome === "win" ? "Você venceu!" : outcome === "lose" ? "O bot venceu." : "Empate!");
+
+    if (resultEmoji) resultEmoji.textContent = emoji;
+    if (resultTitle) resultTitle.textContent = title;
+    if (resultDesc) {
+      const subtitle =
+        detail && detail !== title
+          ? detail
+          : outcome === "win"
+            ? "Parabéns — você levou a mesa!"
+            : outcome === "lose"
+              ? "Mais sorte na próxima rodada."
+              : "Ninguém levou vantagem desta vez.";
+      resultDesc.textContent = subtitle;
+      resultDesc.classList.remove("hidden");
+    }
+
+    resultOverlay?.classList.remove("hidden");
+    resultOverlay?.setAttribute("data-outcome", outcome);
+    pushChat("Mesa", speech, "system", { countUnread: false });
+    announceMatchEnd(outcome, speech);
+    resultAgain?.focus?.();
+  }
+
+  resultAgain?.addEventListener("click", () => {
+    hideMatchResult();
+    handlers.onPlayAgain?.();
+  });
+
+  resultLobby?.addEventListener("click", () => {
+    hideMatchResult();
+    handlers.onBackToLobby?.();
+  });
 
   function isMobileMatch() {
     return window.matchMedia("(max-width: 768px), (max-height: 640px)").matches;
@@ -582,7 +665,10 @@ export function mountMatchChrome(matchEl, handlers = {}) {
       stopVoice();
       stopBotSpeech();
       stopClock();
+      hideMatchResult();
       chrome.remove();
     },
+    showMatchResult,
+    hideMatchResult,
   };
 }

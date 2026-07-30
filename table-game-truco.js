@@ -100,11 +100,9 @@ export function mountTrucoGame(root, { botTier, onExit, onEnd, onBind, match }) 
     if (winner === "you") {
       setStatus("Você fechou 12! Vitória!");
       playWin();
-      speakLine("Você venceu o truco!");
     } else {
       setStatus("Bot fechou 12. Derrota.");
       playLose();
-      speakLine("O bot venceu.");
     }
     onEnd?.(winner);
   }

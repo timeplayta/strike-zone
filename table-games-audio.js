@@ -222,6 +222,18 @@ export async function announceMatchStart(gameName = "") {
   await runMatchCountdown(gameName);
 }
 
+/** Aviso claro de fim de partida — voz (sons já tocam nos jogos individuais) */
+export function announceMatchEnd(outcome, detail = "") {
+  unlockTableAudio();
+  if (outcome === "win") {
+    speakLine(detail || "Você venceu!", { excited: true, rate: 1.08 });
+  } else if (outcome === "lose") {
+    speakLine(detail || "O bot venceu.", { rate: 1.05 });
+  } else {
+    speakLine(detail || "Empate!", { rate: 1.05 });
+  }
+}
+
 export function playWinShort() {
   [523, 659, 784].forEach((f, i) => tone(f, 0.12, "triangle", 0.08, i * 0.07));
 }

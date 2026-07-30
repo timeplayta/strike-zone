@@ -277,6 +277,8 @@ async function beginMatch() {
     onResign: () => gameApi?.resign?.(),
     onOfferDraw: () => gameApi?.offerDraw?.(),
     onTimeout: (kind) => gameApi?.timeout?.(kind),
+    onPlayAgain: () => beginMatch(),
+    onBackToLobby: () => showLobby(currentGameId),
   });
   cleanupChrome = () => {
     matchChrome?.destroy();
@@ -287,9 +289,8 @@ async function beginMatch() {
     botTier: selectedTier,
     match: matchChrome,
     onExit: () => showLobby(currentGameId),
-    onEnd: () => {
-      matchChrome?.endPlayerClock();
-      matchChrome?.setActionsEnabled(false);
+    onEnd: (result, reason) => {
+      matchChrome?.showMatchResult?.(result, reason);
     },
     onBind(api) {
       gameApi = api;
