@@ -386,7 +386,9 @@
       tut.maybeStartTutorial?.();
     } catch { /* tutorial opcional */ }
     try {
-      const lobby = await import("./lobby-view.js?v=4");
+      const { preloadPlayerCharacterModels, isPlayerBlockbenchReady } = await import("./player-character.js");
+      if (!isPlayerBlockbenchReady()) await preloadPlayerCharacterModels();
+      const lobby = await import("./lobby-view.js?v=5");
       lobby.mountLobbyScene?.();
     } catch { /* lobby 3D opcional */ }
   }

@@ -65,7 +65,7 @@ function buildPad(x, z, color, radius = 0.72) {
 }
 
 const SLOTS = [
-  { x: 0, z: 0.55, color: 0xf0a030, mine: true, scale: 1.35, padRadius: 0.78 },
+  { x: 0, z: 0.55, color: 0xf0a030, mine: true, scale: 1.42, padRadius: 0.82 },
   { x: -1.35, z: -0.15, color: 0x2266aa, scale: 1.15, padRadius: 0.62 },
   { x: 1.35, z: -0.15, color: 0xc9a227, scale: 1.15, padRadius: 0.62 },
   { x: 0, z: -0.85, color: 0x888899, scale: 1.1, padRadius: 0.58 },
@@ -79,17 +79,23 @@ function buildScene() {
   scene = new THREE.Scene();
   // Fundo transparente — personagens “grudam” no menu (estilo Free Fire)
   scene.background = null;
-  camera = new THREE.PerspectiveCamera(38, 1, 0.1, 60);
-  camera.position.set(0, 1.55, 5.8);
-  camera.lookAt(0, 1.05, 0.15);
+  camera = new THREE.PerspectiveCamera(36, 1, 0.1, 60);
+  camera.position.set(0, 1.42, 5.1);
+  camera.lookAt(0, 1.02, 0.22);
 
-  scene.add(new THREE.AmbientLight(0xffffff, 0.82));
-  const key = new THREE.DirectionalLight(0xfff4e0, 1.2);
-  key.position.set(2.2, 5, 4);
+  scene.add(new THREE.AmbientLight(0xffffff, 0.95));
+  const key = new THREE.DirectionalLight(0xfff8ec, 1.35);
+  key.position.set(2.4, 5.2, 4.2);
   scene.add(key);
-  const rim = new THREE.DirectionalLight(0x6688ff, 0.55);
-  rim.position.set(-3, 3, -3);
+  const fill = new THREE.DirectionalLight(0xaaccff, 0.65);
+  fill.position.set(-2.5, 2.8, 3);
+  scene.add(fill);
+  const rim = new THREE.DirectionalLight(0x6688ff, 0.72);
+  rim.position.set(-3.2, 3.2, -3.5);
   scene.add(rim);
+  const handLight = new THREE.PointLight(0xffeedd, 0.55, 8, 1.4);
+  handLight.position.set(0.6, 1.05, 2.8);
+  scene.add(handLight);
 
   // Chão quase invisível — só dá base leve sob os pads, sem “caixa”
   const floor = new THREE.Mesh(
@@ -184,16 +190,16 @@ function resize() {
   camera.aspect = aspect;
   // Tela inteira: afasta o bastante pra cabeça + corpo caberem no meio
   if (aspect < 0.85) {
-    camera.position.set(0, 1.7, 7.4);
-    camera.fov = 42;
-  } else if (aspect < 1.25) {
-    camera.position.set(0, 1.6, 6.4);
+    camera.position.set(0, 1.52, 6.6);
     camera.fov = 40;
+  } else if (aspect < 1.25) {
+    camera.position.set(0, 1.46, 5.8);
+    camera.fov = 38;
   } else {
-    camera.position.set(0, 1.55, 5.6);
+    camera.position.set(0, 1.42, 5.1);
     camera.fov = 36;
   }
-  camera.lookAt(0, 1.05, 0.15);
+  camera.lookAt(0, 1.02, 0.22);
   camera.updateProjectionMatrix();
 }
 
@@ -228,25 +234,36 @@ export function mountLobbyScene() {
     rebuildMyCharacter();
     return;
   }
-  try {
-    renderer = new THREE.WebGLRenderer({
-      canvas: canvasEl,
-      antialias: true,
-      alpha: true,
-      premultipliedAlpha: false,
-    });
-    renderer.setClearColor(0x000000, 0);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
-    buildScene();
-    clock = new THREE.Clock();
-    mounted = true;
-    resize();
-    window.addEventListener("resize", resize);
-    if (raf) cancelAnimationFrame(raf);
-    tick();
-  } catch {
-    /* WebGL indisponível — menu segue funcionando sem o lobby 3D */
-  }
+  const start = async () => {
+    try {
+      const { preloadPlayerCharacterModels, isPlayerBlockbenchReady } = await import("./player-character.js");
+      if (!isPlayerBlockbenchReady()) await preloadPlayerCharacterModels();
+    } catch { /* segue mesmo assim */ }
+    try {
+      renderer = new THREE.WebGLRenderer({
+        canvas: canvasEl,
+        antialias: true,
+        alpha: true,
+        premultipliedAlpha: false,
+      });
+      renderer.setClearColor(0x000000, 0);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+      buildScene();
+      clock = new THREE.Clock();
+      mounted = true;
+      resize();
+      window.addEventListener("resize", resize);
+      if (raf) cancelAnimationFrame(raf);
+      tick();
+    } catch {
+      /* WebGL indisponível — menu segue funcionando sem o lobby 3D */
+    }
+  };
+  start();
+}
+
+if (typeof window !== "undefined") {
+  window.addEventListener("strikezone-player-ready", () => refreshLobbyScene());
 }
 
 export function refreshLobbyScene() {

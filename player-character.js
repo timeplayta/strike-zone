@@ -232,6 +232,142 @@ function applyAvatarLook(model, buildOpts) {
   if (!model || !buildOpts) return;
   applyLoadoutColorsToModel(model, buildOpts);
   attachHairToModel(model, buildOpts);
+  polishBlockbenchCharacter(model, buildOpts);
+  updateRuntimeHandColors(model, buildOpts);
+}
+
+function meshLocalCenter(mesh) {
+  if (!mesh?.geometry) return new THREE.Vector3();
+  if (!mesh.geometry.boundingBox) mesh.geometry.computeBoundingBox();
+  const c = new THREE.Vector3();
+  mesh.geometry.boundingBox.getCenter(c);
+  return c;
+}
+
+function bodySurfaceMat(color, neon = false) {
+  const c = new THREE.Color(color);
+  return new THREE.MeshStandardMaterial({
+    color: c,
+    roughness: neon ? 0.38 : 0.7,
+    metalness: neon ? 0.14 : 0.05,
+    flatShading: false,
+    emissive: c.clone().multiplyScalar(neon ? 0.4 : 0.1),
+    emissiveIntensity: neon ? 0.72 : 0.38,
+  });
+}
+
+function buildLobbyRoundHand(side, skinColor, gloveColor, gloveNeon) {
+  const g = new THREE.Group();
+  g.name = side === "r" ? "runtimeHandR" : "runtimeHandL";
+  const gloveMat = bodySurfaceMat(gloveColor, gloveNeon);
+  const skinMat = bodySurfaceMat(skinColor);
+
+  const palm = new THREE.Mesh(new THREE.SphereGeometry(0.084, 18, 14), gloveMat);
+  palm.scale.set(1.14, 0.64, 1.28);
+  g.add(palm);
+
+  const heel = new THREE.Mesh(new THREE.SphereGeometry(0.068, 16, 12), gloveMat);
+  heel.scale.set(0.96, 0.54, 1.08);
+  heel.position.set(0, -0.014, 0.02);
+  g.add(heel);
+
+  const wrist = new THREE.Mesh(new THREE.SphereGeometry(0.06, 16, 12), skinMat);
+  wrist.scale.set(1.06, 0.74, 1.1);
+  wrist.position.set(0, 0.01, 0.044);
+  g.add(wrist);
+
+  const sx = side === "r" ? 1 : -1;
+  for (let i = 0; i < 4; i++) {
+    const knuckle = new THREE.Mesh(new THREE.SphereGeometry(0.025, 12, 10), skinMat);
+    knuckle.position.set(sx * (-0.034 + i * 0.023), 0.026, -0.06);
+    g.add(knuckle);
+    const finger = new THREE.Mesh(new THREE.SphereGeometry(0.021, 12, 10), gloveMat);
+    finger.scale.set(0.88, 1.42, 0.92);
+    finger.position.set(sx * (-0.034 + i * 0.023), 0.006, -0.092 - (i % 2) * 0.01);
+    g.add(finger);
+  }
+
+  const thumb = new THREE.Mesh(new THREE.SphereGeometry(0.027, 12, 10), gloveMat);
+  thumb.scale.set(1, 1.45, 0.96);
+  thumb.position.set(sx * 0.06, -0.008, -0.03);
+  g.add(thumb);
+
+  return { group: g, gloveMat, skinMat };
+}
+
+function enhanceBlockbenchHands(model, buildOpts) {
+  if (!model) return;
+  const skin = buildOpts?.skin || 0xc4956a;
+  const glove = buildOpts?.gloves || 0x3a4048;
+  const gloveNeon = !!buildOpts?.glovesNeon;
+
+  for (const side of ["r", "l"]) {
+    const runtimeName = side === "r" ? "runtimeHandR" : "runtimeHandL";
+    model.getObjectByName(runtimeName)?.parent?.remove(model.getObjectByName(runtimeName));
+
+    const handMesh = model.getObjectByName(`hand_${side}`);
+    if (!handMesh?.isMesh) continue;
+
+    const center = meshLocalCenter(handMesh);
+    const { group, gloveMat, skinMat } = buildLobbyRoundHand(side, skin, glove, gloveNeon);
+    group.position.copy(center);
+    group.rotation.copy(handMesh.rotation);
+    if (side === "l") group.rotation.y += 0.14;
+
+    model.add(group);
+    handMesh.visible = false;
+
+    if (!model.userData.runtimeHands) model.userData.runtimeHands = {};
+    model.userData.runtimeHands[side] = { group, gloveMat, skinMat };
+  }
+  model.userData.handsEnhanced = true;
+}
+
+function applyMatColorDirect(mat, hex, neon = false) {
+  if (!mat) return;
+  const c = new THREE.Color(hex);
+  mat.color.copy(c);
+  if (mat.emissive) mat.emissive.copy(c).multiplyScalar(neon ? 0.4 : 0.1);
+  if ("emissiveIntensity" in mat) mat.emissiveIntensity = neon ? 0.72 : 0.38;
+}
+
+function updateRuntimeHandColors(model, buildOpts) {
+  if (!model || !buildOpts) return;
+  if (!model.userData.handsEnhanced) {
+    enhanceBlockbenchHands(model, buildOpts);
+    return;
+  }
+  const skin = buildOpts.skin || 0xc4956a;
+  const glove = buildOpts.gloves || 0x3a4048;
+  const gloveNeon = !!buildOpts.glovesNeon;
+  for (const side of ["r", "l"]) {
+    const h = model.userData.runtimeHands?.[side];
+    if (!h) continue;
+    applyMatColorDirect(h.gloveMat, glove, gloveNeon);
+    applyMatColorDirect(h.skinMat, skin, false);
+  }
+}
+
+function polishBlockbenchCharacter(model, buildOpts) {
+  if (!model) return;
+  model.traverse((obj) => {
+    if (!obj.isMesh || !obj.material || obj.userData.replacedByRuntimeHand) return;
+    const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
+    for (const m of mats) {
+      if (!m?.isMeshStandardMaterial) continue;
+      m.flatShading = false;
+      const n = obj.name || "";
+      if (nameMatches(n, MESH_SLOT_PATTERNS.skin) || nameMatches(n, MESH_SLOT_PATTERNS.gloves)) {
+        m.roughness = Math.min(m.roughness ?? 0.85, 0.74);
+      }
+      if (nameMatches(n, MESH_SLOT_PATTERNS.skin) && m.emissive) {
+        m.emissive.setHex(buildOpts?.skin || 0xc4956a);
+        m.emissiveIntensity = 0.07;
+      }
+    }
+  });
+  if (!model.userData.handsEnhanced) enhanceBlockbenchHands(model, buildOpts);
+  model.userData.polished = true;
 }
 
 const BLOCKBENCH_FULL_BODY = {
@@ -286,6 +422,10 @@ function mountBlockbenchBody(body, cfg, opts) {
     decorateBlockbenchFace(model);
     applyAvatarLook(model, opts.buildOpts);
     body.add(model);
+    if (opts.withRifle !== false) {
+      const rig = attachWeaponRig(model, opts.weaponType, opts.shirt, true);
+      body.userData.pendingRig = rig;
+    }
     return model;
   };
 
@@ -299,13 +439,20 @@ function mountBlockbenchBody(body, cfg, opts) {
       fitBlockbenchModel(m, fit.targetWidth, fit.targetHeight);
       m.userData.blockbenchMesh = true;
       applyModel(m);
-      const rig = attachWeaponRig(m, opts.weaponType, opts.shirt, opts.withRifle !== false);
-      body.userData.pendingRig = rig;
       window.dispatchEvent(new CustomEvent("strikezone-player-ready", { detail: { key: cfg.key } }));
     });
   }
 
   return model;
+}
+
+function mergePendingRig(body, rig) {
+  if (!body || !rig) return body;
+  body.gun = rig.gun;
+  body.weaponPivot = rig.weaponPivot;
+  body.handR = rig.handR;
+  body.rig = rig.rig || (rig.gunPivot ? { gunPivot: rig.gunPivot, handR: rig.handR } : null);
+  return body;
 }
 
 function buildBlockbenchPlayer(skinId, opts) {
@@ -336,7 +483,7 @@ function buildBlockbenchPlayer(skinId, opts) {
   root.add(headHit);
 
   const rig = model
-    ? attachWeaponRig(model, weaponType, opts.shirt || 0x2266aa, withRifle)
+    ? body.userData.pendingRig || attachWeaponRig(model, weaponType, opts.shirt || 0x2266aa, withRifle)
     : { gun: null, weaponPivot: null, handR: null, gunPivot: null };
 
   root.scale.setScalar(opts.scale || 1);
@@ -344,7 +491,7 @@ function buildBlockbenchPlayer(skinId, opts) {
   root.userData.blockbenchHero = true;
   root.userData.blockbenchKey = cfg.key;
 
-  return {
+  const result = {
     group: root,
     body,
     hitMeshes: [headHit],
@@ -356,6 +503,16 @@ function buildBlockbenchPlayer(skinId, opts) {
     mixer: null,
     playerModel: true,
   };
+
+  if (!model && body.userData.pendingRigPromise !== true) {
+    body.userData.pendingRigPromise = true;
+    waitForBlockbenchModel(cfg.key).then(() => {
+      mergePendingRig(result, body.userData.pendingRig);
+      window.dispatchEvent(new CustomEvent("strikezone-player-ready", { detail: { key: cfg.key } }));
+    });
+  }
+
+  return result;
 }
 
 function equipRealWeapon(body, buildOpts, weaponType, withRifle) {
