@@ -407,6 +407,7 @@ export function mountConnect4Game(root, { botTier, onExit, onEnd, onBind, match 
 export function mountMemoryGame(root, { botTier, onExit, onEnd, onBind, match }) {
   const tier = getBotTier(botTier);
   const icons = ["♠", "♥", "♦", "♣", "★", "●", "▲", "■"];
+  const iconColors = ["#5c6bc0", "#ef5350", "#ec407a", "#26a69a", "#ffb300", "#42a5f5", "#66bb6a", "#ab47bc"];
   let cards = shuffle([...icons, ...icons]).map((v, i) => ({ id: i, v, open: false, done: false }));
   let openIds = [];
   let lock = false;
@@ -420,7 +421,7 @@ export function mountMemoryGame(root, { botTier, onExit, onEnd, onBind, match })
     title: "Memória",
     subtitle: "Ache os pares",
     botName: `Bot ${tier.label}`,
-    accent: "teal",
+    accent: "violet",
   });
   root.appendChild(wrap);
   const center = wrap.querySelector("[data-center]");
@@ -436,7 +437,9 @@ export function mountMemoryGame(root, { botTier, onExit, onEnd, onBind, match })
     cards.forEach((c) => {
       const b = document.createElement("button");
       b.type = "button";
-      b.className = `tg-mem-card${c.open || c.done ? " open" : ""}${c.done ? " done" : ""}`;
+      const tone = icons.indexOf(c.v);
+      b.className = `tg-mem-card tg-mem-tone-${tone}${c.open || c.done ? " open" : ""}${c.done ? " done" : ""}`;
+      b.style.setProperty("--mem-color", iconColors[tone] || "#5c6bc0");
       b.textContent = c.open || c.done ? c.v : "?";
       b.disabled = over || lock || turn !== "you" || c.done || c.open;
       b.onclick = () => flip(c.id);
@@ -919,9 +922,42 @@ export function mountPokerGame(root, { botTier, onExit, onEnd, onBind, match }) 
 export function mountUnoGame(root, { botTier, onExit, onEnd, onBind, match }) {
   const tier = getBotTier(botTier);
   const COLORS = ["R", "G", "B", "Y"];
-  const COLOR_HEX = { R: "#e04040", G: "#2aaa55", B: "#3380e0", Y: "#e0c020" };
+  const COLOR_HEX = { R: "#e63535", G: "#1aa260", B: "#0096e6", Y: "#f7c948" };
   const COLOR_NAME = { R: "Vermelho", G: "Verde", B: "Azul", Y: "Amarelo" };
   const FACE = { skip: "⊘", rev: "⇄", "+2": "+2", wild: "★", "+4": "+4" };
+
+  function unoFaceLabel(c) {
+    return FACE[c.n] ?? String(c.n);
+  }
+
+  function unoCardEl(c, playable) {
+    const el = document.createElement("button");
+    el.type = "button";
+    const colKey = c.col === "W" ? (c.n === "+4" ? "w4" : "w") : c.col.toLowerCase();
+    el.className = `tg-uno-card tg-uno-${colKey}${playable ? " playable" : ""}`;
+    if (c.chosenCol) el.dataset.chosen = c.chosenCol.toLowerCase();
+
+    const face = unoFaceLabel(c);
+    const darkFace = c.col === "Y";
+
+    if (c.col === "W") {
+      el.innerHTML = `
+        <span class="tg-uno-wild-bg" aria-hidden="true"></span>
+        <span class="tg-uno-corner tl">${face}</span>
+        <span class="tg-uno-corner br">${face}</span>
+        <span class="tg-uno-oval wild"><span class="tg-uno-face">${face}</span></span>
+        <span class="tg-uno-brand">UNO</span>
+      `;
+    } else {
+      el.innerHTML = `
+        <span class="tg-uno-corner tl">${face}</span>
+        <span class="tg-uno-corner br">${face}</span>
+        <span class="tg-uno-oval"><span class="tg-uno-face${darkFace ? " dark" : ""}">${face}</span></span>
+      `;
+    }
+    el.disabled = !playable;
+    return el;
+  }
 
   function makeUnoDeck() {
     const d = [];
@@ -952,8 +988,9 @@ export function mountUnoGame(root, { botTier, onExit, onEnd, onBind, match }) {
     title: "Uno",
     subtitle: "1v1 · regras oficiais",
     botName: `Bot ${tier.label}`,
-    accent: "teal",
+    accent: "uno",
   });
+  wrap.classList.add("tg-uno-game");
   root.appendChild(wrap);
   const center = wrap.querySelector("[data-center]");
   const handEl = wrap.querySelector("[data-hand]");
@@ -975,23 +1012,6 @@ export function mountUnoGame(root, { botTier, onExit, onEnd, onBind, match }) {
     if (c.col === "W") return true;
     const t = top();
     return c.col === activeColor() || (t.n !== "wild" && t.n !== "+4" && c.n === t.n);
-  }
-
-  function unoCardEl(c, playable) {
-    const el = document.createElement("button");
-    el.type = "button";
-    el.className = `tg-uno-card${playable ? " playable" : ""}${c.col === "W" ? " tg-uno-wild" : ""}`;
-    if (c.col === "W") {
-      el.style.background =
-        "conic-gradient(#e04040 0 90deg, #e0c020 90deg 180deg, #2aaa55 180deg 270deg, #3380e0 270deg 360deg)";
-      if (c.chosenCol) el.style.boxShadow = `0 0 0 3px ${COLOR_HEX[c.chosenCol]}, 0 4px 10px rgba(0,0,0,.45)`;
-    } else {
-      const hex = COLOR_HEX[c.col];
-      el.style.background = `linear-gradient(160deg, color-mix(in srgb, ${hex} 100%, white 30%), ${hex} 45%, color-mix(in srgb, ${hex} 100%, black 40%))`;
-    }
-    el.textContent = FACE[c.n] ?? String(c.n);
-    el.disabled = !playable;
-    return el;
   }
 
   function paint() {
@@ -1139,9 +1159,8 @@ export function mountUnoGame(root, { botTier, onExit, onEnd, onBind, match }) {
     statusEl.textContent = "Escolha a cor do coringa";
     COLORS.forEach((col) => {
       const b = document.createElement("button");
-      b.className = "tg-btn tg-uno-pickcolor";
+      b.className = `tg-btn tg-uno-pickcolor tg-uno-pick-${col.toLowerCase()}`;
       b.textContent = COLOR_NAME[col];
-      b.style.background = COLOR_HEX[col];
       b.onclick = () => cb(col);
       actions.appendChild(b);
     });
@@ -1296,7 +1315,7 @@ export function mountDominoGame(root, { botTier, onExit, onEnd, onBind, match })
     title: "Dominó",
     subtitle: "Duplo-6 · encaixe nas pontas",
     botName: `Bot ${tier.label}`,
-    accent: "teal",
+    accent: "amber",
   });
   root.appendChild(wrap);
   const center = wrap.querySelector("[data-center]");
@@ -1344,7 +1363,8 @@ export function mountDominoGame(root, { botTier, onExit, onEnd, onBind, match })
   function tileEl(t, playable) {
     const el = document.createElement("button");
     el.type = "button";
-    el.className = `tg-domino${playable ? " playable" : ""}`;
+    const sum = t.a + t.b;
+    el.className = `tg-domino tg-domino-sum-${sum}${playable ? " playable" : ""}`;
     el.innerHTML = `<span>${t.a}</span><i></i><span>${t.b}</span>`;
     el.disabled = !playable;
     return el;

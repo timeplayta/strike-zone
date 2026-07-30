@@ -6852,6 +6852,58 @@ body.tg-open {
   background: linear-gradient(90deg, #2aaa88, #1a7a68);
 }
 
+.tg-salon-uno .tg-salon-badge {
+  background: linear-gradient(90deg, #e63535, #f7c948, #1aa260, #0096e6);
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+.tg-salon-uno .tg-salon-table {
+  background:
+    radial-gradient(circle at 20% 15%, rgba(230, 53, 53, 0.35), transparent 45%),
+    radial-gradient(circle at 80% 25%, rgba(0, 150, 230, 0.3), transparent 42%),
+    radial-gradient(circle at 50% 85%, rgba(26, 162, 96, 0.28), transparent 40%),
+    linear-gradient(155deg, #3d1878 0%, #1a0a38 55%, #0a0420 100%);
+  box-shadow:
+    inset 0 0 0 5px rgba(255, 255, 255, 0.12),
+    0 16px 40px rgba(0, 0, 0, 0.5);
+}
+
+.tg-salon-uno .tg-salon-mat {
+  background: linear-gradient(180deg, #ffffff 0%, #ececec 100%);
+  border: 3px solid rgba(0, 0, 0, 0.08);
+}
+
+.tg-salon-violet .tg-salon-badge {
+  background: linear-gradient(90deg, #ab47bc, #7e57c2, #5c6bc0);
+}
+
+.tg-salon-violet .tg-salon-table {
+  background:
+    radial-gradient(ellipse at 25% 20%, rgba(171, 71, 188, 0.4), transparent 50%),
+    radial-gradient(ellipse at 75% 70%, rgba(92, 107, 192, 0.35), transparent 48%),
+    linear-gradient(160deg, #5e35b1 0%, #4527a0 50%, #311b92 100%);
+}
+
+.tg-salon-violet .tg-salon-mat {
+  background: linear-gradient(180deg, #faf5ff, #ede7f6);
+}
+
+.tg-salon-amber .tg-salon-badge {
+  background: linear-gradient(90deg, #ffb300, #ff8f00, #f4511e);
+}
+
+.tg-salon-amber .tg-salon-table {
+  background:
+    radial-gradient(ellipse at 30% 25%, rgba(255, 179, 0, 0.38), transparent 50%),
+    radial-gradient(ellipse at 70% 75%, rgba(244, 81, 30, 0.32), transparent 45%),
+    linear-gradient(160deg, #e65100 0%, #bf360c 50%, #8d2a0a 100%);
+}
+
+.tg-salon-amber .tg-salon-mat {
+  background: linear-gradient(180deg, #fff8e1, #ffe0b2);
+}
+
 .tg-salon-score {
   display: flex;
   align-items: center;
@@ -6989,8 +7041,8 @@ body.tg-open {
   width: 64px;
   height: 92px;
   border-radius: 8px;
-  border: 1px solid rgba(0, 0, 0, 0.2);
-  background: linear-gradient(165deg, #fffefb, #ece2d0);
+  border: 2px solid rgba(0, 0, 0, 0.12);
+  background: linear-gradient(165deg, #fffefb 0%, #f5ebe0 55%, #e8dcc8 100%);
   box-shadow:
     inset 0 1px 1px rgba(255, 255, 255, 0.8),
     0 5px 10px rgba(0, 0, 0, 0.3),
@@ -7007,7 +7059,12 @@ body.tg-open {
   font-size: 0.85em;
 }
 
-.tg-playing-card.red { color: #c02828; }
+.tg-playing-card.red { color: #e63535; }
+
+.tg-playing-card.clubs,
+.tg-playing-card.spades { color: #1a1a22; }
+.tg-playing-card.hearts,
+.tg-playing-card.diamonds { color: #e63535; }
 
 .tg-playing-card.playable {
   cursor: pointer;
@@ -7023,9 +7080,11 @@ body.tg-open {
 }
 
 .tg-playing-card.back {
-  background: linear-gradient(155deg, #3a5c92, #16233e);
+  background:
+    repeating-linear-gradient(45deg, #1e88e5 0 8px, #1565c0 8px 16px),
+    linear-gradient(155deg, #42a5f5, #0d47a1);
   box-shadow:
-    inset 0 2px 2px rgba(255, 255, 255, 0.15),
+    inset 0 2px 2px rgba(255, 255, 255, 0.2),
     inset 0 -6px 10px rgba(0, 0, 0, 0.4),
     0 5px 10px rgba(0, 0, 0, 0.35);
 }
@@ -7256,11 +7315,16 @@ body.tg-open {
   display: flex;
   gap: 0.25rem;
   justify-content: center;
-  padding: 0.5rem;
-  background: #1a4a7a;
-  border-radius: 14px;
+  padding: 0.65rem;
+  background:
+    linear-gradient(180deg, #1565c0 0%, #0d47a1 100%);
+  border-radius: 16px;
   width: fit-content;
   margin: 0 auto;
+  border: 4px solid #ffd54f;
+  box-shadow:
+    inset 0 4px 12px rgba(0, 0, 0, 0.35),
+    0 8px 20px rgba(0, 0, 0, 0.45);
 }
 
 .tg-c4-col {
@@ -7287,7 +7351,7 @@ body.tg-open {
 }
 
 .tg-c4-cell.p1 {
-  background: radial-gradient(circle at 35% 28%, #ff9070, #c02818 68%, #7a1408);
+  background: radial-gradient(circle at 35% 28%, #ff7043, #e63535 68%, #b71c1c);
   box-shadow:
     inset 0 3px 5px rgba(255, 255, 255, 0.35),
     inset 0 -6px 8px rgba(0, 0, 0, 0.4),
@@ -7295,7 +7359,7 @@ body.tg-open {
 }
 
 .tg-c4-cell.p2 {
-  background: radial-gradient(circle at 35% 28%, #fff0a0, #e0a812 68%, #8a6608);
+  background: radial-gradient(circle at 35% 28%, #fff176, #fdd835 68%, #f9a825);
   box-shadow:
     inset 0 3px 5px rgba(255, 255, 255, 0.4),
     inset 0 -6px 8px rgba(0, 0, 0, 0.35),
@@ -7311,18 +7375,21 @@ body.tg-open {
 
 .tg-mem-card {
   aspect-ratio: 1;
-  border: none;
-  border-radius: 10px;
-  background: linear-gradient(160deg, #d9683f, #a03e22);
+  min-width: 52px;
+  min-height: 52px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-radius: 12px;
+  background: linear-gradient(145deg, color-mix(in srgb, var(--mem-color, #5c6bc0) 85%, white), var(--mem-color, #3949ab));
   box-shadow:
-    inset 0 2px 3px rgba(255, 255, 255, 0.25),
-    inset 0 -6px 10px rgba(0, 0, 0, 0.35),
+    inset 0 2px 4px rgba(255, 255, 255, 0.35),
+    inset 0 -4px 8px rgba(0, 0, 0, 0.35),
     0 4px 8px rgba(0, 0, 0, 0.35);
   color: #fff;
   font-size: 1.4rem;
   font-weight: 800;
   cursor: pointer;
   transition: transform 0.14s ease, box-shadow 0.14s ease;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
 }
 
 .tg-mem-card:not(:disabled):hover {
@@ -7330,80 +7397,186 @@ body.tg-open {
 }
 
 .tg-mem-card.open {
-  background: linear-gradient(160deg, #fffaf0, #e8d8be);
+  background: linear-gradient(160deg, #fffef8, #ffe8c0);
   box-shadow:
     inset 0 2px 3px rgba(255, 255, 255, 0.6),
     inset 0 -4px 8px rgba(0, 0, 0, 0.12),
     0 4px 8px rgba(0, 0, 0, 0.3);
-  color: #301810;
+  color: var(--mem-color, #3949ab);
   animation: memFlip3d 0.28s ease-out;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
 .tg-mem-card.done {
-  background: linear-gradient(160deg, #9a9878, #6e6c50);
-  opacity: 0.6;
+  background: linear-gradient(160deg, color-mix(in srgb, var(--mem-color, #888) 40%, #666), #444);
+  opacity: 0.55;
   box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
 }
+
+.tg-mem-tone-0 { --mem-color: #ef5350; }
+.tg-mem-tone-1 { --mem-color: #ec407a; }
+.tg-mem-tone-2 { --mem-color: #ab47bc; }
+.tg-mem-tone-3 { --mem-color: #26a69a; }
+.tg-mem-tone-4 { --mem-color: #ffb300; }
+.tg-mem-tone-5 { --mem-color: #42a5f5; }
+.tg-mem-tone-6 { --mem-color: #66bb6a; }
+.tg-mem-tone-7 { --mem-color: #5c6bc0; }
 
 @keyframes memFlip3d {
   0% { transform: rotateY(90deg) scale(0.85); opacity: 0.3; }
   100% { transform: rotateY(0deg) scale(1); opacity: 1; }
 }
 
+/* ——— Uno (estilo cartas oficiais) ——— */
+.tg-uno-game .tg-salon-hand {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.15rem;
+  min-height: 100px;
+}
+
 .tg-uno-card {
-  width: 54px;
-  height: 78px;
-  border: 2px solid rgba(255, 255, 255, 0.55);
+  position: relative;
+  width: 62px;
+  height: 92px;
+  border: 3px solid #111;
   border-radius: 10px;
-  color: #fff;
-  font-weight: 900;
-  font-size: 1.1rem;
-  background-blend-mode: overlay;
+  padding: 0;
+  flex-shrink: 0;
+  overflow: hidden;
+  cursor: default;
   box-shadow:
-    inset 0 3px 4px rgba(255, 255, 255, 0.35),
-    inset 0 -8px 12px rgba(0, 0, 0, 0.4),
-    0 5px 10px rgba(0, 0, 0, 0.4);
-  text-shadow: 0 2px 3px rgba(0, 0, 0, 0.5);
+    inset 0 0 0 2px rgba(255, 255, 255, 0.35),
+    0 6px 14px rgba(0, 0, 0, 0.45);
   transition: transform 0.14s ease, box-shadow 0.14s ease;
+}
+
+.tg-uno-card.tg-uno-r { background: #e63535; }
+.tg-uno-card.tg-uno-g { background: #1aa260; }
+.tg-uno-card.tg-uno-b { background: #0096e6; }
+.tg-uno-card.tg-uno-y { background: #f7c948; }
+.tg-uno-card.tg-uno-w,
+.tg-uno-card.tg-uno-w4 { background: #111; }
+
+.tg-uno-wild-bg {
+  position: absolute;
+  inset: 5px;
+  border-radius: 6px;
+  background: conic-gradient(#e63535 0 90deg, #f7c948 90deg 180deg, #1aa260 180deg 270deg, #0096e6 270deg 360deg);
+  z-index: 0;
+}
+
+.tg-uno-card[data-chosen="r"] .tg-uno-wild-bg { background: #e63535; }
+.tg-uno-card[data-chosen="g"] .tg-uno-wild-bg { background: #1aa260; }
+.tg-uno-card[data-chosen="b"] .tg-uno-wild-bg { background: #0096e6; }
+.tg-uno-card[data-chosen="y"] .tg-uno-wild-bg { background: #f7c948; }
+
+.tg-uno-corner {
+  position: absolute;
+  font-size: 0.72rem;
+  font-weight: 900;
+  color: #fff;
+  line-height: 1;
+  z-index: 2;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+.tg-uno-y .tg-uno-corner,
+.tg-uno-card[data-chosen="y"] .tg-uno-corner {
+  color: #1a1a1a;
+  text-shadow: none;
+}
+
+.tg-uno-corner.tl { top: 5px; left: 7px; }
+.tg-uno-corner.br { bottom: 5px; right: 7px; transform: rotate(180deg); }
+
+.tg-uno-oval {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 76%;
+  height: 58%;
+  background: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+  box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.12);
+}
+
+.tg-uno-oval.wild { background: rgba(255, 255, 255, 0.95); }
+
+.tg-uno-face {
+  font-size: 1.55rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.tg-uno-r .tg-uno-face { color: #e63535; }
+.tg-uno-g .tg-uno-face { color: #1aa260; }
+.tg-uno-b .tg-uno-face { color: #0096e6; }
+.tg-uno-y .tg-uno-face,
+.tg-uno-face.dark { color: #1a1a1a; }
+.tg-uno-w .tg-uno-face,
+.tg-uno-w4 .tg-uno-face { color: #111; }
+
+.tg-uno-brand {
+  position: absolute;
+  bottom: 7px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.52rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  color: #fff;
+  z-index: 2;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
 }
 
 .tg-uno-card.playable {
   cursor: pointer;
-  outline: 2px solid #fff;
-  transform: translateY(-6px);
+  transform: translateY(-8px);
   box-shadow:
-    inset 0 3px 4px rgba(255, 255, 255, 0.4),
-    inset 0 -8px 12px rgba(0, 0, 0, 0.4),
-    0 10px 16px rgba(0, 0, 0, 0.45);
+    inset 0 0 0 2px rgba(255, 255, 255, 0.5),
+    0 0 0 3px rgba(255, 255, 255, 0.85),
+    0 12px 20px rgba(0, 0, 0, 0.5);
 }
 
 .tg-uno-card.playable:hover {
-  transform: translateY(-9px) scale(1.05);
-}
-
-.tg-uno-card.tg-uno-wild {
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
-  font-size: 1.1rem;
+  transform: translateY(-12px) scale(1.06);
 }
 
 .tg-uno-color-tag {
   align-self: center;
   margin-left: 0.5rem;
-  padding: 0.25rem 0.6rem;
+  padding: 0.3rem 0.75rem;
   border-radius: 999px;
   color: #fff;
   font-weight: 800;
   font-size: 0.78rem;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+  border: 2px solid rgba(255, 255, 255, 0.65);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35);
 }
 
 .tg-uno-pickcolor {
+  min-width: 88px;
   color: #fff !important;
-  font-weight: 900;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
-  border: 2px solid rgba(255, 255, 255, 0.6);
+  font-weight: 900 !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55) !important;
+  border: 3px solid rgba(255, 255, 255, 0.75) !important;
+  border-radius: 999px !important;
+  padding: 0.55rem 1rem !important;
 }
+
+.tg-uno-pick-r { background: #e63535 !important; }
+.tg-uno-pick-g { background: #1aa260 !important; }
+.tg-uno-pick-b { background: #0096e6 !important; }
+.tg-uno-pick-y { background: #f7c948 !important; color: #1a1a1a !important; text-shadow: none !important; }
 
 /* ——— Batalha Naval ——— */
 .tg-bn-boards {
@@ -7573,21 +7746,28 @@ body.tg-open {
   width: clamp(52px, 9vmin, 72px);
   height: clamp(52px, 9vmin, 72px);
   border-radius: 12px;
-  border: 2px solid rgba(255, 255, 255, 0.35);
-  background: linear-gradient(160deg, #f8f4ea, #d8d0bc);
+  border: 3px solid rgba(255, 255, 255, 0.45);
+  background: linear-gradient(160deg, #fffef8, #ffe082);
   color: #22201a;
   font-size: clamp(2.4rem, 7vmin, 3.4rem);
   line-height: 1;
   display: grid;
   place-items: center;
   cursor: pointer;
-  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
 }
+
+.tg-gen-die:nth-child(1) { background: linear-gradient(160deg, #ffcdd2, #ef5350); border-color: #e53935; }
+.tg-gen-die:nth-child(2) { background: linear-gradient(160deg, #ffe0b2, #ffb74d); border-color: #fb8c00; }
+.tg-gen-die:nth-child(3) { background: linear-gradient(160deg, #fff9c4, #fff176); border-color: #fdd835; }
+.tg-gen-die:nth-child(4) { background: linear-gradient(160deg, #c8e6c9, #66bb6a); border-color: #43a047; }
+.tg-gen-die:nth-child(5) { background: linear-gradient(160deg, #bbdefb, #42a5f5); border-color: #1e88e5; }
 
 .tg-gen-die.held {
   transform: translateY(-6px);
-  border-color: #e8c84a;
-  box-shadow: 0 0 0 3px rgba(232, 200, 74, 0.55), 0 8px 14px rgba(0, 0, 0, 0.4);
+  border-color: #ffd54f;
+  box-shadow: 0 0 0 3px rgba(255, 213, 79, 0.65), 0 8px 14px rgba(0, 0, 0, 0.4);
 }
 
 .tg-gen-die:disabled {
@@ -7699,7 +7879,7 @@ body.tg-open {
   width: 42px;
   height: 78px;
   border-radius: 8px;
-  border: 1px solid rgba(0, 0, 0, 0.25);
+  border: 2px solid rgba(0, 0, 0, 0.2);
   background: linear-gradient(160deg, #fffdf8, #d8cfb8);
   box-shadow:
     inset 0 2px 2px rgba(255, 255, 255, 0.7),
@@ -7711,25 +7891,39 @@ body.tg-open {
   transition: transform 0.14s ease, box-shadow 0.14s ease;
 }
 
-.tg-domino i {
-  display: block;
-  width: 70%;
-  height: 2px;
-  background: #4a4a4a;
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
-}
+.tg-domino-sum-0  { background: linear-gradient(160deg, #fafafa, #e0e0e0); border-color: #9e9e9e; }
+.tg-domino-sum-1  { background: linear-gradient(160deg, #fff3e0, #ffcc80); border-color: #ff9800; }
+.tg-domino-sum-2  { background: linear-gradient(160deg, #fce4ec, #f48fb1); border-color: #e91e63; }
+.tg-domino-sum-3  { background: linear-gradient(160deg, #e8f5e9, #a5d6a7); border-color: #4caf50; }
+.tg-domino-sum-4  { background: linear-gradient(160deg, #e3f2fd, #90caf9); border-color: #2196f3; }
+.tg-domino-sum-5  { background: linear-gradient(160deg, #f3e5f5, #ce93d8); border-color: #9c27b0; }
+.tg-domino-sum-6  { background: linear-gradient(160deg, #fff8e1, #ffe082); border-color: #ffc107; }
+.tg-domino-sum-7  { background: linear-gradient(160deg, #ffebee, #ef9a9a); border-color: #f44336; }
+.tg-domino-sum-8  { background: linear-gradient(160deg, #e0f7fa, #80deea); border-color: #00bcd4; }
+.tg-domino-sum-9  { background: linear-gradient(160deg, #f1f8e9, #aed581); border-color: #8bc34a; }
+.tg-domino-sum-10 { background: linear-gradient(160deg, #ede7f6, #b39ddb); border-color: #673ab7; }
+.tg-domino-sum-11 { background: linear-gradient(160deg, #fffde7, #fff59d); border-color: #ffeb3b; }
+.tg-domino-sum-12 { background: linear-gradient(160deg, #eceff1, #b0bec5); border-color: #607d8b; }
 
 .tg-domino.playable {
   cursor: pointer;
   box-shadow:
     inset 0 2px 2px rgba(255, 255, 255, 0.7),
     inset 0 -4px 6px rgba(0, 0, 0, 0.15),
-    0 0 0 2px #e8785a,
+    0 0 0 3px #ff7043,
     0 6px 12px rgba(0, 0, 0, 0.4);
 }
 
 .tg-domino.playable:hover {
   transform: translateY(-3px);
+}
+
+.tg-domino i {
+  display: block;
+  width: 70%;
+  height: 2px;
+  background: #4a4a4a;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
 }
 
 .tg-domino-chain {
@@ -7742,6 +7936,52 @@ body.tg-open {
   background:
     radial-gradient(ellipse at 40% 30%, rgba(232, 120, 90, 0.28), transparent 55%),
     linear-gradient(165deg, #1a100c 0%, #2a1812 50%, #12100e 100%);
+}
+
+.tg-screen[data-game="uno"] .tg-bg {
+  background:
+    radial-gradient(circle at 15% 20%, rgba(230, 53, 53, 0.25), transparent 40%),
+    radial-gradient(circle at 85% 30%, rgba(0, 150, 230, 0.22), transparent 38%),
+    radial-gradient(circle at 50% 80%, rgba(26, 162, 96, 0.2), transparent 35%),
+    linear-gradient(165deg, #1a0a38 0%, #0d0520 100%);
+}
+
+.tg-screen[data-game="memoria"] .tg-bg {
+  background:
+    radial-gradient(ellipse at 30% 25%, rgba(171, 71, 188, 0.3), transparent 50%),
+    radial-gradient(ellipse at 70% 70%, rgba(92, 107, 192, 0.28), transparent 45%),
+    linear-gradient(165deg, #1a1038 0%, #0a0820 100%);
+}
+
+.tg-screen[data-game="domino"] .tg-bg {
+  background:
+    radial-gradient(ellipse at 25% 30%, rgba(255, 179, 0, 0.28), transparent 48%),
+    radial-gradient(ellipse at 75% 65%, rgba(244, 81, 30, 0.25), transparent 42%),
+    linear-gradient(165deg, #201008 0%, #120804 100%);
+}
+
+.tg-screen[data-game="lig4"] .tg-bg {
+  background:
+    radial-gradient(ellipse at 50% 30%, rgba(21, 101, 192, 0.35), transparent 50%),
+    linear-gradient(165deg, #0a1628 0%, #061018 100%);
+}
+
+.tg-screen[data-game="general"] .tg-bg {
+  background:
+    radial-gradient(ellipse at 40% 35%, rgba(255, 213, 79, 0.25), transparent 50%),
+    linear-gradient(165deg, #1a1408 0%, #0e0a04 100%);
+}
+
+.tg-screen[data-game="batalha"] .tg-bg {
+  background:
+    radial-gradient(ellipse at 50% 25%, rgba(80, 160, 220, 0.3), transparent 50%),
+    linear-gradient(165deg, #081828 0%, #040c14 100%);
+}
+
+.tg-screen[data-game="velha"] .tg-bg {
+  background:
+    radial-gradient(ellipse at 50% 40%, rgba(201, 162, 39, 0.22), transparent 50%),
+    linear-gradient(165deg, #141008 0%, #0a0804 100%);
 }
 
 @media (max-width: 720px) {

@@ -5,7 +5,7 @@
 import { playCardDeal, playCardPlay } from "./table-games-audio.js";
 
 export const SUITS = ["♣", "♥", "♠", "♦"];
-export const SUIT_COLORS = { "♣": "#1a1a22", "♥": "#c02828", "♠": "#1a1a22", "♦": "#c02828" };
+export const SUIT_COLORS = { "♣": "#1a1a22", "♥": "#e63535", "♠": "#1a1a22", "♦": "#e63535" };
 
 export function createSalonShell({
   title,
