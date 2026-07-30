@@ -7462,8 +7462,93 @@ body.tg-open {
 }
 
 .tg-bn-cell.ship {
-  background: rgba(150, 165, 180, 0.8);
-  border-color: rgba(220, 230, 240, 0.5);
+  background: linear-gradient(165deg, #6a849c 0%, #4a6278 42%, #354958 100%);
+  border-color: rgba(210, 225, 240, 0.65);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.22), inset 0 -2px 0 rgba(0, 0, 0, 0.25);
+  color: #eef4ff;
+  font-weight: 800;
+  font-size: 0.55rem;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+}
+
+.tg-bn-cell.ship-seg.ship-h.ship-bow {
+  border-radius: 10px 4px 4px 10px;
+}
+
+.tg-bn-cell.ship-seg.ship-h.ship-stern {
+  border-radius: 4px 10px 10px 4px;
+}
+
+.tg-bn-cell.ship-seg.ship-v.ship-bow {
+  border-radius: 10px 10px 4px 4px;
+}
+
+.tg-bn-cell.ship-seg.ship-v.ship-stern {
+  border-radius: 4px 4px 10px 10px;
+}
+
+.tg-bn-cell.ship-seg.ship-mid,
+.tg-bn-cell.ship-seg.ship-solo {
+  border-radius: 4px;
+}
+
+.tg-bn-cell.preview-ok {
+  background: rgba(60, 180, 120, 0.55) !important;
+  border-color: rgba(140, 255, 190, 0.75);
+  box-shadow: inset 0 0 0 2px rgba(120, 255, 170, 0.45);
+}
+
+.tg-bn-cell.preview-bad {
+  background: rgba(180, 60, 60, 0.5) !important;
+  border-color: rgba(255, 140, 140, 0.65);
+}
+
+.tg-bn-setup {
+  text-align: center;
+  margin-bottom: 0.75rem;
+}
+
+.tg-bn-setup-ship {
+  margin: 0 0 0.25rem;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #ffe08a;
+}
+
+.tg-bn-setup-hint {
+  margin: 0 0 0.65rem;
+  font-size: 0.78rem;
+  color: #9db4cc;
+}
+
+.tg-bn-setup-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  justify-content: center;
+}
+
+.tg-bn-wrap.tg-bn-setup-phase .tg-bn-side-you {
+  margin-inline: auto;
+}
+
+.tg-bn-wrap.tg-bn-setup-phase .tg-bn-side-you .tg-bn-cell {
+  width: clamp(32px, 5.8vmin, 48px);
+  height: clamp(32px, 5.8vmin, 48px);
+  font-size: 0.72rem;
+  cursor: pointer;
+}
+
+.tg-bn-wrap.tg-bn-setup-phase .tg-bn-side-you .tg-bn-cell:not(:disabled):hover {
+  background: rgba(80, 140, 200, 0.75);
+}
+
+.tg-bn-side.hidden {
+  display: none !important;
+}
+
+.tg-bn-setup.hidden {
+  display: none !important;
 }
 
 .tg-bn-cell.miss {

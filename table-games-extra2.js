@@ -26,10 +26,42 @@ function endVoice() {
 /* ═══════════ Batalha Naval ═══════════ */
 const BN_SIZE = 8;
 const BN_SHIPS = [4, 3, 3, 2, 2]; // 14 células
+const BN_SHIP_LABELS = ["Encouraçado (4)", "Cruzador (3)", "Submarino (3)", "Torpedeiro (2)", "Patrulha (2)"];
+
+function bnEmptyGrid() {
+  return Array.from({ length: BN_SIZE }, () => Array(BN_SIZE).fill(-1));
+}
+
+function bnCanPlace(grid, r, c, len, horiz) {
+  if (horiz) {
+    if (c < 0 || c + len > BN_SIZE || r < 0 || r >= BN_SIZE) return false;
+  } else if (r < 0 || r + len > BN_SIZE || c < 0 || c >= BN_SIZE) {
+    return false;
+  }
+  for (let k = -1; k <= len; k++) {
+    for (let d = -1; d <= 1; d++) {
+      const rr = horiz ? r + d : r + k;
+      const cc = horiz ? c + k : c + d;
+      if (rr < 0 || rr >= BN_SIZE || cc < 0 || cc >= BN_SIZE) continue;
+      if (grid[rr][cc] !== -1) return false;
+    }
+  }
+  return true;
+}
+
+function bnPlaceShip(grid, ships, shipIdx, len, r, c, horiz) {
+  const cells = [];
+  for (let k = 0; k < len; k++) {
+    const rr = horiz ? r : r + k;
+    const cc = horiz ? c + k : c;
+    grid[rr][cc] = shipIdx;
+    cells.push([rr, cc]);
+  }
+  ships.push({ len, cells, hits: 0, horiz });
+}
 
 function bnPlaceFleet() {
-  // grid[r][c] = índice do navio ou -1
-  const grid = Array.from({ length: BN_SIZE }, () => Array(BN_SIZE).fill(-1));
+  const grid = bnEmptyGrid();
   const ships = [];
   for (let s = 0; s < BN_SHIPS.length; s++) {
     const len = BN_SHIPS[s];
@@ -38,54 +70,85 @@ function bnPlaceFleet() {
       const horiz = Math.random() < 0.5;
       const r = Math.floor(Math.random() * (horiz ? BN_SIZE : BN_SIZE - len + 1));
       const c = Math.floor(Math.random() * (horiz ? BN_SIZE - len + 1 : BN_SIZE));
-      let ok = true;
-      // navios não podem se tocar (nem na diagonal)
-      for (let k = -1; k <= len && ok; k++) {
-        for (let d = -1; d <= 1 && ok; d++) {
-          const rr = horiz ? r + d : r + k;
-          const cc = horiz ? c + k : c + d;
-          if (rr < 0 || rr >= BN_SIZE || cc < 0 || cc >= BN_SIZE) continue;
-          if (grid[rr][cc] !== -1) ok = false;
-        }
-      }
-      if (!ok) continue;
-      const cells = [];
-      for (let k = 0; k < len; k++) {
-        const rr = horiz ? r : r + k;
-        const cc = horiz ? c + k : c;
-        grid[rr][cc] = s;
-        cells.push([rr, cc]);
-      }
-      ships.push({ len, cells, hits: 0 });
+      if (!bnCanPlace(grid, r, c, len, horiz)) continue;
+      bnPlaceShip(grid, ships, s, len, r, c, horiz);
       placed = true;
     }
-    if (!placed) return bnPlaceFleet(); // recomeça se travou
+    if (!placed) return bnPlaceFleet();
   }
   return { grid, ships };
 }
 
+function bnRandomPlayerFleet() {
+  return bnPlaceFleet();
+}
+
+function bnShipSegment(ship, r, c) {
+  const idx = ship.cells.findIndex(([rr, cc]) => rr === r && cc === c);
+  if (idx < 0) return null;
+  const horiz = !!ship.horiz;
+  const len = ship.cells.length;
+  if (len === 1) return { part: "solo", horiz };
+  if (idx === 0) return { part: "bow", horiz };
+  if (idx === len - 1) return { part: "stern", horiz };
+  return { part: "mid", horiz };
+}
+
+function bnApplyShipVisual(cell, ship, r, c) {
+  const seg = bnShipSegment(ship, r, c);
+  if (!seg) return;
+  cell.classList.add("ship-seg", `ship-${seg.part}`, seg.horiz ? "ship-h" : "ship-v");
+  if (seg.part === "bow") cell.textContent = seg.horiz ? "▶" : "▲";
+  else if (seg.part === "stern") cell.textContent = seg.horiz ? "◀" : "▼";
+  else if (seg.part === "mid") cell.textContent = "■";
+  else cell.textContent = "◆";
+}
+
+function bnPreviewCells(r, c, len, horiz) {
+  const cells = [];
+  for (let k = 0; k < len; k++) {
+    cells.push([horiz ? r : r + k, horiz ? c + k : c]);
+  }
+  return cells;
+}
+
 export function mountBattleshipGame(root, { botTier, onExit, onEnd, onBind, match }) {
   const tier = getBotTier(botTier);
-  let you, enemy; // { grid, ships }
-  let youShots, enemyShots; // 0 nada, 1 água, 2 acerto
+  let you = { grid: bnEmptyGrid(), ships: [] };
+  let enemy;
+  let youShots, enemyShots;
   let turn = "you";
   let over = false;
   let botTargets = [];
+  let phase = "setup"; // setup | battle
+  let placingHoriz = true;
+  let placingShipIdx = 0;
+  let hoverCell = null;
 
   const wrap = document.createElement("div");
   wrap.className = "tg-board-wrap tg-simple-wrap tg-bn-wrap";
   wrap.innerHTML = `
     <div class="tg-board-hud">
       <div class="tg-board-title">Batalha Naval</div>
-      <div class="tg-board-status" data-status>Sua vez — atire na frota inimiga</div>
+      <div class="tg-board-status" data-status>Posicione sua frota no tabuleiro</div>
       <div class="tg-board-meta">Bot: ${tier.label} · acertou, atira de novo</div>
     </div>
+    <div class="tg-bn-setup" data-setup>
+      <p class="tg-bn-setup-ship" data-setup-ship>Navio 1/5 — ${BN_SHIP_LABELS[0]}</p>
+      <p class="tg-bn-setup-hint">Toque numa célula para colocar · use Girar para mudar a direção</p>
+      <div class="tg-bn-setup-actions">
+        <button type="button" class="tg-btn tg-btn-ghost" data-rotate>Girar ↻</button>
+        <button type="button" class="tg-btn tg-btn-ghost" data-random>Aleatório</button>
+        <button type="button" class="tg-btn tg-btn-ghost" data-undo>Desfazer</button>
+        <button type="button" class="tg-btn tg-btn-primary" data-start disabled>Começar batalha</button>
+      </div>
+    </div>
     <div class="tg-bn-boards">
-      <div class="tg-bn-side">
+      <div class="tg-bn-side tg-bn-side-enemy" data-enemy-side>
         <p class="tg-bn-label">Frota inimiga <span data-enemy-left></span></p>
         <div class="tg-bn-grid enemy" data-enemy-board></div>
       </div>
-      <div class="tg-bn-side">
+      <div class="tg-bn-side tg-bn-side-you">
         <p class="tg-bn-label">Sua frota <span data-you-left></span></p>
         <div class="tg-bn-grid mine" data-you-board></div>
       </div>
@@ -95,14 +158,23 @@ export function mountBattleshipGame(root, { botTier, onExit, onEnd, onBind, matc
       <button type="button" class="tg-btn" data-restart>Reiniciar</button>
     </div>
   `;
+  wrap.tabIndex = 0;
   root.appendChild(wrap);
   const enemyBoardEl = wrap.querySelector("[data-enemy-board]");
   const youBoardEl = wrap.querySelector("[data-you-board]");
+  const enemySideEl = wrap.querySelector("[data-enemy-side]");
+  const setupEl = wrap.querySelector("[data-setup]");
+  const setupShipEl = wrap.querySelector("[data-setup-ship]");
+  const rotateBtn = wrap.querySelector("[data-rotate]");
+  const randomBtn = wrap.querySelector("[data-random]");
+  const undoBtn = wrap.querySelector("[data-undo]");
+  const startBtn = wrap.querySelector("[data-start]");
   const statusEl = wrap.querySelector("[data-status]");
   const enemyLeftEl = wrap.querySelector("[data-enemy-left]");
   const youLeftEl = wrap.querySelector("[data-you-left]");
 
   function aliveCells(fleet, shots) {
+    if (!fleet?.grid || !shots) return 0;
     let n = 0;
     for (let r = 0; r < BN_SIZE; r++)
       for (let c = 0; c < BN_SIZE; c++)
@@ -110,7 +182,73 @@ export function mountBattleshipGame(root, { botTier, onExit, onEnd, onBind, matc
     return n;
   }
 
-  function render() {
+  function updateSetupHud() {
+    const done = placingShipIdx >= BN_SHIPS.length;
+    setupShipEl.textContent = done
+      ? "Frota pronta — comece a batalha!"
+      : `Navio ${placingShipIdx + 1}/${BN_SHIPS.length} — ${BN_SHIP_LABELS[placingShipIdx]}`;
+    rotateBtn.disabled = done || over;
+    undoBtn.disabled = done || placingShipIdx <= 0 || over;
+    startBtn.disabled = !done || over;
+    youLeftEl.textContent = done ? `· ${aliveCells(you, enemyShots)} células` : `· ${placingShipIdx}/${BN_SHIPS.length} navios`;
+  }
+
+  function renderYouBoard() {
+    youBoardEl.innerHTML = "";
+    const preview =
+      phase === "setup" && placingShipIdx < BN_SHIPS.length && hoverCell
+        ? bnPreviewCells(hoverCell[0], hoverCell[1], BN_SHIPS[placingShipIdx], placingHoriz)
+        : [];
+    const previewValid =
+      preview.length &&
+      bnCanPlace(you.grid, hoverCell[0], hoverCell[1], BN_SHIPS[placingShipIdx], placingHoriz);
+    const previewSet = new Set(preview.map(([rr, cc]) => `${rr},${cc}`));
+
+    for (let r = 0; r < BN_SIZE; r++) {
+      for (let c = 0; c < BN_SIZE; c++) {
+        const cell = document.createElement(phase === "setup" ? "button" : "span");
+        if (phase === "setup") cell.type = "button";
+        const shot = enemyShots?.[r]?.[c] ?? 0;
+        const shipIdx = you.grid[r][c];
+        const ship = shipIdx !== -1 ? you.ships[shipIdx] : null;
+        cell.className = "tg-bn-cell small";
+        if (ship) {
+          cell.classList.add("ship");
+          bnApplyShipVisual(cell, ship, r, c);
+        }
+        if (previewSet.has(`${r},${c}`)) {
+          cell.classList.add(previewValid ? "preview-ok" : "preview-bad");
+        }
+        if (phase === "battle") {
+          if (shot === 1) cell.classList.add("miss");
+          if (shot === 2) {
+            cell.classList.add("hit");
+            cell.textContent = "✸";
+          }
+        }
+        if (phase === "setup") {
+          cell.onclick = () => placeCurrentShip(r, c);
+          cell.onmouseenter = () => {
+            hoverCell = [r, c];
+            renderYouBoard();
+          };
+          cell.onmouseleave = () => {
+            hoverCell = null;
+            renderYouBoard();
+          };
+        }
+        youBoardEl.appendChild(cell);
+      }
+    }
+    youBoardEl.onmouseleave = () => {
+      if (hoverCell) {
+        hoverCell = null;
+        renderYouBoard();
+      }
+    };
+  }
+
+  function renderEnemyBoard() {
     enemyBoardEl.innerHTML = "";
     for (let r = 0; r < BN_SIZE; r++) {
       for (let c = 0; c < BN_SIZE; c++) {
@@ -121,27 +259,81 @@ export function mountBattleshipGame(root, { botTier, onExit, onEnd, onBind, matc
         if (shot === 1) cell.classList.add("miss");
         if (shot === 2) cell.classList.add("hit");
         cell.textContent = shot === 2 ? "✸" : shot === 1 ? "•" : "";
-        cell.disabled = over || turn !== "you" || shot !== 0;
+        cell.disabled = over || turn !== "you" || shot !== 0 || phase !== "battle";
         cell.onclick = () => fire(r, c);
         enemyBoardEl.appendChild(cell);
       }
     }
-    youBoardEl.innerHTML = "";
-    for (let r = 0; r < BN_SIZE; r++) {
-      for (let c = 0; c < BN_SIZE; c++) {
-        const cell = document.createElement("span");
-        const shot = enemyShots[r][c];
-        const ship = you.grid[r][c] !== -1;
-        cell.className = "tg-bn-cell small";
-        if (ship) cell.classList.add("ship");
-        if (shot === 1) cell.classList.add("miss");
-        if (shot === 2) cell.classList.add("hit");
-        cell.textContent = shot === 2 ? "✸" : shot === 1 ? "•" : "";
-        youBoardEl.appendChild(cell);
-      }
+  }
+
+  function render() {
+    wrap.classList.toggle("tg-bn-setup-phase", phase === "setup");
+    enemySideEl?.classList.toggle("hidden", phase === "setup");
+    setupEl?.classList.toggle("hidden", phase === "battle");
+    renderYouBoard();
+    if (phase === "battle") {
+      renderEnemyBoard();
+      enemyLeftEl.textContent = `· ${aliveCells(enemy, youShots)} células`;
+      youLeftEl.textContent = `· ${aliveCells(you, enemyShots)} células`;
+    } else {
+      updateSetupHud();
     }
-    enemyLeftEl.textContent = `· ${aliveCells(enemy, youShots)} células`;
-    youLeftEl.textContent = `· ${aliveCells(you, enemyShots)} células`;
+  }
+
+  function placeCurrentShip(r, c) {
+    if (phase !== "setup" || over || placingShipIdx >= BN_SHIPS.length) return;
+    const len = BN_SHIPS[placingShipIdx];
+    if (!bnCanPlace(you.grid, r, c, len, placingHoriz)) {
+      playIllegal();
+      return;
+    }
+    bnPlaceShip(you.grid, you.ships, placingShipIdx, len, r, c, placingHoriz);
+    playPiecePlace();
+    placingShipIdx++;
+    hoverCell = null;
+    if (placingShipIdx >= BN_SHIPS.length) {
+      statusEl.textContent = "Frota posicionada! Toque em Começar batalha";
+    } else {
+      statusEl.textContent = `Coloque o ${BN_SHIP_LABELS[placingShipIdx]}`;
+    }
+    render();
+  }
+
+  function undoLastShip() {
+    if (phase !== "setup" || placingShipIdx <= 0) return;
+    placingShipIdx--;
+    const ship = you.ships.pop();
+    ship.cells.forEach(([rr, cc]) => {
+      you.grid[rr][cc] = -1;
+    });
+    playFlip();
+    statusEl.textContent = `Coloque o ${BN_SHIP_LABELS[placingShipIdx]}`;
+    render();
+  }
+
+  function randomizePlayerFleet() {
+    you = bnRandomPlayerFleet();
+    placingShipIdx = BN_SHIPS.length;
+    hoverCell = null;
+    playChip();
+    statusEl.textContent = "Frota sorteada! Toque em Começar batalha ou Desfazer para ajustar";
+    render();
+  }
+
+  function beginBattle() {
+    if (placingShipIdx < BN_SHIPS.length) return;
+    enemy = bnPlaceFleet();
+    youShots = Array.from({ length: BN_SIZE }, () => Array(BN_SIZE).fill(0));
+    enemyShots = Array.from({ length: BN_SIZE }, () => Array(BN_SIZE).fill(0));
+    phase = "battle";
+    turn = "you";
+    over = false;
+    botTargets = [];
+    hoverCell = null;
+    statusEl.textContent = "Sua vez — atire na frota inimiga";
+    match?.setActionsEnabled?.(true);
+    render();
+    match?.startPlayerClock?.(true);
   }
 
   function finish(w) {
@@ -155,7 +347,7 @@ export function mountBattleshipGame(root, { botTier, onExit, onEnd, onBind, matc
   }
 
   function fire(r, c) {
-    if (over || turn !== "you" || youShots[r][c] !== 0) return;
+    if (phase !== "battle" || over || turn !== "you" || youShots[r][c] !== 0) return;
     const shipIdx = enemy.grid[r][c];
     if (shipIdx !== -1) {
       youShots[r][c] = 2;
@@ -238,18 +430,39 @@ export function mountBattleshipGame(root, { botTier, onExit, onEnd, onBind, matc
   }
 
   function reset() {
-    you = bnPlaceFleet();
-    enemy = bnPlaceFleet();
-    youShots = Array.from({ length: BN_SIZE }, () => Array(BN_SIZE).fill(0));
-    enemyShots = Array.from({ length: BN_SIZE }, () => Array(BN_SIZE).fill(0));
+    you = { grid: bnEmptyGrid(), ships: [] };
+    enemy = null;
+    youShots = null;
+    enemyShots = null;
+    phase = "setup";
+    placingHoriz = true;
+    placingShipIdx = 0;
+    hoverCell = null;
     turn = "you";
     over = false;
     botTargets = [];
-    match?.setActionsEnabled?.(true);
-    statusEl.textContent = "Sua vez — atire na frota inimiga";
+    match?.setActionsEnabled?.(false);
+    statusEl.textContent = "Posicione sua frota no tabuleiro";
     render();
-    match?.startPlayerClock?.(true);
   }
+
+  rotateBtn?.addEventListener("click", () => {
+    if (phase !== "setup" || placingShipIdx >= BN_SHIPS.length) return;
+    placingHoriz = !placingHoriz;
+    playFlip();
+    render();
+  });
+  randomBtn?.addEventListener("click", randomizePlayerFleet);
+  undoBtn?.addEventListener("click", undoLastShip);
+  startBtn?.addEventListener("click", beginBattle);
+  wrap.addEventListener("keydown", (e) => {
+    if (e.key === "r" || e.key === "R") {
+      if (phase === "setup" && placingShipIdx < BN_SHIPS.length) {
+        placingHoriz = !placingHoriz;
+        render();
+      }
+    }
+  });
 
   bindCommon(wrap, { onExit, restart: reset });
   onBind?.({

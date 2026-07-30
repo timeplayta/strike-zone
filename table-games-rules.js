@@ -201,23 +201,25 @@ export const TABLE_GAME_RULES = {
   batalha: {
     objetivo: "Afundar os 5 navios do bot antes que ele afunde os seus.",
     como_jogar: [
-      "Cada frota tem 5 navios (4, 3, 3, 2 e 2 células) posicionados automaticamente.",
-      "Na sua vez, toque numa célula do tabuleiro inimigo para atirar.",
+      "Antes da partida, posicione sua frota: 5 navios (4, 3, 3, 2 e 2 casas).",
+      "Toque numa célula do seu tabuleiro para colocar · Girar muda horizontal/vertical.",
+      "Use Aleatório para sortear tudo ou Desfazer para corrigir o último navio.",
+      "Depois toque Começar batalha · na sua vez, atire no tabuleiro inimigo.",
       "✸ = acertou (atira de novo!) · • = água (vez do bot).",
-      "Seu tabuleiro à direita mostra seus navios e os tiros do bot.",
     ],
     pode: [
+      "Escolher onde colocar cada navio antes de começar",
+      "Girar a direção do navio (botão ou tecla R)",
       "Atirar em qualquer célula ainda não atacada",
       "Continuar atirando enquanto acertar",
-      "Reiniciar para sortear novas posições",
     ],
     nao_pode: [
       "Atirar na mesma célula duas vezes",
-      "Mover os navios depois que a partida começou",
+      "Mover os navios depois que a batalha começou",
       "Ver os navios do bot (só os acertos aparecem)",
     ],
     vitoria:
-      "Afundou as 14 células inimigas = vitória. Navios não se tocam. Desistir ou estourar o tempo = derrota.",
+      "Afundou as 14 células inimigas = vitória. Navios não podem se tocar. Desistir ou estourar o tempo = derrota.",
   },
 
   general: {
