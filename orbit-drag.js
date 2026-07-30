@@ -1,8 +1,18 @@
 /** Arrastar com o mouse/dedo sobre um canvas para girar um pivot 3D (visualização de armas/personagem) */
 
-export function attachOrbitDrag(canvas, getPivot, onDragStart) {
+/**
+ * @param {HTMLElement} canvas
+ * @param {() => { rotation: { y: number } } | null} getPivot
+ * @param {() => void} [onDragStart]
+ * @param {{ invertYaw?: boolean, sensitivity?: number }} [opts]
+ *   invertYaw: true = arrastar pra esquerda gira a câmera pra esquerda (modo jogo)
+ */
+export function attachOrbitDrag(canvas, getPivot, onDragStart, opts = {}) {
   if (!canvas || canvas.__orbitDragBound) return;
   canvas.__orbitDragBound = true;
+
+  const yawSign = opts.invertYaw ? -1 : 1;
+  const sensitivity = opts.sensitivity ?? 0.012;
 
   let dragging = false;
   let lastX = 0;
@@ -23,7 +33,7 @@ export function attachOrbitDrag(canvas, getPivot, onDragStart) {
     const pivot = getPivot();
     if (pivot) {
       const dx = e.clientX - lastX;
-      pivot.rotation.y += dx * 0.012;
+      pivot.rotation.y += dx * sensitivity * yawSign;
     }
     lastX = e.clientX;
   });

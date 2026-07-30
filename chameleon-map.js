@@ -1,4 +1,4 @@
-/** Arena do modo Mecha Camaleão — chão sólido + zonas de cor + objetos (jarras, patos) pra se camuflar/colar */
+/** Arena do modo Esconde-Bicho — chão sólido + zonas de cor + objetos (jarras, patos) pra se camuflar/colar */
 
 import * as THREE from "three";
 

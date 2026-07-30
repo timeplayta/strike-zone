@@ -8,7 +8,7 @@ const MAPS = [
   { id: "warehouse", category: "tiro", name: "Cold Storage", desc: "Armazém fechado" },
   { id: "horror", category: "terror", name: "Terror", desc: "Combate escuro", horror: true },
   { id: "labyrinth", category: "esconde-esconde", name: "Fim das Trevas", desc: "Labirinto de escape", horror: true },
-  { id: "camaleao", category: "esconde-esconde", name: "Mecha Camaleão", desc: "Vire um bichinho e se camufle do caçador" },
+  { id: "camaleao", category: "esconde-esconde", name: "Esconde-Bicho", desc: "Vire um bichinho e se camufle do caçador" },
   { id: "frontier", category: "tiro", name: "Ilha Frontier", desc: "Ilha 2km • 10 POIs • deserto, selva e costa • 100 bots" },
   { id: "chess", category: "jogos-de-mesa", name: "Xadrez", desc: "Tabuleiro clássico · vs bot" },
   { id: "dama", category: "jogos-de-mesa", name: "Dama", desc: "Damas 8×8 · capturas obrigatórias" },

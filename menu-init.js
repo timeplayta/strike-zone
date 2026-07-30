@@ -126,7 +126,7 @@
     warehouse: "Cold Storage",
     horror: "Terror",
     labyrinth: "Fim das Trevas",
-    camaleao: "Mecha Camaleão",
+    camaleao: "Esconde-Bicho",
     frontier: "Ilha Frontier",
     chess: "Xadrez",
     dama: "Dama",
@@ -204,7 +204,7 @@
     if (!hint) return;
     if (map === "camaleao") {
       hint.textContent =
-        "Mecha Camaleão — escolha bichinho e cor · combine com o ambiente · WASD move, A/D vira, Shift corre, E cola";
+        "Esconde-Bicho — escolha bichinho · pinte a cor · WASD anda pra onde a câmera aponta · arraste pra olhar · Shift corre · E cola";
       return;
     }
     if (table) {
@@ -306,13 +306,13 @@
         return;
       }
       try {
-        await import("./chameleon-mode.js?v=2");
+        await import("./chameleon-mode.js?v=3");
         if (typeof window.openChameleonMode === "function") {
           window.openChameleonMode();
           return;
         }
       } catch (e) {
-        showLoadError(e?.message || "Falha ao abrir o Mecha Camaleão.");
+        showLoadError(e?.message || "Falha ao abrir o Esconde-Bicho.");
         return;
       }
     }

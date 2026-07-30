@@ -1,4 +1,4 @@
-/** Mecha Camaleão — modo esconde-esconde: vire um bichinho, pinte sua cor e se camufle do caçador */
+/** Esconde-Bicho — modo esconde-esconde: vire um bichinho, pinte sua cor e se camufle do caçador */
 
 import * as THREE from "three";
 import { buildChameleonAnimal, buildHunter, ANIMAL_TYPES, ANIMAL_META } from "./chameleon-animals.js";
@@ -14,7 +14,7 @@ const CATCH_RADIUS = 0.95;
 const ANIMAL_SCALE = 0.19;
 const HUNTER_SCALE = ANIMAL_SCALE * 10;
 const HUNTER_COLLIDE_R = 0.42;
-const BASE_SPEED = 3.1;
+const BASE_SPEED = 3.6;
 const HUNTER_PATROL_SPEED = 2.35;
 const HUNTER_CHASE_SPEED = 4.4;
 
@@ -57,8 +57,8 @@ function ensureShell() {
     <div class="cha-lobby" data-lobby>
       <div class="cha-lobby-card">
         <p class="cha-eyebrow">Esconde-esconde</p>
-        <h1 class="cha-title">🦎 Mecha Camaleão</h1>
-        <p class="cha-desc">Escolha seu bichinho e entre na arena. Lá dentro, use o botão 🎨 pra pintar sua cor na hora — combine com o chão, as jarras e os patos pra sumir da vista do caçador.</p>
+        <h1 class="cha-title">🦎 Esconde-Bicho</h1>
+        <p class="cha-desc">Escolha seu bichinho e entre na arena. Lá dentro, use o botão 🎨 pra pintar sua cor na hora — combine com o chão, as jarras e os patos pra sumir da vista do caçador. Arraste o mouse pra olhar · WASD anda pra onde a câmera aponta.</p>
         <h2 class="cha-sub">Seu bichinho</h2>
         <div class="cha-animal-grid" data-animals></div>
         <div class="cha-lobby-foot">
@@ -351,7 +351,10 @@ function setupScene(canvas) {
   };
 
   orbitPivot = new THREE.Object3D();
-  attachOrbitDrag(canvas, () => orbitPivot);
+  // Yaw absoluto da câmera (independente do corpo do bicho)
+  orbitPivot.rotation.y = player.angle;
+  // invertYaw: arrastar pra esquerda olha pra esquerda (não espelhado)
+  attachOrbitDrag(canvas, () => orbitPivot, undefined, { invertYaw: true, sensitivity: 0.014 });
 
   function resize() {
     const rect = shell.querySelector("[data-match]").getBoundingClientRect();
@@ -384,27 +387,41 @@ function animateLegs(legs, moveAmount, t, freeze) {
 const PLAYER_COLLIDE_R = 0.09;
 
 function updatePlayer(dt, t) {
-  let forwardInput = -touchDir.z;
-  let turnInput = touchDir.x;
-  if (keys.has("KeyW") || keys.has("ArrowUp")) forwardInput += 1;
-  if (keys.has("KeyS") || keys.has("ArrowDown")) forwardInput -= 1;
-  if (keys.has("KeyA") || keys.has("ArrowLeft")) turnInput -= 1;
-  if (keys.has("KeyD") || keys.has("ArrowRight")) turnInput += 1;
-  forwardInput = Math.max(-1, Math.min(1, forwardInput));
-  turnInput = Math.max(-1, Math.min(1, turnInput));
+  // Eixos da tela: Z frente/trás, X strafe — relativo à câmera, não ao corpo
+  let inputX = touchDir.x;
+  let inputZ = -touchDir.z;
+  if (keys.has("KeyW") || keys.has("ArrowUp")) inputZ += 1;
+  if (keys.has("KeyS") || keys.has("ArrowDown")) inputZ -= 1;
+  if (keys.has("KeyA") || keys.has("ArrowLeft")) inputX -= 1;
+  if (keys.has("KeyD") || keys.has("ArrowRight")) inputX += 1;
+  inputX = Math.max(-1, Math.min(1, inputX));
+  inputZ = Math.max(-1, Math.min(1, inputZ));
   const isRunning = keys.has("ShiftLeft") || keys.has("ShiftRight") || keys.has("run-touch");
 
-  player.angle -= turnInput * dt * 2.6;
+  const camYaw = orbitPivot?.rotation.y ?? player.angle;
+  const fx = Math.sin(camYaw);
+  const fz = Math.cos(camYaw);
+  const rx = Math.cos(camYaw);
+  const rz = -Math.sin(camYaw);
+
+  let moveX = fx * inputZ + rx * inputX;
+  let moveZ = fz * inputZ + rz * inputX;
+  const moveLen = Math.hypot(moveX, moveZ);
+  if (moveLen > 1) {
+    moveX /= moveLen;
+    moveZ /= moveLen;
+  }
 
   let moveAmount = 0;
-  if (forwardInput !== 0 && !player.stuck) {
-    const speed = BASE_SPEED * ANIMAL_META[chosenAnimal].speed * (isRunning ? 1.55 : 1) * forwardInput;
-    const nx = player.x + Math.sin(player.angle) * speed * dt;
-    const nz = player.z + Math.cos(player.angle) * speed * dt;
+  if (moveLen > 0.001 && !player.stuck) {
+    const speed = BASE_SPEED * ANIMAL_META[chosenAnimal].speed * (isRunning ? 1.55 : 1);
+    const nx = player.x + moveX * speed * dt;
+    const nz = player.z + moveZ * speed * dt;
     const resolved = arena.resolveCollision(nx, nz, PLAYER_COLLIDE_R);
     player.x = resolved.x;
     player.z = resolved.z;
-    moveAmount = Math.abs(speed) / (BASE_SPEED * 1.6);
+    player.angle = Math.atan2(moveX, moveZ);
+    moveAmount = speed / (BASE_SPEED * 1.6);
     player.stuck = null;
   }
 
@@ -416,15 +433,14 @@ function updatePlayer(dt, t) {
   if (animalRig.headGroup) animalRig.headGroup.rotation.z = Math.sin(t * 1.4) * 0.05;
   if (animalRig.trunk) animalRig.trunk.rotation.x = Math.sin(t * 1.8) * 0.12 - 0.1;
 
-  const orbitAngle = player.angle + orbitPivot.rotation.y;
   const camDist = 3.1;
   const camHeight = 1.7;
-  const desiredX = player.x - Math.sin(orbitAngle) * camDist;
-  const desiredZ = player.z - Math.cos(orbitAngle) * camDist;
+  const desiredX = player.x - Math.sin(camYaw) * camDist;
+  const desiredZ = player.z - Math.cos(camYaw) * camDist;
   const desiredY = camHeight;
-  camera.position.x += (desiredX - camera.position.x) * Math.min(1, dt * 5);
-  camera.position.z += (desiredZ - camera.position.z) * Math.min(1, dt * 5);
-  camera.position.y += (desiredY - camera.position.y) * Math.min(1, dt * 5);
+  camera.position.x += (desiredX - camera.position.x) * Math.min(1, dt * 8);
+  camera.position.z += (desiredZ - camera.position.z) * Math.min(1, dt * 8);
+  camera.position.y += (desiredY - camera.position.y) * Math.min(1, dt * 8);
   camera.lookAt(player.x, 0.35, player.z);
 }
 

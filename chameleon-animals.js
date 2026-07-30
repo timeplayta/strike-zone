@@ -1,4 +1,4 @@
-/** Bichinhos jogáveis do modo Mecha Camaleão — corpo recolorível pra camuflagem */
+/** Bichinhos jogáveis do modo Esconde-Bicho — corpo recolorível pra camuflagem */
 
 import * as THREE from "three";
 
