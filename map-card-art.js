@@ -224,6 +224,62 @@ function drawCamaleao(ctx) {
   ctx.fillText("🦎", W * 0.06, H * 0.2);
 }
 
+function drawNeblina(ctx) {
+  sky(ctx, "#0a1810", "#1a3020");
+  ground(ctx, "#121a14", H * 0.48);
+  fog(ctx, "rgba(20,60,30,0.78)", H * 0.35);
+  block(ctx, 80, 90, 140, 170, "#141a16");
+  block(ctx, 280, 70, 180, 200, "#101814");
+  block(ctx, 460, 100, 120, 160, "#161c18");
+  monster(ctx, 520, 175, 0.82, "rgba(0,0,0,0.88)", "#44ff66");
+  runner(ctx, 270, 220, 0.74, "#0a100c", "rgba(68,255,120,0.22)");
+  ctx.fillStyle = "rgba(40,120,60,0.35)";
+  ctx.fillRect(0, H * 0.4, W, H * 0.6);
+}
+
+function drawEsconde(ctx) {
+  sky(ctx, "#6eb5ff", "#a8d4ff");
+  ground(ctx, "#7cb342", H * 0.52);
+  block(ctx, 120, 160, 50, 70, "#f2efe6");
+  block(ctx, 220, 140, 45, 65, "#f1d430");
+  block(ctx, 340, 170, 48, 72, "#f2f2f2");
+  block(ctx, 430, 150, 52, 68, "#e8785a");
+  runner(ctx, 280, 230, 0.8, "#4a90d9", "rgba(255,255,255,0.25)");
+  ctx.fillStyle = "rgba(0,0,0,0.75)";
+  ctx.beginPath();
+  ctx.ellipse(W * 0.78, H * 0.28, 38, 50, 0.15, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "#ff3d2e";
+  ctx.beginPath();
+  ctx.arc(W * 0.78, H * 0.3, 10, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "rgba(255,255,255,0.9)";
+  ctx.font = "bold 28px sans-serif";
+  ctx.fillText("15", W * 0.12, H * 0.22);
+}
+
+function drawSombras(ctx) {
+  sky(ctx, "#050508", "#120818");
+  ground(ctx, "#0c0a10", H * 0.5);
+  fog(ctx, "rgba(5,5,10,0.85)", H * 0.38);
+  block(ctx, 100, 120, 440, 30, "#1a1510");
+  block(ctx, 140, 150, 55, 80, "#222018");
+  block(ctx, 280, 140, 50, 90, "#1a1814");
+  block(ctx, 400, 155, 48, 75, "#201c18");
+  runner(ctx, 310, 228, 0.72, "#6b5b95", "rgba(120,100,200,0.2)");
+  ctx.fillStyle = "rgba(255,220,140,0.55)";
+  ctx.beginPath();
+  ctx.moveTo(W * 0.72, H * 0.2);
+  ctx.lineTo(W * 0.62, H * 0.55);
+  ctx.lineTo(W * 0.82, H * 0.55);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = "rgba(0,0,0,0.82)";
+  ctx.beginPath();
+  ctx.ellipse(W * 0.74, H * 0.24, 34, 46, 0.1, 0, Math.PI * 2);
+  ctx.fill();
+}
+
 function drawFrontier(ctx) {
   sky(ctx, "#6ec8ff", "#cceeff");
   sun(ctx, W * 0.78, H * 0.14, 58, "rgba(255,230,150,0.95)");
@@ -466,8 +522,11 @@ const DRAWERS = {
   dust: drawDust,
   warehouse: drawWarehouse,
   horror: drawHorror,
+  neblina: drawNeblina,
   labyrinth: drawLabyrinth,
   camaleao: drawCamaleao,
+  esconde: drawEsconde,
+  sombras: drawSombras,
   frontier: drawFrontier,
   chess: drawChess,
   dama: drawDama,

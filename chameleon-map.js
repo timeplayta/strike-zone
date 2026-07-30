@@ -315,6 +315,7 @@ export function buildChameleonArena(seed = 1) {
   return {
     group,
     half: HALF,
+    colliders,
     colorAt,
     lightAt,
     findStickable,

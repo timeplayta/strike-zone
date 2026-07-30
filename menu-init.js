@@ -125,8 +125,11 @@
     dust: "Dust Alley",
     warehouse: "Cold Storage",
     horror: "Terror",
+    neblina: "Perseguido na Neblina",
     labyrinth: "Fim das Trevas",
     camaleao: "Esconde-Bicho",
+    esconde: "Esconde-Esconde",
+    sombras: "Sombras no Porão",
     frontier: "Ilha Frontier",
     chess: "Xadrez",
     dama: "Dama",
@@ -159,6 +162,9 @@
     "general",
   ]);
 
+  const HIDE_SEEK_MAPS = new Set(["esconde", "sombras"]);
+  const SPECIAL_LOBBY_MAPS = new Set(["camaleao", ...HIDE_SEEK_MAPS]);
+
   function updateSelectedMapLabel() {
     const map = document.querySelector(".map-btn.selected")?.dataset?.map || "dust";
     const el = $("ffSelectedMapName");
@@ -179,9 +185,9 @@
     const isLab = map === "labyrinth";
     const isFrontier = map === "frontier";
     const isTable = TABLE_GAME_MAPS.has(map);
-    const isCamaleao = map === "camaleao";
+    const isSpecialLobby = SPECIAL_LOBBY_MAPS.has(map);
     document.querySelectorAll(".labyrinth-hide").forEach((el) => {
-      el.classList.toggle("hidden", isLab || isTable || isCamaleao);
+      el.classList.toggle("hidden", isLab || isTable || isSpecialLobby);
     });
     const botSlider = $("botCount");
     if (botSlider && isFrontier) botSlider.value = "100";
@@ -197,7 +203,7 @@
   function updateMenuHint() {
     const device = document.querySelector(".device-btn.selected")?.dataset.device || "desktop";
     const map = document.querySelector(".map-btn.selected")?.dataset?.map;
-    const horror = map === "horror";
+    const horror = map === "horror" || map === "neblina";
     const frontier = map === "frontier";
     const table = TABLE_GAME_MAPS.has(map);
     const hint = $("menuHint");
@@ -205,6 +211,13 @@
     if (map === "camaleao") {
       hint.textContent =
         "Esconde-Bicho — escolha bichinho · pinte a cor · WASD anda pra onde a câmera aponta · arraste pra olhar · Shift corre · E cola";
+      return;
+    }
+    if (HIDE_SEEK_MAPS.has(map)) {
+      hint.textContent =
+        map === "sombras"
+          ? "Sombras no Porão — contagem · esconda-se nas sombras · WASD · arraste pra olhar · Shift corre · E agachar"
+          : "Esconde-Esconde — contagem · esconda-se atrás dos obstáculos · WASD · arraste pra olhar · Shift corre · E agachar";
       return;
     }
     if (table) {
@@ -313,6 +326,23 @@
         }
       } catch (e) {
         showLoadError(e?.message || "Falha ao abrir o Esconde-Bicho.");
+        return;
+      }
+    }
+    if (HIDE_SEEK_MAPS.has(map)) {
+      $("loadError")?.classList.add("hidden");
+      if (typeof window.openHideSeekMode === "function") {
+        window.openHideSeekMode(map);
+        return;
+      }
+      try {
+        await import("./hide-seek-mode.js?v=1");
+        if (typeof window.openHideSeekMode === "function") {
+          window.openHideSeekMode(map);
+          return;
+        }
+      } catch (e) {
+        showLoadError(e?.message || "Falha ao abrir o Esconde-Esconde.");
         return;
       }
     }

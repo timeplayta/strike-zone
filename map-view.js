@@ -1,14 +1,17 @@
 /** Tela cheia de mapas — abre pelo botão acima de JOGAR */
 
-import { getMapCardArtUrl } from "./map-card-art.js?v=75";
+import { getMapCardArtUrl } from "./map-card-art.js?v=76";
 import { closeAccountModalIfLeavingHome } from "./account-hub.js";
 
 const MAPS = [
   { id: "dust", category: "tiro", name: "Dust Alley", desc: "Deserto aberto" },
   { id: "warehouse", category: "tiro", name: "Cold Storage", desc: "Armazém fechado" },
   { id: "horror", category: "terror", name: "Terror", desc: "Combate escuro", horror: true },
+  { id: "neblina", category: "terror", name: "Perseguido na Neblina", desc: "Neblina verde · monstro na escuridão", horror: true },
   { id: "labyrinth", category: "esconde-esconde", name: "Fim das Trevas", desc: "Labirinto de escape", horror: true },
   { id: "camaleao", category: "esconde-esconde", name: "Esconde-Bicho", desc: "Vire um bichinho e se camufle do caçador" },
+  { id: "esconde", category: "esconde-esconde", name: "Esconde-Esconde", desc: "Contagem · esconda-se atrás dos obstáculos" },
+  { id: "sombras", category: "esconde-esconde", name: "Sombras no Porão", desc: "Porão escuro · fuja da lanterna do caçador" },
   { id: "frontier", category: "tiro", name: "Ilha Frontier", desc: "Ilha 2km • 10 POIs • deserto, selva e costa • 100 bots" },
   { id: "chess", category: "jogos-de-mesa", name: "Xadrez", desc: "Tabuleiro clássico · vs bot" },
   { id: "dama", category: "jogos-de-mesa", name: "Dama", desc: "Damas 8×8 · capturas obrigatórias" },
@@ -44,7 +47,7 @@ function categoryForMap(mapId) {
 function buildMapCards() {
   const grid = $("ffMapCardGrid");
   if (!grid) return;
-  if (grid.dataset.built === "6" && grid.children.length) return;
+  if (grid.dataset.built === "7" && grid.children.length) return;
   try {
     grid.innerHTML = MAPS.map((m) => {
       const art = getMapCardArtUrl(m.id);
@@ -62,7 +65,7 @@ function buildMapCards() {
         `</div>`
       );
     }).join("");
-    grid.dataset.built = "6";
+    grid.dataset.built = "7";
   } catch (err) {
     console.warn("[Strike Zone] Falha ao montar cards de mapa:", err);
     grid.dataset.built = "0";
