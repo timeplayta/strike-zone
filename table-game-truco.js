@@ -10,7 +10,7 @@ import {
   playTrucoCall,
   playBotThink,
   announceDealing,
-  speakLine,
+  speakBotReact,
 } from "./table-games-audio.js";
 import { getBotTier, pickMoveWithWisdom } from "./table-games-bots.js";
 import {
@@ -186,7 +186,7 @@ export function mountTrucoGame(root, { botTier, onExit, onEnd, onBind, match }) 
         stake = next;
         paintScore();
         setStatus(`Bot aceitou! Vale ${stake}.`);
-        speakLine(stake >= 6 ? "Aceito!" : "Caiu.");
+        speakBotReact(stake >= 6 ? "Aceito!" : "Caiu.");
         waiting = false;
         renderActions();
         if (turn === "you") match?.startPlayerClock?.(false);
@@ -195,11 +195,11 @@ export function mountTrucoGame(root, { botTier, onExit, onEnd, onBind, match }) 
         scoreYou += stake;
         paintScore();
         setStatus(`Bot correu! +${stake} pra você.`);
-        speakLine("Correu!");
+        speakBotReact("Correu!");
         if (scoreYou >= 12) endMatch("you");
         else setTimeout(dealHand, 900);
       }
-    }, 600 + (1 - tier.pocketBias) * 500);
+    }, 320 + (1 - tier.pocketBias) * 220);
   }
 
   function finishTrick() {
@@ -299,7 +299,7 @@ export function mountTrucoGame(root, { botTier, onExit, onEnd, onBind, match }) 
     }
     playedOrder = "you-first";
     setStatus("Bot respondendo…");
-    setTimeout(botTurn, 450 + Math.random() * 300);
+    setTimeout(botTurn, 280 + Math.random() * 160);
   }
 
   function botTurn() {
@@ -324,14 +324,14 @@ export function mountTrucoGame(root, { botTier, onExit, onEnd, onBind, match }) 
         paintScore();
         waiting = false;
         setStatus(`Aceito! Vale ${stake}. Bot joga…`);
-        speakLine("Aceito!");
+        speakBotReact("Aceito!");
         setTimeout(botPlayCard, 400);
       };
       no.onclick = () => {
         scoreBot += stake;
         paintScore();
         setStatus(`Você correu. +${stake} pro bot.`);
-        speakLine("Correu!");
+        speakBotReact("Correu!");
         if (scoreBot >= 12) endMatch("bot");
         else setTimeout(dealHand, 800);
       };

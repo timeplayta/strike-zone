@@ -105,9 +105,36 @@ const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
 // Duas personas de locutor: quando o sistema só tem 1 voz em pt-BR, a diferença
 // de tom/velocidade ainda deixa as duas audivelmente diferentes.
 const VOICE_PERSONAS = {
-  female: { gender: "female", pitch: 1.05, rate: 0.98, fallbackPitch: 1.22 },
-  male: { gender: "male", pitch: 0.9, rate: 0.96, fallbackPitch: 0.76 },
+  female: { gender: "female", pitch: 1.05, rate: 1.08, fallbackPitch: 1.22 },
+  male: { gender: "male", pitch: 0.9, rate: 1.06, fallbackPitch: 0.76 },
 };
+
+let ttsWarmed = false;
+
+/** Chrome atrasa a 1ª fala — aquece no clique do lobby */
+function warmTtsEngine() {
+  if (typeof speechSynthesis === "undefined") return;
+  refreshVoices();
+  if (ttsWarmed) return;
+  ttsWarmed = true;
+  try {
+    const u = new SpeechSynthesisUtterance(".");
+    u.volume = 0.001;
+    u.rate = 3;
+    const { voice } = resolveVoice("female");
+    if (voice) u.voice = voice;
+    speechSynthesis.speak(u);
+    window.setTimeout(() => {
+      try {
+        speechSynthesis.cancel();
+      } catch {
+        /* ignore */
+      }
+    }, 50);
+  } catch {
+    /* ignore */
+  }
+}
 
 let currentPersona = "female";
 export function setAnnouncerPersona(id) {
@@ -125,11 +152,14 @@ export function unlockTableAudio() {
     getCtx();
     if (typeof speechSynthesis !== "undefined") {
       refreshVoices();
-      // Aquece o motor de voz cedo para não atrasar a contagem na 1ª partida
+      warmTtsEngine();
       if (!voiceCache.length) {
         speechSynthesis.addEventListener?.(
           "voiceschanged",
-          () => refreshVoices(),
+          () => {
+            refreshVoices();
+            warmTtsEngine();
+          },
           { once: true }
         );
       }
@@ -146,16 +176,25 @@ export function speakLine(text, opts = {}) {
         resolve(false);
         return;
       }
+      const interrupt = opts.interrupt !== false;
+      if (interrupt) {
+        try {
+          speechSynthesis.cancel();
+        } catch {
+          /* ignore */
+        }
+      }
       const persona = VOICE_PERSONAS[opts.persona || currentPersona] || VOICE_PERSONAS.female;
       const { voice, matched } = resolveVoice(persona.gender);
       const u = new SpeechSynthesisUtterance(String(text));
       u.lang = opts.lang || "pt-BR";
       if (voice) u.voice = voice;
       const excited = opts.excited ? 0.05 : 0;
-      const jitter = (Math.random() - 0.5) * 0.03; // evita cadência robótica sempre igual
+      const jitter = (Math.random() - 0.5) * 0.02;
       const basePitch = matched ? persona.pitch : persona.fallbackPitch;
       u.pitch = clamp((opts.pitch ?? basePitch + excited) + jitter, 0.3, 2);
-      u.rate = clamp((opts.rate ?? persona.rate + excited) + jitter, 0.5, 2);
+      const baseRate = opts.rate ?? persona.rate + excited + (opts.bot ? 0.06 : 0);
+      u.rate = clamp(baseRate + jitter, 0.5, 2);
       u.volume = opts.volume ?? 0.95;
       let done = false;
       const finish = (ok) => {
@@ -166,11 +205,16 @@ export function speakLine(text, opts = {}) {
       u.onend = () => finish(true);
       u.onerror = () => finish(false);
       speechSynthesis.speak(u);
-      setTimeout(() => finish(true), Math.min(5000, 500 + String(text).length * 70));
+      setTimeout(() => finish(true), Math.min(3500, 220 + String(text).length * 42));
     } catch {
       resolve(false);
     }
   });
+}
+
+/** Falas reativas do bot — corta fila anterior e fala mais rápido */
+export function speakBotReact(text, opts = {}) {
+  return speakLine(text, { rate: 1.16, interrupt: true, bot: true, ...opts });
 }
 
 /** Contagem 1-2-3 sincronizada: voz + visual no mesmo passo, ritmo fixo */
@@ -178,9 +222,9 @@ export async function runMatchCountdown(gameName = "", onVisualStep = null) {
   unlockTableAudio();
   currentPersona = Math.random() < 0.5 ? "female" : "male";
 
-  const COUNTDOWN_RATE = 1.42;
-  const STEP_MS = 580;
-  const FINAL_MS = 720;
+  const COUNTDOWN_RATE = 1.48;
+  const STEP_MS = 540;
+  const FINAL_MS = 680;
 
   const steps = [
     { visual: "1", speech: "Um", freq: 320 },
@@ -367,9 +411,9 @@ export function playCardShuffle() {
   }
 }
 
-export async function announceDealing() {
+export function announceDealing() {
   playCardShuffle();
-  await speakLine("Cartas sendo dadas!", { rate: 1.1 });
+  speakBotReact("Cartas!", { rate: 1.24, interrupt: false });
 }
 
 export function playDominoPlace() {
@@ -385,7 +429,7 @@ export function playChip() {
 export function playTrucoCall() {
   tone(300, 0.1, "sawtooth", 0.08);
   tone(450, 0.12, "square", 0.07, 0.08);
-  speakLine("Truco!", { rate: 1.2, pitch: 1.15 });
+  speakBotReact("Truco!", { rate: 1.22, pitch: 1.12, excited: true });
 }
 
 export function playFlip() {

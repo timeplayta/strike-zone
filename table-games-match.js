@@ -3,7 +3,7 @@
  */
 
 import { isSessionAdult } from "./player-account.js";
-import { announceMatchEnd } from "./table-games-audio.js";
+import { announceMatchEnd, speakBotReact } from "./table-games-audio.js";
 
 function normalizeMatchOutcome(result) {
   const r = String(result ?? "").toLowerCase();
@@ -67,37 +67,7 @@ function getSpeechRecognition() {
 }
 
 function speakBotLine(text) {
-  return new Promise((resolve) => {
-    try {
-      if (typeof speechSynthesis === "undefined") {
-        resolve(false);
-        return;
-      }
-      speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(text);
-      u.lang = "pt-BR";
-      u.rate = 1.02;
-      u.pitch = 1.05;
-      u.volume = 0.92;
-      const voices = speechSynthesis.getVoices?.() || [];
-      const pt =
-        voices.find((v) => /pt(-|_)?BR/i.test(v.lang)) ||
-        voices.find((v) => /^pt/i.test(v.lang));
-      if (pt) u.voice = pt;
-      let done = false;
-      const finish = (ok) => {
-        if (done) return;
-        done = true;
-        resolve(ok);
-      };
-      u.onend = () => finish(true);
-      u.onerror = () => finish(false);
-      speechSynthesis.speak(u);
-      setTimeout(() => finish(true), Math.min(12000, 800 + text.length * 80));
-    } catch {
-      resolve(false);
-    }
-  });
+  return speakBotReact(text, { rate: 1.14 });
 }
 
 function stopBotSpeech() {
@@ -441,13 +411,15 @@ export function mountMatchChrome(matchEl, handlers = {}) {
     updateMicUi();
 
     pushChat("Bot", reply, "bot");
-    const spoke = await speakBotLine(reply);
+    const spokePromise = speakBotLine(reply);
+    setVoiceStatus("Bot falando…");
+    const spoke = await spokePromise;
     if (!spoke) setVoiceStatus("Bot em texto (TTS falhou)");
 
     botSpeaking = false;
     if (micOn && !destroyed) {
       updateMicUi();
-      scheduleRecognitionRestart(350);
+      scheduleRecognitionRestart(120);
     } else {
       updateMicUi();
     }
@@ -459,7 +431,7 @@ export function mountMatchChrome(matchEl, handlers = {}) {
     pushChat("Você", clean, "player");
     setTimeout(() => {
       if (!destroyed) botRespond(clean);
-    }, 280);
+    }, 60);
   }
 
   async function startVoice() {

@@ -14,7 +14,7 @@ import {
   playChip,
   playBotThink,
   announceDealing,
-  speakLine,
+  speakBotReact,
 } from "./table-games-audio.js";
 import { getBotTier, pickMoveWithWisdom } from "./table-games-bots.js";
 import {
@@ -1131,9 +1131,9 @@ export function mountUnoGame(root, { botTier, onExit, onEnd, onBind, match }) {
   function unoShout(who) {
     if (who === "you" && you.length === 1) {
       statusEl.textContent = "UNO! Só falta 1 carta!";
-      speakLine("Uno!");
+      speakBotReact("Uno!");
     } else if (who === "bot" && bot.length === 1) {
-      speakLine("O bot gritou uno!");
+      speakBotReact("Uno!");
     }
   }
 
@@ -1401,7 +1401,7 @@ export function mountDominoGame(root, { botTier, onExit, onEnd, onBind, match })
     chain = [];
     turn = "you";
     over = false;
-    speakLine("Pedras no jogo!");
+    speakBotReact("Pedras no jogo!");
     paint();
     statusEl.textContent = "Sua vez — jogue qualquer pedra pra abrir";
     actions.innerHTML = "";
