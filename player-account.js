@@ -43,6 +43,7 @@ function getSavedPlayerIdForName(name) {
 const KILL_REWARD = 12;
 const SOLO_KILL_REWARD = 55;
 const SESSION_KEY = "strikezone_session_v3";
+const LAST_EMAIL_KEY = "strikezone_last_email";
 
 let cachedAccount = null;
 let cachedName = "";
@@ -58,13 +59,60 @@ function emptyAccount() {
   return { coins: 0, skins: {}, purchases: [], characterSkin: "ct_tactical" };
 }
 
+function rememberLoginEmail(email) {
+  const mail = String(email || "").trim();
+  if (!mail) return;
+  try {
+    localStorage.setItem(LAST_EMAIL_KEY, mail);
+  } catch { /* ignore */ }
+}
+
+export function getLastLoginEmail() {
+  try {
+    return localStorage.getItem(LAST_EMAIL_KEY) || getSavedSession()?.account?.email || "";
+  } catch {
+    return "";
+  }
+}
+
+function hydrateSessionFromStorage() {
+  const saved = getSavedSession();
+  if (!saved?.token || !saved?.accountId) return false;
+  cachedName = saved.name || saved.account?.name || "";
+  sessionToken = saved.token;
+  cachedAccountId = saved.accountId;
+  cachedAccount = saved.account || emptyAccount();
+  cachedIsAdmin = !!cachedAccount.isAdmin;
+  if (typeof window !== "undefined") window.__cachedAccount = cachedAccount;
+  return true;
+}
+
+export function getActiveToken() {
+  return sessionToken || getSavedSession()?.token || "";
+}
+
+function invalidateServerSession() {
+  const email = cachedAccount?.email || getSavedSession()?.account?.email;
+  sessionToken = "";
+  cachedAccountId = "";
+  cachedName = "";
+  cachedAccount = null;
+  cachedIsAdmin = false;
+  if (typeof window !== "undefined") window.__cachedAccount = null;
+  try {
+    localStorage.removeItem(SESSION_KEY);
+  } catch { /* ignore */ }
+  if (email) rememberLoginEmail(email);
+}
+
 export function saveSession(name, token, account) {
-  cachedName = (name || "").trim();
+  cachedName = (name || "").trim() || account?.name || "";
   sessionToken = token || "";
   cachedAccount = account || emptyAccount();
   cachedAccountId = account?.id || "";
   cachedIsAdmin = !!cachedAccount.isAdmin;
   if (typeof window !== "undefined") window.__cachedAccount = cachedAccount;
+  rememberLoginEmail(account?.email);
   try {
     localStorage.setItem(
       SESSION_KEY,
@@ -113,7 +161,7 @@ export function getPlayerId() {
 }
 
 export function isLoggedIn() {
-  return !!(getAccountId() && sessionToken);
+  return !!(getAccountId() && getActiveToken());
 }
 
 export function isSessionAdmin() {
@@ -132,7 +180,7 @@ export function getCharacterSkin() {
 function authBody(extra = {}) {
   return {
     accountId: getAccountId(),
-    token: sessionToken,
+    token: getActiveToken(),
     ...extra,
   };
 }
@@ -145,7 +193,7 @@ export async function getPlayerLoadout(name) {
 }
 
 export async function savePlayerLoadout(name, loadout) {
-  if (!getAccountId() || !sessionToken) return { ok: false, msg: "Faça login para salvar" };
+  if (!getAccountId() || !getActiveToken()) return { ok: false, msg: "Faça login para salvar" };
   try {
     const { ok, data } = await apiPost("/api/account/profile", authBody({ loadout }));
     if (ok && data.ok) {
@@ -153,7 +201,7 @@ export async function savePlayerLoadout(name, loadout) {
       saveSession(cachedName, sessionToken, data.account);
       return { ok: true, account: data.account };
     }
-    if (data.error?.includes("autorizado")) clearSession();
+    if (data.error?.includes("autorizado")) invalidateServerSession();
     return { ok: false, msg: data.error || "Erro ao salvar" };
   } catch {
     cachedAccount.loadout = loadout;
@@ -185,7 +233,7 @@ export function isVoiceChatEnabled() {
 }
 
 export async function saveAvatarChoice(name, avatar) {
-  if (!getAccountId() || !sessionToken) return { ok: false };
+  if (!getAccountId() || !getActiveToken()) return { ok: false };
   try {
     const { ok, data } = await apiPost("/api/account/profile", authBody({ avatar }));
     if (ok && data.ok) {
@@ -201,7 +249,7 @@ export async function saveAvatarChoice(name, avatar) {
 }
 
 export async function uploadProfilePhoto(imageDataUrl) {
-  if (!getAccountId() || !sessionToken) return { ok: false, msg: "Faça login" };
+  if (!getAccountId() || !getActiveToken()) return { ok: false, msg: "Faça login" };
   try {
     const { ok, data } = await apiPost("/api/account/photo", authBody({ imageDataUrl }));
     if (ok && data.ok) {
@@ -215,7 +263,7 @@ export async function uploadProfilePhoto(imageDataUrl) {
 }
 
 export async function removeProfilePhoto() {
-  if (!getAccountId() || !sessionToken) return { ok: false, msg: "Faça login" };
+  if (!getAccountId() || !getActiveToken()) return { ok: false, msg: "Faça login" };
   try {
     const { ok, data } = await apiPost("/api/account/photo/remove", authBody());
     if (ok && data.ok) {
@@ -229,7 +277,7 @@ export async function removeProfilePhoto() {
 }
 
 export async function setVoiceChatEnabled(enabled) {
-  if (!getAccountId() || !sessionToken) return { ok: false, msg: "Faça login" };
+  if (!getAccountId() || !getActiveToken()) return { ok: false, msg: "Faça login" };
   if (enabled && !isSessionAdult()) {
     return { ok: false, msg: "Conversas por voz só para maiores de 18 anos" };
   }
@@ -261,7 +309,7 @@ export async function searchPlayers(query) {
 }
 
 export async function addFriendByPlayerId(playerId) {
-  if (!getAccountId() || !sessionToken) return { ok: false, msg: "Faça login" };
+  if (!getAccountId() || !getActiveToken()) return { ok: false, msg: "Faça login" };
   try {
     const { ok, data } = await apiPost("/api/account/friends/add", authBody({ playerId }));
     if (ok && data.ok) {
@@ -275,7 +323,7 @@ export async function addFriendByPlayerId(playerId) {
 }
 
 export async function removeFriendByPlayerId(playerId) {
-  if (!getAccountId() || !sessionToken) return { ok: false, msg: "Faça login" };
+  if (!getAccountId() || !getActiveToken()) return { ok: false, msg: "Faça login" };
   try {
     const { ok, data } = await apiPost("/api/account/friends/remove", authBody({ playerId }));
     if (ok && data.ok) {
@@ -289,10 +337,10 @@ export async function removeFriendByPlayerId(playerId) {
 }
 
 export async function refreshFriendsList() {
-  if (!getAccountId() || !sessionToken) return { ok: false, friends: [] };
+  if (!getAccountId() || !getActiveToken()) return { ok: false, friends: [] };
   try {
     const res = await fetch(
-      `/api/account/friends?accountId=${encodeURIComponent(getAccountId())}&token=${encodeURIComponent(sessionToken)}`
+      `/api/account/friends?accountId=${encodeURIComponent(getAccountId())}&token=${encodeURIComponent(getActiveToken())}`
     );
     const data = await res.json();
     if (data.ok) {
@@ -322,28 +370,27 @@ export async function tryRestoreSession() {
   const saved = getSavedSession();
   if (!saved?.token || !saved?.accountId) return null;
 
+  hydrateSessionFromStorage();
+
   try {
-    const { ok, data } = await apiPost("/api/account/session", {
+    const { ok, data, status } = await apiPost("/api/account/session", {
       accountId: saved.accountId,
       token: saved.token,
     });
     if (ok && data.ok && data.account) {
-      saveSession(saved.name, saved.token, data.account);
+      saveSession(saved.name || data.account.name, saved.token, data.account);
       return data.account;
     }
-    // Servidor respondeu, mas a sessão não vale mais — não reutilizar token velho.
-    clearSession();
-    return null;
-  } catch { /* offline */ }
+    if (status === 401) {
+      invalidateServerSession();
+      return null;
+    }
+  } catch { /* offline ou servidor acordando */ }
 
   if (saved.account && hasValidEmail(saved.account)) {
-    cachedName = saved.name;
-    sessionToken = saved.token;
-    cachedAccountId = saved.accountId;
-    cachedAccount = saved.account;
+    hydrateSessionFromStorage();
     return saved.account;
   }
-  clearSession();
   return null;
 }
 
@@ -432,7 +479,7 @@ export function getAccountCoins(username) {
 }
 
 export async function addKillReward(username, isSolo = false) {
-  if (!getAccountId() || !sessionToken) return isSolo ? SOLO_KILL_REWARD : KILL_REWARD;
+  if (!getAccountId() || !getActiveToken()) return isSolo ? SOLO_KILL_REWARD : KILL_REWARD;
 
   try {
     const { ok, data } = await apiPost("/api/account/kill", authBody({ solo: isSolo }));
@@ -441,7 +488,7 @@ export async function addKillReward(username, isSolo = false) {
       saveSession(cachedName, sessionToken, cachedAccount);
       return data.gain ?? (isSolo ? SOLO_KILL_REWARD : KILL_REWARD);
     }
-    if (data.error?.includes("autorizado")) clearSession();
+    if (data.error?.includes("autorizado")) invalidateServerSession();
   } catch { /* offline */ }
 
   const gain = isSolo ? SOLO_KILL_REWARD : KILL_REWARD;
@@ -454,7 +501,7 @@ export async function buyShopItem(username, itemId) {
   const item = getShopItem(itemId);
   if (!item) return { ok: false, msg: "Item inválido na loja — atualize a página." };
   if (!getAccountId()) return { ok: false, msg: "Faça login para comprar." };
-  if (!sessionToken) return { ok: false, msg: "Faça login para comprar" };
+  if (!getActiveToken()) return { ok: false, msg: "Faça login para comprar" };
 
   try {
     const { ok, data } = await apiPost("/api/account/buy", authBody({ itemId }));
@@ -466,7 +513,7 @@ export async function buyShopItem(username, itemId) {
     }
     if (data.error) {
       if (data.error.includes("autorizado") || data.error.includes("Sessão expirada")) {
-        clearSession();
+        invalidateServerSession();
         return { ok: false, msg: "Sessão expirada — faça login novamente." };
       }
       return { ok: false, msg: data.error };
@@ -491,7 +538,7 @@ export async function equipShopItem(itemId) {
       return { ok: true, account: data.account };
     }
     if (data.error?.includes("autorizado") || data.error?.includes("Sessão expirada")) {
-      clearSession();
+      invalidateServerSession();
       return { ok: false, msg: "Sessão expirada — faça login novamente." };
     }
     return { ok: false, msg: data.error || "Não foi possível equipar" };
@@ -754,7 +801,7 @@ function renderCoinPacks(grid, packs) {
 
 async function startCoinPurchase(packId, btnEl) {
   const accountId = getAccountId();
-  const token = sessionToken;
+  const token = getActiveToken();
   if (!accountId || !token) {
     alert("Faça login para comprar moedas.");
     return;
@@ -791,4 +838,8 @@ function showCoinPackSuccess(coins, pack) {
   if (msg && coins) {
     msg.textContent = `+${Number(coins).toLocaleString("pt-BR")} moedas creditadas! Aproveite a loja.`;
   }
+}
+
+if (typeof window !== "undefined") {
+  hydrateSessionFromStorage();
 }

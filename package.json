@@ -17,6 +17,7 @@
     "@capacitor/android": "^8.4.0",
     "@capacitor/cli": "^8.4.0",
     "@capacitor/core": "^8.4.0",
-    "stripe": "^22.2.1"
+    "stripe": "^22.2.1",
+    "pg": "^8.16.3"
   }
 }

@@ -3,6 +3,7 @@
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
+const { scheduleRemoteWrite } = require("./account-persistence.js");
 
 const ADMIN_EMAIL = "sistemasparasaude@gmail.com";
 const ADMIN_ACCOUNTS = { [ADMIN_EMAIL]: "123456" };
@@ -11,6 +12,9 @@ const ADMIN_BOOTSTRAP_EMAIL = ADMIN_EMAIL;
 
 const DB_FILE = path.join(__dirname, "data", "accounts.json");
 const SESSION_DAYS = 30;
+const SESSION_SECRET =
+  process.env.SESSION_SECRET ||
+  crypto.createHash("sha256").update(`strikezone-${__dirname}`).digest("hex");
 const MIN_PASSWORD_LEN = 4;
 const LOGIN_FAIL_MSG = "Email ou senha errados. Confira os dados e tente de novo.";
 
@@ -490,17 +494,52 @@ function verifyPassword(p, password) {
   return hashPassword(password, p.passwordSalt) === p.passwordHash;
 }
 
+function signJwt(payload) {
+  const header = Buffer.from(JSON.stringify({ alg: "HS256", typ: "JWT" })).toString("base64url");
+  const body = Buffer.from(JSON.stringify(payload)).toString("base64url");
+  const sig = crypto.createHmac("sha256", SESSION_SECRET).update(`${header}.${body}`).digest("base64url");
+  return `${header}.${body}.${sig}`;
+}
+
+function verifyJwt(token) {
+  const parts = String(token || "").split(".");
+  if (parts.length !== 3) return null;
+  const [header, body, sig] = parts;
+  const expected = crypto
+    .createHmac("sha256", SESSION_SECRET)
+    .update(`${header}.${body}`)
+    .digest("base64url");
+  if (sig !== expected) return null;
+  try {
+    const payload = JSON.parse(Buffer.from(body, "base64url").toString("utf8"));
+    if (payload.exp && Date.now() / 1000 > payload.exp) return null;
+    return payload;
+  } catch {
+    return null;
+  }
+}
+
 function createSessionToken(p) {
-  p.sessionToken = crypto.randomBytes(32).toString("hex");
-  p.sessionExpires = Date.now() + SESSION_DAYS * 24 * 3600 * 1000;
-  return p.sessionToken;
+  const exp = Math.floor(Date.now() / 1000) + SESSION_DAYS * 86400;
+  const token = signJwt({ sub: p.id, exp });
+  p.sessionToken = token;
+  p.sessionExpires = exp * 1000;
+  return token;
 }
 
 function sessionValid(p, token) {
-  if (!p || !token || p.sessionToken !== token) return false;
-  if (p.sessionExpires && Date.now() > p.sessionExpires) return false;
+  if (!p || !token) return false;
   if (!emailValid(p.email)) return false;
-  return true;
+
+  const payload = verifyJwt(token);
+  if (payload?.sub === p.id) return true;
+
+  // Sessões antigas (token aleatório salvo no banco)
+  if (p.sessionToken === token) {
+    if (p.sessionExpires && Date.now() > p.sessionExpires) return false;
+    return true;
+  }
+  return false;
 }
 
 function readDb() {
@@ -519,6 +558,7 @@ function readDb() {
 function writeDb(db) {
   fs.mkdirSync(path.dirname(DB_FILE), { recursive: true });
   fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2));
+  scheduleRemoteWrite(db);
 }
 
 function getPlayerById(id) {

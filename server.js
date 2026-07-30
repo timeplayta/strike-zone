@@ -9,9 +9,9 @@ const PORT = Number(process.env.PORT) || 8080;
 const IS_CLOUD = process.env.NODE_ENV === "production" || process.env.RENDER === "true";
 const ROOT = __dirname;
 const { handleAccountApi, ensureBootstrapAdmin } = require("./account-db.js");
+const { initAccountPersistence } = require("./account-persistence.js");
 const { handleStripeApi } = require("./stripe-handlers.js");
 const { handleOAuthApi } = require("./oauth-auth.js");
-ensureBootstrapAdmin();
 const VENDOR_DIR = path.join(ROOT, "vendor");
 const THREE_FILE = path.join(VENDOR_DIR, "three.module.js");
 const THREE_CDN = "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js";
@@ -269,14 +269,26 @@ if (!fs.existsSync(THREE_FILE) || fs.statSync(THREE_FILE).size < 100000) {
   });
 }
 
-server.listen(PORT, "0.0.0.0", () => {
-  const ip = getLocalIP();
-  if (IS_CLOUD) {
-    console.log("\nStrike Zone online (Render) — porta " + PORT + "\n");
-  } else {
-    console.log("\nStrike Zone: http://localhost:" + PORT);
-    if (ip) console.log("Celular: http://" + ip + ":" + PORT + "/celular");
-    console.log("Deixe esta janela aberta.\n");
-    openBrowser("http://localhost:" + PORT);
-  }
+async function boot() {
+  await initAccountPersistence();
+  ensureBootstrapAdmin();
+  server.listen(PORT, "0.0.0.0", () => {
+    const ip = getLocalIP();
+    if (IS_CLOUD) {
+      console.log("\nStrike Zone online (Render) — porta " + PORT + "\n");
+    } else {
+      console.log("\nStrike Zone: http://localhost:" + PORT);
+      if (ip) console.log("Celular: http://" + ip + ":" + PORT + "/celular");
+      console.log("Deixe esta janela aberta.\n");
+      openBrowser("http://localhost:" + PORT);
+    }
+  });
+}
+
+boot().catch((err) => {
+  console.error("[Contas] Falha ao iniciar persistência:", err.message);
+  ensureBootstrapAdmin();
+  server.listen(PORT, "0.0.0.0", () => {
+    console.log("\nStrike Zone online (modo fallback) — porta " + PORT + "\n");
+  });
 });
