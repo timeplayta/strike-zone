@@ -2,38 +2,39 @@
 
 import * as THREE from "three";
 import { buildChameleonArena } from "./chameleon-map.js";
-import { buildHunter } from "./chameleon-animals.js";
+import { buildChameleonAnimal, buildHunter, ANIMAL_META } from "./chameleon-animals.js";
 import { attachOrbitDrag } from "./orbit-drag.js";
+import { attachPixelPaintBrush } from "./chameleon-paint.js";
 import { speakLine, unlockTableAudio } from "./table-games-audio.js";
 
 const VARIANTS = {
   esconde: {
     title: "Esconde-Esconde",
     emoji: "🙈",
-    desc: "O caçador conta até 15… depois te procura! Esconda-se atrás das jarras e patos. WASD anda pra onde a câmera aponta · arraste pra olhar · Shift corre.",
-    duration: 90,
-    countdown: 15,
+    desc: "O caçador conta até 12… depois te procura! Esconda-se atrás das jarras e patos. WASD · arraste o mouse (lados/cima/baixo) · Shift corre · 🖌️ pinte pixel a pixel.",
+    duration: 120,
+    countdown: 12,
     arenaSeed: 42,
     bg: 0x87b8e8,
     fog: 0x6a9cc8,
-    hunterPatrol: 2.4,
-    hunterChase: 4.1,
-    visionRange: 13,
-    playerColor: 0x4a90d9,
+    hunterPatrol: 3.2,
+    hunterChase: 5.4,
+    visionRange: 14,
+    playerColor: 0xf2f2f2,
   },
   sombras: {
     title: "Sombras no Porão",
     emoji: "🔦",
-    desc: "Porão escuro com poucas luzes. Fique nas sombras e longe da lanterna do caçador. WASD · arraste a câmera · Shift corre.",
-    duration: 75,
-    countdown: 12,
+    desc: "Porão escuro — fique nas sombras. Caçador agressivo e rápido. WASD · mouse olha em todas direções · 🎨+🖌️ pintar camuflagem.",
+    duration: 90,
+    countdown: 10,
     arenaSeed: 88,
     bg: 0x0a0808,
     fog: 0x060404,
-    hunterPatrol: 2.7,
-    hunterChase: 4.6,
-    visionRange: 9,
-    playerColor: 0x6b5b95,
+    hunterPatrol: 3.5,
+    hunterChase: 5.8,
+    visionRange: 10,
+    playerColor: 0xd8d0e8,
     dark: true,
   },
 };
@@ -44,7 +45,20 @@ const CATCH_RADIUS = 0.95;
 const HUNTER_SCALE = 1.9;
 const HUNTER_COLLIDE_R = 0.42;
 const PLAYER_COLLIDE_R = 0.09;
-const BASE_SPEED = 3.7;
+const ANIMAL_SCALE = 0.19;
+const BASE_SPEED = 3.8;
+
+let currentHue = 0.58;
+let currentSat = 0.35;
+let currentLum = 0.55;
+let paintMode = false;
+let detachPaintBrush = null;
+
+function currentColorHex() {
+  const c = new THREE.Color();
+  c.setHSL(currentHue, currentSat, currentLum);
+  return c.getHex();
+}
 
 function $(id) {
   return document.getElementById(id);
@@ -71,17 +85,93 @@ let hiderRig = null;
 let hunterRig = null;
 let matchState = null;
 
-function buildHiderMesh(color) {
-  const g = new THREE.Group();
-  const bodyMat = new THREE.MeshStandardMaterial({ color, roughness: 0.65 });
-  const skinMat = new THREE.MeshStandardMaterial({ color: 0xffdbac, roughness: 0.7 });
-  const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.12, 0.32, 4, 8), bodyMat);
-  body.position.y = 0.34;
-  g.add(body);
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.11, 10, 8), skinMat);
-  head.position.y = 0.6;
-  g.add(head);
-  return { group: g };
+function drawColorWheel(canvas) {
+  const ctx = canvas.getContext("2d");
+  const w = canvas.width;
+  const h = canvas.height;
+  const cx = w / 2;
+  const cy = h / 2;
+  const radius = Math.min(cx, cy) - 2;
+  const img = ctx.createImageData(w, h);
+  const tmp = new THREE.Color();
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const dx = x - cx;
+      const dy = y - cy;
+      const dist = Math.hypot(dx, dy);
+      const idx = (y * w + x) * 4;
+      if (dist > radius) {
+        img.data[idx + 3] = 0;
+        continue;
+      }
+      const hue = (Math.atan2(dy, dx) / (Math.PI * 2) + 1) % 1;
+      const sat = Math.min(1, dist / radius);
+      tmp.setHSL(hue, sat, 0.5);
+      img.data[idx] = Math.round(tmp.r * 255);
+      img.data[idx + 1] = Math.round(tmp.g * 255);
+      img.data[idx + 2] = Math.round(tmp.b * 255);
+      img.data[idx + 3] = 255;
+    }
+  }
+  ctx.putImageData(img, 0, 0);
+}
+
+function applyBrushPreview() {
+  const hex = currentColorHex();
+  const preview = shell?.querySelector("[data-color-preview]");
+  if (preview) preview.style.background = `#${hex.toString(16).padStart(6, "0")}`;
+}
+
+function initColorWheel() {
+  const dock = shell.querySelector("[data-color-dock]");
+  if (!dock || dock.dataset.ready) return;
+  dock.dataset.ready = "1";
+  const btn = dock.querySelector("[data-color-btn]");
+  const panel = dock.querySelector("[data-color-panel]");
+  const wheel = dock.querySelector("[data-wheel]");
+  const lum = dock.querySelector("[data-lum]");
+  const paintBtn = dock.querySelector("[data-paint-btn]");
+  drawColorWheel(wheel);
+
+  btn.addEventListener("click", () => panel.classList.toggle("hidden"));
+  paintBtn?.addEventListener("click", () => {
+    paintMode = !paintMode;
+    paintBtn.classList.toggle("active", paintMode);
+    paintBtn.textContent = paintMode ? "🖌️ Pintando…" : "🖌️ Pintar";
+  });
+
+  const pickFromWheel = (e) => {
+    const rect = wheel.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * wheel.width;
+    const y = ((e.clientY - rect.top) / rect.height) * wheel.height;
+    const cx = wheel.width / 2;
+    const cy = wheel.height / 2;
+    const dx = x - cx;
+    const dy = y - cy;
+    const radius = Math.min(cx, cy) - 2;
+    const dist = Math.hypot(dx, dy);
+    if (dist > radius) return;
+    currentHue = (Math.atan2(dy, dx) / (Math.PI * 2) + 1) % 1;
+    currentSat = Math.min(1, dist / radius);
+    applyBrushPreview();
+  };
+  let wheelDown = false;
+  wheel.addEventListener("pointerdown", (e) => {
+    wheelDown = true;
+    wheel.setPointerCapture?.(e.pointerId);
+    pickFromWheel(e);
+  });
+  wheel.addEventListener("pointermove", (e) => {
+    if (wheelDown) pickFromWheel(e);
+  });
+  wheel.addEventListener("pointerup", () => {
+    wheelDown = false;
+  });
+  lum.addEventListener("input", () => {
+    currentLum = Number(lum.value) / 100;
+    applyBrushPreview();
+  });
+  applyBrushPreview();
 }
 
 function hasLineOfSight(hx, hz, px, pz) {
@@ -134,6 +224,19 @@ function ensureShell() {
           </div>
         </div>
         <div class="cha-status" data-status>Esconda-se!</div>
+        <div class="cha-color-dock" data-color-dock>
+          <div class="cha-color-panel hidden" data-color-panel>
+            <canvas class="cha-wheel" data-wheel width="170" height="170"></canvas>
+            <label class="cha-lum-label">Luminosidade</label>
+            <input type="range" class="cha-lum-slider" data-lum min="8" max="95" value="55" />
+            <div class="cha-color-preview-row">
+              <span class="cha-color-preview" data-color-preview></span>
+              <span class="cha-color-hint">Cor do pincel — 🖌️ e clique no personagem</span>
+            </div>
+          </div>
+          <button type="button" class="cha-color-btn" data-color-btn>🎨 Cores</button>
+          <button type="button" class="cha-paint-btn" data-paint-btn>🖌️ Pintar</button>
+        </div>
         <div class="cha-touch" data-touch>
           <div class="cha-touch-move">
             <button type="button" class="cha-touch-btn" data-move="up">▲</button>
@@ -246,7 +349,8 @@ function setupScene(canvas) {
   arena = buildChameleonArena(cfg.arenaSeed);
   scene.add(arena.group);
 
-  hiderRig = buildHiderMesh(cfg.playerColor);
+  hiderRig = buildChameleonAnimal("leao", cfg.playerColor);
+  hiderRig.group.scale.setScalar(ANIMAL_SCALE);
   scene.add(hiderRig.group);
 
   hunterRig = buildHunter();
@@ -267,11 +371,32 @@ function setupScene(canvas) {
     state: "wait",
     waypoint: null,
     chaseLostT: 0,
+    lastSeenX: arena.spawnPlayer.x,
+    lastSeenZ: arena.spawnPlayer.z,
   };
 
   orbitPivot = new THREE.Object3D();
   orbitPivot.rotation.y = player.angle;
-  attachOrbitDrag(canvas, () => orbitPivot, undefined, { invertYaw: true, sensitivity: 0.014 });
+  orbitPivot.rotation.x = 0.1;
+  attachOrbitDrag(canvas, () => orbitPivot, undefined, {
+    invertYaw: true,
+    sensitivity: 0.014,
+    allowPitch: true,
+    canDrag: () => !paintMode,
+  });
+
+  if (detachPaintBrush) detachPaintBrush();
+  detachPaintBrush = attachPixelPaintBrush(canvas, {
+    camera,
+    getTargets: () => (hiderRig ? [hiderRig.group] : []),
+    getBrushColor: currentColorHex,
+    isActive: () => paintMode && matchState?.phase === "play" && !matchState?.over,
+    onPaint: () => {},
+  });
+  cleanupFns.push(() => {
+    detachPaintBrush?.();
+    detachPaintBrush = null;
+  });
 
   function resize() {
     const rect = shell.querySelector("[data-match]").getBoundingClientRect();
@@ -328,7 +453,7 @@ function updatePlayer(dt, t) {
 
   let moveAmount = 0;
   if (moveLen > 0.001 && matchState.phase !== "countdown") {
-    const speed = BASE_SPEED * (player.crouching ? 0.55 : 1) * (isRunning ? 1.45 : 1);
+    const speed = BASE_SPEED * ANIMAL_META.leao.speed * (player.crouching ? 0.55 : 1) * (isRunning ? 1.45 : 1);
     const nx = player.x + moveX * speed * dt;
     const nz = player.z + moveZ * speed * dt;
     const resolved = arena.resolveCollision(nx, nz, PLAYER_COLLIDE_R);
@@ -345,17 +470,21 @@ function updatePlayer(dt, t) {
   hiderRig.group.position.set(player.x, 0, player.z);
   hiderRig.group.rotation.y = player.angle;
   const squat = player.crouching ? 0.18 : 0;
-  hiderRig.group.scale.y = player.crouching ? 0.82 : 1;
+  hiderRig.group.scale.set(ANIMAL_SCALE, ANIMAL_SCALE * (player.crouching ? 0.82 : 1), ANIMAL_SCALE);
   hiderRig.group.position.y = -squat;
+  animateLegs(hiderRig.legs, moveAmount, t);
 
   const camDist = player.crouching ? 2.6 : 3.1;
   const camHeight = player.crouching ? 1.35 : 1.7;
-  const desiredX = player.x - Math.sin(camYaw) * camDist;
-  const desiredZ = player.z - Math.cos(camYaw) * camDist;
+  const camPitch = orbitPivot?.rotation.x ?? 0;
+  const cosP = Math.cos(camPitch);
+  const desiredX = player.x - Math.sin(camYaw) * camDist * cosP;
+  const desiredZ = player.z - Math.cos(camYaw) * camDist * cosP;
+  const desiredY = camHeight + Math.sin(camPitch) * camDist * 0.55;
   camera.position.x += (desiredX - camera.position.x) * Math.min(1, dt * 8);
   camera.position.z += (desiredZ - camera.position.z) * Math.min(1, dt * 8);
-  camera.position.y += (camHeight - camera.position.y) * Math.min(1, dt * 8);
-  camera.lookAt(player.x, player.crouching ? 0.22 : 0.35, player.z);
+  camera.position.y += (desiredY - camera.position.y) * Math.min(1, dt * 8);
+  camera.lookAt(player.x, (player.crouching ? 0.22 : 0.35) + Math.sin(camPitch) * 0.12, player.z);
 }
 
 function updateHunter(dt, t) {
@@ -377,9 +506,9 @@ function updateHunter(dt, t) {
     const resolved = arena.resolveCollision(nx, nz, HUNTER_COLLIDE_R);
     hunter.x = resolved.x;
     hunter.z = resolved.z;
-    if (dist > 14) {
+    if (dist > 12) {
       hunter.chaseLostT += dt;
-      if (hunter.chaseLostT > 2.2) {
+      if (hunter.chaseLostT > 1.6) {
         hunter.state = "patrol";
         hunter.waypoint = null;
         matchState.suspicion = 30;
@@ -390,8 +519,12 @@ function updateHunter(dt, t) {
       return;
     }
   } else {
-    if (!hunter.waypoint || Math.hypot(hunter.waypoint.x - hunter.x, hunter.waypoint.z - hunter.z) < 1) {
-      hunter.waypoint = pickWaypoint();
+    if (matchState.suspicion > 35) {
+      hunter.waypoint = { x: hunter.lastSeenX, z: hunter.lastSeenZ };
+    } else if (!hunter.waypoint || Math.hypot(hunter.waypoint.x - hunter.x, hunter.waypoint.z - hunter.z) < 1) {
+      hunter.waypoint = Math.random() < 0.4
+        ? { x: player.x + (Math.random() - 0.5) * 5, z: player.z + (Math.random() - 0.5) * 5 }
+        : pickWaypoint();
     }
     const dx = hunter.waypoint.x - hunter.x;
     const dz = hunter.waypoint.z - hunter.z;
@@ -424,9 +557,11 @@ function updateHunter(dt, t) {
     const los = hasLineOfSight(hunter.x, hunter.z, player.x, player.z);
     const spotted = los && dist < cfg.visionRange && (inCone || dist < CLOSE_RADIUS);
     if (spotted) {
+      hunter.lastSeenX = player.x;
+      hunter.lastSeenZ = player.z;
       const proximity = Math.max(0, 1 - dist / cfg.visionRange);
-      const expose = (1 - cover) + (player.isRunning ? 0.35 : 0);
-      matchState.suspicion += 48 * proximity * expose * dt;
+      const expose = (1 - cover) + (player.isRunning ? 0.4 : 0);
+      matchState.suspicion += 62 * proximity * expose * dt;
       if (matchState.suspicion >= 100) {
         hunter.state = "chase";
         hunter.chaseLostT = 0;
@@ -456,6 +591,10 @@ function updateHud() {
   if (status) {
     if (matchState.phase === "countdown") {
       status.textContent = `Esconda-se! Caçador conta… ${Math.ceil(matchState.countdownLeft)}s`;
+    } else if (matchState.timeLeft <= 15) {
+      status.textContent = `⏱ ${Math.ceil(matchState.timeLeft)}s — aguente!`;
+    } else if (hunter.state === "chase") {
+      status.textContent = "🏃 CAÇADOR TE VIU — CORRE!";
     } else if (player.crouching) status.textContent = "Agachado — mais difícil de te ver";
     else if (matchState.cover > 0.65) status.textContent = "Boa cobertura!";
     else if (matchState.cover > 0.35) status.textContent = "Parcialmente exposto";
@@ -545,6 +684,10 @@ function startMatch() {
   touchDir = { x: 0, z: 0 };
   running = true;
   unlockTableAudio();
+  initColorWheel();
+  applyBrushPreview();
+  paintMode = false;
+  shell.querySelector("[data-paint-btn]")?.classList.remove("active");
   speakLine("Esconda-se! O caçador está contando…", { excited: true });
   window.addEventListener("keydown", onKeyDown);
   window.addEventListener("keyup", onKeyUp);

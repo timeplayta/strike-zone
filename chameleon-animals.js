@@ -1,6 +1,7 @@
-/** Bichinhos jogáveis do modo Esconde-Bicho — corpo recolorível pra camuflagem */
+/** Bichinhos jogáveis do modo Esconde-Bicho — corpo recolorível / pintável pixel a pixel */
 
 import * as THREE from "three";
+import { createPaintableSkin } from "./chameleon-paint.js";
 
 function box(w, h, d, mat, x = 0, y = 0, z = 0, rx = 0, ry = 0, rz = 0) {
   const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
@@ -42,9 +43,14 @@ function buildLeg(skin, dark, x, hipY, z, len, thick) {
   return pivot;
 }
 
-/** Constrói um dos 3 bichinhos jogáveis. Retorna hooks pra recolorir e animar. */
+function tagPaintable(mesh, paintable) {
+  mesh.userData.paintable = paintable;
+}
+
+/** Constrói um dos 3 bichinhos jogáveis. Retorna hooks pra pintar e animar. */
 export function buildChameleonAnimal(type = "elefante", colorHex = 0xff6a3d) {
-  const skin = makeSkin(colorHex);
+  const paintable = createPaintableSkin(colorHex);
+  const skin = paintable.material;
   const dark = new THREE.MeshStandardMaterial({ color: 0x211712, roughness: 0.7, metalness: 0.05 });
   const ivory = new THREE.MeshStandardMaterial({ color: 0xf2ead8, roughness: 0.4, metalness: 0.05 });
 
@@ -150,6 +156,7 @@ export function buildChameleonAnimal(type = "elefante", colorHex = 0xff6a3d) {
   g.traverse((o) => {
     o.castShadow = false;
     o.receiveShadow = false;
+    if (o.isMesh && o.material === skin) tagPaintable(o, paintable);
   });
 
   return {
@@ -158,8 +165,15 @@ export function buildChameleonAnimal(type = "elefante", colorHex = 0xff6a3d) {
     headGroup,
     trunk: g.userData.trunk || null,
     skinMat: skin,
+    paintable,
     setColor(hex) {
-      skin.color.set(hex);
+      paintable.paintUV(0.5, 0.5, hex, 28);
+    },
+    paintUV(u, v, hex, r = 1) {
+      paintable.paintUV(u, v, hex, r);
+    },
+    getAverageColor() {
+      return paintable.averageColor();
     },
     eyeHeight,
     bodyLen,

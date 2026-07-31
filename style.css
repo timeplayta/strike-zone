@@ -8754,6 +8754,18 @@ body.tg-open {
   z-index: 5;
 }
 
+.cha-color-dock > .cha-color-btn,
+.cha-color-dock > .cha-paint-btn {
+  flex: 0 0 auto;
+}
+
+.cha-color-dock-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  justify-content: center;
+}
+
 .cha-color-btn {
   padding: 0.55rem 1.3rem;
   border-radius: 999px;
@@ -8767,6 +8779,28 @@ body.tg-open {
 }
 
 .cha-color-btn:active {
+  transform: scale(0.96);
+}
+
+.cha-paint-btn {
+  padding: 0.55rem 1.1rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 180, 80, 0.45);
+  background: rgba(14, 8, 24, 0.85);
+  color: #ffe8c8;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.45);
+}
+
+.cha-paint-btn.active {
+  border-color: rgba(255, 200, 80, 0.9);
+  background: rgba(80, 45, 10, 0.92);
+  box-shadow: 0 0 0 2px rgba(255, 180, 60, 0.35);
+}
+
+.cha-paint-btn:active {
   transform: scale(0.96);
 }
 

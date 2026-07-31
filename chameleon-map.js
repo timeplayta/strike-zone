@@ -298,16 +298,20 @@ export function buildChameleonArena(seed = 1) {
     let nz = z;
     nx = Math.max(-HALF + r, Math.min(HALF - r, nx));
     nz = Math.max(-HALF + r, Math.min(HALF - r, nz));
-    for (const c of colliders) {
-      if (nx + r > c.minX && nx - r < c.maxX && nz + r > c.minZ && nz - r < c.maxZ) {
-        const overlapX = Math.min(nx + r - c.minX, c.maxX - (nx - r));
-        const overlapZ = Math.min(nz + r - c.minZ, c.maxZ - (nz - r));
-        if (overlapX < overlapZ) {
-          nx += nx < (c.minX + c.maxX) / 2 ? -overlapX : overlapX;
-        } else {
-          nz += nz < (c.minZ + c.maxZ) / 2 ? -overlapZ : overlapZ;
+    for (let pass = 0; pass < 4; pass++) {
+      for (const c of colliders) {
+        if (nx + r > c.minX && nx - r < c.maxX && nz + r > c.minZ && nz - r < c.maxZ) {
+          const overlapX = Math.min(nx + r - c.minX, c.maxX - (nx - r));
+          const overlapZ = Math.min(nz + r - c.minZ, c.maxZ - (nz - r));
+          if (overlapX < overlapZ) {
+            nx += nx < (c.minX + c.maxX) / 2 ? -overlapX - 0.01 : overlapX + 0.01;
+          } else {
+            nz += nz < (c.minZ + c.maxZ) / 2 ? -overlapZ - 0.01 : overlapZ + 0.01;
+          }
         }
       }
+      nx = Math.max(-HALF + r, Math.min(HALF - r, nx));
+      nz = Math.max(-HALF + r, Math.min(HALF - r, nz));
     }
     return { x: nx, z: nz };
   }

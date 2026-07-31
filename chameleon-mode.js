@@ -4,6 +4,7 @@ import * as THREE from "three";
 import { buildChameleonAnimal, buildHunter, ANIMAL_TYPES, ANIMAL_META } from "./chameleon-animals.js";
 import { buildChameleonArena } from "./chameleon-map.js";
 import { attachOrbitDrag } from "./orbit-drag.js";
+import { attachPixelPaintBrush } from "./chameleon-paint.js";
 import { speakLine, unlockTableAudio } from "./table-games-audio.js";
 
 const MATCH_DURATION = 100;
@@ -15,8 +16,8 @@ const ANIMAL_SCALE = 0.19;
 const HUNTER_SCALE = ANIMAL_SCALE * 10;
 const HUNTER_COLLIDE_R = 0.42;
 const BASE_SPEED = 3.6;
-const HUNTER_PATROL_SPEED = 2.35;
-const HUNTER_CHASE_SPEED = 4.4;
+const HUNTER_PATROL_SPEED = 3.1;
+const HUNTER_CHASE_SPEED = 5.6;
 
 function $(id) {
   return document.getElementById(id);
@@ -35,6 +36,8 @@ let cleanupFns = [];
 
 let chosenAnimal = "leao";
 let running = false;
+let paintMode = false;
+let detachPaintBrush = null;
 
 // Cor atual do bicho — começa branco, o jogador pinta DURANTE a partida
 let currentHue = 0;
@@ -58,7 +61,7 @@ function ensureShell() {
       <div class="cha-lobby-card">
         <p class="cha-eyebrow">Esconde-esconde</p>
         <h1 class="cha-title">🦎 Esconde-Bicho</h1>
-        <p class="cha-desc">Escolha seu bichinho e entre na arena. Lá dentro, use o botão 🎨 pra pintar sua cor na hora — combine com o chão, as jarras e os patos pra sumir da vista do caçador. Arraste o mouse pra olhar · WASD anda pra onde a câmera aponta.</p>
+        <p class="cha-desc">Escolha seu bichinho e entre na arena. Use 🎨 pra escolher a cor do pincel e 🖌️ Pintar pra desenhar pixel a pixel no corpo — combine com o chão e os obstáculos. Arraste o mouse pra olhar (lados/cima/baixo) · WASD anda.</p>
         <h2 class="cha-sub">Seu bichinho</h2>
         <div class="cha-animal-grid" data-animals></div>
         <div class="cha-lobby-foot">
@@ -92,10 +95,11 @@ function ensureShell() {
             <input type="range" class="cha-lum-slider" data-lum min="8" max="95" value="95" />
             <div class="cha-color-preview-row">
               <span class="cha-color-preview" data-color-preview></span>
-              <span class="cha-color-hint">Toque na roda pra escolher a cor</span>
+              <span class="cha-color-hint">Cor do pincel — use 🖌️ e clique no bichinho</span>
             </div>
           </div>
           <button type="button" class="cha-color-btn" data-color-btn>🎨 Cores</button>
+          <button type="button" class="cha-paint-btn" data-paint-btn>🖌️ Pintar</button>
         </div>
         <div class="cha-touch" data-touch>
           <div class="cha-touch-move">
@@ -182,11 +186,9 @@ function ensureShell() {
   return shell;
 }
 
-/** Aplica a cor escolhida no bicho e no estado do jogador, ao vivo */
-function applyPlayerColor() {
+/** Atualiza preview da cor do pincel (não pinta o bichinho inteiro) */
+function applyBrushPreview() {
   const hex = currentColorHex();
-  if (animalRig) animalRig.setColor(hex);
-  if (player) player.color = new THREE.Color(hex);
   const preview = shell?.querySelector("[data-color-preview]");
   if (preview) preview.style.background = `#${hex.toString(16).padStart(6, "0")}`;
 }
@@ -236,6 +238,13 @@ function initColorWheel() {
     panel.classList.toggle("hidden");
   });
 
+  const paintBtn = dock.querySelector("[data-paint-btn]");
+  paintBtn?.addEventListener("click", () => {
+    paintMode = !paintMode;
+    paintBtn.classList.toggle("active", paintMode);
+    paintBtn.textContent = paintMode ? "🖌️ Pintando…" : "🖌️ Pintar";
+  });
+
   const pickFromWheel = (e) => {
     const rect = wheel.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * wheel.width;
@@ -249,7 +258,7 @@ function initColorWheel() {
     if (dist > radius) return;
     currentHue = (Math.atan2(dy, dx) / (Math.PI * 2) + 1) % 1;
     currentSat = Math.min(1, dist / radius);
-    applyPlayerColor();
+    applyBrushPreview();
   };
   let wheelDown = false;
   wheel.addEventListener("pointerdown", (e) => {
@@ -266,7 +275,7 @@ function initColorWheel() {
 
   lum.addEventListener("input", () => {
     currentLum = Number(lum.value) / 100;
-    applyPlayerColor();
+    applyBrushPreview();
   });
 }
 
@@ -338,7 +347,7 @@ function setupScene(canvas) {
     x: arena.spawnPlayer.x,
     z: arena.spawnPlayer.z,
     angle: Math.PI,
-    color: new THREE.Color(colorHex),
+    color: animalRig.getAverageColor(),
     stuck: null,
   };
   hunter = {
@@ -348,13 +357,34 @@ function setupScene(canvas) {
     state: "patrol",
     waypoint: null,
     chaseLostT: 0,
+    lastSeenX: arena.spawnPlayer.x,
+    lastSeenZ: arena.spawnPlayer.z,
   };
 
   orbitPivot = new THREE.Object3D();
-  // Yaw absoluto da câmera (independente do corpo do bicho)
   orbitPivot.rotation.y = player.angle;
-  // invertYaw: arrastar pra esquerda olha pra esquerda (não espelhado)
-  attachOrbitDrag(canvas, () => orbitPivot, undefined, { invertYaw: true, sensitivity: 0.014 });
+  orbitPivot.rotation.x = 0.12;
+  attachOrbitDrag(canvas, () => orbitPivot, undefined, {
+    invertYaw: true,
+    sensitivity: 0.014,
+    allowPitch: true,
+    canDrag: () => !paintMode,
+  });
+
+  if (detachPaintBrush) detachPaintBrush();
+  detachPaintBrush = attachPixelPaintBrush(canvas, {
+    camera,
+    getTargets: () => (animalRig ? [animalRig.group] : []),
+    getBrushColor: currentColorHex,
+    isActive: () => paintMode && !matchState?.over,
+    onPaint: (avg) => {
+      if (player && avg) player.color = avg.clone();
+    },
+  });
+  cleanupFns.push(() => {
+    detachPaintBrush?.();
+    detachPaintBrush = null;
+  });
 
   function resize() {
     const rect = shell.querySelector("[data-match]").getBoundingClientRect();
@@ -435,13 +465,16 @@ function updatePlayer(dt, t) {
 
   const camDist = 3.1;
   const camHeight = 1.7;
-  const desiredX = player.x - Math.sin(camYaw) * camDist;
-  const desiredZ = player.z - Math.cos(camYaw) * camDist;
-  const desiredY = camHeight;
+  const camPitch = orbitPivot?.rotation.x ?? 0;
+  const cosP = Math.cos(camPitch);
+  const desiredX = player.x - Math.sin(camYaw) * camDist * cosP;
+  const desiredZ = player.z - Math.cos(camYaw) * camDist * cosP;
+  const desiredY = camHeight + Math.sin(camPitch) * camDist * 0.55;
   camera.position.x += (desiredX - camera.position.x) * Math.min(1, dt * 8);
   camera.position.z += (desiredZ - camera.position.z) * Math.min(1, dt * 8);
   camera.position.y += (desiredY - camera.position.y) * Math.min(1, dt * 8);
-  camera.lookAt(player.x, 0.35, player.z);
+  const lookY = 0.35 + Math.sin(camPitch) * 0.15;
+  camera.lookAt(player.x, lookY, player.z);
 }
 
 function updateHunter(dt, t) {
@@ -472,8 +505,12 @@ function updateHunter(dt, t) {
       return;
     }
   } else {
-    if (!hunter.waypoint || Math.hypot(hunter.waypoint.x - hunter.x, hunter.waypoint.z - hunter.z) < 1) {
-      hunter.waypoint = pickWaypoint();
+    if (matchState.suspicion > 40) {
+      hunter.waypoint = { x: hunter.lastSeenX, z: hunter.lastSeenZ };
+    } else if (!hunter.waypoint || Math.hypot(hunter.waypoint.x - hunter.x, hunter.waypoint.z - hunter.z) < 1) {
+      hunter.waypoint = Math.random() < 0.35
+        ? { x: player.x + (Math.random() - 0.5) * 4, z: player.z + (Math.random() - 0.5) * 4 }
+        : pickWaypoint();
     }
     const dx = hunter.waypoint.x - hunter.x;
     const dz = hunter.waypoint.z - hunter.z;
@@ -508,8 +545,10 @@ function updateHunter(dt, t) {
     const inCone = Math.cos(toPlayer - hunter.angle) > CONE_COS;
     const spotted = dist < VISION_RANGE && (inCone || dist < CLOSE_RADIUS);
     if (spotted) {
+      hunter.lastSeenX = player.x;
+      hunter.lastSeenZ = player.z;
       const proximity = Math.max(0, 1 - dist / VISION_RANGE);
-      matchState.suspicion += 52 * proximity * (1 - concealment) * dt;
+      matchState.suspicion += 58 * proximity * (1 - concealment) * dt;
       if (matchState.suspicion >= 100 && hunter.state !== "chase") {
         hunter.state = "chase";
         hunter.chaseLostT = 0;
@@ -604,14 +643,16 @@ function startMatch() {
   currentLum = 0.95;
   const lumSlider = shell.querySelector("[data-lum]");
   if (lumSlider) lumSlider.value = "95";
-  shell.querySelector("[data-color-panel]")?.classList.add("hidden");
+  paintMode = false;
+  shell.querySelector("[data-paint-btn]")?.classList.remove("active");
+  applyBrushPreview();
 
   if (renderer) {
     renderer.dispose();
     renderer = null;
   }
   setupScene(canvas);
-  applyPlayerColor();
+  applyBrushPreview();
 
   matchState = { timeLeft: MATCH_DURATION, suspicion: 0, concealment: 0.3, light: 0.3, over: false };
   clock = new THREE.Clock();
