@@ -12,7 +12,6 @@ import {
   playBotThink,
 } from "./table-games-audio.js";
 import { getBotTier, pickMoveWithWisdom } from "./table-games-bots.js";
-import { ChessBoard3D } from "./table-game-chess-3d.js";
 
 const FILES = "abcdefgh";
 const PIECE_VAL = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 20000 };
@@ -24,6 +23,21 @@ const PIECE_NAME = {
   q: "Rainha",
   k: "Rei",
 };
+
+/** Peças unicode + FE0E (força texto, evita emoji colorido no Android/iOS) */
+const PIECE_CHAR = {
+  w: { k: "♔", q: "♕", r: "♖", b: "♗", n: "♘", p: "♙" },
+  b: { k: "♚", q: "♛", r: "♜", b: "♝", n: "♞", p: "♟" },
+};
+
+function pieceGlyph(type, color) {
+  const ch = (PIECE_CHAR[color] && PIECE_CHAR[color][type]) || PIECE_CHAR.w.p;
+  return `
+    <span class="tg-chess-piece piece-${color}" data-type="${type}" aria-hidden="true">
+      <span class="tg-chess-glyph">${ch}\uFE0E</span>
+    </span>
+  `;
+}
 
 function emptyBoard() {
   return Array.from({ length: 8 }, () => Array(8).fill(null));
@@ -373,7 +387,7 @@ export function mountChessGame(root, { botTier, onExit, onEnd, onBind, match, mo
       <div class="tg-board-meta">Bot: <strong>${tier.label}</strong> · você joga de brancas</div>
     </div>
     <div class="tg-chess-stage">
-      <div class="tg-chess-3d-view" data-board aria-label="Tabuleiro de xadrez 3D"></div>
+      <div class="tg-chess-board" data-board role="grid" aria-label="Tabuleiro de xadrez"></div>
     </div>
     <div class="tg-board-actions">
       <button type="button" class="tg-btn tg-btn-ghost" data-exit>Sair</button>
@@ -384,20 +398,7 @@ export function mountChessGame(root, { botTier, onExit, onEnd, onBind, match, mo
 
   const boardEl = wrap.querySelector("[data-board]");
   const statusEl = wrap.querySelector("[data-status]");
-
-  const board3d = new ChessBoard3D(boardEl, {
-    onSquareClick: (r, c) => onCell(r, c),
-  });
-
-  function syncView() {
-    board3d.sync({
-      board,
-      selected,
-      highlights,
-      lastFrom,
-      lastTo,
-    });
-  }
+  let reviewPly = null;
 
   function setStatus(msg) {
     status = msg;
@@ -409,7 +410,51 @@ export function mountChessGame(root, { botTier, onExit, onEnd, onBind, match, mo
   }
 
   function render() {
-    syncView();
+    const view = reviewPly != null ? boardAtPly(reviewPly) : board;
+    boardEl.innerHTML = "";
+    for (let r = 0; r < 8; r++) {
+      for (let c = 0; c < 8; c++) {
+        const cell = document.createElement("button");
+        cell.type = "button";
+        const tone = (r + c) % 2 === 0 ? "light" : "dark";
+        cell.className = `tg-sq tg-chess-sq ${tone}`;
+        if (reviewPly == null && selected && selected.r === r && selected.c === c) {
+          cell.classList.add("selected");
+        }
+        if (reviewPly == null && lastFrom && lastFrom.r === r && lastFrom.c === c) {
+          cell.classList.add("last-from");
+        }
+        if (reviewPly == null && lastTo && lastTo.r === r && lastTo.c === c) {
+          cell.classList.add("last-to");
+        }
+        const hi = reviewPly == null ? highlights.find((h) => h.r === r && h.c === c) : null;
+        if (hi) cell.classList.add(hi.cap ? "capture" : "move");
+        const p = view[r][c];
+        if (p) {
+          cell.innerHTML = pieceGlyph(p.t, p.c);
+          cell.classList.add(p.c === "w" ? "has-w" : "has-b");
+        }
+        if (r === 7) {
+          const lab = document.createElement("span");
+          lab.className = "tg-coord file";
+          lab.textContent = FILES[c];
+          cell.appendChild(lab);
+        }
+        if (c === 0) {
+          const lab = document.createElement("span");
+          lab.className = "tg-coord rank";
+          lab.textContent = String(8 - r);
+          cell.appendChild(lab);
+        }
+        cell.dataset.r = String(r);
+        cell.dataset.c = String(c);
+        const label = p
+          ? `${PIECE_NAME[p.t]} ${p.c === "w" ? "branco" : "preto"} em ${sqName(r, c)}`
+          : sqName(r, c);
+        cell.setAttribute("aria-label", label);
+        boardEl.appendChild(cell);
+      }
+    }
   }
 
   function endGame(result, reason = "") {
@@ -698,7 +743,12 @@ export function mountChessGame(root, { botTier, onExit, onEnd, onBind, match, mo
     startClockForPlayer();
   }
 
-  boardEl.addEventListener("contextmenu", (e) => e.preventDefault());
+  boardEl.addEventListener("click", (e) => {
+    if (reviewPly != null) return;
+    const btn = e.target.closest(".tg-sq");
+    if (!btn) return;
+    onCell(+btn.dataset.r, +btn.dataset.c);
+  });
 
   wrap.querySelector("[data-exit]").addEventListener("click", () => {
     match?.stopClock?.();
@@ -714,14 +764,8 @@ export function mountChessGame(root, { botTier, onExit, onEnd, onBind, match, mo
     offerDraw,
     timeout,
     seekReviewPly(ply) {
-      const b = boardAtPly(ply);
-      board3d.sync({
-        board: b,
-        selected: null,
-        highlights: [],
-        lastFrom: null,
-        lastTo: null,
-      });
+      reviewPly = ply;
+      render();
     },
   });
 
@@ -732,7 +776,6 @@ export function mountChessGame(root, { botTier, onExit, onEnd, onBind, match, mo
 
   return () => {
     match?.stopClock?.();
-    board3d.dispose();
     wrap.remove();
   };
 }
