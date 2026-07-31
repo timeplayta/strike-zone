@@ -348,7 +348,7 @@ function sqName(r, c) {
   return `${FILES[c]}${8 - r}`;
 }
 
-export function mountChessGame(root, { botTier, onExit, onEnd, onBind, match }) {
+export function mountChessGame(root, { botTier, onExit, onEnd, onBind, match, moveLog }) {
   const tier = getBotTier(botTier);
   let board = setupBoard();
   let turn = "w";
@@ -467,17 +467,54 @@ export function mountChessGame(root, { botTier, onExit, onEnd, onBind, match }) 
     return true;
   }
 
+  function boardAtPly(ply) {
+    let b = setupBoard();
+    if (!moveLog) return b;
+    for (const entry of moveLog.getSnapshot().moves) {
+      if (entry.ply > ply) break;
+      if (entry.data) b = applyMove(b, entry.data);
+    }
+    return b;
+  }
+
   function doMove(m) {
     match?.endPlayerClock?.();
+    const actor = turn;
     const piece = board[m.fr][m.fc];
     const captured = !!board[m.tr][m.tc];
     const pawnMove = piece?.t === "p";
+    let analysis = null;
+    if (moveLog && actor === "w") {
+      const scored = scoreAllMoves(board, "w", tier.depth);
+      const sorted = [...scored].sort((a, b) => b.score - a.score);
+      const best = sorted[0];
+      const played = scored.find(
+        (x) => x.fr === m.fr && x.fc === m.fc && x.tr === m.tr && x.tc === m.tc
+      );
+      analysis = {
+        evalBest: best?.score ?? 0,
+        evalPlayed: played?.score ?? -99999,
+        bestLabel: best ? `${sqName(best.fr, best.fc)} → ${sqName(best.tr, best.tc)}` : null,
+      };
+    }
     lastFrom = { r: m.fr, c: m.fc };
     lastTo = { r: m.tr, c: m.tc };
     board = applyMove(board, m);
     if (pawnMove || captured) halfmoveClock = 0;
     else halfmoveClock += 1;
     plyCount += 1;
+    if (moveLog) {
+      const opp = actor === "w" ? "b" : "w";
+      moveLog.push({
+        actor: actor === "w" ? "you" : "bot",
+        label: `${sqName(m.fr, m.fc)} → ${sqName(m.tr, m.tc)}`,
+        piece: piece?.t,
+        capture: captured,
+        check: isInCheck(board, opp),
+        data: { fr: m.fr, fc: m.fc, tr: m.tr, tc: m.tc },
+        analysis,
+      });
+    }
     if (captured) playCapture();
     else playPiecePlace(true);
     selected = null;
@@ -676,6 +713,16 @@ export function mountChessGame(root, { botTier, onExit, onEnd, onBind, match }) 
     resign,
     offerDraw,
     timeout,
+    seekReviewPly(ply) {
+      const b = boardAtPly(ply);
+      board3d.sync({
+        board: b,
+        selected: null,
+        highlights: [],
+        lastFrom: null,
+        lastTo: null,
+      });
+    },
   });
 
   setStatus(status);

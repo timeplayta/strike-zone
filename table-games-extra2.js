@@ -112,7 +112,7 @@ function bnPreviewCells(r, c, len, horiz) {
   return cells;
 }
 
-export function mountBattleshipGame(root, { botTier, onExit, onEnd, onBind, match }) {
+export function mountBattleshipGame(root, { botTier, onExit, onEnd, onBind, match, moveLog }) {
   const tier = getBotTier(botTier);
   let you = { grid: bnEmptyGrid(), ships: [] };
   let enemy;
@@ -349,10 +349,18 @@ export function mountBattleshipGame(root, { botTier, onExit, onEnd, onBind, matc
   function fire(r, c) {
     if (phase !== "battle" || over || turn !== "you" || youShots[r][c] !== 0) return;
     const shipIdx = enemy.grid[r][c];
+    const center = r >= 2 && r <= 5 && c >= 2 && c <= 5;
     if (shipIdx !== -1) {
       youShots[r][c] = 2;
       const ship = enemy.ships[shipIdx];
       ship.hits++;
+      moveLog?.push({
+        actor: "you",
+        label: `Tiro ${String.fromCharCode(65 + c)}${r + 1}`,
+        hit: true,
+        sunk: ship.hits >= ship.len,
+        pattern: center ? "center" : "edge",
+      });
       playPiecePlace();
       if (enemy.ships.every((s) => s.hits >= s.len)) {
         finish("you");
@@ -363,6 +371,12 @@ export function mountBattleshipGame(root, { botTier, onExit, onEnd, onBind, matc
       render();
     } else {
       youShots[r][c] = 1;
+      moveLog?.push({
+        actor: "you",
+        label: `Tiro ${String.fromCharCode(65 + c)}${r + 1} — água`,
+        hit: false,
+        pattern: center ? "center" : "edge",
+      });
       playFlip();
       match?.endPlayerClock?.();
       turn = "bot";

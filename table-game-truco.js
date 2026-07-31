@@ -46,7 +46,7 @@ function winnerOfTrick(c1, c2, manilha, starterIsPlayer) {
   return starterIsPlayer ? -1 : 1;
 }
 
-export function mountTrucoGame(root, { botTier, onExit, onEnd, onBind, match }) {
+export function mountTrucoGame(root, { botTier, onExit, onEnd, onBind, match, moveLog }) {
   const tier = getBotTier(botTier);
   let scoreYou = 0;
   let scoreBot = 0;
@@ -173,6 +173,7 @@ export function mountTrucoGame(root, { botTier, onExit, onEnd, onBind, match }) 
   function callTruco() {
     if (over || waiting || turn !== "you" || stake >= 12) return;
     playTrucoCall();
+    moveLog?.push({ actor: "you", type: "truco", label: "Pediu truco!", accepted: null });
     const next = stake === 1 ? 3 : stake === 3 ? 6 : stake === 6 ? 9 : 12;
     setStatus(`Você pediu ${next}! Bot pensando…`);
     waiting = true;
@@ -222,6 +223,15 @@ export function mountTrucoGame(root, { botTier, onExit, onEnd, onBind, match }) 
     else if (res < 0) winner = "bot";
 
     tricks.push({ you: playedYou, bot: playedBot, winner });
+    if (moveLog && playedYou) {
+      moveLog.push({
+        actor: "you",
+        type: "trick",
+        label: `Vaza: ${playedYou.rank}${playedYou.suit} vs ${playedBot?.rank || "?"}${playedBot?.suit || ""}`,
+        won: winner === "you",
+        tie: winner === "tie",
+      });
+    }
     if (winner === "you") roundWins[0]++;
     else if (winner === "bot") roundWins[1]++;
     else {
@@ -284,6 +294,13 @@ export function mountTrucoGame(root, { botTier, onExit, onEnd, onBind, match }) 
     const card = handYou[idx];
     if (!card) return;
     match?.endPlayerClock?.();
+    if (moveLog) {
+      moveLog.push({
+        actor: "you",
+        type: "card",
+        label: `Jogou ${card.rank}${card.suit}`,
+      });
+    }
     handYou.splice(idx, 1);
     playedYou = card;
     playCardPlay();

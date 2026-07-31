@@ -10,6 +10,8 @@ import {
   runMatchCountdown,
 } from "./table-games-audio.js";
 import { mountMatchChrome } from "./table-games-match.js";
+import { createMoveLog } from "./table-games-history.js";
+import { openMatchReview } from "./table-games-review.js";
 import { mountChessGame } from "./table-game-chess.js";
 import { mountCheckersGame } from "./table-game-checkers.js";
 import { mountPoolGame } from "./table-game-pool.js";
@@ -130,6 +132,7 @@ let cleanupChrome = null;
 let currentGameId = null;
 let matchChrome = null;
 let gameApi = null;
+let activeMoveLog = null;
 
 function ensureShell() {
   if (shell) return shell;
@@ -213,6 +216,7 @@ function tearDownMatch() {
   }
   matchChrome = null;
   gameApi = null;
+  activeMoveLog = null;
 }
 
 function showLobby(gameId) {
@@ -273,12 +277,23 @@ async function beginMatch() {
 
   await runCountdown(game.name);
 
+  activeMoveLog = createMoveLog(currentGameId, {
+    gameName: game.name,
+    botTier: selectedTier,
+  });
+
   matchChrome = mountMatchChrome(matchEl, {
     onResign: () => gameApi?.resign?.(),
     onOfferDraw: () => gameApi?.offerDraw?.(),
     onTimeout: (kind) => gameApi?.timeout?.(kind),
     onPlayAgain: () => beginMatch(),
     onBackToLobby: () => showLobby(currentGameId),
+    onReview: (snapshot, opts) =>
+      openMatchReview(matchEl, snapshot, {
+        ...opts,
+        onStep: (ply, move) => gameApi?.seekReviewPly?.(ply, move),
+      }),
+    onReviewStep: (ply, move) => gameApi?.seekReviewPly?.(ply, move),
   });
   cleanupChrome = () => {
     matchChrome?.destroy();
@@ -288,9 +303,11 @@ async function beginMatch() {
   cleanupGame = game.mount(mount, {
     botTier: selectedTier,
     match: matchChrome,
+    moveLog: activeMoveLog,
     onExit: () => showLobby(currentGameId),
     onEnd: (result, reason) => {
-      matchChrome?.showMatchResult?.(result, reason);
+      activeMoveLog?.setResult(result, reason);
+      matchChrome?.showMatchResult?.(result, reason, activeMoveLog?.getSnapshot?.());
     },
     onBind(api) {
       gameApi = api;

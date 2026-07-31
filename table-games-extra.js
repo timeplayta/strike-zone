@@ -40,7 +40,7 @@ const TTT_LINES = [
   [0, 4, 8], [2, 4, 6],
 ];
 
-export function mountTicTacToeGame(root, { botTier, onExit, onEnd, onBind, match }) {
+export function mountTicTacToeGame(root, { botTier, onExit, onEnd, onBind, match, moveLog }) {
   const tier = getBotTier(botTier);
   let board = Array(9).fill(null);
   let playerSymbol = "X";
@@ -140,6 +140,13 @@ export function mountTicTacToeGame(root, { botTier, onExit, onEnd, onBind, match
     const i = pick?.move ?? empties[0];
     board[i] = botSymbol;
     lastMove = i;
+    if (moveLog) {
+      moveLog.push({
+        actor: "bot",
+        label: `Bot jogou ${botSymbol} na casa ${i + 1}`,
+        cell: i,
+      });
+    }
     playPiecePlace();
     const w = winner();
     if (w) {
@@ -152,9 +159,34 @@ export function mountTicTacToeGame(root, { botTier, onExit, onEnd, onBind, match
     render();
   }
 
+  function tttAnalyze(idx, sym, botSym) {
+    const tryWin = [...board];
+    tryWin[idx] = sym;
+    let winning = false;
+    for (const [a, b, c] of TTT_LINES) {
+      if (tryWin[a] === sym && tryWin[b] === sym && tryWin[c] === sym) winning = true;
+    }
+    const tryBlock = [...board];
+    tryBlock[idx] = botSym;
+    let blocking = false;
+    for (const [a, b, c] of TTT_LINES) {
+      if (tryBlock[a] === botSym && tryBlock[b] === botSym && tryBlock[c] === botSym) blocking = true;
+    }
+    return { winning, blocking, cell: idx };
+  }
+
   function play(i) {
     if (!chosen || over || board[i] || turn !== playerSymbol) return;
     match?.endPlayerClock?.();
+    if (moveLog) {
+      const meta = tttAnalyze(i, playerSymbol, botSymbol);
+      moveLog.push({
+        actor: "you",
+        label: `Jogou ${playerSymbol} na casa ${i + 1}`,
+        cell: i,
+        ...meta,
+      });
+    }
     board[i] = playerSymbol;
     lastMove = i;
     playPiecePlace();
@@ -230,7 +262,7 @@ export function mountTicTacToeGame(root, { botTier, onExit, onEnd, onBind, match
 }
 
 /* ——— Lig 4 ——— */
-export function mountConnect4Game(root, { botTier, onExit, onEnd, onBind, match }) {
+export function mountConnect4Game(root, { botTier, onExit, onEnd, onBind, match, moveLog }) {
   const tier = getBotTier(botTier);
   const COLS = 7;
   const ROWS = 6;
@@ -356,6 +388,37 @@ export function mountConnect4Game(root, { botTier, onExit, onEnd, onBind, match 
       return;
     }
     if (!isBot) match?.endPlayerClock?.();
+    if (!isBot && moveLog) {
+      const g1 = grid.map((row) => [...row]);
+      for (let r = ROWS - 1; r >= 0; r--) {
+        if (!g1[r][c]) {
+          g1[r][c] = 1;
+          break;
+        }
+      }
+      const winning = checkWinOn(g1, 1);
+      let blocking = false;
+      for (let bc = 0; bc < COLS; bc++) {
+        if (grid[0][bc]) continue;
+        const g2 = grid.map((row) => [...row]);
+        for (let r = ROWS - 1; r >= 0; r--) {
+          if (!g2[r][bc]) {
+            g2[r][bc] = 2;
+            break;
+          }
+        }
+        if (checkWinOn(g2, 2) && bc === c) blocking = true;
+      }
+      moveLog.push({
+        actor: "you",
+        label: `Coluna ${c + 1}`,
+        col: c,
+        winning,
+        blocking,
+      });
+    } else if (isBot && moveLog) {
+      moveLog.push({ actor: "bot", label: `Bot na coluna ${c + 1}`, col: c });
+    }
     drop(c, isBot ? 2 : 1);
     playPiecePlace(true);
     render();
@@ -404,7 +467,7 @@ export function mountConnect4Game(root, { botTier, onExit, onEnd, onBind, match 
 }
 
 /* ——— Memória ——— */
-export function mountMemoryGame(root, { botTier, onExit, onEnd, onBind, match }) {
+export function mountMemoryGame(root, { botTier, onExit, onEnd, onBind, match, moveLog }) {
   const tier = getBotTier(botTier);
   const icons = ["♠", "♥", "♦", "♣", "★", "●", "▲", "■"];
   const iconColors = ["#5c6bc0", "#ef5350", "#ec407a", "#26a69a", "#ffb300", "#42a5f5", "#66bb6a", "#ab47bc"];
@@ -460,8 +523,15 @@ export function mountMemoryGame(root, { botTier, onExit, onEnd, onBind, match })
 
   function afterPair(matchOk, who) {
     if (matchOk) {
-      if (who === "you") scoreYou++;
-      else scoreBot++;
+      if (who === "you") {
+        scoreYou++;
+        moveLog?.push({
+          actor: "you",
+          label: "Achou um par!",
+          positive: true,
+          comment: "Memória afiada — par certo.",
+        });
+      } else scoreBot++;
       if (cards.every((c) => c.done)) finish();
       else if (who === "you") {
         statusEl.textContent = "Par! Jogue de novo";
@@ -590,7 +660,7 @@ export function mountMemoryGame(root, { botTier, onExit, onEnd, onBind, match })
 }
 
 /* ——— Blackjack ——— */
-export function mountBlackjackGame(root, { botTier, onExit, onEnd, onBind, match }) {
+export function mountBlackjackGame(root, { botTier, onExit, onEnd, onBind, match, moveLog }) {
   const tier = getBotTier(botTier);
   let deck = [];
   let you = [];
@@ -655,6 +725,12 @@ export function mountBlackjackGame(root, { botTier, onExit, onEnd, onBind, match
     hit.textContent = "Pedir";
     hit.onclick = () => {
       you.push(deck.pop());
+      moveLog?.push({
+        actor: "you",
+        label: `Pediu carta (mão ${val(you)})`,
+        positive: val(you) <= 21,
+        comment: val(you) > 21 ? "Estourou — arriscou demais." : "Mão ainda segura.",
+      });
       playCardDeal();
       paint();
       if (val(you) > 21) finishRound();
@@ -663,7 +739,15 @@ export function mountBlackjackGame(root, { botTier, onExit, onEnd, onBind, match
     const stand = document.createElement("button");
     stand.className = "tg-btn";
     stand.textContent = "Parar";
-    stand.onclick = () => finishRound();
+    stand.onclick = () => {
+      moveLog?.push({
+        actor: "you",
+        label: `Parou com ${val(you)}`,
+        positive: val(you) >= 17 && val(you) <= 21,
+        comment: val(you) >= 17 ? "Parar com 17+ é clássico." : "Parou cedo — às vezes vale pedir mais.",
+      });
+      finishRound();
+    };
     actions.append(hit, stand);
     match?.startPlayerClock?.(false);
   }
@@ -919,7 +1003,7 @@ export function mountPokerGame(root, { botTier, onExit, onEnd, onBind, match }) 
 }
 
 /* ——— Uno oficial 1v1 (coringa, +4, inverter) ——— */
-export function mountUnoGame(root, { botTier, onExit, onEnd, onBind, match }) {
+export function mountUnoGame(root, { botTier, onExit, onEnd, onBind, match, moveLog }) {
   const tier = getBotTier(botTier);
   const COLORS = ["R", "G", "B", "Y"];
   const COLOR_HEX = { R: "#e63535", G: "#1aa260", B: "#0096e6", Y: "#f7c948" };
@@ -1208,6 +1292,15 @@ export function mountUnoGame(root, { botTier, onExit, onEnd, onBind, match }) {
       return;
     }
     match?.endPlayerClock?.();
+    if (moveLog) {
+      moveLog.push({
+        actor: "you",
+        label: c.col === "W" ? `Coringa ${c.n}` : `${COLOR_NAME[c.col]} ${c.n}`,
+        wild: c.col === "W",
+        special: ["+2", "+4", "skip", "rev"].includes(c.n) ? c.n : null,
+        uno: you.length === 1,
+      });
+    }
     you.splice(i, 1);
     playCardPlay();
     if (c.col === "W") {
@@ -1302,7 +1395,7 @@ export function mountUnoGame(root, { botTier, onExit, onEnd, onBind, match }) {
 }
 
 /* ——— Dominó (duplo-6) ——— */
-export function mountDominoGame(root, { botTier, onExit, onEnd, onBind, match }) {
+export function mountDominoGame(root, { botTier, onExit, onEnd, onBind, match, moveLog }) {
   const tier = getBotTier(botTier);
   let boneyard = [];
   let you = [];
@@ -1446,6 +1539,13 @@ export function mountDominoGame(root, { botTier, onExit, onEnd, onBind, match })
       return;
     }
     match?.endPlayerClock?.();
+    if (moveLog) {
+      moveLog.push({
+        actor: "you",
+        label: `Pedra ${t.a}|${t.b} na ${side === "left" ? "esquerda" : "direita"}`,
+        endsBlocked: chain.length > 0,
+      });
+    }
     you.splice(i, 1);
     place(t, side);
     playDominoPlace();

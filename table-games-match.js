@@ -146,6 +146,7 @@ export function mountMatchChrome(matchEl, handlers = {}) {
         <div class="tg-result-title" data-result-title>Partida encerrada</div>
         <div class="tg-result-desc" data-result-desc></div>
         <div class="tg-result-actions">
+          <button type="button" class="tg-btn tg-btn-review hidden" data-result-review>Revisar partida</button>
           <button type="button" class="tg-btn tg-btn-ghost" data-result-lobby>Voltar ao lobby</button>
           <button type="button" class="tg-btn tg-btn-primary" data-result-again>Jogar de novo</button>
         </div>
@@ -176,16 +177,20 @@ export function mountMatchChrome(matchEl, handlers = {}) {
   const resultDesc = chrome.querySelector("[data-result-desc]");
   const resultAgain = chrome.querySelector("[data-result-again]");
   const resultLobby = chrome.querySelector("[data-result-lobby]");
+  const resultReview = chrome.querySelector("[data-result-review]");
   let resultShown = false;
+  let reviewSnapshot = null;
+  let reviewOpen = null;
 
   function hideMatchResult() {
     resultShown = false;
     resultOverlay?.classList.add("hidden");
   }
 
-  function showMatchResult(result, reason = "") {
+  function showMatchResult(result, reason = "", snapshot = null) {
     if (destroyed || resultShown) return;
     resultShown = true;
+    reviewSnapshot = snapshot;
     endPlayerClock();
     setActionsEnabled(false);
     setMenuOpen(false);
@@ -211,12 +216,27 @@ export function mountMatchChrome(matchEl, handlers = {}) {
       resultDesc.classList.remove("hidden");
     }
 
+    const canReview = snapshot?.moves?.some((m) => m.actor === "you");
+    resultReview?.classList.toggle("hidden", !canReview);
+
     resultOverlay?.classList.remove("hidden");
     resultOverlay?.setAttribute("data-outcome", outcome);
     pushChat("Mesa", speech, "system", { countUnread: false });
     announceMatchEnd(outcome, speech);
-    resultAgain?.focus?.();
+    (canReview ? resultReview : resultAgain)?.focus?.();
   }
+
+  resultReview?.addEventListener("click", () => {
+    if (!reviewSnapshot?.moves?.length) return;
+    resultOverlay?.classList.add("hidden");
+    reviewOpen = handlers.onReview?.(reviewSnapshot, {
+      onClose: () => {
+        reviewOpen = null;
+        if (!destroyed && resultShown) resultOverlay?.classList.remove("hidden");
+      },
+      onStep: (ply, move) => handlers.onReviewStep?.(ply, move),
+    }) || null;
+  });
 
   resultAgain?.addEventListener("click", () => {
     hideMatchResult();
@@ -638,6 +658,8 @@ export function mountMatchChrome(matchEl, handlers = {}) {
       stopBotSpeech();
       stopClock();
       hideMatchResult();
+      reviewOpen?.close?.();
+      reviewOpen = null;
       chrome.remove();
     },
     showMatchResult,

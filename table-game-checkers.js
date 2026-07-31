@@ -387,7 +387,7 @@ function scoreMoves(board, color, depth) {
   });
 }
 
-export function mountCheckersGame(root, { botTier, onExit, onEnd, onBind, match }) {
+export function mountCheckersGame(root, { botTier, onExit, onEnd, onBind, match, moveLog }) {
   const tier = getBotTier(botTier);
   let board = setupBoard();
   let turn = "w";
@@ -426,7 +426,10 @@ export function mountCheckersGame(root, { botTier, onExit, onEnd, onBind, match 
     match?.startPlayerClock?.(plyCount === 0);
   }
 
+  let reviewPly = null;
+
   function render() {
+    const view = reviewPly != null ? boardAtPly(reviewPly) : board;
     boardEl.innerHTML = "";
     for (let r = 0; r < 8; r++) {
       for (let c = 0; c < 8; c++) {
@@ -437,7 +440,7 @@ export function mountCheckersGame(root, { botTier, onExit, onEnd, onBind, match 
         if (highlights.some((h) => h.r === r && h.c === c)) {
           cell.classList.add(highlights.find((h) => h.r === r && h.c === c).cap ? "capture" : "move");
         }
-        const p = board[r][c];
+        const p = view[r][c];
         if (p) {
           const disc = document.createElement("span");
           disc.className = `tg-disc ${p.c === "w" ? "disc-w" : "disc-b"}${p.k ? " king" : ""}`;
@@ -478,10 +481,48 @@ export function mountCheckersGame(root, { botTier, onExit, onEnd, onBind, match 
     return false;
   }
 
+  function sqLabel(r, c) {
+    return `${String.fromCharCode(97 + c)}${8 - r}`;
+  }
+
+  function boardAtPly(ply) {
+    let b = setupBoard();
+    if (!moveLog) return b;
+    for (const entry of moveLog.getSnapshot().moves) {
+      if (entry.ply > ply) break;
+      if (entry.data) b = applyMove(b, entry.data);
+    }
+    return b;
+  }
+
   function doMove(m) {
     match?.endPlayerClock?.();
+    const actor = turn;
+    let analysis = null;
+    if (moveLog && actor === "w") {
+      const scored = scoreMoves(board, "w", tier.depth);
+      const sorted = [...scored].sort((a, b) => b.score - a.score);
+      const best = sorted[0];
+      const played = scored.find(
+        (x) => x.fr === m.fr && x.fc === m.fc && x.tr === m.tr && x.tc === m.tc
+      );
+      analysis = {
+        evalBest: best?.score ?? 0,
+        evalPlayed: played?.score ?? -99999,
+        bestLabel: best ? `${sqLabel(best.fr, best.fc)} → ${sqLabel(best.tr, best.tc)}` : null,
+      };
+    }
     board = applyMove(board, m);
     plyCount += 1;
+    if (moveLog) {
+      moveLog.push({
+        actor: actor === "w" ? "you" : "bot",
+        label: `${sqLabel(m.fr, m.fc)} → ${sqLabel(m.tr, m.tc)}`,
+        capture: !!(m.captures?.length),
+        data: { fr: m.fr, fc: m.fc, tr: m.tr, tc: m.tc, captures: m.captures },
+        analysis,
+      });
+    }
     if (m.captures?.length) playCapture();
     else playPiecePlace();
     selected = null;
@@ -616,7 +657,15 @@ export function mountCheckersGame(root, { botTier, onExit, onEnd, onBind, match 
     startClockForPlayer();
   });
 
-  onBind?.({ resign, offerDraw, timeout });
+  onBind?.({
+    resign,
+    offerDraw,
+    timeout,
+    seekReviewPly(ply) {
+      reviewPly = ply;
+      render();
+    },
+  });
   setStatus("Sua vez — peças claras");
   render();
   match?.setActionsEnabled?.(true);
