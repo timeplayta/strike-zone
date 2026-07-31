@@ -13,92 +13,95 @@ const VERDICT = {
   info: { cls: "info", emoji: "·", tag: "Info" },
 };
 
+const BOARD_REVIEW_GAMES = new Set(["chess", "dama"]);
+
 function v(key, comment) {
   const m = VERDICT[key] || VERDICT.info;
   return { verdict: key, ...m, comment };
 }
 
 function evalGapComment(gap, bestLabel) {
-  if (gap <= 25) return v("great", "Era a melhor opção — ou quase. Mandou bem!");
-  if (gap <= 70) return v("good", `Jogada sólida. Se quiser afinar, ${bestLabel} era um tiquinho melhor.`);
-  if (gap <= 160) return v("warn", `Deixou escapar um pouco de vantagem. Melhor era ${bestLabel}.`);
-  return v("bad", `Aqui doeu! O bot teria preferido ${bestLabel}.`);
+  const alt = bestLabel || "outra jogada";
+  if (gap <= 25) return v("great", "Esse foi o melhor lance possível. Mandou muito bem!");
+  if (gap <= 70) return v("good", `Jogada boa. Se quiser afinar, ${alt} era um pouco melhor.`);
+  if (gap <= 160) return v("warn", `Aqui você perdeu vantagem. O ideal era ${alt}.`);
+  return v("bad", `Erro importante. Nesta posição, o bot jogaria ${alt}.`);
 }
 
 function analyzeChess(move) {
   const a = move.analysis;
-  if (!a) return v("info", move.label || "Jogada registrada.");
+  if (!a) return v("info", move.label ? `Você jogou ${move.label}.` : "Lance registrado.");
   const gap = (a.evalBest ?? 0) - (a.evalPlayed ?? 0);
+  const alt = a.bestLabel || "outra casa";
   if (move.capture) {
-    const base = evalGapComment(gap, a.bestLabel || "outra casa");
-    if (gap <= 70) base.comment = `Captura correta! ${base.comment}`;
+    const base = evalGapComment(gap, alt);
+    if (gap <= 70) return v("good", `Boa captura! ${base.comment}`);
     return base;
   }
   if (move.check) {
-    const base = evalGapComment(gap, a.bestLabel || "outra casa");
-    base.comment = `Xeque! ${base.comment}`;
-    return base;
+    const base = evalGapComment(gap, alt);
+    return v(base.verdict === "great" ? "great" : base.verdict, `Xeque! ${base.comment}`);
   }
-  return evalGapComment(gap, a.bestLabel || "outra jogada");
+  return evalGapComment(gap, alt);
 }
 
 function analyzeCheckers(move) {
   const a = move.analysis;
   if (!a) {
-    if (move.capture) return v("good", "Captura — na dama isso costuma ser obrigatório e forte.");
-    return v("info", move.label || "Jogada registrada.");
+    if (move.capture) return v("good", "Boa captura — na dama, tomar peça costuma ser a jogada certa.");
+    return v("info", move.label ? `Você jogou ${move.label}.` : "Lance registrado.");
   }
   const gap = (a.evalBest ?? 0) - (a.evalPlayed ?? 0);
-  if (move.capture && gap <= 60) return v("great", "Ótima captura! Você manteve a pressão.");
+  if (move.capture && gap <= 60) return v("great", "Ótima captura! Você manteve a pressão no tabuleiro.");
   return evalGapComment(gap, a.bestLabel || "outra casa");
 }
 
 function analyzeVelha(move) {
-  if (move.winning) return v("great", "Jogada vencedora! Você fechou a sequência.");
-  if (move.blocking) return v("good", "Defesa certeira — bloqueou a ameaça do bot.");
-  if (move.cell === 4) return v("good", "Centro é ouro no jogo da velha. Boa escolha.");
-  if ([0, 2, 6, 8].includes(move.cell)) return v("ok", "Canto — posição razoável, mas o centro manda mais.");
-  return v("warn", "Casa de borda — o bot pode explorar melhor que isso.");
+  if (move.winning) return v("great", "Jogada vencedora! Você fechou a sequência e ganhou.");
+  if (move.blocking) return v("good", "Defesa certeira — você bloqueou a ameaça do bot.");
+  if (move.cell === 4) return v("good", "Centro é a melhor casa no jogo da velha. Boa escolha!");
+  if ([0, 2, 6, 8].includes(move.cell)) return v("ok", "Canto é ok, mas o centro costuma ser mais forte.");
+  return v("warn", "Borda é fraca — o bot pode explorar melhor essa escolha.");
 }
 
 function analyzeLig4(move) {
-  if (move.winning) return v("great", "Lance decisivo — montou ameaça de 4!");
+  if (move.winning) return v("great", "Lance decisivo — você montou ameaça de 4 peças!");
   if (move.blocking) return v("good", "Bloqueou a linha do bot. Defesa essencial.");
-  if (move.col === 3) return v("good", "Coluna central — clássico e forte no Lig 4.");
-  if ([2, 4].includes(move.col)) return v("ok", "Coluna vizinha ao centro — jogada ok.");
-  return v("warn", "Borda — dá menos opções. Centro costuma render mais.");
+  if (move.col === 3) return v("good", "Coluna do meio — clássica e forte no Lig 4.");
+  if ([2, 4].includes(move.col)) return v("ok", "Coluna perto do centro — jogada razoável.");
+  return v("warn", "Borda dá menos opções. Tente mirar o centro nas próximas.");
 }
 
 function analyzeTruco(move) {
   if (move.type === "truco") {
     return move.accepted === false
-      ? v("good", "Correr com mão fraca pode ser sensato — você guardou pontos.")
-      : v("ok", "Pediu truco! Só valia se a mão aguentava a pressão.");
+      ? v("good", "Correr com mão fraca foi sensato — você guardou pontos.")
+      : v("ok", "Pediu truco! Só vale a pena com mão forte.");
   }
   if (move.type === "trick") {
-    if (move.won) return v("great", "Venceu a vaza — carta no momento certo.");
-    if (move.tie) return v("ok", "Empate na vaza — ok, segue o jogo.");
+    if (move.won) return v("great", "Venceu a vaza — carta certa na hora certa.");
+    if (move.tie) return v("ok", "Empate na vaza — ok, o jogo continua.");
     return v("warn", "Perdeu a vaza — talvez outra carta segurava melhor.");
   }
   return v("info", move.label || "Carta jogada.");
 }
 
 function analyzeUno(move) {
-  if (move.wild) return v("good", "Coringa na hora certa — controlou a cor.");
-  if (move.special === "+2" || move.special === "+4") return v("great", "Ataque! Forçou o bot a comprar.");
-  if (move.uno) return v("good", "UNO! Só faltava uma — pressão máxima.");
+  if (move.wild) return v("good", "Coringa na hora certa — você controlou a cor.");
+  if (move.special === "+2" || move.special === "+4") return v("great", "Ataque! Você forçou o bot a comprar cartas.");
+  if (move.uno) return v("good", "UNO! Só faltava uma carta — pressão máxima.");
   return v("ok", move.label || "Carta jogada dentro da regra.");
 }
 
 function analyzeDomino(move) {
-  if (move.blocked) return v("warn", "Passou vez — talvez faltou opção antes; boneyard ajuda.");
+  if (move.blocked) return v("warn", "Você passou a vez — talvez faltou encaixar antes; o monte pode ajudar.");
   if (move.endsBlocked) return v("great", "Travou uma ponta — boa tática!");
   return v("ok", move.label || "Pedra encaixada.");
 }
 
 function analyzeBattleship(move) {
   if (move.hit && move.sunk) return v("great", "Afundou um navio! Tiro certeiro.");
-  if (move.hit) return v("good", "Acertou! Continue na mesma região.");
+  if (move.hit) return v("good", "Acertou! Continue atirando na mesma região.");
   if (move.pattern === "center") return v("ok", "Tiro no centro — boa cobertura inicial.");
   return v("warn", "Água… na próxima, rastreie em cruz a partir dos acertos.");
 }
@@ -136,32 +139,34 @@ function playerSteps(snapshot) {
   return snapshot.moves.filter((m) => m.actor === "you");
 }
 
-function introLine(snapshot) {
+function introLine(snapshot, boardDock) {
   const n = playerSteps(snapshot).length;
   const name = snapshot.meta?.gameName || "Partida";
-  if (!n) return `Revisei o ${name}, mas não registrei lances seus nesta partida.`;
+  if (!n) return `Revisei o ${name}, mas não encontrei lances seus nesta partida.`;
   const res = snapshot.result?.value;
+  const boardHint = boardDock ? " Veja cada jogada destacada no tabuleiro acima." : "";
   if (["you", "w", "player", "1", "white"].includes(String(res ?? "").toLowerCase())) {
-    return `Parabéns! Vamos rever seus ${n} lance(s) no ${name} — veja o que funcionou.`;
+    return `Parabéns! Vamos rever seus ${n} lance(s) no ${name}.${boardHint}`;
   }
   if (String(res ?? "").toLowerCase() === "draw" || res === 0) {
-    return `Empate apertado. Revise seus ${n} lance(s) no ${name}.`;
+    return `Empate apertado. Revise seus ${n} lance(s) no ${name}.${boardHint}`;
   }
-  return `Vamos aprender. Revise seus ${n} lance(s) no ${name} — acho que aqui dá para evoluir.`;
+  return `Vamos aprender juntos. Revise seus ${n} lance(s) no ${name} — dá para evoluir daqui.${boardHint}`;
 }
 
 /**
  * @param {HTMLElement} matchEl
  * @param {object} snapshot
- * @param {{ onClose: () => void, onStep?: (plyIndex: number, move: object|null) => void }} opts
+ * @param {{ onClose: () => void, onStep?: (plyIndex: number|null, move: object|null) => void }} opts
  */
 export function openMatchReview(matchEl, snapshot, { onClose, onStep } = {}) {
   const steps = playerSteps(snapshot);
   let stepIdx = 0;
   let closed = false;
+  const boardDock = BOARD_REVIEW_GAMES.has(snapshot.gameId);
 
   const overlay = document.createElement("div");
-  overlay.className = "tg-review-overlay";
+  overlay.className = boardDock ? "tg-review-overlay tg-review-dock" : "tg-review-overlay";
   overlay.setAttribute("role", "dialog");
   overlay.setAttribute("aria-modal", "true");
   overlay.innerHTML = `
@@ -194,6 +199,9 @@ export function openMatchReview(matchEl, snapshot, { onClose, onStep } = {}) {
     </div>
   `;
   matchEl.appendChild(overlay);
+  if (boardDock) {
+    matchEl.classList.add("tg-review-active", `tg-review-game-${snapshot.gameId}`);
+  }
 
   const introEl = overlay.querySelector("[data-intro]");
   const stepNum = overlay.querySelector("[data-step-num]");
@@ -210,7 +218,7 @@ export function openMatchReview(matchEl, snapshot, { onClose, onStep } = {}) {
   const xBtn = overlay.querySelector(".tg-review-close");
   const stepPanel = overlay.querySelector("[data-step-panel]");
 
-  introEl.textContent = introLine(snapshot);
+  introEl.textContent = introLine(snapshot, boardDock);
 
   function paint() {
     if (!steps.length) {
@@ -221,6 +229,7 @@ export function openMatchReview(matchEl, snapshot, { onClose, onStep } = {}) {
       counterEl.textContent = "0 / 0";
       prevBtn.disabled = true;
       nextBtn.disabled = true;
+      onStep?.(null, null);
       return;
     }
 
@@ -228,7 +237,7 @@ export function openMatchReview(matchEl, snapshot, { onClose, onStep } = {}) {
     const ply = snapshot.moves.indexOf(move) + 1;
     const analysis = analyzePlayerMove(snapshot.gameId, move);
 
-    stepNum.textContent = `Lance ${stepIdx + 1}`;
+    stepNum.textContent = `Seu lance ${stepIdx + 1}`;
     stepMove.textContent = move.label || "—";
     vEmoji.textContent = analysis.emoji;
     vTag.textContent = analysis.tag;
@@ -245,6 +254,8 @@ export function openMatchReview(matchEl, snapshot, { onClose, onStep } = {}) {
   function close() {
     if (closed) return;
     closed = true;
+    onStep?.(null, null);
+    matchEl.classList.remove("tg-review-active", `tg-review-game-${snapshot.gameId}`);
     overlay.remove();
     onClose?.();
   }
@@ -266,7 +277,7 @@ export function openMatchReview(matchEl, snapshot, { onClose, onStep } = {}) {
   speakBtn.addEventListener("click", () => {
     const move = steps[stepIdx];
     if (!move?._lastComment) return;
-    speakBotReact(move._lastComment, { rate: 1.05 });
+    speakBotReact(move._lastComment, { rate: 1.02 });
   });
 
   closeBtn.addEventListener("click", close);

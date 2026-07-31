@@ -427,17 +427,27 @@ export function mountCheckersGame(root, { botTier, onExit, onEnd, onBind, match,
   }
 
   let reviewPly = null;
+  let reviewMove = null;
 
   function render() {
-    const view = reviewPly != null ? boardAtPly(reviewPly) : board;
+    const inReview = reviewPly != null;
+    const view = inReview ? boardAtPly(reviewPly) : board;
+    const hlFrom = inReview && reviewMove?.data
+      ? { r: reviewMove.data.fr, c: reviewMove.data.fc }
+      : null;
+    const hlTo = inReview && reviewMove?.data
+      ? { r: reviewMove.data.tr, c: reviewMove.data.tc }
+      : null;
     boardEl.innerHTML = "";
     for (let r = 0; r < 8; r++) {
       for (let c = 0; c < 8; c++) {
         const cell = document.createElement("button");
         cell.type = "button";
         cell.className = `tg-sq ${(r + c) % 2 === 0 ? "light" : "dark"}`;
-        if (selected && selected.r === r && selected.c === c) cell.classList.add("selected");
-        if (highlights.some((h) => h.r === r && h.c === c)) {
+        if (!inReview && selected && selected.r === r && selected.c === c) cell.classList.add("selected");
+        if (hlFrom && hlFrom.r === r && hlFrom.c === c) cell.classList.add("last-from");
+        if (hlTo && hlTo.r === r && hlTo.c === c) cell.classList.add("last-to");
+        if (!inReview && highlights.some((h) => h.r === r && h.c === c)) {
           cell.classList.add(highlights.find((h) => h.r === r && h.c === c).cap ? "capture" : "move");
         }
         const p = view[r][c];
@@ -449,6 +459,7 @@ export function mountCheckersGame(root, { botTier, onExit, onEnd, onBind, match,
         }
         cell.dataset.r = String(r);
         cell.dataset.c = String(c);
+        if (inReview) cell.disabled = true;
         boardEl.appendChild(cell);
       }
     }
@@ -661,8 +672,9 @@ export function mountCheckersGame(root, { botTier, onExit, onEnd, onBind, match,
     resign,
     offerDraw,
     timeout,
-    seekReviewPly(ply) {
-      reviewPly = ply;
+    seekReviewPly(ply, move) {
+      reviewPly = ply ?? null;
+      reviewMove = move ?? null;
       render();
     },
   });

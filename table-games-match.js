@@ -23,18 +23,18 @@ export const FIRST_MOVE_LIMIT_MS = 60_000;
 export const MOVE_LIMIT_MS = 180_000;
 
 const BOT_CHAT_REPLIES = [
-  "Boa.",
-  "Hmm… deixa eu pensar.",
-  "Interessante.",
-  "Ok, vamos nessa.",
-  "Pressão!",
-  "gg se continuar assim.",
-  "Calma, ainda tem jogo.",
-  "Mandou bem.",
-  "Tô ouvindo. Joga com calma.",
-  "Pode falar — eu respondo por aqui.",
-  "Boa conversa. Agora é minha vez de pensar.",
-  "Heh, gostei dessa.",
+  "Boa jogada!",
+  "Deixa eu pensar um pouco…",
+  "Interessante essa escolha.",
+  "Vamos lá, continua!",
+  "Tá ficando tenso!",
+  "Ainda dá para virar — foco!",
+  "Calma, o jogo não acabou.",
+  "Mandou bem!",
+  "Pode falar — estou ouvindo.",
+  "Gostei da conversa. Agora é minha vez de pensar.",
+  "Hehe, boa essa.",
+  "Show! Vamos ver no tabuleiro.",
 ];
 
 function formatMs(ms) {
@@ -47,17 +47,22 @@ function formatMs(ms) {
 function pickBotReply(playerText = "") {
   const t = playerText.toLowerCase();
   if (/oi|olá|ola|e a[ií]|fala|hey|hello/.test(t)) {
-    return "E aí! Bora jogar — pode falar no mic ou escrever.";
+    return "E aí! Bora jogar — pode falar no mic ou escrever aqui no chat.";
   }
-  if (/obrigad|valeu|thanks/.test(t)) return "Por nada! Foco no tabuleiro.";
-  if (/ganhei|ganhar|win|gg/.test(t)) return "Ainda não acabou… pressão!";
-  if (/perdi|lose|aff|nossa/.test(t)) return "Calma, ainda tem jogo.";
-  if (/ajuda|dica|help/.test(t)) return "Dica de bot: respira e olha o centro do tabuleiro.";
+  if (/obrigad|valeu|thanks/.test(t)) return "Por nada! Bora focar no tabuleiro.";
+  if (/ganhei|ganhar|win|gg/.test(t)) return "Calma, ainda não acabou… vamos ver!";
+  if (/perdi|lose|aff|nossa|droga/.test(t)) return "Relaxa, ainda dá tempo de virar o jogo.";
+  if (/ajuda|dica|help/.test(t)) {
+    return "Dica rápida: respira, olha o tabuleiro inteiro e pensa na melhor casa antes de clicar.";
+  }
   if (/burro|lixo|idiota|ot[aá]rio|merda|porra/.test(t)) {
-    return "Ei, respeito na mesa. Joga limpo.";
+    return "Ei, respeito na mesa. Vamos jogar limpo.";
   }
   if (/voz|mic|microfone|ouvindo/.test(t)) {
-    return "Tô no modo voz+texto. Se a fala falhar, eu escrevo aqui.";
+    return "Estou no modo voz + texto. Se a fala falhar, eu respondo por escrito aqui.";
+  }
+  if (/xadrez|dama|velha|truco|uno/.test(t)) {
+    return "Boa! Foca na partida — estou acompanhando.";
   }
   return BOT_CHAT_REPLIES[Math.floor(Math.random() * BOT_CHAT_REPLIES.length)];
 }
@@ -210,8 +215,8 @@ export function mountMatchChrome(matchEl, handlers = {}) {
           : outcome === "win"
             ? "Parabéns — você levou a mesa!"
             : outcome === "lose"
-              ? "Mais sorte na próxima rodada."
-              : "Ninguém levou vantagem desta vez.";
+              ? "Não foi dessa vez. Revise seus lances para melhorar."
+              : "Ninguém levou vantagem — partida equilibrada.";
       resultDesc.textContent = subtitle;
       resultDesc.classList.remove("hidden");
     }
@@ -628,7 +633,7 @@ export function mountMatchChrome(matchEl, handlers = {}) {
       "Este navegador não tem fala→texto. Use Chrome/Edge no PC, ou escreva no chat.";
   }
 
-  pushChat("Mesa", "Partida iniciada. 1º lance: 1 min · demais: 3 min. Mic = falar com o bot.", "system", {
+  pushChat("Mesa", "Partida iniciada! 1º lance: 1 minuto · depois: 3 minutos. Use o Mic para falar com o bot.", "system", {
     countUnread: false,
   });
   setChatOpen(false);

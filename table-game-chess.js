@@ -399,10 +399,11 @@ export function mountChessGame(root, { botTier, onExit, onEnd, onBind, match, mo
   const boardEl = wrap.querySelector("[data-board]");
   const statusEl = wrap.querySelector("[data-status]");
   let reviewPly = null;
+  let reviewMove = null;
 
   function setStatus(msg) {
     status = msg;
-    statusEl.textContent = msg;
+    if (reviewPly == null) statusEl.textContent = msg;
   }
 
   function startClockForPlayer() {
@@ -410,7 +411,14 @@ export function mountChessGame(root, { botTier, onExit, onEnd, onBind, match, mo
   }
 
   function render() {
-    const view = reviewPly != null ? boardAtPly(reviewPly) : board;
+    const inReview = reviewPly != null;
+    const view = inReview ? boardAtPly(reviewPly) : board;
+    const hlFrom = inReview && reviewMove?.data
+      ? { r: reviewMove.data.fr, c: reviewMove.data.fc }
+      : lastFrom;
+    const hlTo = inReview && reviewMove?.data
+      ? { r: reviewMove.data.tr, c: reviewMove.data.tc }
+      : lastTo;
     boardEl.innerHTML = "";
     for (let r = 0; r < 8; r++) {
       for (let c = 0; c < 8; c++) {
@@ -418,16 +426,16 @@ export function mountChessGame(root, { botTier, onExit, onEnd, onBind, match, mo
         cell.type = "button";
         const tone = (r + c) % 2 === 0 ? "light" : "dark";
         cell.className = `tg-sq tg-chess-sq ${tone}`;
-        if (reviewPly == null && selected && selected.r === r && selected.c === c) {
+        if (!inReview && selected && selected.r === r && selected.c === c) {
           cell.classList.add("selected");
         }
-        if (reviewPly == null && lastFrom && lastFrom.r === r && lastFrom.c === c) {
+        if (hlFrom && hlFrom.r === r && hlFrom.c === c) {
           cell.classList.add("last-from");
         }
-        if (reviewPly == null && lastTo && lastTo.r === r && lastTo.c === c) {
+        if (hlTo && hlTo.r === r && hlTo.c === c) {
           cell.classList.add("last-to");
         }
-        const hi = reviewPly == null ? highlights.find((h) => h.r === r && h.c === c) : null;
+        const hi = !inReview ? highlights.find((h) => h.r === r && h.c === c) : null;
         if (hi) cell.classList.add(hi.cap ? "capture" : "move");
         const p = view[r][c];
         if (p) {
@@ -448,6 +456,7 @@ export function mountChessGame(root, { botTier, onExit, onEnd, onBind, match, mo
         }
         cell.dataset.r = String(r);
         cell.dataset.c = String(c);
+        if (inReview) cell.disabled = true;
         const label = p
           ? `${PIECE_NAME[p.t]} ${p.c === "w" ? "branco" : "preto"} em ${sqName(r, c)}`
           : sqName(r, c);
@@ -763,8 +772,14 @@ export function mountChessGame(root, { botTier, onExit, onEnd, onBind, match, mo
     resign,
     offerDraw,
     timeout,
-    seekReviewPly(ply) {
-      reviewPly = ply;
+    seekReviewPly(ply, move) {
+      reviewPly = ply ?? null;
+      reviewMove = move ?? null;
+      if (reviewPly != null && move?.label) {
+        statusEl.textContent = `Revisão: ${move.label}`;
+      } else if (reviewPly == null) {
+        statusEl.textContent = status;
+      }
       render();
     },
   });
