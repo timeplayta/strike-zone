@@ -51,8 +51,18 @@ const BASE_SPEED = 3.8;
 let currentHue = 0.58;
 let currentSat = 0.35;
 let currentLum = 0.55;
-let paintMode = false;
+let paintTool = null; // null | 'brush' | 'eraser'
 let detachPaintBrush = null;
+
+function setPaintTool(tool) {
+  paintTool = paintTool === tool ? null : tool;
+  const paintBtn = shell?.querySelector("[data-paint-btn]");
+  const eraseBtn = shell?.querySelector("[data-erase-btn]");
+  paintBtn?.classList.toggle("active", paintTool === "brush");
+  paintBtn && (paintBtn.textContent = paintTool === "brush" ? "🖌️ Pintando…" : "🖌️ Pintar");
+  eraseBtn?.classList.toggle("active", paintTool === "eraser");
+  eraseBtn && (eraseBtn.textContent = paintTool === "eraser" ? "🧽 Apagando…" : "🧽 Borracha");
+}
 
 function currentColorHex() {
   const c = new THREE.Color();
@@ -134,11 +144,8 @@ function initColorWheel() {
   drawColorWheel(wheel);
 
   btn.addEventListener("click", () => panel.classList.toggle("hidden"));
-  paintBtn?.addEventListener("click", () => {
-    paintMode = !paintMode;
-    paintBtn.classList.toggle("active", paintMode);
-    paintBtn.textContent = paintMode ? "🖌️ Pintando…" : "🖌️ Pintar";
-  });
+  paintBtn?.addEventListener("click", () => setPaintTool("brush"));
+  dock.querySelector("[data-erase-btn]")?.addEventListener("click", () => setPaintTool("eraser"));
 
   const pickFromWheel = (e) => {
     const rect = wheel.getBoundingClientRect();
@@ -231,11 +238,12 @@ function ensureShell() {
             <input type="range" class="cha-lum-slider" data-lum min="8" max="95" value="55" />
             <div class="cha-color-preview-row">
               <span class="cha-color-preview" data-color-preview></span>
-              <span class="cha-color-hint">Cor do pincel — 🖌️ e clique no personagem</span>
+              <span class="cha-color-hint">Cor do pincel — 🖌️ pintar · 🧽 borracha apaga</span>
             </div>
           </div>
           <button type="button" class="cha-color-btn" data-color-btn>🎨 Cores</button>
           <button type="button" class="cha-paint-btn" data-paint-btn>🖌️ Pintar</button>
+          <button type="button" class="cha-erase-btn" data-erase-btn>🧽 Borracha</button>
         </div>
         <div class="cha-touch" data-touch>
           <div class="cha-touch-move">
@@ -382,7 +390,7 @@ function setupScene(canvas) {
     invertYaw: true,
     sensitivity: 0.014,
     allowPitch: true,
-    canDrag: () => !paintMode,
+    canDrag: () => !paintTool,
   });
 
   if (detachPaintBrush) detachPaintBrush();
@@ -390,7 +398,8 @@ function setupScene(canvas) {
     camera,
     getTargets: () => (hiderRig ? [hiderRig.group] : []),
     getBrushColor: currentColorHex,
-    isActive: () => paintMode && matchState?.phase === "play" && !matchState?.over,
+    getTool: () => paintTool ?? "brush",
+    isActive: () => !!paintTool && matchState?.phase === "play" && !matchState?.over,
     onPaint: () => {},
   });
   cleanupFns.push(() => {
@@ -686,8 +695,7 @@ function startMatch() {
   unlockTableAudio();
   initColorWheel();
   applyBrushPreview();
-  paintMode = false;
-  shell.querySelector("[data-paint-btn]")?.classList.remove("active");
+  setPaintTool(null);
   speakLine("Esconda-se! O caçador está contando…", { excited: true });
   window.addEventListener("keydown", onKeyDown);
   window.addEventListener("keyup", onKeyUp);

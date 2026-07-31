@@ -8755,7 +8755,8 @@ body.tg-open {
 }
 
 .cha-color-dock > .cha-color-btn,
-.cha-color-dock > .cha-paint-btn {
+.cha-color-dock > .cha-paint-btn,
+.cha-color-dock > .cha-erase-btn {
   flex: 0 0 auto;
 }
 
@@ -8801,6 +8802,28 @@ body.tg-open {
 }
 
 .cha-paint-btn:active {
+  transform: scale(0.96);
+}
+
+.cha-erase-btn {
+  padding: 0.55rem 1rem;
+  border-radius: 999px;
+  border: 1px solid rgba(180, 200, 220, 0.45);
+  background: rgba(14, 8, 24, 0.85);
+  color: #e8f0ff;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.45);
+}
+
+.cha-erase-btn.active {
+  border-color: rgba(200, 220, 255, 0.85);
+  background: rgba(30, 40, 55, 0.92);
+  box-shadow: 0 0 0 2px rgba(180, 210, 255, 0.35);
+}
+
+.cha-erase-btn:active {
   transform: scale(0.96);
 }
 
@@ -9209,49 +9232,114 @@ body.tg-open {
   min-width: 7rem;
 }
 
-/* Revisão com tabuleiro visível (xadrez / dama) */
+/* Revisão com tabuleiro visível (xadrez / dama) — painel embaixo, sem cobrir o tabuleiro */
+.tg-match.tg-review-active {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  max-height: 100dvh;
+  overflow: hidden;
+}
+
 .tg-review-overlay.tg-review-dock {
-  inset: auto 0 0 0;
-  top: auto;
+  position: relative;
+  inset: unset;
+  flex: 0 0 auto;
+  width: 100%;
   height: auto;
-  align-items: flex-end;
-  justify-content: center;
+  align-items: stretch;
+  justify-content: flex-end;
   padding: 0;
-  background: linear-gradient(180deg, transparent 0%, rgba(6, 10, 18, 0.35) 18%, rgba(6, 10, 18, 0.72) 100%);
+  background: transparent;
   backdrop-filter: none;
   pointer-events: none;
+  z-index: 3;
+  animation: none;
 }
 
 .tg-review-dock .tg-review-card {
   pointer-events: auto;
-  width: min(640px, 100vw);
-  max-height: min(42vh, 360px);
+  width: 100%;
+  max-width: none;
+  max-height: min(34vh, 220px);
   margin: 0;
-  border-radius: 18px 18px 0 0;
+  padding: 0.65rem 0.85rem 0.55rem;
+  border-radius: 14px 14px 0 0;
   border-bottom: none;
-  box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.55);
+  box-shadow: 0 -6px 28px rgba(0, 0, 0, 0.5);
+  overflow-y: auto;
+}
+
+.tg-review-dock .tg-review-head {
+  margin-bottom: 0.35rem;
 }
 
 .tg-review-dock .tg-review-intro {
-  font-size: 0.84rem;
-  margin-bottom: 0.65rem;
+  display: none;
+}
+
+.tg-review-dock .tg-review-step {
+  padding: 0.55rem 0.65rem;
+  margin-bottom: 0.45rem;
+}
+
+.tg-review-dock .tg-review-step-head {
+  margin-bottom: 0.35rem;
 }
 
 .tg-review-dock .tg-review-comment {
-  font-size: 0.95rem;
-  line-height: 1.5;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  margin: 0;
+}
+
+.tg-review-dock .tg-review-nav {
+  margin-bottom: 0.45rem;
+}
+
+.tg-review-dock .tg-review-foot {
+  gap: 0.4rem;
+}
+
+.tg-review-dock .tg-review-foot .tg-btn {
+  min-width: 5.5rem;
+  padding: 0.4rem 0.65rem;
+  font-size: 0.82rem;
 }
 
 .tg-match.tg-review-active .tg-match-mount {
-  align-items: flex-start;
+  flex: 1 1 0;
+  min-height: 0;
+  align-items: center;
   justify-content: center;
-  padding-top: 3.25rem;
+  padding-top: 3rem;
   padding-bottom: 0.15rem;
+  overflow: hidden;
 }
 
 .tg-match.tg-review-active .tg-board-wrap {
-  justify-content: flex-start;
-  gap: 0.25rem;
+  justify-content: center;
+  gap: 0.15rem;
+  height: 100%;
+  max-height: 100%;
+}
+
+.tg-match.tg-review-active .tg-board-hud {
+  flex: 0 0 auto;
+}
+
+.tg-match.tg-review-active .tg-board-title {
+  display: none;
+}
+
+.tg-match.tg-review-active .tg-chess-stage,
+.tg-match.tg-review-active .tg-dama-stage {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .tg-match.tg-review-active .tg-board-actions {
@@ -9261,11 +9349,35 @@ body.tg-open {
 .tg-match.tg-review-active .tg-board-status {
   font-weight: 700;
   color: #ffd54f;
+  font-size: 0.82rem;
 }
 
 .tg-match.tg-review-active.tg-review-game-chess .tg-chess-board,
 .tg-match.tg-review-active.tg-review-game-dama .tg-dama-board {
-  --tg-board-size: min(96vw, 520px, calc(100dvh - 17.5rem));
+  --tg-board-size: min(
+    calc(100vw - 0.75rem),
+    calc(100dvh - var(--tg-review-dock-h, 220px) - 3.75rem),
+    calc(100svh - var(--tg-review-dock-h, 220px) - 3.75rem)
+  );
+  width: var(--tg-board-size);
+  height: var(--tg-board-size);
+  max-width: var(--tg-board-size);
+  max-height: var(--tg-board-size);
+  flex-shrink: 0;
+}
+
+.tg-match.tg-match-mobile.tg-review-active .tg-match-mount {
+  padding-top: 2.65rem;
+  padding-bottom: 0.1rem;
+}
+
+.tg-match.tg-match-mobile.tg-review-active.tg-review-game-chess .tg-chess-board,
+.tg-match.tg-match-mobile.tg-review-active.tg-review-game-dama .tg-dama-board {
+  --tg-board-size: min(
+    calc(100vw - 0.45rem),
+    calc(100dvh - var(--tg-review-dock-h, 210px) - 3.25rem),
+    calc(100svh - var(--tg-review-dock-h, 210px) - 3.25rem)
+  );
 }
 
 .tg-dama-board .tg-sq.last-from,

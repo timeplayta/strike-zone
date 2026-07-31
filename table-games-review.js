@@ -220,6 +220,16 @@ export function openMatchReview(matchEl, snapshot, { onClose, onStep } = {}) {
 
   introEl.textContent = introLine(snapshot, boardDock);
 
+  let syncDockLayout = null;
+  if (boardDock) {
+    syncDockLayout = () => {
+      const h = overlay.getBoundingClientRect().height;
+      matchEl.style.setProperty("--tg-review-dock-h", `${Math.ceil(h)}px`);
+    };
+    requestAnimationFrame(syncDockLayout);
+    window.addEventListener("resize", syncDockLayout);
+  }
+
   function paint() {
     if (!steps.length) {
       stepPanel.classList.add("empty");
@@ -249,11 +259,14 @@ export function openMatchReview(matchEl, snapshot, { onClose, onStep } = {}) {
 
     onStep?.(ply, move);
     move._lastComment = analysis.comment;
+    syncDockLayout?.();
   }
 
   function close() {
     if (closed) return;
     closed = true;
+    if (syncDockLayout) window.removeEventListener("resize", syncDockLayout);
+    matchEl.style.removeProperty("--tg-review-dock-h");
     onStep?.(null, null);
     matchEl.classList.remove("tg-review-active", `tg-review-game-${snapshot.gameId}`);
     overlay.remove();

@@ -10,7 +10,8 @@ export function createPaintableSkin(baseHex = 0xf2f2f2) {
   canvas.height = TEX_SIZE;
   const ctx = canvas.getContext("2d");
   const base = new THREE.Color(baseHex);
-  ctx.fillStyle = `#${base.getHexString()}`;
+  const baseHexStr = `#${base.getHexString()}`;
+  ctx.fillStyle = baseHexStr;
   ctx.fillRect(0, 0, TEX_SIZE, TEX_SIZE);
 
   const texture = new THREE.CanvasTexture(canvas);
@@ -27,6 +28,22 @@ export function createPaintableSkin(baseHex = 0xf2f2f2) {
   function paintUV(u, v, colorHex, radius = 1) {
     const c = new THREE.Color(colorHex);
     ctx.fillStyle = `#${c.getHexString()}`;
+    const px = Math.floor(u * TEX_SIZE);
+    const py = Math.floor((1 - v) * TEX_SIZE);
+    for (let dy = -radius; dy <= radius; dy++) {
+      for (let dx = -radius; dx <= radius; dx++) {
+        if (dx * dx + dy * dy > radius * radius + 0.3) continue;
+        const x = px + dx;
+        const y = py + dy;
+        if (x < 0 || y < 0 || x >= TEX_SIZE || y >= TEX_SIZE) continue;
+        ctx.fillRect(x, y, 1, 1);
+      }
+    }
+    texture.needsUpdate = true;
+  }
+
+  function eraseUV(u, v, radius = 1) {
+    ctx.fillStyle = baseHexStr;
     const px = Math.floor(u * TEX_SIZE);
     const py = Math.floor((1 - v) * TEX_SIZE);
     for (let dy = -radius; dy <= radius; dy++) {
@@ -58,16 +75,18 @@ export function createPaintableSkin(baseHex = 0xf2f2f2) {
     return new THREE.Color(r / n / 255, g / n / 255, b / n / 255);
   }
 
-  return { material, canvas, ctx, texture, paintUV, averageColor };
+  return { material, canvas, ctx, texture, paintUV, eraseUV, averageColor, baseHex };
 }
 
 /**
- * Pincel 3D: arrastar no canvas pinta o bichinho pixel a pixel (cor = pincel, não preenche tudo).
+ * Pincel 3D: arrastar no canvas pinta ou apaga pixel a pixel no modelo.
+ * getTool: () => 'brush' | 'eraser'
  */
 export function attachPixelPaintBrush(canvas, {
   camera,
   getTargets,
   getBrushColor,
+  getTool,
   isActive,
   onPaint,
 } = {}) {
@@ -91,7 +110,11 @@ export function attachPixelPaintBrush(canvas, {
     if (!hit.uv) return;
     const paintable = hit.object.userData?.paintable;
     if (!paintable) return;
-    paintable.paintUV(hit.uv.x, hit.uv.y, getBrushColor?.() ?? 0xffffff, 1);
+    if (getTool?.() === "eraser") {
+      paintable.eraseUV(hit.uv.x, hit.uv.y, 1);
+    } else {
+      paintable.paintUV(hit.uv.x, hit.uv.y, getBrushColor?.() ?? 0xffffff, 1);
+    }
     onPaint?.(paintable.averageColor());
   }
 
