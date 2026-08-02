@@ -1085,4 +1085,18 @@ if (new URLSearchParams(location.search).get("tutorial") === "1") {
   } catch {
     /* ignore */
   }
+  // força o tutorial na tela (mesmo se já tinha concluído)
+  const boot = () => {
+    try {
+      showPlayHub?.();
+    } catch {
+      /* hub opcional */
+    }
+    setTimeout(() => startTutorial({ force: true }), 700);
+  };
+  if (document.readyState === "loading") {
+    window.addEventListener("DOMContentLoaded", () => setTimeout(boot, 400));
+  } else {
+    setTimeout(boot, 400);
+  }
 }
