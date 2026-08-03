@@ -132,7 +132,7 @@ STRIPE_PRICE_MEGA=price_xxxxxx
 
 No dashboard: **Developers → Webhooks → Add endpoint**
 
-- URL: `https://strike-zone.onrender.com/api/stripe/webhook`
+- URL: `https://strike-zone-j05k.onrender.com/api/stripe/webhook`
 - Evento: `checkout.session.completed`
 - Copie o **Signing secret** (`whsec_...`) → `.env: STRIPE_WEBHOOK_SECRET`
 
@@ -146,7 +146,7 @@ Coloque em `.env`:
 ```
 STRIPE_SECRET_KEY=sk_test_...
 STRIPE_WEBHOOK_SECRET=whsec_...
-PUBLIC_URL=https://strike-zone.onrender.com
+PUBLIC_URL=https://strike-zone-j05k.onrender.com
 ```
 
 ### 5. No Render

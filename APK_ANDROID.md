@@ -1,6 +1,6 @@
 # APK do Strike Zone
 
-Este APK abre o jogo online em `https://strike-zone.onrender.com`.
+Este APK abre o jogo online em `https://strike-zone-j05k.onrender.com`.
 
 Por que assim?
 

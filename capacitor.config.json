@@ -3,7 +3,7 @@
   "appName": "Strike Zone",
   "webDir": "apk-www",
   "server": {
-    "url": "https://strike-zone.onrender.com",
+    "url": "https://strike-zone-j05k.onrender.com",
     "cleartext": false
   },
   "android": {

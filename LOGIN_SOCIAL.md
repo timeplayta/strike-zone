@@ -13,7 +13,7 @@ Os botões só ficam ativos quando as credenciais OAuth estão configuradas no R
 Configure em **Render > Strike Zone > Environment**:
 
 ```text
-PUBLIC_BASE_URL=https://strike-zone.onrender.com
+PUBLIC_BASE_URL=https://strike-zone-j05k.onrender.com
 GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
 VK_CLIENT_ID=
@@ -28,13 +28,13 @@ Use exatamente essas URLs nas plataformas:
 
 ```text
 Google:
-https://strike-zone.onrender.com/api/oauth/callback/google
+https://strike-zone-j05k.onrender.com/api/oauth/callback/google
 
 VK:
-https://strike-zone.onrender.com/api/oauth/callback/vk
+https://strike-zone-j05k.onrender.com/api/oauth/callback/vk
 
 Twitter/X:
-https://strike-zone.onrender.com/api/oauth/callback/twitter
+https://strike-zone-j05k.onrender.com/api/oauth/callback/twitter
 ```
 
 ## Observação

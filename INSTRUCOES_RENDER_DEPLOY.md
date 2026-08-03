@@ -11,10 +11,10 @@ Este projeto deve ser publicado na web pelo **Render**, não apenas testado no W
 
 ## Link Público
 
-- Jogo web: `https://strike-zone.onrender.com`
-- Celular: `https://strike-zone.onrender.com/celular`
+- Jogo web: `https://strike-zone-j05k.onrender.com`
+- Celular: `https://strike-zone-j05k.onrender.com/celular`
 
-Se o nome do serviço mudar no Render, trocar `strike-zone` pelo nome correto do serviço.
+O link público aparece no topo da página do serviço no Render (Settings → General). Se mudar de novo, atualize este arquivo e o `capacitor.config.json`.
 
 ## Fluxo Obrigatório Para O Agente
 
