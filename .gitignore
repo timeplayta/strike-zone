@@ -14,3 +14,6 @@ temp_download.json
 data/accounts.json
 data/tutorial-reports/
 data/profile-photos/
+
+# Local Netlify folder
+.netlify
